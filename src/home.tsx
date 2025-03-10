@@ -17,11 +17,6 @@ export const Home: React.FunctionComponent = () => {
     <br />
     <br />
     <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
     <ProjectQuery />
   </>;
 };

@@ -1,4 +1,4 @@
-import { List, PrimaryButton, TextField } from '@fluentui/react';
+import { PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
 import { ProjectRef } from './top-state';
 import { Component } from 'react';
 
@@ -9,7 +9,7 @@ interface ProjectProps {
 
 interface ProjectState {
   q?: string;
-  df: boolean;
+  loading: boolean;
   rows?: ProjectRef[];
 }
 
@@ -19,7 +19,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     super(props);
     this.state = {
       q: props.find ?? '',
-      df: false,
+      loading: false,
     };
   }
 
@@ -39,7 +39,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     if (!qq) { return; }
     const url = `https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net/api/system/${qq}`;
     console.log('ProjectSearch.fetch: begin:', url);
-    this.setState({ df: true });
+    this.setState({ loading: true });
 
     // await new Promise(resolve => setTimeout(resolve, 1000));
     const response = await fetch(url, { method: 'GET' })
@@ -48,9 +48,9 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       const newRows: ProjectRef[] = await response.json();
 
       console.log('Project.ProjectSearch: end', newRows);
-      this.setState({ df: false });
       this.setState({
-        rows: newRows
+        loading: false,
+        rows: newRows,
       });
     } else {
       console.error(`${response.status}: ${response.statusText}`);
@@ -58,7 +58,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   }
 
   render() {
-    const { q, df, rows } = this.state;
+    const { q, loading } = this.state;
 
     return <>
       {<div className="projects-query">
@@ -67,7 +67,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
           required description="Enter complete system name"
           value={q}
           onChange={(_, v) => this.setState({ q: v })}
-          disabled={df}
+          disabled={loading}
           onKeyDown={(ev) => {
             if (ev.key === 'Enter') { this.onFind(); }
           }}
@@ -75,33 +75,36 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         <br />
         <PrimaryButton
           text="find"
-          disabled={df}
+          disabled={loading}
           onClick={this.onFind} />
       </div>}
       <hr />
-      <div className="projects-list">
-        <p>{rows?.length ?? '?'} Build projects in: {this.props.find}</p>
-        <List items={rows} onRenderCell={this.renderRow} />
-      </div>
+      {this.renderRows()}
     </>
   }
 
-  renderRow(row?: ProjectRef, index?: number) {
-    if (!row || index === undefined) { return; }
+  renderRows() {
+    const { q, loading, rows } = this.state;
+    const { find } = this.props;
 
-    return (
-      <div data-is-focusable className={index % 2 === 0 ? 'even' : 'odd'}>
-        <div>#{index}
-          &nbsp;
-          <a
-            href={`#build=${row.buildId}`}
-            onClick={(ev)=> window.location.replace(`#build=${row.buildId}`)}
-          >
-            {row.buildName} ({row.buildType})
-          </a>
-        </div>
+    if (loading) {
+      return <Spinner size={SpinnerSize.large} label={`Searching for projects within: ${q}`} />
+    }
+
+    if (!rows) { return; }
+
+    if (rows.length === 0) {
+      return <h2>No build projects in: <a href={`#find=${find}`}>{find}</a></h2>;
+    }
+
+    if (rows.length > 0) {
+      const listItems = rows.map(r => <li key={r.buildId}><a href={`#build=${r.buildId}`}>{r.buildName} ({r.buildType})</a></li>)
+      return <div className="projects-list">
+        <h2>{rows?.length ?? '?'} Build projects in: <a href={`#find=${find}`}>{find}</a></h2>
+        <ul>
+          {listItems}
+        </ul>
       </div>
-    );
+    }
   }
-
 }

@@ -68,7 +68,6 @@ export class App extends Component<AppProps, AppState> {
 
   render() {
     const { pivot, bid, find } = this.state;
-    console.warn(`** App.render`, this.state);
 
     return (
       <ThemeProvider theme={appTheme}>
@@ -79,8 +78,10 @@ export class App extends Component<AppProps, AppState> {
 
             const newHash = `#${i.props.itemKey}`;
             if (!window.location.hash.startsWith(newHash)) {
-              console.log(`!!`, i)
               window.location.assign(newHash);
+              // this.setState({
+              //   pivot: TopPivot[i.props.itemKey as TopPivot]
+              // });
             }
 
             // setTS({ ...ts, pivot: i.props.itemKey as TopPivot });
@@ -99,6 +100,7 @@ export class App extends Component<AppProps, AppState> {
             <About />
           </PivotItem>
         </Pivot>
+        <br/>
       </ThemeProvider>
     );
   }

@@ -33,3 +33,24 @@ margin-right: 20px;
 .commodity-need {
   text-align: right;
 }
+
+.cmdr:hover {
+  background: #aaffff;
+}
+
+.cmdr {
+  padding: 2px;
+}
+.cmdr .remove {
+  display: none;
+  margin-left: 4px;
+  padding: 0 4px 0 4px;
+}
+.cmdr:hover .remove {
+  display: inline;
+}
+
+
+.ms-TextField {
+  width: 200px;
+}
