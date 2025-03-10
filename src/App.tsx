@@ -12,12 +12,12 @@ interface AppProps {
 }
 interface AppState {
   pivot: TopPivot;
-  bid?: string;
-  find?: string;
+  bid?: string | null;
+  find?: string | null;
 }
 
 export class App extends Component<AppProps, AppState> {
-  constructor(props) {
+  constructor(props: AppProps) {
     super(props);
 
     this.state = {
@@ -37,7 +37,7 @@ export class App extends Component<AppProps, AppState> {
 
   setStateFromHash() {
     // console.log(`** App.setStateFromHash: '${window.location.hash}'`);
-    const nextState = { ... this.state };
+    const nextState = { ...this.state };
 
     if (window.location.hash === '#about') {
       nextState.pivot = TopPivot.about;
@@ -75,6 +75,8 @@ export class App extends Component<AppProps, AppState> {
         <Pivot
           selectedKey={pivot}
           onLinkClick={(i) => {
+            if (!i) { return; }
+
             const newHash = `#${i.props.itemKey}`;
             if (!window.location.hash.startsWith(newHash)) {
               console.log(`!!`, i)

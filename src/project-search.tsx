@@ -4,7 +4,7 @@ import { Component } from 'react';
 
 
 interface ProjectProps {
-  find: string;
+  find: string | undefined | null;
 }
 
 interface ProjectState {
@@ -18,13 +18,13 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   constructor(props: ProjectProps) {
     super(props);
     this.state = {
-      q: props.find,
+      q: props.find ?? '',
       df: false,
     };
   }
 
   componentDidMount() {
-    this.findProjects(this.props.find);
+    this.findProjects(this.props.find ?? '');
   }
 
   onFind = () => {
@@ -32,7 +32,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     this.setState({
       rows: undefined,
     })
-    this.findProjects(this.state.q);
+    this.findProjects(this.state.q ?? '');
   }
 
   findProjects = async (qq: string) => {
@@ -57,10 +57,6 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     }
   }
 
-  onKeyDown = (event) => {
-    if (event.key === 'Enter') { this.onFind(); }
-  };
-
   render() {
     const { q, df, rows } = this.state;
 
@@ -72,7 +68,9 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
           value={q}
           onChange={(_, v) => this.setState({ q: v })}
           disabled={df}
-          onKeyDown={this.onKeyDown}
+          onKeyDown={(ev) => {
+            if (ev.key === 'Enter') { this.onFind(); }
+          }}
         />
         <br />
         <PrimaryButton
@@ -82,16 +80,14 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       </div>}
       <hr />
       <div className="projects-list">
-        <p>{rows?.length ?? '?'} Build projects in: <a>{this.props.find}</a></p>
+        <p>{rows?.length ?? '?'} Build projects in: {this.props.find}</p>
         <List items={rows} onRenderCell={this.renderRow} />
       </div>
     </>
   }
 
-  renderRow(row: ProjectRef, index: number) {
-    const onRowClick = (ev) => {
-      window.location.replace(ev.target.href);
-    }
+  renderRow(row?: ProjectRef, index?: number) {
+    if (!row || index === undefined) { return; }
 
     return (
       <div data-is-focusable className={index % 2 === 0 ? 'even' : 'odd'}>
@@ -99,7 +95,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
           &nbsp;
           <a
             href={`#build=${row.buildId}`}
-            onClick={onRowClick}
+            onClick={(ev)=> window.location.replace(`#build=${row.buildId}`)}
           >
             {row.buildName} ({row.buildType})
           </a>

@@ -2,7 +2,7 @@ import { Project } from './top-state'
 import { Component } from 'react';
 
 interface ProjectProps {
-  buildId: string;
+  buildId: string | undefined | null;
 }
 
 interface ProjectState {
@@ -10,7 +10,7 @@ interface ProjectState {
 }
 
 export class ProjectView extends Component<ProjectProps, ProjectState> {
-  constructor(props) {
+  constructor(props: ProjectProps) {
     super(props);
     this.state = {};
   }
@@ -44,9 +44,10 @@ export class ProjectView extends Component<ProjectProps, ProjectState> {
     if (!proj?.commodities) { return <div />; }
 
     const rows = [];
+    const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
     for (const key in proj.commodities) {
-      const assigned = Object.keys(proj.commanders)
-        .filter(k => proj.commanders[k].includes(key))
+      const assigned = cmdrs
+        .filter(k => cmdrs.includes(key))
         .map(k => <span>📌 {k}</span>);
 
       var row = <tr>

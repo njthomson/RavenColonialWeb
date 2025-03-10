@@ -9,19 +9,16 @@ export const ProjectQuery: React.FunctionComponent = () => {
     window.location.assign(`#find=${txt}`);
   };
 
-  const onKeyDown = (event) => {
-    console.log("ProjectQuery.onKeyDown");
-    if (event.key === 'Enter') { onFind(); }
-  };
-
   return <>
     <div className="projects-query">
       <TextField
         label="System name:"
         required description="Enter complete system name"
         value={txt}
-        onChange={(e, v) => setTxt(v)}
-        onKeyDown={onKeyDown}
+        onChange={(_, v) => setTxt(v ?? '')}
+        onKeyDown={(ev) => {
+          if (ev.key === 'Enter') { onFind(); }
+        }}
       />
       <br />
       <PrimaryButton text="find" onClick={onFind} />
