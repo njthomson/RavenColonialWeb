@@ -2,10 +2,12 @@ import { Component } from 'react';
 import { Pivot, PivotItem, ThemeProvider } from '@fluentui/react';
 import { About } from './about';
 import { Home } from './home';
-import { TopPivot } from './top-state'
+import { TopPivot } from './types'
 import { ProjectSearch } from './project-search';
 import { appTheme } from './theme';
 import { ProjectView } from './project-view';
+import './App.css';
+import { Footer } from './footer';
 
 interface AppProps {
 
@@ -70,7 +72,7 @@ export class App extends Component<AppProps, AppState> {
     const { pivot, bid, find } = this.state;
 
     return (
-      <ThemeProvider theme={appTheme}>
+      <ThemeProvider theme={appTheme} className='app'>
         <Pivot
           selectedKey={pivot}
           onLinkClick={(i) => {
@@ -100,7 +102,8 @@ export class App extends Component<AppProps, AppState> {
             <About />
           </PivotItem>
         </Pivot>
-        <br/>
+        <br />
+        <Footer />
       </ThemeProvider>
     );
   }

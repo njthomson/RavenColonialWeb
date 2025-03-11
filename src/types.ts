@@ -1,5 +1,8 @@
 // type Pair<S> = [S | undefined, Dispatch<SetStateAction<S | undefined>>]
 
+// export const apiSvcUrl = 'https://localhost:7007';
+export const apiSvcUrl = 'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net';
+
 export interface ProjectRef {
   buildId: string;
   buildName: string;
@@ -8,15 +11,14 @@ export interface ProjectRef {
   marketId?: number;
   systemAddress?: number;
   systemName?: string;
-  x?: number;
-  y?: number;
-  z?: number;
+  starPos?: number[];
 
   bodyNum?: number;
   bodyName?: string;
 
   architectName: string;
   factionName: string;
+  notes: string;
 }
 
 export interface Project extends ProjectRef {
@@ -49,6 +51,47 @@ export enum TopPivot {
   build = 'build',
   cmdr = 'cmdr',
   about = 'about',
+}
+
+
+export interface ResponseEdsmStations {
+  id: number;
+  id64: number;
+  name: string;
+  url: string;
+  stations: StationEDSM[];
+}
+
+export interface StationEDSM {
+  id: number;
+  marketId: string;
+  name: string;
+  type: string;
+  distanceToArrival: number;
+  economy: string;
+  secondEconomy: string;
+  haveMarket: boolean;
+  haveOutfitting: boolean;
+  haveShipyard: boolean;
+
+  body?: {
+    id: number;
+    name: string;
+  }
+
+  controllingFaction: {
+    id: number;
+    name: string;
+  }
+}
+
+export interface ResponseEdsmSystem {
+  name: string;
+  coords: {
+    x: number;
+    y: number;
+    z: number;
+  }
 }
 
 // const topState = createContext({

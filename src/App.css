@@ -5,8 +5,62 @@ body {
   background-repeat: repeat;
   color:#f88d01; */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 14pt;
-  padding: 10px;
+  font-size: 16pt;
+}
+
+.app {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  padding: 0px;
+  padding-bottom: 30px;
+}
+
+.ms-Pivot {
+  border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+  min-height: fit-content;
+}
+
+footer {
+  position: fixed;
+  background-color: white;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 10px;
+  border-top: 1px solid #e5e5e5;
+  color: rgba(33, 37, 41, 0.75);
+  box-shadow: 0 -1rem 4rem 0px rgba(0, 0, 0, .05);
+}
+
+footer p {
+  /* background-color: yellow; */
+  padding-left: 60px;
+}
+h3 {
+  border-bottom: #e5e5e5 1px solid;
+  /* margin: 0 10px 0 10px; */
+}
+
+.half-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.half {
+  /* max-width: 50%; */
+  min-width: 300px;
+  flex-grow: 1;
+  margin: 8px;
+}
+
+
+.right {
+  float: right;
+}
+
+.ms-Dialog-main {
+  text-align: center;
 }
 
 .projects-query {
@@ -16,12 +70,13 @@ body {
 
 .rcc {
   float: left;
-margin-right: 20px;
+  margin-right: 20px;
 }
 
 .projects-list .ms-List-cell {
   margin: 2px 0 2px 10px;
 }
+
 .projects-list .odd {
   background-color: rgb(104, 136, 125);
 }
@@ -30,27 +85,13 @@ margin-right: 20px;
   background-color: rgb(219, 219, 219);
 }
 
-.commodity-need {
-  text-align: right;
+.create-project {
+  /* background-color: palegreen; */
+  width: 100%;
+  min-width: 350px;
 }
 
-.cmdr:hover {
-  background: #aaffff;
-}
-
-.cmdr {
-  padding: 2px;
-}
-.cmdr .remove {
-  display: none;
-  margin-left: 4px;
-  padding: 0 4px 0 4px;
-}
-.cmdr:hover .remove {
-  display: inline;
-}
-
-
-.ms-TextField {
-  width: 200px;
+.ms-TextField,
+.ms-ComboBox-container {
+  width: 300px;
 }

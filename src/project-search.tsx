@@ -1,6 +1,7 @@
-import { PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
-import { ProjectRef } from './top-state';
+import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
+import { apiSvcUrl, ProjectRef } from './types';
 import { Component } from 'react';
+import { ProjectCreate } from './project-create';
 
 
 interface ProjectProps {
@@ -9,8 +10,10 @@ interface ProjectProps {
 
 interface ProjectState {
   q?: string;
+  find?: string;
   loading: boolean;
   rows?: ProjectRef[];
+  errorMsg?: string;
 }
 
 
@@ -19,6 +22,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     super(props);
     this.state = {
       q: props.find ?? '',
+      find: props.find ?? '',
       loading: false,
     };
   }
@@ -29,15 +33,12 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
   onFind = () => {
     window.location.assign(`#find=${this.state.q}`);
-    this.setState({
-      rows: undefined,
-    })
-    this.findProjects(this.state.q ?? '');
+    window.location.reload();
   }
 
   findProjects = async (qq: string) => {
     if (!qq) { return; }
-    const url = `https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net/api/system/${qq}`;
+    const url = `${apiSvcUrl}/api/system/${qq}`;
     console.log('ProjectSearch.fetch: begin:', url);
     this.setState({ loading: true });
 
@@ -53,39 +54,47 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         rows: newRows,
       });
     } else {
-      console.error(`${response.status}: ${response.statusText}`);
+      const txt = await response.text();
+      const msg = `${response.status}: ${response.statusText} ${txt}`;
+      this.setState({
+         errorMsg: msg,
+         loading: false,
+         });
+      console.error(msg);
     }
   }
 
   render() {
-    const { q, loading } = this.state;
+    const { q, loading, errorMsg } = this.state;
 
     return <>
-      {<div className="projects-query">
-        <TextField
-          label="System name:"
-          required description="Enter complete system name"
-          value={q}
-          onChange={(_, v) => this.setState({ q: v })}
-          disabled={loading}
-          onKeyDown={(ev) => {
-            if (ev.key === 'Enter') { this.onFind(); }
-          }}
-        />
-        <br />
-        <PrimaryButton
-          text="find"
-          disabled={loading}
-          onClick={this.onFind} />
-      </div>}
-      <hr />
-      {this.renderRows()}
+      <div className='half right'><ProjectCreate systemName={this.props.find!} /></div>
+      <div className='half'>
+        <div className="projects-query">
+          <TextField
+            label="System name:"
+            required description="Enter complete system name"
+            value={q}
+            onChange={(_, v) => this.setState({ q: v })}
+            disabled={loading}
+            onKeyDown={(ev) => {
+              if (ev.key === 'Enter') { this.onFind(); }
+            }}
+          />
+          <br />
+          <PrimaryButton
+            text="find"
+            disabled={loading}
+            onClick={this.onFind} />
+        </div>
+        {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+        {this.renderRows()}
+      </div>
     </>
   }
 
   renderRows() {
-    const { q, loading, rows } = this.state;
-    const { find } = this.props;
+    const { q, loading, rows, find } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Searching for projects within: ${q}`} />

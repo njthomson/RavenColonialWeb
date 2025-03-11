@@ -1,0 +1,101 @@
+
+/* .commodities{
+  background-color: yellow;
+} */
+
+.commodities th {
+  text-align: left;
+  padding: 0 10px 0 10px;
+  border-bottom: #e5e5e5 1px solid;
+}
+
+.commodities tr {
+  height: 20px;
+}
+
+.commodities tr:hover {
+  background: #aaffff;
+}
+
+.commodities .btn-assign {
+  display: none;
+  margin-left: 4px;
+}
+
+.commodities .commodity-name {
+  padding: 0 10px 0 10px;
+}
+
+.commodities .assigned {
+  white-space: nowrap;
+}
+
+.commodities tr:hover .btn-assign {
+  display: inline;
+}
+
+.commodities .commodity-need {
+  text-align: right;
+  padding: 0 10px 0 10px;
+  border-left: #e5e5e5 1px solid;
+  border-right: #e5e5e5 1px solid;
+}
+
+.commodity-num {
+  width: 80px;
+  text-align: right;
+}
+
+.odd {
+  background-color: rgb(238, 238, 238);
+}
+
+.commodities .commodity-name {
+  min-width: 210px;
+}
+
+.removable:hover {
+  background: #aaffff;
+}
+
+.removable {
+  padding: 2px;
+  align-items: center; 
+}
+.removable lbl{
+  /* display: block; */
+  padding: 2px;
+  /* height: 16px; */
+  /* min-height: 16px; */
+}
+.removable .btn {
+  display: none;
+  margin-left: 4px;
+  padding: 0 4px 0 4px;
+  margin: 0 4px 0 4px;
+}
+.removable:hover .btn {
+  display: inline;
+}
+
+
+.project-edit input {
+  width: 400px;
+}
+
+.project-edit textarea {
+  width: 400px;
+  height: 100px;
+}
+
+.detail {
+  background-color: rgb(238, 238, 238);
+  padding: 2px;
+  white-space: pre-line;
+}
+
+/* 
+.notes {
+  padding: 2px;
+  white-space: pre-line;
+} */
