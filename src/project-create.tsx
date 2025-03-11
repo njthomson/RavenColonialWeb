@@ -164,7 +164,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     console.log('ProjectCreate.onCheckSystem:', url);
 
     const body = {
-      ... this.state
+      ...this.state
     };
     delete body.foundStations;
 

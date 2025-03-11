@@ -1,4 +1,4 @@
-import { ActionButton, ComboBox, DefaultButton, IconButton, IIconProps, initializeIcons, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, ComboBox, DefaultButton, IconButton, initializeIcons, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
 import { apiSvcUrl, Project } from './types'
 import { Component } from 'react';
