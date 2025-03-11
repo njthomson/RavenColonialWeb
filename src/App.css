@@ -95,3 +95,7 @@ h3 {
 .ms-ComboBox-container {
   width: 300px;
 }
+
+.ms-Button{
+  margin-right: 8px;
+}

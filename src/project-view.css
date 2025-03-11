@@ -24,6 +24,7 @@
 
 .commodities .commodity-name {
   padding: 0 10px 0 10px;
+  min-width: 240px;
 }
 
 .commodities .assigned {
@@ -48,10 +49,6 @@
 
 .odd {
   background-color: rgb(238, 238, 238);
-}
-
-.commodities .commodity-name {
-  min-width: 210px;
 }
 
 .removable:hover {

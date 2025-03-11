@@ -160,6 +160,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     }
 
+    const sumTotal = Object.values(proj.commodities).reduce((total, current) => total += current, 0);
+    const tripsType9 = Math.ceil(sumTotal / 784);
+    const tripsType8 = Math.ceil(sumTotal / 400);
+
     return <>
       <table className='commodities' cellSpacing={0} cellPadding={0}>
         <thead>
@@ -171,6 +175,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </thead>
         <tbody>{rows}</tbody>
       </table>
+
+      {!editCommodities && <div>
+        <br />
+        Total remaining: <span className='detail'>{sumTotal.toLocaleString()}</span>. Trips needed in Type9: <span className='detail'>{tripsType9}</span> or Type8: <span className='detail'>{tripsType8}</span>
+      </div>}
 
       {editCommodities && <>
         <div>Use click / shift mouse-wheel to adjust values</div>
