@@ -27,6 +27,11 @@
   min-width: 240px;
 }
 
+.commodities .done {
+  color: grey;
+  text-decoration: line-through;
+}
+
 .commodities .assigned {
   white-space: nowrap;
 }
@@ -47,7 +52,7 @@
   text-align: right;
 }
 
-.odd {
+.commodities .odd {
   background-color: rgb(238, 238, 238);
 }
 
@@ -90,9 +95,3 @@
   padding: 2px;
   white-space: pre-line;
 }
-
-/* 
-.notes {
-  padding: 2px;
-  white-space: pre-line;
-} */

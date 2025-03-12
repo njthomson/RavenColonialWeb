@@ -11,8 +11,6 @@ interface ProjectCreateState extends ProjectRef {
   errorMsg?: string;
 }
 
-// Initialize icons in case this example uses them
-initializeIcons();
 
 const buildTypes: IComboBoxOption[] = [
   { key: '', text: 'Tier 1: Space', itemType: SelectableOptionMenuItemType.Header },
@@ -22,30 +20,30 @@ const buildTypes: IComboBoxOption[] = [
   { key: 'output-civilian', text: 'Civilian Outpost', },
   { key: 'output-science', text: 'Science Outpost', },
   { key: 'output-military', text: 'Military Outpost', },
-  
+
   { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: '', text: 'Tier 1: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: '', text: 'Coming soon', disabled: true},
+  { key: '', text: 'Coming soon', disabled: true },
   // TODO: ...
 
   { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: 't2-space', text: 'Tier 2: Space', itemType: SelectableOptionMenuItemType.Header },
   { key: 'coriolis', text: 'Coriolis', },
   { key: 'asteroid', text: 'Asteroid', },
-  
+
   { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: '', text: 'Tier 2: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: '', text: 'Coming soon', disabled: true},
+  { key: '', text: 'Coming soon', disabled: true },
   // TODO: ...
 
   { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: '', text: 'Tier 3: Space', itemType: SelectableOptionMenuItemType.Header, },
   { key: 'ocellus', text: 'Ccellus', },
   { key: 'orbis', text: 'Orbis', },
-  
+
   { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: '', text: 'Tier 3: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: '', text: 'Coming soon', disabled: true},
+  { key: '', text: 'Coming soon', disabled: true },
   // TODO: ...
 
 ];
@@ -56,13 +54,15 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     super(props);
 
     this.state = {
-      systemName: props.systemName,
+      systemAddress: 0,
+      systemName: props.systemName ?? '',
+      starPos: [0, 0, 0],
+      marketId: 0,
       buildId: '',
       buildName: '',
       buildType: 'orbis',
       architectName: '',
       factionName: '',
-      marketId: 0,
       notes: '',
     };
 
@@ -77,16 +77,16 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       <div className="create-project">
         <h3>Start a new build?</h3>
         <div>
-          <TextField label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
+          <TextField name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
           <button onClick={this.onCheckSystem} hidden={foundStations && foundStations.length > 0}>check system</button>
         </div>
         <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         {this.renderFoundStations()}
         {(marketId === -1) && <div>
-          <TextField label='Market ID:' value={marketId.toString()} required={true} description='This value comes from journal files in: %HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous' />
+          <TextField name='marketId' label='Market ID:' value={marketId.toString()} required={true} description='This value comes from journal files in: %HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous' />
         </div>}
 
-        <TextField label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
+        <TextField name='buildName' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
         <br />
 
         {(marketId === 0 && !foundStations) && <div>( check system first )<br /></div>}

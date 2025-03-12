@@ -3,27 +3,34 @@
 // export const apiSvcUrl = 'https://localhost:7007';
 export const apiSvcUrl = 'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net';
 
-export interface ProjectRef {
+export interface ProjectRefLite {
   buildId: string;
   buildName: string;
-  buildType?: string;
+  buildType: string
+  systemName: string;
+}
 
-  marketId?: number;
-  systemAddress?: number;
-  systemName?: string;
-  starPos?: number[];
+export interface ProjectRef extends ProjectRefLite {
+  marketId: number;
+  systemAddress: number;
+  starPos: number[];
 
   bodyNum?: number;
   bodyName?: string;
 
-  architectName: string;
-  factionName: string;
-  notes: string;
+  architectName?: string;
+  factionName?: string;
+  notes?: string;
 }
 
 export interface Project extends ProjectRef {
-  commanders?: Record<string, string[]>;
-  commodities?: Record<string, number>;
+  commanders: Record<string, string[]>;
+  commodities: Record<string, number>;
+}
+
+export interface CmdrSummary {
+  primaryId?: string;
+  projects: Project[];
 }
 
 export interface QueryProject {
@@ -33,7 +40,7 @@ export interface QueryProject {
 export interface TopState {
   pivot: TopPivot;
   query?: QueryProject | undefined;
-  buildId?: string| undefined;
+  buildId?: string | undefined;
   proj?: Project | undefined;
 }
 
@@ -94,65 +101,62 @@ export interface ResponseEdsmSystem {
   }
 }
 
-// const topState = createContext({
-//   pivot: TopPivot.home,
-//   // setTS : Any; //Dispatch<SetStateAction<S | undefined>
-// });
+export const mapCommodityIcon: Record<string, string> = {
+  Chemicals: 'TestBeaker',
+  ConsumerItems: 'ShoppingCart',
+  LegalDrugs: 'ClassroomLogo',
+  Foods: 'EatDrink',
+  Industrial: 'CubeShape', // 'CubeShape',
+  Machinery: 'ProductVariant', // 'CubeShape',
+  Medicines: 'Health', //'Medical',
+  Metals: 'WebAppBuilderModule', //'ViewInAR',
+  Minerals: 'Diamond',
+  Salvage: 'Quantity',
+  Technology: 'Robot',
+  Waste: 'RecycleBin',
+  Weapons: 'GripperTool', // IncidentTriangle
+}
 
-// export const useTopState = () => {
-//   return useContext(topState);
-// }
+export const mapCommodityType: Record<string, string> = {
+  liquidoxygen: 'Chemicals',
+  water: 'Chemicals',
+  ceramiccomposites: 'Industrial',
+  cmmcomposite: 'Industrial',
+  insulatingmembrane: 'Industrial', 
+  polymers: 'Industrial',
+  semiconductors: 'Industrial',
+  superconductors: 'Industrial',
+  aluminium: 'Metals', 
+  copper: 'Metals', 
+  steel: 'Metals', 
+  titanium: 'Metals',
+  computercomponents: 'Technology',
+  medicaldiagnosticequipment: 'Medicines',
+  foodcartridges: 'Foods', 
+  fruitandvegetables: 'Foods',
+  nonlethalweapons: 'Weapons', 
+  powergenerators: 'Technology', 
+  waterpurifiers: 'Technology', 
+}
 
-
-// const usePair = (obj: any, key: string, val: any) => {
-//   const [getVal, setVal] = useState(val);
-
-//   Object.defineProperty(obj, key, {
-//     get: () => {
-//       return val;
-//     },
-//     set: (newVal: any) => {
-//       setVal(newVal);
-//     },
-//     enumerable: true,
-//     configurable: true,
-//   });
-// }
-
-
-
-// export const useFoo = <T>(raw: Record<string, Pair<unknown>>): T => {
-//   const obj = {};
-
-//   for (const key in raw) {
-
-//     // eslint-disable-next-line react-hooks/rules-of-hooks
-//     const [getVal, setVal] = raw[key];
-
-//     Object.defineProperty(obj, key, {
-//       get: () => {
-//         return getVal;
-//       },
-//       set: (newVal: any) => {
-//         setVal(newVal);
-//       },
-//       enumerable: true,
-//       configurable: true,
-//     });
-//   }
-
-//   return obj as T;
-// };
-
-// export const tsRaw = {};
-
-// // export const useInitialState = () => {
-// //   if (tsRaw) { return; }
-
-// //   tsRaw = {
-// //     topPivot: useState(TopPivot.home),
-// //   };
-
-// // }
-
-// // export const ts = useFoo<TopState>(tsRaw);
+export const mapCommodityNames: Record<string, string> = {
+  liquidoxygen: 'Liquid Oxygen',
+  water: 'Water',
+  ceramiccomposites: 'Ceramic Composites',
+  cmmcomposite: 'CMM Composite',
+  insulatingmembrane: 'Insulating Membrane', 
+  polymers: 'Polymers',
+  semiconductors: 'Semi Conductors',
+  superconductors: 'Super Conductors',
+  aluminium: 'Aluminium', 
+  copper: 'Copper', 
+  steel: 'Steel', 
+  titanium: 'Titanium',
+  computercomponents: 'Computer Components',
+  medicaldiagnosticequipment: 'Medical Diagnostic Equipment',
+  foodcartridges: 'Food Cartridges', 
+  fruitandvegetables: 'Fruit and Vegetables',
+  nonlethalweapons: 'Non Lethal Weapons', 
+  powergenerators: 'Power Generators', 
+  waterpurifiers: 'Water Purifiers', 
+}

@@ -34,22 +34,37 @@ footer {
 }
 
 footer p {
-  /* background-color: yellow; */
   padding-left: 60px;
 }
+
 h3 {
   border-bottom: #e5e5e5 1px solid;
   /* margin: 0 10px 0 10px; */
 }
 
-.half-container {
+.contain-horiz {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+}
+
+.contain-vert {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  align-items: center;
 }
 
 .half {
-  /* max-width: 50%; */
-  min-width: 300px;
+  max-width: 50%;
+  min-width: 400px;
+  flex-grow: 1;
+  margin: 8px;
+}
+
+.center {
+  max-width: 50%;
+  min-width: 400px;
   flex-grow: 1;
   margin: 8px;
 }
@@ -65,7 +80,6 @@ h3 {
 
 .projects-query {
   width: 400px;
-  /* background-color: red; */
 }
 
 .rcc {
@@ -78,7 +92,7 @@ h3 {
 }
 
 .projects-list .odd {
-  background-color: rgb(104, 136, 125);
+  background-color: rgb(238, 238, 238);
 }
 
 .projects-list .even {
@@ -96,6 +110,37 @@ h3 {
   width: 300px;
 }
 
-.ms-Button{
-  margin-right: 8px;
+.current-cmdr {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.edit-cmdr {
+  padding: 8px;
+}
+
+.edit-cmdr .ms-TextField {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+
+.yellow {
+  background-color: yellow;
+}
+
+.cyan {
+  background-color: cyan;
+}
+
+/* misc  */
+
+.grey {
+  background-color: rgb(238, 238, 238);
+  padding: 0 4px 0 4px;
+}
+
+.hint {
+  font-size: 14px;
 }

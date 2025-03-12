@@ -12,6 +12,7 @@ export const ProjectQuery: React.FunctionComponent = () => {
   return <>
     <div className="projects-query">
       <TextField
+        name='systemName'
         label="System name:"
         required description="Enter complete system name"
         value={txt}

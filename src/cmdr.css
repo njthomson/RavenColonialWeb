@@ -1,0 +1,35 @@
+.cmdr-projects .header {
+  padding: 16px 8px 4px 8px;
+}
+
+.cmdr-projects .assignment {
+  text-align: right;
+  width: fit-content;
+}
+
+.cmdr-projects .commodity {
+  padding: 0 8px 0 8px;
+}
+
+.cmdr-projects .init {
+  width: 40px;
+}
+
+.cmdr-projects .icon {
+  text-align: left;
+  padding: 0 10px 0 10px;
+  cursor: default;
+}
+
+
+.cmdr-projects .need {
+  padding-right: 20px;
+}
+
+.cmdr-projects .filler {
+  width: 40%;
+}
+
+.cmdr-projects .odd .d {
+  background-color: rgb(238, 238, 238);
+}

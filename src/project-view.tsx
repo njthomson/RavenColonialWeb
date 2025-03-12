@@ -1,12 +1,14 @@
-import { ActionButton, ComboBox, DefaultButton, IconButton, initializeIcons, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, ComboBox, DefaultButton, IconButton, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
-import { apiSvcUrl, Project } from './types'
+import { apiSvcUrl, mapCommodityNames, Project } from './types'
 import { Component } from 'react';
 import { ProjectCreate } from './project-create';
 import './project-view.css';
+import { Store } from './local-storage';
+import { CargoRemaining, CommodityIcon } from './misc';
 
 interface ProjectViewProps {
-  buildId: string | undefined | null;
+  buildId?: string;
 }
 
 interface ProjectViewState {
@@ -23,8 +25,6 @@ interface ProjectViewState {
   editProject?: Partial<Project>;
 }
 
-// Initialize icons in case this example uses them
-initializeIcons();
 
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   constructor(props: ProjectViewProps) {
@@ -37,11 +37,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   componentDidMount() {
-    this.fetchProject();
+    this.fetchProject(this.props.buildId);
   }
 
-  async fetchProject() {
-    const { buildId } = this.props;
+  componentDidUpdate(prevProps: Readonly<ProjectViewProps>, prevState: Readonly<ProjectViewState>, snapshot?: any): void {
+    if (prevState.proj?.buildId !== this.props.buildId && this.props.buildId) {
+      this.fetchProject(this.props.buildId);
+    }
+  }
+
+  async fetchProject(buildId: string | undefined) {
     if (!buildId) {
       this.setState({ loading: false });
       return;
@@ -57,6 +62,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       const newProj: Project = await response.json();
 
       console.log('Project.fetch: end buildId:', newProj);
+      Store.addRecentProject(newProj);
+
       this.setState({
         proj: newProj,
         loading: false,
@@ -75,10 +82,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     if (!proj) {
-      return <>
-        <div className='half right'><ProjectCreate /></div>
+      return <div className='contain-horiz'>
         <div className='half'><ProjectQuery /></div>
-      </>;
+        <div className='half right'><ProjectCreate /></div>
+      </div>;
     }
 
     return <>
@@ -87,7 +94,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <h2><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} ({proj.buildType})</h2>
       </div>
 
-      <div className='half-container'>
+      <div className='contain-horiz'>
         {!editProject && <div className='half'>
           <h3>Commodities:</h3>
           {this.renderCommodities()}
@@ -161,8 +168,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     const sumTotal = Object.values(proj.commodities).reduce((total, current) => total += current, 0);
-    const tripsType9 = Math.ceil(sumTotal / 784);
-    const tripsType8 = Math.ceil(sumTotal / 400);
 
     return <>
       <table className='commodities' cellSpacing={0} cellPadding={0}>
@@ -176,13 +181,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <tbody>{rows}</tbody>
       </table>
 
-      {!editCommodities && <div>
-        <br />
-        Total remaining: <span className='detail'>{sumTotal.toLocaleString()}</span>. Trips needed in Type9: <span className='detail'>{tripsType9}</span> or Type8: <span className='detail'>{tripsType8}</span>
-      </div>}
+      {!editCommodities && <CargoRemaining sumTotal={sumTotal} />}
 
       {editCommodities && <>
-        <div>Use click / shift mouse-wheel to adjust values</div>
+        <div className='hint'>Use click / shift mouse-wheel to adjust values</div>
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editCommodities: undefined, })} />
       </>}
@@ -196,13 +198,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         return <span className='removable' key={`$${key}-${k}`}> 📌{k}<button className='btn' title={`Remove assignment of ${key} from ${k}`} onClick={() => { this.onClickUnassign(k, key); }}>x</button></span>;
       });
 
-    return <tr key={`cc-${key}`} className={flip ? '' : ' odd'}>
+      const need = proj.commodities![key];
+      const  className=`${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
+    return <tr key={`cc-${key}`} className={ className}>
       <td className='commodity-name'>
-        <span>{key}</span>
+        <span><CommodityIcon name={key}/> {mapCommodityNames[key]}</span>
         {!editCommodities && <button className='btn-assign' onClick={() => this.setState({ assignCommodity: key })} title={`Assign a commander to commodity: ${key}`}>+</button>}
       </td>
       <td className='commodity-need'>
-        {!editCommodities && proj.commodities![key].toLocaleString()}
+        {!editCommodities && need.toLocaleString()}
         {editCommodities && <input className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {
           const ec2 = this.state.editCommodities!;
           ec2[key] = ev.target.valueAsNumber;
@@ -289,6 +293,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div className='add-cmdr' hidden={!showAddCmdr}>
         <Stack horizontal tokens={horizontalGapStackTokens}>
           <TextField
+            name='cmdr'
             value={newCmdr}
             onKeyDown={(ev) => {
               if (ev.key === 'Enter') { this.onClickAddCmdr(); }

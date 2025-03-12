@@ -2,6 +2,7 @@ import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextFi
 import { apiSvcUrl, ProjectRef } from './types';
 import { Component } from 'react';
 import { ProjectCreate } from './project-create';
+import { ProjectLink } from './misc';
 
 
 interface ProjectProps {
@@ -57,9 +58,9 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       const txt = await response.text();
       const msg = `${response.status}: ${response.statusText} ${txt}`;
       this.setState({
-         errorMsg: msg,
-         loading: false,
-         });
+        errorMsg: msg,
+        loading: false,
+      });
       console.error(msg);
     }
   }
@@ -67,11 +68,11 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   render() {
     const { q, loading, errorMsg } = this.state;
 
-    return <>
-      <div className='half right'><ProjectCreate systemName={this.props.find!} /></div>
+    return <div className='contain-horiz'>
       <div className='half'>
         <div className="projects-query">
           <TextField
+            name='systemName'
             label="System name:"
             required description="Enter complete system name"
             value={q}
@@ -90,7 +91,9 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         {this.renderRows()}
       </div>
-    </>
+
+      <div className='half right'><ProjectCreate systemName={this.props.find!} /></div>
+    </div>
   }
 
   renderRows() {
@@ -107,7 +110,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     }
 
     if (rows.length > 0) {
-      const listItems = rows.map(r => <li key={r.buildId}><a href={`#build=${r.buildId}`}>{r.buildName} ({r.buildType})</a></li>)
+      const listItems = rows.map(r => <li key={r.buildId}><ProjectLink proj={r} noSys={true} /></li>)
       return <div className="projects-list">
         <h2>{rows?.length ?? '?'} Build projects in: <a href={`#find=${find}`}>{find}</a></h2>
         <ul>
