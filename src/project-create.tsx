@@ -1,4 +1,4 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, initializeIcons, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, TextField } from '@fluentui/react';
+import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, TextField } from '@fluentui/react';
 import { apiSvcUrl, Project, ProjectRef, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
 
