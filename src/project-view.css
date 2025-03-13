@@ -1,4 +1,3 @@
-
 /* .commodities{
   background-color: yellow;
 } */
@@ -36,6 +35,11 @@
   white-space: nowrap;
 }
 
+.commodities .glue {
+  white-space: nowrap;
+}
+
+
 .commodities tr:hover .btn-assign {
   display: inline;
 }
@@ -62,26 +66,30 @@
 
 .removable {
   padding: 2px;
-  align-items: center; 
+  align-items: center;
 }
-.removable lbl{
+
+.removable lbl {
   /* display: block; */
   padding: 2px;
   /* height: 16px; */
   /* min-height: 16px; */
 }
+
 .removable .btn {
   display: none;
   margin-left: 4px;
   padding: 0 4px 0 4px;
   margin: 0 4px 0 4px;
 }
+
 .removable:hover .btn {
   display: inline;
 }
 
 
 .project-edit input {
+  display: block;
   width: 400px;
 }
 
@@ -94,4 +102,29 @@
   background-color: rgb(238, 238, 238);
   padding: 2px;
   white-space: pre-line;
+}
+
+
+@media (max-width: 400px) {
+  .commodities {
+    font-size: 12px;
+  }
+ 
+  .commodities .commodity-name {
+    min-width: 0px;
+  }
+
+  .commodities .assigned {
+    white-space: unset;
+  }
+
+  .project-edit input {
+    width: 200px;
+    display: block;
+  }
+  
+  .project-edit textarea {
+    width: 200px;
+    display: block;
+  }
 }

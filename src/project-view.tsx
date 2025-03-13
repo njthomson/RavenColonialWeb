@@ -1,4 +1,4 @@
-import { ActionButton, ComboBox, DefaultButton, IconButton, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
 import { apiSvcUrl, mapCommodityNames, Project } from './types'
 import { Component } from 'react';
@@ -23,6 +23,7 @@ interface ProjectViewState {
   assignCmdr?: string;
   editCommodities?: Record<string, number>;
   editProject?: Partial<Project>;
+  disableDelete?: boolean;
 }
 
 
@@ -33,6 +34,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       loading: true,
       newCmdr: '',
       showAddCmdr: false,
+      disableDelete: true,
     };
   }
 
@@ -64,9 +66,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.log('Project.fetch: end buildId:', newProj);
       Store.addRecentProject(newProj);
 
+      const cmdrName = Store.getCmdr()?.name;
       this.setState({
         proj: newProj,
         loading: false,
+        disableDelete: !!cmdrName && !!newProj.architectName && newProj.architectName.toLowerCase() === cmdrName.toLowerCase(),
       });
     } else {
       this.setState({ loading: false });
@@ -75,7 +79,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject } = this.state;
+    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject, disableDelete } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -88,49 +92,57 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div>;
     }
 
+    const cmds: ICommandBarItemProps[] = [{
+      key: 'edit-commodities', text: 'Edit commodities',
+      iconProps: { iconName: 'AllAppsMirrored' },
+      onClick: () => this.setState({ editCommodities: { ...this.state.proj?.commodities } }),
+    }, {
+      key: 'btn-edit', text: 'Edit project',
+      iconProps: { iconName: 'Edit' },
+      onClick: () => this.setState({ editProject: { ...this.state.proj } }),
+    }, {
+      key: 'btn-complete', text: 'Complete',
+      iconProps: { iconName: 'Completed' },
+      disabled: true,
+      onClick: () => this.setState({ confirmComplete: true }),
+    }, {
+      key: 'btn-delete', text: 'Delete',
+      iconProps: { iconName: 'Delete' },
+      disabled: !!proj.architectName,
+      onClick: () => this.setState({ confirmDelete: true }),
+    }]
+
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} ({proj.buildType})</h2>
-      </div>
+        {!editCommodities && !editProject && <CommandBar className='top-bar' items={cmds} />}
+      </div >
 
       <div className='contain-horiz'>
         {!editProject && <div className='half'>
-          <h3>Commodities:</h3>
+          {!editCommodities && <h3>Commodities:</h3>}
           {this.renderCommodities()}
         </div>}
 
         {!editCommodities && <div className='half'>
           {this.renderProjectDetails(proj, editProject!)}
+          {/* {this.renderStats()} */}
         </div>}
       </div>
 
-      <div className='full'>
-        <br />
-        {!editCommodities && !editProject && <>
-          <DefaultButton text='Edit commodities' iconProps={{ iconName: 'AllAppsMirrored' }} onClick={() => {
-            this.setState({
-              editCommodities: { ...proj.commodities },
-            });
-          }} />
-          <DefaultButton text='Mark project complete' iconProps={{ iconName: 'Completed' }} onClick={() => this.setState({ confirmComplete: true })} disabled />
-          <DefaultButton text='Delete project' iconProps={{ iconName: 'Delete' }} onClick={() => this.setState({ confirmDelete: true })} />
-          <DefaultButton text='Edit project' iconProps={{ iconName: 'Edit' }} onClick={() => { this.setState({ editProject: { ...proj }, }) }} />
-        </>}
-
-        <Modal isOpen={confirmDelete}>
-          <h3>Are you sure you want to delete?</h3>
-          <p>This cannot be undone.</p>
-          <DefaultButton text='Yes' onClick={this.onProjectDelete} />
-          <PrimaryButton text='No' onClick={() => this.setState({ confirmDelete: false })} />
-        </Modal>
-        <Modal isOpen={confirmComplete}>
-          <h3>Are you sure?</h3>
-          <p>Congratulations!</p>
-          <PrimaryButton text='Yes' onClick={this.onProjectDelete} />
-          <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} />
-        </Modal>
-      </div >
+      <Modal isOpen={confirmDelete}>
+        <h3>Are you sure you want to delete?</h3>
+        <p>This cannot be undone.</p>
+        <DefaultButton text='Yes' onClick={this.onProjectDelete} />
+        <PrimaryButton text='No' onClick={() => this.setState({ confirmDelete: false })} />
+      </Modal>
+      <Modal isOpen={confirmComplete}>
+        <h3>Are you sure?</h3>
+        <p>Congratulations!</p>
+        <PrimaryButton text='Yes' onClick={this.onProjectDelete} />
+        <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} />
+      </Modal>
     </>;
   }
 
@@ -158,7 +170,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <td colSpan={3}>
             <Stack horizontal>
               <ComboBox options={cmdrOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} />
-              <PrimaryButton text='Assign' iconProps={{ iconName: 'Assign' }} onClick={this.onClickAssign} />
+              <IconButton title='Assign' iconProps={{ iconName: 'Add' }} onClick={this.onClickAssign} />
               <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
             </Stack>
           </td>
@@ -170,6 +182,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const sumTotal = Object.values(proj.commodities).reduce((total, current) => total += current, 0);
 
     return <>
+      {editCommodities && <>
+        <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
+        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editCommodities: undefined, })} />
+      </>}
+
       <table className='commodities' cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
@@ -182,12 +199,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </table>
 
       {!editCommodities && <CargoRemaining sumTotal={sumTotal} />}
-
-      {editCommodities && <>
-        <div className='hint'>Use click / shift mouse-wheel to adjust values</div>
-        <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
-        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editCommodities: undefined, })} />
-      </>}
     </>
   }
 
@@ -195,14 +206,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const assigned = cmdrs
       .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
-        return <span className='removable' key={`$${key}-${k}`}> 📌{k}<button className='btn' title={`Remove assignment of ${key} from ${k}`} onClick={() => { this.onClickUnassign(k, key); }}>x</button></span>;
+        return <span className='removable' key={`$${key}-${k}`}> <span className='glue'>📌{k}</span><button className='btn' title={`Remove assignment of ${key} from ${k}`} onClick={() => { this.onClickUnassign(k, key); }}>x</button></span>;
       });
 
-      const need = proj.commodities![key];
-      const  className=`${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
-    return <tr key={`cc-${key}`} className={ className}>
+    const need = proj.commodities![key];
+    const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
+    return <tr key={`cc-${key}`} className={className}>
       <td className='commodity-name'>
-        <span><CommodityIcon name={key}/> {mapCommodityNames[key]}</span>
+        <span><CommodityIcon name={key} /> {mapCommodityNames[key]}</span>
         {!editCommodities && <button className='btn-assign' onClick={() => this.setState({ assignCommodity: key })} title={`Assign a commander to commodity: ${key}`}>+</button>}
       </td>
       <td className='commodity-need'>
@@ -222,7 +233,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const className = !!editProject ? 'project-edit' : 'project';
 
     return <div className={className}>
-      <h3>Build:</h3>
+      {editProject && <>
+        <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
+        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editProject: undefined, })} />
+      </>}
+
+      {!editProject && <h3>Build:</h3>}
       <table>
         <tbody>
           <tr><td>Build name:</td><td>
@@ -246,11 +262,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </tbody>
       </table>
       {!editProject && this.renderCommanders()}
-
-      {editProject && <>
-        <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
-        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editProject: undefined, })} />
-      </>}
 
     </div>;
   };
@@ -379,7 +390,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-
   onClickUnassign = async (cmdr: string, commodity: string) => {
     const { proj } = this.state;
     if (!proj?.commanders || !cmdr || !commodity || !proj.commanders[cmdr]) { return; }
@@ -499,4 +509,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
   };
+
+  renderStats() {
+    return <>
+      <div>stat!</div>
+    </>;
+  }
 }

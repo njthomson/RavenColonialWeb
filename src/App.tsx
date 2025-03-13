@@ -1,6 +1,6 @@
 import './App.css';
-import { Component } from 'react';
-import { ActionButton, DefaultButton, initializeIcons, IStackTokens, Modal, Pivot, PivotItem, PrimaryButton, Slider, Stack, TextField, ThemeProvider } from '@fluentui/react';
+import { Component, } from 'react';
+import { CommandBar, DefaultButton, ICommandBarItemProps, IContextualMenuItem, initializeIcons, Modal, PrimaryButton, Slider, Stack, TextField, ThemeProvider } from '@fluentui/react';
 import { About } from './about';
 import { Home } from './home';
 import { TopPivot } from './types'
@@ -18,6 +18,8 @@ interface AppProps {
 
 interface AppState {
   pivot: TopPivot;
+  nearItems: ICommandBarItemProps[];
+  cmdrBtn: ICommandBarItemProps;
   bid?: string;
   find?: string;
 
@@ -41,17 +43,49 @@ export class App extends Component<AppProps, AppState> {
 
     this.state = {
       pivot: TopPivot.home,
+      nearItems: [{
+        key: 'home', iconOnly: true,
+        iconProps: { iconName: 'Home' },
+        onClick: (_, i) => this.clickNearItem(i),
+      }, {
+        key: 'find', text: 'Find',
+        onClick: (_, i) => this.clickNearItem(i),
+      }, {
+        key: 'build', text: 'Build',
+        onClick: (_, i) => this.clickNearItem(i),
+      }, {
+        key: 'cmdr', text: 'Cmdr',
+        onClick: (_, i) => this.clickNearItem(i),
+      }, {
+        key: 'about', text: 'About',
+        onClick: (_, i) => this.clickNearItem(i),
+      }],
+      cmdrBtn: {
+        id: 'current-cmdr', key: 'current-cmdr',
+        iconProps: { iconName: cmdr?.name ? 'Contact' : 'UserWarning' },
+        text: cmdr?.name ?? '?',
+        onClick: () => this.setState({ cmdrEdit: cmdr?.name ?? '' }),
+      },
       cmdr: cmdr?.name,
       cargoLargeMax: this.largeMax,
       cargoMediumMax: this.medMax,
     };
-
 
     window.onhashchange = (ev: HashChangeEvent) => {
       console.debug('onhashchange:', ev);
       this.setStateFromHash();
     };
   }
+
+  clickNearItem = (item: IContextualMenuItem | undefined): boolean | void => {
+    if (!item) { return; }
+
+    const newHash = `#${item.key}`;
+    if (!window.location.hash.startsWith(newHash)) {
+      window.location.assign(newHash);
+    }
+    return true;
+  };
 
   componentDidMount(): void {
     // console.warn(`** App.componentDidMount`);
@@ -87,39 +121,28 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { pivot, bid, find, cmdr } = this.state;
+    const { nearItems, cmdrBtn, cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
+
+    const editingCmdr = cmdrEdit !== undefined;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
-        <Pivot
-          selectedKey={pivot}
-          onLinkClick={(i) => {
-            if (!i) { return; }
+        <CommandBar items={nearItems} farItems={[cmdrBtn]} className='top-bar' />
+        {this.renderBody()}
 
-            const newHash = `#${i.props.itemKey}`;
-            if (!window.location.hash.startsWith(newHash)) {
-              window.location.assign(newHash);
-            }
-          }}
-        >
-          <PivotItem itemKey={TopPivot.home} headerText="Raven Colonial Corporation">
-            <Home />
-          </PivotItem>
-          <PivotItem itemKey={TopPivot.find} headerText="Find">
-            <ProjectSearch find={find} />
-          </PivotItem>
-          <PivotItem itemKey={TopPivot.build} headerText="Build">
-            <ProjectView buildId={bid} />
-          </PivotItem>
-          <PivotItem itemKey={TopPivot.cmdr} headerText="Cmdr">
-            <Cmdr cmdr={cmdr} />
-          </PivotItem>
-          <PivotItem itemKey={TopPivot.about} headerText="About">
-            <About />
-          </PivotItem>
-        </Pivot>
-        {this.renderCmdr()}
-
+        <Modal isOpen={editingCmdr}>
+          <div className="edit-cmdr">
+            <h2>Who are you?</h2>
+            <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} autoFocus />
+            <Slider min={0} max={794} value={cargoLargeMax} label='Large ship max capacity:' onChange={v => this.setState({ cargoLargeMax: v })} />
+            <Slider min={0} max={400} value={cargoMediumMax} label='Medium ship max capacity:' onChange={v => this.setState({ cargoMediumMax: v })} />
+            <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
+              <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.saveCmdrName} />
+              <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.clearCmdrName} />
+              <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.cancelCmdrName} />
+            </Stack>
+          </div>
+        </Modal>
         <br />
         <footer>
           <p>© 2025 - Raven Colonial Corporation - Under development</p>
@@ -128,59 +151,50 @@ export class App extends Component<AppProps, AppState> {
     );
   }
 
-  renderCmdr() {
-    const { cmdr, cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
+  renderBody() {
+    const { pivot, bid, find, cmdr } = this.state;
 
-    const editingCmdr = cmdrEdit !== undefined;
-    const txt = `Cmdr: ${cmdr ?? '?'}`;
-    const icon = { iconName: cmdr ? 'Contact' : 'UserWarning' };
-
-    const horizontalGapStackTokens: IStackTokens = {
-      childrenGap: 10,
-      padding: 10,
-    };
-
-    return <div className='current-cmdr'>
-      <ActionButton id='current-cmdr' iconProps={icon} text={txt} onClick={() => {
-        this.setState({ cmdrEdit: cmdr ?? '' });
-      }} />
-
-      <Modal isOpen={editingCmdr}>
-        <div className="edit-cmdr">
-          <h2>Who are you?</h2>
-          <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} autoFocus />
-          <Slider min={0} max={794} value={cargoLargeMax} label='Large ship max capacity:' onChange={v => this.setState({ cargoLargeMax: v })} />
-          <Slider min={0} max={400} value={cargoMediumMax} label='Medium ship max capacity:' onChange={v => this.setState({ cargoMediumMax: v })} />
-          <Stack horizontal tokens={horizontalGapStackTokens}>
-            <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.saveCmdrName} />
-            <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.clearCmdrName} />
-            <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.cancelCmdrName} />
-          </Stack>
-        </div>
-      </Modal >
-
-    </div >;
+    switch (pivot) {
+      case TopPivot.home: return <Home />;
+      case TopPivot.find: return <ProjectSearch find={find} />;
+      case TopPivot.build: return <ProjectView buildId={bid} />;
+      case TopPivot.cmdr: return <Cmdr cmdr={cmdr} />;
+      case TopPivot.about: return <About />;
+    }
   }
 
   clearCmdrName = () => {
+    const { cmdrBtn, } = this.state;
     Store.clearCmdr();
+
     this.setState({
       cmdr: undefined,
       cmdrEdit: undefined,
+      cmdrBtn: {
+        ...cmdrBtn,
+        iconProps: { iconName: 'UserWarning' },
+        text: '?',
+      },
     });
   }
 
   saveCmdrName = () => {
-    const { cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
+    const { cmdrBtn, cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
     if (!!cmdrEdit) {
       Store.setCmdr({
         name: cmdrEdit,
         largeMax: cargoLargeMax,
         medMax: cargoMediumMax,
       });
+
       this.setState({
         cmdr: cmdrEdit,
         cmdrEdit: undefined,
+        cmdrBtn: {
+          ...cmdrBtn,
+          iconProps: { iconName: 'Contact' },
+          text: cmdrEdit,
+        },
       });
       window.location.reload();
     }

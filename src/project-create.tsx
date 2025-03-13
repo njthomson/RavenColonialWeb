@@ -14,12 +14,12 @@ interface ProjectCreateState extends ProjectRef {
 
 const buildTypes: IComboBoxOption[] = [
   { key: '', text: 'Tier 1: Space', itemType: SelectableOptionMenuItemType.Header },
-  { key: 'output-commercial', text: 'Commercial Outpost', },
-  { key: 'output-industrial', text: 'Industrial Outpost', },
-  { key: 'output-criminal', text: 'Prirate Outpost', },
-  { key: 'output-civilian', text: 'Civilian Outpost', },
-  { key: 'output-science', text: 'Science Outpost', },
-  { key: 'output-military', text: 'Military Outpost', },
+  { key: 'outpost-commercial', text: 'Commercial Outpost', },
+  { key: 'outpost-industrial', text: 'Industrial Outpost', },
+  { key: 'outpost-criminal', text: 'Prirate Outpost', },
+  { key: 'outpost-civilian', text: 'Civilian Outpost', },
+  { key: 'outpost-science', text: 'Science Outpost', },
+  { key: 'outpost-military', text: 'Military Outpost', },
 
   { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: '', text: 'Tier 1: Surface', itemType: SelectableOptionMenuItemType.Header, },
@@ -75,7 +75,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
     return <>
       <div className="create-project">
-        <h3>Start a new build?</h3>
+        <h3>Or start a new build?</h3>
         <div>
           <TextField name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
           <button onClick={this.onCheckSystem} hidden={foundStations && foundStations.length > 0}>check system</button>

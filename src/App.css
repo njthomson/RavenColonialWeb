@@ -13,9 +13,10 @@ body {
   font-size: 16px;
   padding: 0px;
   padding-bottom: 30px;
+  min-width: 400px;
 }
 
-.ms-Pivot {
+.top-bar {
   border-bottom: 1px solid #e5e5e5;
   box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
   min-height: fit-content;
@@ -37,6 +38,16 @@ footer p {
   padding-left: 60px;
 }
 
+@media (max-width: 400px) {
+  footer {
+    font-size: 12px;
+    line-height: 6px;
+  }
+  footer p {
+    padding-left: 20px;
+  }
+}
+
 h3 {
   border-bottom: #e5e5e5 1px solid;
   /* margin: 0 10px 0 10px; */
@@ -56,14 +67,12 @@ h3 {
 }
 
 .half {
-  max-width: 50%;
   min-width: 400px;
   flex-grow: 1;
   margin: 8px;
 }
 
 .center {
-  max-width: 50%;
   min-width: 400px;
   flex-grow: 1;
   margin: 8px;
