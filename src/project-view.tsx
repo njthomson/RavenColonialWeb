@@ -79,7 +79,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject, disableDelete } = this.state;
+    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
