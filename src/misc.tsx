@@ -30,7 +30,12 @@ export const CommodityIcon: FunctionComponent<{ name: string }> = (props) => {
     commodityClass = props.name;
     iconName = mapCommodityIcon[props.name];
   } else {
-    throw new Error(`Unexpected: ${props.name}`);
+    console.error(`Unexpected: ${props.name}`);
+    commodityClass = 'Unknown';
+    iconName = 'Close';
+
+    mapCommodityType[props.name] = 'xxx'
+    console.log(mapCommodityType);
   }
 
   return <Icon className="commodity-icon" iconName={iconName} title={commodityClass} />;

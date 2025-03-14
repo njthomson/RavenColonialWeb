@@ -1,0 +1,2508 @@
+[
+  {
+    "cargo": {
+      "Liquid Oxygen": "3781",
+      "Water": "1609",
+      "Ceramic Composites": "1207",
+      "CMM Composite": "11261",
+      "Insulating Membrane": "644",
+      "Polymers": "1046",
+      "Semiconductors": "161",
+      "Superconductors": "282",
+      "Aluminium": "10055",
+      "Copper": "644",
+      "Steel": "14076",
+      "Titanium": "8205",
+      "Computer Components": "145",
+      "Medical Diagnostic Equipment": "25",
+      "Food Cartridges": "242",
+      "Fruit and Vegetables": "145",
+      "Non-Lethal Weapons": "25",
+      "Power Generators": "65",
+      "Water Purifiers": "105"
+    },
+    "stats": {
+      "Initial Pop": "1",
+      "Max Pop": "0",
+      "Security": "-2",
+      "Tech Level": "1",
+      "Wealth": "2",
+      "Comfort": "3",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -3,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Coriolis",
+    "Building Type": "Coriolis Starport",
+    "Layouts": [
+      "No Truss",
+      "Dual Truss",
+      "Quad Truss"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "3781",
+      "Water": "1609",
+      "Ceramic Composites": "1207",
+      "CMM Composite": "11261",
+      "Insulating Membrane": "644",
+      "Polymers": "1046",
+      "Semiconductors": "161",
+      "Superconductors": "282",
+      "Aluminium": "10055",
+      "Copper": "644",
+      "Steel": "14076",
+      "Titanium": "8205",
+      "Computer Components": "145",
+      "Medical Diagnostic Equipment": "25",
+      "Food Cartridges": "242",
+      "Fruit and Vegetables": "145",
+      "Non-Lethal Weapons": "25",
+      "Power Generators": "65",
+      "Water Purifiers": "105"
+    },
+    "stats": {
+      "Initial Pop": "1",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Tech Level": "3",
+      "Wealth": "5",
+      "Comfort": "-4",
+      "Infrastructure": "7"
+    },
+    "points": {
+      "Tier 2": -3,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Facility": "Extraction"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Asteroid Base",
+    "Building Type": "Asteroid Base",
+    "Layouts": [
+      "Asteroid (adjusts to ring type)"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "15124",
+      "Water": "6436",
+      "Ceramic Composites": "4828",
+      "CMM Composite": "45044",
+      "Insulating Membrane": "1288",
+      "Polymers": "2092",
+      "Semiconductors": "322",
+      "Superconductors": "564",
+      "Aluminium": "40220",
+      "Copper": "2576",
+      "Steel": "56304",
+      "Titanium": "32820",
+      "Computer Components": "290",
+      "Medical Diagnostic Equipment": "50",
+      "Food Cartridges": "484",
+      "Fruit and Vegetables": "290",
+      "Non-Lethal Weapons": "50",
+      "Power Generators": "130",
+      "Water Purifiers": "210"
+    },
+    "stats": {
+      "Initial Pop": "5",
+      "Max Pop": "1",
+      "Security": "-3",
+      "Tech Level": "6",
+      "Wealth": "7",
+      "Comfort": "5",
+      "Infrastructure": "8"
+    },
+    "points": {
+      "Tier 3": -6
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "3",
+    "Location": "Orbital",
+    "Category": "Ocellus",
+    "Building Type": "Ocellus Starport",
+    "Layouts": [
+      "Ocellus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "15124",
+      "Water": "6436",
+      "Ceramic Composites": "4828",
+      "CMM Composite": "45044",
+      "Insulating Membrane": "1288",
+      "Polymers": "2092",
+      "Semiconductors": "322",
+      "Superconductors": "564",
+      "Aluminium": "40220",
+      "Copper": "2576",
+      "Steel": "56304",
+      "Titanium": "32820",
+      "Computer Components": "290",
+      "Medical Diagnostic Equipment": "50",
+      "Food Cartridges": "484",
+      "Fruit and Vegetables": "290",
+      "Non-Lethal Weapons": "50",
+      "Power Generators": "130",
+      "Water Purifiers": "210"
+    },
+    "stats": {
+      "Initial Pop": "5",
+      "Max Pop": "1",
+      "Security": "-3",
+      "Tech Level": "6",
+      "Wealth": "7",
+      "Comfort": "5",
+      "Infrastructure": "8"
+    },
+    "points": {
+      "Tier 3": -6
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "3",
+    "Location": "Orbital",
+    "Category": "Orbis",
+    "Building Type": "Orbis Starport",
+    "Layouts": [
+      "Apollo",
+      "Artemis"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1553",
+      "Water": "621",
+      "Ceramic Composites": "497",
+      "CMM Composite": "3912",
+      "Insulating Membrane": "311",
+      "Polymers": "497",
+      "Semiconductors": "56",
+      "Superconductors": "100",
+      "Aluminium": "515",
+      "Copper": "218",
+      "Steel": "5588",
+      "Titanium": "4843",
+      "Computer Components": "50",
+      "Medical Diagnostic Equipment": "13",
+      "Food Cartridges": "94",
+      "Fruit and Vegetables": "50",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "19",
+      "Water Purifiers": "38"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Wealth": "2",
+      "Comfort": "5"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Commercial Outpost",
+    "Building Type": "Commercial Outpost",
+    "Layouts": [
+      "Plutus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1553",
+      "Water": "621",
+      "Ceramic Composites": "497",
+      "CMM Composite": "3912",
+      "Insulating Membrane": "311",
+      "Polymers": "497",
+      "Semiconductors": "56",
+      "Superconductors": "100",
+      "Aluminium": "515",
+      "Copper": "217",
+      "Steel": "5588",
+      "Titanium": "4843",
+      "Computer Components": "50",
+      "Medical Diagnostic Equipment": "13",
+      "Food Cartridges": "94",
+      "Fruit and Vegetables": "50",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "19",
+      "Water Purifiers": "38"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Tech Level": "3",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Industrial"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Industrial Outpost",
+    "Building Type": "Industrial Outpost",
+    "Layouts": [
+      "Vulcan"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1553",
+      "Water": "621",
+      "Ceramic Composites": "497",
+      "CMM Composite": "3912",
+      "Insulating Membrane": "311",
+      "Polymers": "497",
+      "Semiconductors": "56",
+      "Superconductors": "100",
+      "Aluminium": "515",
+      "Copper": "218",
+      "Steel": "5588",
+      "Titanium": "4843",
+      "Computer Components": "50",
+      "Medical Diagnostic Equipment": "13",
+      "Food Cartridges": "94",
+      "Fruit and Vegetables": "50",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "19",
+      "Water Purifiers": "38"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "-2",
+      "Wealth": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Colony",
+      "Influence": "Contraband"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Criminal Outpost",
+    "Building Type": "Pirate Outpost",
+    "Layouts": [
+      "Dysnomia"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1553",
+      "Water": "621",
+      "Ceramic Composites": "497",
+      "CMM Composite": "3912",
+      "Insulating Membrane": "311",
+      "Polymers": "497",
+      "Semiconductors": "56",
+      "Superconductors": "100",
+      "Aluminium": "515",
+      "Copper": "218",
+      "Steel": "5588",
+      "Titanium": "4843",
+      "Computer Components": "50",
+      "Medical Diagnostic Equipment": "13",
+      "Food Cartridges": "94",
+      "Fruit and Vegetables": "50",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "19",
+      "Water Purifiers": "38"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Wealth": "1",
+      "Comfort": "1",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Civilian Outpost",
+    "Building Type": "Civilian Outpost",
+    "Layouts": [
+      "Vesta"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1553",
+      "Water": "621",
+      "Ceramic Composites": "497",
+      "CMM Composite": "3912",
+      "Insulating Membrane": "311",
+      "Polymers": "497",
+      "Semiconductors": "56",
+      "Superconductors": "100",
+      "Aluminium": "515",
+      "Copper": "218",
+      "Steel": "5588",
+      "Titanium": "4843",
+      "Computer Components": "50",
+      "Medical Diagnostic Equipment": "13",
+      "Food Cartridges": "94",
+      "Fruit and Vegetables": "50",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "19",
+      "Water Purifiers": "38"
+    },
+    "stats": {
+      "Initial Pop": "1",
+      "Max Pop": "0",
+      "Tech Level": "3"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Hightech"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Scientific Outpost",
+    "Building Type": "Scientific Outpost",
+    "Layouts": [
+      "Prometheus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1553",
+      "Water": "621",
+      "Ceramic Composites": "497",
+      "CMM Composite": "3912",
+      "Insulating Membrane": "311",
+      "Polymers": "497",
+      "Semiconductors": "56",
+      "Superconductors": "100",
+      "Aluminium": "515",
+      "Copper": "218",
+      "Steel": "5588",
+      "Titanium": "4843",
+      "Computer Components": "50",
+      "Medical Diagnostic Equipment": "13",
+      "Food Cartridges": "94",
+      "Fruit and Vegetables": "50",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "19",
+      "Water Purifiers": "38"
+    },
+    "stats": {
+      "Initial Pop": "1",
+      "Max Pop": "0",
+      "Security": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Military"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Military Outpost",
+    "Building Type": "Military Outpost",
+    "Layouts": [
+      "Nemesis"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "678",
+      "Water": "22",
+      "Ceramic Composites": "85",
+      "Insulating Membrane": "106",
+      "Polymers": "170",
+      "Semiconductors": "34",
+      "Superconductors": "60",
+      "Aluminium": "1322",
+      "Copper": "85",
+      "Steel": "2542",
+      "Titanium": "1525",
+      "Computer Components": "22",
+      "Food Cartridges": "26",
+      "Fruit and Vegetables": "9",
+      "Power Generators": "9",
+      "Water Purifiers": "13",
+      "Micro Controllers": "13"
+    },
+    "stats": {
+      "Wealth": "1",
+      "Comfort": "1",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {},
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Satellite",
+    "Building Type": "Satellite Installation",
+    "Layouts": [
+      "Hermes",
+      "Angelia",
+      "Eirene"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "678",
+      "Water": "22",
+      "Ceramic Composites": "85",
+      "Insulating Membrane": "106",
+      "Polymers": "170",
+      "Semiconductors": "34",
+      "Superconductors": "60",
+      "Aluminium": "1322",
+      "Copper": "85",
+      "Steel": "2542",
+      "Titanium": "1525",
+      "Computer Components": "22",
+      "Food Cartridges": "26",
+      "Fruit and Vegetables": "9",
+      "Power Generators": "9",
+      "Water Purifiers": "13",
+      "Micro Controllers": "13"
+    },
+    "stats": {
+      "Security": "1",
+      "Tech Level": "3"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {},
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Communication Station",
+    "Building Type": "Comms Installation",
+    "Layouts": [
+      "Pistis",
+      "Soter",
+      "Aletheia"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1071",
+      "Water": "173",
+      "Ceramic Composites": "77",
+      "Insulating Membrane": "192",
+      "Polymers": "230",
+      "Aluminium": "842",
+      "Copper": "46",
+      "Steel": "1912",
+      "Titanium": "1453",
+      "Computer Components": "12",
+      "Food Cartridges": "46",
+      "Fruit and Vegetables": "69",
+      "Power Generators": "8",
+      "Water Purifiers": "31",
+      "Grain": "92",
+      "Pesticides": "123",
+      "Agri-Medicines": "115",
+      "Crop Harvesters": "77",
+      "Biowaste": "153"
+    },
+    "stats": {
+      "Comfort": "5",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Influence": "Agricultural"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Space Farm",
+    "Building Type": "Agricultural Installation",
+    "Layouts": [
+      "Demeter"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "911",
+      "Water": "65",
+      "Ceramic Composites": "95",
+      "Insulating Membrane": "95",
+      "Polymers": "190",
+      "Aluminium": "1233",
+      "Copper": "57",
+      "Steel": "1707",
+      "Titanium": "1594",
+      "Computer Components": "19",
+      "Food Cartridges": "61",
+      "Fruit and Vegetables": "16",
+      "Power Generators": "8",
+      "Water Purifiers": "16",
+      "Beer": "380",
+      "Liquor": "228",
+      "Battle Weapons": "23",
+      "Reactive Armour": "23"
+    },
+    "stats": {
+      "Security": "-4",
+      "Wealth": "3"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Influence": "Contraband"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Pirate Base",
+    "Building Type": "Pirate Installation",
+    "Layouts": [
+      "Apate",
+      "Laverna"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1028",
+      "Water": "73",
+      "Ceramic Composites": "86",
+      "Insulating Membrane": "129",
+      "Polymers": "215",
+      "Aluminium": "921",
+      "Copper": "52",
+      "Steel": "2141",
+      "Titanium": "1628",
+      "Computer Components": "13",
+      "Food Cartridges": "52",
+      "Fruit and Vegetables": "18",
+      "Power Generators": "9",
+      "Water Purifiers": "22",
+      "H.E. Suits": "13",
+      "Robotics": "60",
+      "Resonating Separators": "22",
+      "Bioreducing Lichen": "172",
+      "Geological Equipment": "26",
+      "Muon Imager": "43"
+    },
+    "stats": {
+      "Wealth": "3",
+      "Comfort": "-2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Influence": "Extraction"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Mining Outpost",
+    "Building Type": "Industrial Installation",
+    "Layouts": [
+      "Euthenia",
+      "Phorcys"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "780",
+      "Water": "25",
+      "Ceramic Composites": "98",
+      "Insulating Membrane": "122",
+      "Polymers": "195",
+      "Semiconductors": "39",
+      "Superconductors": "59",
+      "Aluminium": "1033",
+      "Copper": "88",
+      "Steel": "2437",
+      "Titanium": "1755",
+      "Computer Components": "25",
+      "Food Cartridges": "30",
+      "Fruit and Vegetables": "10",
+      "Power Generators": "10",
+      "Water Purifiers": "15"
+    },
+    "stats": {
+      "Security": "1",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Influence": "Hightech"
+    },
+    "Tier": "1",
+    "Location": "Orbital",
+    "Category": "Relay Station",
+    "Building Type": "Relay Installation",
+    "Layouts": [
+      "Enodia",
+      "Ichnaea"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1424",
+      "Water": "238",
+      "Ceramic Composites": "238",
+      "CMM Composite": "356",
+      "Insulating Membrane": "178",
+      "Polymers": "416",
+      "Aluminium": "1317",
+      "Copper": "131",
+      "Steel": "2966",
+      "Titanium": "2373",
+      "Computer Components": "42",
+      "Food Cartridges": "107",
+      "Fruit and Vegetables": "48",
+      "Power Generators": "18",
+      "Water Purifiers": "42",
+      "Micro Controllers": "18",
+      "Battle Weapons": "30",
+      "Reactive Armour": "30",
+      "Basic Medicines": "24",
+      "Combat Stabilizers": "48",
+      "Military Grade Fabrics": "36"
+    },
+    "stats": {
+      "Security": "6"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Military"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Military",
+    "Building Type": "Military Installation",
+    "Layouts": [
+      "Vacuna",
+      "Alastor"
+    ],
+    "Required Facility In System": "Settlement - Military",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1458",
+      "Water": "31",
+      "Ceramic Composites": "122",
+      "Insulating Membrane": "183",
+      "Polymers": "243",
+      "Aluminium": "1774",
+      "Copper": "122",
+      "Steel": "3645",
+      "Titanium": "2309",
+      "Computer Components": "31",
+      "Food Cartridges": "37",
+      "Fruit and Vegetables": "13",
+      "Non-Lethal Weapons": "19",
+      "Power Generators": "13",
+      "Water Purifiers": "19",
+      "Battle Weapons": "19",
+      "Combat Stabilizers": "25",
+      "Military Grade Fabrics": "19"
+    },
+    "stats": {
+      "Security": "8",
+      "Comfort": "3",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Military"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Security Station",
+    "Building Type": "Security Installation",
+    "Layouts": [
+      "Dicaeosyne",
+      "Poena",
+      "Eunomia",
+      "Nomos"
+    ],
+    "Required Facility In System": "Installation - Relay Station",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1479",
+      "Water": "154",
+      "Ceramic Composites": "154",
+      "Insulating Membrane": "247",
+      "Polymers": "370",
+      "Aluminium": "1959",
+      "Copper": "93",
+      "Steel": "3080",
+      "Titanium": "2341",
+      "Computer Components": "13",
+      "Food Cartridges": "93",
+      "Fruit and Vegetables": "37",
+      "Non-Lethal Weapons": "13",
+      "Power Generators": "13",
+      "Water Purifiers": "31"
+    },
+    "stats": {
+      "Security": "2",
+      "Comfort": "6",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {},
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Government",
+    "Building Type": "Government Installation",
+    "Layouts": [
+      "Harmonia"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1727",
+      "Water": "278",
+      "Ceramic Composites": "155",
+      "Insulating Membrane": "309",
+      "Polymers": "371",
+      "Aluminium": "1357",
+      "Copper": "112",
+      "Steel": "3084",
+      "Titanium": "2282",
+      "Computer Components": "31",
+      "Medical Diagnostic Equipment": "99",
+      "Food Cartridges": "75",
+      "Fruit and Vegetables": "50",
+      "Power Generators": "19",
+      "Water Purifiers": "38",
+      "H.E. Suits": "25",
+      "Basic Medicines": "50",
+      "Combat Stabilizers": "19"
+    },
+    "stats": {
+      "Tech Level": "3",
+      "Comfort": "5"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Medical",
+    "Building Type": "Medical Installation",
+    "Layouts": [
+      "Asclepius",
+      "Eupraxia"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1506",
+      "Water": "157",
+      "Ceramic Composites": "157",
+      "Insulating Membrane": "314",
+      "Polymers": "377",
+      "Semiconductors": "51",
+      "Superconductors": "88",
+      "Aluminium": "1380",
+      "Copper": "126",
+      "Steel": "3136",
+      "Titanium": "2383",
+      "Computer Components": "38",
+      "Medical Diagnostic Equipment": "51",
+      "Food Cartridges": "76",
+      "Fruit and Vegetables": "26",
+      "Power Generators": "13",
+      "Water Purifiers": "38",
+      "Micro Controllers": "13",
+      "H.E. Suits": "32",
+      "Geological Equipment": "26",
+      "Muon Imager": "38",
+      "Basic Medicines": "13",
+      "Advanced Catalysers": "44"
+    },
+    "stats": {
+      "Tech Level": "8",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Research Station",
+    "Building Type": "Scientific Installation",
+    "Layouts": [
+      "Astraeus",
+      "Coeus",
+      "Dodona",
+      "Dione"
+    ],
+    "Required Facility In System": "Settlement - Research Bio",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1813",
+      "Water": "324",
+      "Ceramic Composites": "130",
+      "Insulating Membrane": "259",
+      "Polymers": "324",
+      "Aluminium": "1269",
+      "Copper": "78",
+      "Steel": "2598",
+      "Titanium": "1813",
+      "Computer Components": "13",
+      "Fruit and Vegetables": "65",
+      "Power Generators": "13",
+      "Water Purifiers": "39",
+      "Beer": "389",
+      "Wine": "259",
+      "Liquor": "195",
+      "Animal Meat": "78",
+      "Fish": "39",
+      "Tea": "259",
+      "Coffee": "130"
+    },
+    "stats": {
+      "Security": "-3",
+      "Wealth": "6",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Tourism"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Tourist",
+    "Building Type": "Tourist Installation",
+    "Layouts": [
+      "Hedone",
+      "Opora",
+      "Pasithea"
+    ],
+    "Required Facility In System": "Satellite ➔ Tourism Settlement",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1738",
+      "Water": "311",
+      "Ceramic Composites": "125",
+      "Insulating Membrane": "249",
+      "Polymers": "311",
+      "Aluminium": "1217",
+      "Copper": "75",
+      "Steel": "2483",
+      "Titanium": "1738",
+      "Computer Components": "13",
+      "Fruit and Vegetables": "38",
+      "Power Generators": "13",
+      "Water Purifiers": "38",
+      "Beer": "497",
+      "Wine": "621",
+      "Liquor": "311",
+      "Animal Meat": "38",
+      "Fish": "19",
+      "Tea": "178",
+      "Coffee": "63"
+    },
+    "stats": {
+      "Security": "-2",
+      "Wealth": "2",
+      "Comfort": "3"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Tourism"
+    },
+    "Tier": "2",
+    "Location": "Orbital",
+    "Category": "Bar",
+    "Building Type": "Space Bar",
+    "Layouts": [
+      "Dionysus",
+      "Bacchus"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "2372",
+      "Ceramic Composites": "814",
+      "CMM Composite": "6776",
+      "Polymers": "678",
+      "Semiconductors": "102",
+      "Superconductors": "136",
+      "Aluminium": "7047",
+      "Copper": "407",
+      "Steel": "10164",
+      "Titanium": "5760",
+      "Computer Components": "102",
+      "Medical Diagnostic Equipment": "48",
+      "Food Cartridges": "136",
+      "Fruit and Vegetables": "95",
+      "Non-Lethal Weapons": "34",
+      "Power Generators": "68",
+      "Land Enrichment Systems": "68",
+      "Surface Stabilisers": "610",
+      "Building Fabricators": "407",
+      "Structural Regulators": "678",
+      "Evacuation Shelter": "204",
+      "Emergency Power Cells": "68",
+      "Survival Equipment": "55"
+    },
+    "stats": {
+      "Initial Pop": "2",
+      "Max Pop": "0",
+      "Security": "-2",
+      "Comfort": "3"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "1",
+    "Location": "Surface",
+    "Category": "Outpost",
+    "Building Type": "Civilian",
+    "Layouts": [
+      "Hestia",
+      "Decima",
+      "Atropos",
+      "Nona",
+      "Lachesis",
+      "Clotho"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "2372",
+      "Ceramic Composites": "814",
+      "CMM Composite": "6776",
+      "Polymers": "678",
+      "Semiconductors": "102",
+      "Superconductors": "136",
+      "Aluminium": "7047",
+      "Copper": "407",
+      "Steel": "10164",
+      "Titanium": "5760",
+      "Computer Components": "102",
+      "Medical Diagnostic Equipment": "48",
+      "Food Cartridges": "136",
+      "Fruit and Vegetables": "95",
+      "Non-Lethal Weapons": "34",
+      "Power Generators": "68",
+      "Land Enrichment Systems": "68",
+      "Surface Stabilisers": "610",
+      "Building Fabricators": "407",
+      "Structural Regulators": "678",
+      "Evacuation Shelter": "204",
+      "Emergency Power Cells": "68",
+      "Survival Equipment": "55"
+    },
+    "stats": {
+      "Initial Pop": "1",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Wealth": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Industrial"
+    },
+    "Tier": "1",
+    "Location": "Surface",
+    "Category": "Outpost",
+    "Building Type": "Industrial",
+    "Layouts": [
+      "Hephaestus",
+      "Opis",
+      "Ponos",
+      "Tethys",
+      "Bia",
+      "Mefitis"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "2372",
+      "Ceramic Composites": "814",
+      "CMM Composite": "6776",
+      "Polymers": "678",
+      "Semiconductors": "102",
+      "Superconductors": "136",
+      "Aluminium": "7047",
+      "Copper": "407",
+      "Steel": "10164",
+      "Titanium": "5760",
+      "Computer Components": "102",
+      "Medical Diagnostic Equipment": "48",
+      "Food Cartridges": "136",
+      "Fruit and Vegetables": "95",
+      "Non-Lethal Weapons": "34",
+      "Power Generators": "68",
+      "Land Enrichment Systems": "68",
+      "Surface Stabilisers": "610",
+      "Building Fabricators": "407",
+      "Structural Regulators": "678",
+      "Evacuation Shelter": "204",
+      "Emergency Power Cells": "68",
+      "Survival Equipment": "55"
+    },
+    "stats": {
+      "Initial Pop": "1",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Tech Level": "5",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Hightech"
+    },
+    "Tier": "1",
+    "Location": "Surface",
+    "Category": "Outpost",
+    "Building Type": "Scientific",
+    "Layouts": [
+      "Necessitas",
+      "Ananke",
+      "Fauna",
+      "Providentia",
+      "Antevorta",
+      "Porrima"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "14232",
+      "Ceramic Composites": "4884",
+      "CMM Composite": "40656",
+      "Polymers": "2712",
+      "Semiconductors": "408",
+      "Superconductors": "544",
+      "Aluminium": "42282",
+      "Copper": "2442",
+      "Steel": "60984",
+      "Titanium": "34560",
+      "Computer Components": "408",
+      "Medical Diagnostic Equipment": "44",
+      "Food Cartridges": "544",
+      "Fruit and Vegetables": "380",
+      "Non-Lethal Weapons": "136",
+      "Power Generators": "272",
+      "Land Enrichment Systems": "272",
+      "Surface Stabilisers": "3660",
+      "Building Fabricators": "2442",
+      "Structural Regulators": "2712",
+      "Evacuation Shelter": "816",
+      "Emergency Power Cells": "272",
+      "Survival Equipment": "220"
+    },
+    "stats": {
+      "Initial Pop": "10",
+      "Max Pop": "10",
+      "Security": "-3",
+      "Tech Level": "5",
+      "Wealth": "5",
+      "Comfort": "6",
+      "Infrastructure": "10"
+    },
+    "points": {
+      "Tier 3": -6
+    },
+    "economy": {
+      "Facility": "Colony"
+    },
+    "Tier": "3",
+    "Location": "Surface",
+    "Category": "Port",
+    "Building Type": "",
+    "Layouts": [
+      "Zeus",
+      "Hera",
+      "Poseidon",
+      "Aphrodite"
+    ],
+    "Required Facility In System": "",
+    "Pad": "L"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "224",
+      "Ceramic Composites": "28",
+      "Polymers": "91",
+      "Aluminium": "559",
+      "Copper": "21",
+      "Steel": "768",
+      "Computer Components": "14",
+      "Food Cartridges": "42",
+      "Fruit and Vegetables": "63",
+      "Land Enrichment Systems": "70",
+      "Surface Stabilisers": "56",
+      "Building Fabricators": "42",
+      "Structural Regulators": "56",
+      "Evacuation Shelter": "14",
+      "Emergency Power Cells": "84",
+      "Survival Equipment": "14",
+      "Grain": "77",
+      "Pesticides": "126",
+      "Crop Harvesters": "210",
+      "Biowaste": "280"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Comfort": "3"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Agricultural",
+      "Influence": "Agricultural"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Agriculture Tier 1",
+    "Building Type": "Small",
+    "Layouts": [
+      "Consus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "448",
+      "Ceramic Composites": "56",
+      "Polymers": "182",
+      "Aluminium": "1118",
+      "Copper": "42",
+      "Steel": "1536",
+      "Computer Components": "28",
+      "Food Cartridges": "84",
+      "Fruit and Vegetables": "126",
+      "Land Enrichment Systems": "140",
+      "Surface Stabilisers": "112",
+      "Building Fabricators": "84",
+      "Structural Regulators": "112",
+      "Evacuation Shelter": "28",
+      "Emergency Power Cells": "168",
+      "Survival Equipment": "28",
+      "Grain": "154",
+      "Pesticides": "252",
+      "Crop Harvesters": "420",
+      "Biowaste": "560"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Comfort": "6"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Agricultural",
+      "Influence": "Agricultural"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Agriculture Tier 1",
+    "Building Type": "Medium",
+    "Layouts": [
+      "Picumnus",
+      "Annona"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "672",
+      "Ceramic Composites": "84",
+      "Polymers": "273",
+      "Aluminium": "1677",
+      "Copper": "63",
+      "Steel": "2304",
+      "Computer Components": "42",
+      "Food Cartridges": "126",
+      "Fruit and Vegetables": "189",
+      "Land Enrichment Systems": "210",
+      "Surface Stabilisers": "168",
+      "Building Fabricators": "126",
+      "Structural Regulators": "168",
+      "Evacuation Shelter": "42",
+      "Emergency Power Cells": "252",
+      "Survival Equipment": "42",
+      "Grain": "231",
+      "Pesticides": "378",
+      "Crop Harvesters": "630",
+      "Biowaste": "840"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Comfort": "10"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 2
+    },
+    "economy": {
+      "Facility": "Agricultural",
+      "Influence": "Agricultural"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Agriculture Tier 2",
+    "Building Type": "Large",
+    "Layouts": [
+      "Ceres",
+      "Fornax"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "177",
+      "Ceramic Composites": "59",
+      "Polymers": "118",
+      "Aluminium": "632",
+      "Copper": "30",
+      "Steel": "1028",
+      "Computer Components": "30",
+      "Food Cartridges": "45",
+      "Fruit and Vegetables": "30",
+      "Surface Stabilisers": "89",
+      "Building Fabricators": "59",
+      "Structural Regulators": "74",
+      "Evacuation Shelter": "30",
+      "Emergency Power Cells": "96",
+      "Survival Equipment": "15",
+      "H.E. Suits": "15",
+      "Robotics": "59",
+      "Bioreducing Lichen": "162",
+      "Geological Equipment": "52",
+      "Muon Imager": "45"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Wealth": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Extraction",
+      "Influence": "Extraction"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Extraction Tier 1",
+    "Building Type": "Small",
+    "Layouts": [
+      "Ourea"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "354",
+      "Ceramic Composites": "118",
+      "Polymers": "236",
+      "Aluminium": "1264",
+      "Copper": "60",
+      "Steel": "2056",
+      "Computer Components": "60",
+      "Food Cartridges": "90",
+      "Fruit and Vegetables": "60",
+      "Surface Stabilisers": "178",
+      "Building Fabricators": "118",
+      "Structural Regulators": "148",
+      "Evacuation Shelter": "60",
+      "Emergency Power Cells": "192",
+      "Survival Equipment": "30",
+      "H.E. Suits": "30",
+      "Robotics": "118",
+      "Bioreducing Lichen": "324",
+      "Geological Equipment": "104",
+      "Muon Imager": "90"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Wealth": "5"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Extraction",
+      "Influence": "Extraction"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Extraction Tier 1",
+    "Building Type": "Medium",
+    "Layouts": [
+      "Mantus",
+      "Orcus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "531",
+      "Ceramic Composites": "177",
+      "Polymers": "354",
+      "Aluminium": "1896",
+      "Copper": "90",
+      "Steel": "3084",
+      "Computer Components": "90",
+      "Food Cartridges": "135",
+      "Fruit and Vegetables": "90",
+      "Surface Stabilisers": "267",
+      "Building Fabricators": "177",
+      "Structural Regulators": "222",
+      "Evacuation Shelter": "90",
+      "Emergency Power Cells": "288",
+      "Survival Equipment": "45",
+      "H.E. Suits": "45",
+      "Robotics": "177",
+      "Bioreducing Lichen": "486",
+      "Geological Equipment": "156",
+      "Muon Imager": "135"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Tech Level": "1",
+      "Wealth": "7",
+      "Comfort": "-2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 2
+    },
+    "economy": {
+      "Facility": "Extraction",
+      "Influence": "Extraction"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Extraction Tier 2",
+    "Building Type": "Large",
+    "Layouts": [
+      "Erebus",
+      "Aerecura"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "110",
+      "Polymers": "109",
+      "Semiconductors": "14",
+      "Superconductors": "14",
+      "Aluminium": "585",
+      "Copper": "28",
+      "Food Cartridges": "41",
+      "Fruit and Vegetables": "28",
+      "Surface Stabilisers": "136",
+      "Building Fabricators": "110",
+      "Structural Regulators": "136",
+      "Evacuation Shelter": "42",
+      "Emergency Power Cells": "56",
+      "Survival Equipment": "28",
+      "Micro Controllers": "28",
+      "Thermal Cooling Units": "28",
+      "Microbial Furnaces": "164",
+      "Mineral Extractors": "328",
+      "H.E. Suits": "28",
+      "Robotics": "110",
+      "Resonating Separators": "28",
+      "Advanced Catalysers": "82"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Industrial",
+      "Influence": "Industrial"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Industrial Tier 1",
+    "Building Type": "Small",
+    "Layouts": [
+      "Fontus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "220",
+      "Polymers": "218",
+      "Semiconductors": "28",
+      "Superconductors": "28",
+      "Aluminium": "1170",
+      "Copper": "56",
+      "Food Cartridges": "82",
+      "Fruit and Vegetables": "56",
+      "Surface Stabilisers": "272",
+      "Building Fabricators": "220",
+      "Structural Regulators": "272",
+      "Evacuation Shelter": "84",
+      "Emergency Power Cells": "112",
+      "Survival Equipment": "56",
+      "Micro Controllers": "56",
+      "Thermal Cooling Units": "56",
+      "Microbial Furnaces": "328",
+      "Mineral Extractors": "656",
+      "H.E. Suits": "56",
+      "Robotics": "220",
+      "Resonating Separators": "56",
+      "Advanced Catalysers": "164"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Infrastructure": "5"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Industrial",
+      "Influence": "Industrial"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Industrial Tier 1",
+    "Building Type": "Medium",
+    "Layouts": [
+      "Meteope",
+      "Palici",
+      "Minthe"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "330",
+      "Polymers": "327",
+      "Semiconductors": "42",
+      "Superconductors": "42",
+      "Aluminium": "1755",
+      "Copper": "84",
+      "Food Cartridges": "123",
+      "Fruit and Vegetables": "84",
+      "Surface Stabilisers": "408",
+      "Building Fabricators": "330",
+      "Structural Regulators": "408",
+      "Evacuation Shelter": "126",
+      "Emergency Power Cells": "168",
+      "Survival Equipment": "84",
+      "Micro Controllers": "84",
+      "Thermal Cooling Units": "84",
+      "Microbial Furnaces": "492",
+      "Mineral Extractors": "984",
+      "H.E. Suits": "84",
+      "Robotics": "330",
+      "Resonating Separators": "84",
+      "Advanced Catalysers": "246"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Wealth": "2",
+      "Infrastructure": "8"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 2
+    },
+    "economy": {
+      "Facility": "Industrial",
+      "Influence": "Industrial"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Industrial Tier 2",
+    "Building Type": "Large",
+    "Layouts": [
+      "Gaea"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "172",
+      "Ceramic Composites": "60",
+      "CMM Composite": "356",
+      "Polymers": "119",
+      "Aluminium": "593",
+      "Copper": "30",
+      "Steel": "949",
+      "Computer Components": "42",
+      "Food Cartridges": "36",
+      "Fruit and Vegetables": "24",
+      "Surface Stabilisers": "60",
+      "Building Fabricators": "60",
+      "Structural Regulators": "101",
+      "Evacuation Shelter": "36",
+      "Emergency Power Cells": "24",
+      "Survival Equipment": "24",
+      "Micro Controllers": "12",
+      "Battle Weapons": "24",
+      "Reactive Armour": "24",
+      "Basic Medicines": "36",
+      "Combat Stabilizers": "36",
+      "Military Grade Fabrics": "24"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "2"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Military",
+      "Influence": "Military"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Military Tier 1",
+    "Building Type": "Small",
+    "Layouts": [
+      "Ioke"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "344",
+      "Ceramic Composites": "120",
+      "CMM Composite": "712",
+      "Polymers": "238",
+      "Aluminium": "1186",
+      "Copper": "60",
+      "Steel": "1898",
+      "Computer Components": "84",
+      "Food Cartridges": "72",
+      "Fruit and Vegetables": "48",
+      "Surface Stabilisers": "120",
+      "Building Fabricators": "120",
+      "Structural Regulators": "202",
+      "Evacuation Shelter": "72",
+      "Emergency Power Cells": "48",
+      "Survival Equipment": "48",
+      "Micro Controllers": "24",
+      "Battle Weapons": "48",
+      "Reactive Armour": "48",
+      "Basic Medicines": "72",
+      "Combat Stabilizers": "72",
+      "Military Grade Fabrics": "48"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "4"
+    },
+    "points": {
+      "Tier 2": 1
+    },
+    "economy": {
+      "Facility": "Military",
+      "Influence": "Military"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Military Tier 1",
+    "Building Type": "Medium",
+    "Layouts": [
+      "Bellona",
+      "Enyo",
+      "Polemos"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "516",
+      "Ceramic Composites": "180",
+      "CMM Composite": "1068",
+      "Polymers": "357",
+      "Aluminium": "1779",
+      "Copper": "90",
+      "Steel": "2847",
+      "Computer Components": "126",
+      "Food Cartridges": "108",
+      "Fruit and Vegetables": "72",
+      "Surface Stabilisers": "180",
+      "Building Fabricators": "180",
+      "Structural Regulators": "303",
+      "Evacuation Shelter": "108",
+      "Emergency Power Cells": "72",
+      "Survival Equipment": "72",
+      "Micro Controllers": "36",
+      "Battle Weapons": "72",
+      "Reactive Armour": "72",
+      "Basic Medicines": "108",
+      "Combat Stabilizers": "108",
+      "Military Grade Fabrics": "72"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "6",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 2
+    },
+    "economy": {
+      "Facility": "Military",
+      "Influence": "Military"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Military Tier 2",
+    "Building Type": "Large",
+    "Layouts": [
+      "Minerva"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "351",
+      "Ceramic Composites": "41",
+      "Polymers": "115",
+      "Semiconductors": "21",
+      "Superconductors": "21",
+      "Aluminium": "607",
+      "Copper": "34",
+      "Steel": "945",
+      "Computer Components": "41",
+      "Medical Diagnostic Equipment": "41",
+      "Food Cartridges": "41",
+      "Fruit and Vegetables": "27",
+      "Surface Stabilisers": "81",
+      "Building Fabricators": "54",
+      "Structural Regulators": "81",
+      "Evacuation Shelter": "27",
+      "Emergency Power Cells": "27",
+      "Survival Equipment": "14",
+      "Micro Controllers": "14",
+      "H.E. Suits": "27",
+      "Geological Equipment": "27",
+      "Muon Imager": "95",
+      "Basic Medicines": "14",
+      "Advanced Catalysers": "95"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Tech Level": "3",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Facility": "Hightech",
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Research Bio Tier 1",
+    "Building Type": "Small",
+    "Layouts": [
+      "Pheobe"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "702",
+      "Ceramic Composites": "82",
+      "Polymers": "230",
+      "Semiconductors": "42",
+      "Superconductors": "42",
+      "Aluminium": "1214",
+      "Copper": "68",
+      "Steel": "1890",
+      "Computer Components": "82",
+      "Medical Diagnostic Equipment": "82",
+      "Food Cartridges": "82",
+      "Fruit and Vegetables": "54",
+      "Surface Stabilisers": "162",
+      "Building Fabricators": "108",
+      "Structural Regulators": "162",
+      "Evacuation Shelter": "54",
+      "Emergency Power Cells": "54",
+      "Survival Equipment": "28",
+      "Micro Controllers": "28",
+      "H.E. Suits": "54",
+      "Geological Equipment": "54",
+      "Muon Imager": "190",
+      "Basic Medicines": "28",
+      "Advanced Catalysers": "190"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Tech Level": "6",
+      "Infrastructure": "1"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Facility": "Hightech",
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Research Bio Tier 1",
+    "Building Type": "Medium",
+    "Layouts": [
+      "Asteria",
+      "Caerus"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "1053",
+      "Ceramic Composites": "123",
+      "Polymers": "345",
+      "Semiconductors": "63",
+      "Superconductors": "63",
+      "Aluminium": "1821",
+      "Copper": "102",
+      "Steel": "2835",
+      "Computer Components": "123",
+      "Medical Diagnostic Equipment": "123",
+      "Food Cartridges": "123",
+      "Fruit and Vegetables": "81",
+      "Surface Stabilisers": "243",
+      "Building Fabricators": "162",
+      "Structural Regulators": "243",
+      "Evacuation Shelter": "81",
+      "Emergency Power Cells": "81",
+      "Survival Equipment": "42",
+      "Micro Controllers": "42",
+      "H.E. Suits": "81",
+      "Geological Equipment": "81",
+      "Muon Imager": "285",
+      "Basic Medicines": "42",
+      "Advanced Catalysers": "285"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Tech Level": "10",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 2
+    },
+    "economy": {
+      "Facility": "Hightech",
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Research Bio Tier 2",
+    "Building Type": "Large",
+    "Layouts": [
+      "Chronos"
+    ],
+    "Required Facility In System": "",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "227",
+      "Ceramic Composites": "43",
+      "Polymers": "114",
+      "Aluminium": "509",
+      "Copper": "22",
+      "Steel": "707",
+      "Computer Components": "15",
+      "Fruit and Vegetables": "71",
+      "Surface Stabilisers": "57",
+      "Building Fabricators": "29",
+      "Structural Regulators": "57",
+      "Evacuation Shelter": "22",
+      "Emergency Power Cells": "15",
+      "Survival Equipment": "15",
+      "Beer": "311",
+      "Wine": "156",
+      "Liquor": "128",
+      "Animal Meat": "71",
+      "Fish": "36",
+      "Tea": "170",
+      "Coffee": "71"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Wealth": "1"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Facility": "Tourism",
+      "Influence": "Tourism"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Tourism Tier 1",
+    "Building Type": "Small",
+    "Layouts": [
+      "Aergia"
+    ],
+    "Required Facility In System": "Installation - Satellite",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "454",
+      "Ceramic Composites": "86",
+      "Polymers": "228",
+      "Aluminium": "1018",
+      "Copper": "44",
+      "Steel": "1414",
+      "Computer Components": "30",
+      "Fruit and Vegetables": "142",
+      "Surface Stabilisers": "114",
+      "Building Fabricators": "58",
+      "Structural Regulators": "114",
+      "Evacuation Shelter": "44",
+      "Emergency Power Cells": "30",
+      "Survival Equipment": "30",
+      "Beer": "622",
+      "Wine": "312",
+      "Liquor": "256",
+      "Animal Meat": "142",
+      "Fish": "72",
+      "Tea": "340",
+      "Coffee": "142"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Wealth": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Facility": "Tourism",
+      "Influence": "Tourism"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Tourism Tier 1",
+    "Building Type": "Medium",
+    "Layouts": [
+      "Comos",
+      "Gelos"
+    ],
+    "Required Facility In System": "Installation - Satellite",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Liquid Oxygen": "681",
+      "Ceramic Composites": "129",
+      "Polymers": "342",
+      "Aluminium": "1527",
+      "Copper": "66",
+      "Steel": "2121",
+      "Computer Components": "45",
+      "Fruit and Vegetables": "213",
+      "Surface Stabilisers": "171",
+      "Building Fabricators": "87",
+      "Structural Regulators": "171",
+      "Evacuation Shelter": "66",
+      "Emergency Power Cells": "45",
+      "Survival Equipment": "45",
+      "Beer": "933",
+      "Wine": "468",
+      "Liquor": "384",
+      "Animal Meat": "213",
+      "Fish": "108",
+      "Tea": "510",
+      "Coffee": "213"
+    },
+    "stats": {
+      "Initial Pop": "0",
+      "Max Pop": "0",
+      "Security": "-1",
+      "Wealth": "5"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 2
+    },
+    "economy": {
+      "Facility": "Tourism",
+      "Influence": "Tourism"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Tourism Tier 2",
+    "Building Type": "Large",
+    "Layouts": [
+      "Fufluns"
+    ],
+    "Required Facility In System": "Installation - Satellite",
+    "Pad": "M"
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "252",
+      "Polymers": "672",
+      "Aluminium": "2352",
+      "Copper": "84",
+      "Steel": "3359",
+      "Computer Components": "38",
+      "Food Cartridges": "51",
+      "Fruit and Vegetables": "34",
+      "Surface Stabilisers": "756",
+      "Building Fabricators": "210",
+      "Structural Regulators": "504",
+      "Evacuation Shelter": "51",
+      "Emergency Power Cells": "42",
+      "Survival Equipment": "26",
+      "H.E. Suits": "126",
+      "Robotics": "252",
+      "Bioreducing Lichen": "714",
+      "Geological Equipment": "210",
+      "Muon Imager": "160"
+    },
+    "stats": {
+      "Wealth": "10",
+      "Comfort": "-4",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Extraction"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Extraction",
+    "Building Type": "",
+    "Layouts": [
+      "Tartarus"
+    ],
+    "Required Facility In System": "Settlement - Extraction",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "126",
+      "Polymers": "630",
+      "Aluminium": "2433",
+      "Copper": "68",
+      "Steel": "3775",
+      "Computer Components": "21",
+      "Food Cartridges": "68",
+      "Fruit and Vegetables": "42",
+      "Surface Stabilisers": "588",
+      "Building Fabricators": "84",
+      "Structural Regulators": "336",
+      "Evacuation Shelter": "68",
+      "Emergency Power Cells": "42",
+      "Survival Equipment": "38",
+      "Pesticides": "378",
+      "Agri-Medicines": "235",
+      "Crop Harvesters": "210",
+      "Biowaste": "630"
+    },
+    "stats": {
+      "Security": "-3",
+      "Comfort": "3",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {},
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Civilian",
+    "Building Type": "",
+    "Layouts": [
+      "Aegle"
+    ],
+    "Required Facility In System": "Settlement - Agriculture",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "134",
+      "Polymers": "666",
+      "Aluminium": "2483",
+      "Copper": "178",
+      "Steel": "3547",
+      "Computer Components": "49",
+      "Food Cartridges": "54",
+      "Fruit and Vegetables": "36",
+      "Power Generators": "32",
+      "Surface Stabilisers": "1419",
+      "Building Fabricators": "89",
+      "Structural Regulators": "267",
+      "Evacuation Shelter": "36",
+      "Emergency Power Cells": "45",
+      "Survival Equipment": "18",
+      "H.E. Suits": "249",
+      "Geological Equipment": "621"
+    },
+    "stats": {
+      "Security": "-1",
+      "Tech Level": "6",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Tourism"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Exploration",
+    "Building Type": "",
+    "Layouts": [
+      "Tellus"
+    ],
+    "Required Facility In System": "Installation - Communication Station",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "145",
+      "Aluminium": "2797",
+      "Copper": "78",
+      "Steel": "4051",
+      "Computer Components": "25",
+      "Food Cartridges": "174",
+      "Fruit and Vegetables": "87",
+      "Power Generators": "25",
+      "Surface Stabilisers": "1061",
+      "Building Fabricators": "290",
+      "Structural Regulators": "338",
+      "Evacuation Shelter": "49",
+      "Emergency Power Cells": "49",
+      "Survival Equipment": "29"
+    },
+    "stats": {
+      "Security": "-2",
+      "Comfort": "3",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {},
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Outpost",
+    "Building Type": "",
+    "Layouts": [
+      "Io"
+    ],
+    "Required Facility In System": "Installation - Space Farm",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "223",
+      "Polymers": "712",
+      "Semiconductors": "72",
+      "Superconductors": "72",
+      "Aluminium": "2581",
+      "Copper": "112",
+      "Steel": "3560",
+      "Computer Components": "67",
+      "Medical Diagnostic Equipment": "161",
+      "Food Cartridges": "54",
+      "Fruit and Vegetables": "36",
+      "Power Generators": "36",
+      "Surface Stabilisers": "534",
+      "Building Fabricators": "178",
+      "Structural Regulators": "445",
+      "Evacuation Shelter": "36",
+      "Emergency Power Cells": "63",
+      "Survival Equipment": "27",
+      "Micro Controllers": "49",
+      "H.E. Suits": "156",
+      "Geological Equipment": "401",
+      "Muon Imager": "107",
+      "Basic Medicines": "72",
+      "Advanced Catalysers": "170"
+    },
+    "stats": {
+      "Tech Level": "10"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Scientific",
+    "Building Type": "",
+    "Layouts": [
+      "Athena",
+      "Caelus"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "375",
+      "CMM Composite": "333",
+      "Polymers": "708",
+      "Aluminium": "2414",
+      "Copper": "105",
+      "Steel": "3746",
+      "Computer Components": "75",
+      "Food Cartridges": "125",
+      "Fruit and Vegetables": "42",
+      "Power Generators": "38",
+      "Surface Stabilisers": "583",
+      "Building Fabricators": "333",
+      "Structural Regulators": "542",
+      "Evacuation Shelter": "75",
+      "Emergency Power Cells": "63",
+      "Survival Equipment": "50",
+      "Micro Controllers": "55",
+      "Battle Weapons": "42",
+      "Reactive Armour": "42",
+      "Basic Medicines": "109",
+      "Combat Stabilizers": "25",
+      "Military Grade Fabrics": "42"
+    },
+    "stats": {
+      "Security": "10"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Military"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Military",
+    "Building Type": "",
+    "Layouts": [
+      "Alala",
+      "Ares"
+    ],
+    "Required Facility In System": "Military Settlement ➔ Military Installation",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "279",
+      "Polymers": "744",
+      "Aluminium": "2697",
+      "Copper": "93",
+      "Steel": "3720",
+      "Computer Components": "42",
+      "Food Cartridges": "56",
+      "Fruit and Vegetables": "38",
+      "Power Generators": "28",
+      "Surface Stabilisers": "558",
+      "Building Fabricators": "233",
+      "Structural Regulators": "465",
+      "Evacuation Shelter": "56",
+      "Emergency Power Cells": "47",
+      "Survival Equipment": "28",
+      "Thermal Cooling Units": "103",
+      "H.E. Suits": "117",
+      "Robotics": "419",
+      "Resonating Separators": "84",
+      "Advanced Catalysers": "112"
+    },
+    "stats": {
+      "Security": "-1",
+      "Tech Level": "3",
+      "Wealth": "5",
+      "Comfort": "-2",
+      "Infrastructure": "7"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Refinery"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Refinery",
+    "Building Type": "",
+    "Layouts": [
+      "Silenus"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "225",
+      "CMM Composite": "270",
+      "Polymers": "673",
+      "Semiconductors": "108",
+      "Superconductors": "108",
+      "Aluminium": "2512",
+      "Copper": "113",
+      "Steel": "3768",
+      "Computer Components": "68",
+      "Food Cartridges": "54",
+      "Fruit and Vegetables": "36",
+      "Power Generators": "27",
+      "Surface Stabilisers": "539",
+      "Building Fabricators": "135",
+      "Structural Regulators": "404",
+      "Evacuation Shelter": "45",
+      "Emergency Power Cells": "59",
+      "Survival Equipment": "27",
+      "Micro Controllers": "90",
+      "Thermal Cooling Units": "211",
+      "Robotics": "449"
+    },
+    "stats": {
+      "Security": "-2",
+      "Tech Level": "10",
+      "Wealth": "-2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Hightech"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "High Tech",
+    "Building Type": "",
+    "Layouts": [
+      "Janus"
+    ],
+    "Required Facility In System": "",
+    "Pad": null
+  },
+  {
+    "cargo": {
+      "Ceramic Composites": "249",
+      "Polymers": "664",
+      "Semiconductors": "75",
+      "Superconductors": "75",
+      "Aluminium": "2407",
+      "Copper": "83",
+      "Steel": "3320",
+      "Computer Components": "38",
+      "Food Cartridges": "50",
+      "Fruit and Vegetables": "34",
+      "Power Generators": "25",
+      "Surface Stabilisers": "498",
+      "Building Fabricators": "208",
+      "Structural Regulators": "498",
+      "Evacuation Shelter": "50",
+      "Emergency Power Cells": "42",
+      "Survival Equipment": "25",
+      "Micro Controllers": "50",
+      "Thermal Cooling Units": "117",
+      "Microbial Furnaces": "415",
+      "Mineral Extractors": "415",
+      "H.E. Suits": "83",
+      "Robotics": "332"
+    },
+    "stats": {
+      "Tech Level": "3",
+      "Wealth": "5",
+      "Comfort": "-4",
+      "Infrastructure": "2"
+    },
+    "points": {
+      "Tier 2": -1,
+      "Tier 3": 1
+    },
+    "economy": {
+      "Influence": "Industrial"
+    },
+    "Tier": "2",
+    "Location": "Surface",
+    "Category": "Industrial",
+    "Building Type": "",
+    "Layouts": [
+      "Molae",
+      "Tellus",
+      "Eunostus"
+    ],
+    "Required Facility In System": "Installation - Mining Outpost",
+    "Pad": null
+  }
+]

@@ -1,6 +1,8 @@
 import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, TextField } from '@fluentui/react';
 import { apiSvcUrl, Project, ProjectRef, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
+import { prepIconLookup } from './prep-costs';
+prepIconLookup();
 
 interface ProjectCreateProps {
   systemName?: string;
@@ -13,39 +15,82 @@ interface ProjectCreateState extends ProjectRef {
 
 
 const buildTypes: IComboBoxOption[] = [
-  { key: '', text: 'Tier 1: Space', itemType: SelectableOptionMenuItemType.Header },
-  { key: 'outpost-commercial', text: 'Commercial Outpost', },
-  { key: 'outpost-industrial', text: 'Industrial Outpost', },
-  { key: 'outpost-criminal', text: 'Prirate Outpost', },
-  { key: 'outpost-civilian', text: 'Civilian Outpost', },
-  { key: 'outpost-science', text: 'Science Outpost', },
-  { key: 'outpost-military', text: 'Military Outpost', },
+  { key: 't1so', text: 'Tier 1: Space Outposts', itemType: SelectableOptionMenuItemType.Header },
+  { key: "plutus", text: "Commercial Outpost (Plutus)" },
+  { key: "vulcan", text: "Industrial Outpost (Vulcan)" },
+  { key: "dysnomia", text: "Pirate Outpost (Dysnomia)" },
+  { key: "vesta", text: "Civilian Outpost (Vesta)" },
+  { key: "prometheus", text: "Scientific Outpost (Prometheus)" },
+  { key: "nemesis", text: "Military Outpost (Nemesis)" },
 
-  { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: '', text: 'Tier 1: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: '', text: 'Coming soon', disabled: true },
-  // TODO: ...
+  { key: 'l1', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't1s1', text: 'Tier 1: Space Installations', itemType: SelectableOptionMenuItemType.Header },
+  { key: "hermes", text: "Satellite Installation (Hermes, Angelia, Eirene)" },
+  { key: "pistis", text: "Comms Installation (Pistis, Soter, Aletheia)" },
+  { key: "demeter", text: "Agricultural Installation (Demeter)" },
+  { key: "apate", text: "Pirate Installation (Apate, Laverna)" },
+  { key: "euthenia", text: "Industrial Installation (Euthenia, Phorcys)" },
+  { key: "enodia", text: "Relay Installation (Enodia, Ichnaea)" },
 
-  { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: 't2-space', text: 'Tier 2: Space', itemType: SelectableOptionMenuItemType.Header },
-  { key: 'coriolis', text: 'Coriolis', },
-  { key: 'asteroid', text: 'Asteroid', },
+  { key: 'l2', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't1ss', text: 'Tier 1: Surface Sites', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "hestia", text: "Civilian Settlement (Hestia, Decima, Atropos, Nona, Lachesis, Clotho)" },
+  { key: "hephaestus", text: "Industrial Settlement (Hephaestus, Opis, Ponos, Tethys, Bia, Mefitis)" },
+  { key: "necessitas", text: "Scientific Settlement (Necessitas, Ananke, Fauna, Providentia, Antevorta, Porrima)" },
 
-  { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: '', text: 'Tier 2: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: '', text: 'Coming soon', disabled: true },
-  // TODO: ...
+  { key: 'l3', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't2ss', text: 'Tier 2: Space Stations', itemType: SelectableOptionMenuItemType.Header },
+  { key: "coriolis", text: "Coriolis Starport (No Truss, Dual Truss, Quad Truss)" },
+  { key: "asteroid", text: "Asteroid Base (Asteroid)" },
 
-  { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: '', text: 'Tier 3: Space', itemType: SelectableOptionMenuItemType.Header, },
-  { key: 'ocellus', text: 'Ccellus', },
-  { key: 'orbis', text: 'Orbis', },
+  { key: 'l4', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't2si', text: 'Tier 2: Space Installations', itemType: SelectableOptionMenuItemType.Header },
+  { key: "vacuna", text: "Military Installation (Vacuna, Alastor)" },
+  { key: "dicaeosyne", text: "Security Installation (Dicaeosyne, Poena, Eunomia, Nomos)" },
+  { key: "harmonia", text: "Government Installation (Harmonia)" },
+  { key: "asclepius", text: "Medical Installation (Asclepius, Eupraxia)" },
+  { key: "astraeus", text: "Scientific Installation (Astraeus, Coeus, Dodona, Dione)" },
+  { key: "hedone", text: "Tourist Installation (Hedone, Opora, Pasithea)" },
+  { key: "dionysus", text: "Space Bar (Dionysus, Bacchus)" },
 
-  { key: '', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: '', text: 'Tier 3: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: '', text: 'Coming soon', disabled: true },
-  // TODO: ...
+  { key: 'l5', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't2ss', text: 'Tier 2: Surface', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "consus", text: "Agricultural Settlement (Consus)" },
+  { key: "picumnus", text: "Agricultural Settlement (Picumnus, Annona)" },
+  { key: "ceres", text: "Agricultural Settlement (Ceres, Fornax)" },
+  { key: "ourea", text: "Extraction Settlement (Ourea)" },
+  { key: "mantus", text: "Extraction Settlement (Mantus, Orcus)" },
+  { key: "erebus", text: "Extraction Settlement (Erebus, Aerecura)" },
+  { key: "fontus", text: "Industrial Settlement (Fontus)" },
+  { key: "meteope", text: "Industrial Settlement (Meteope, Palici, Minthe)" },
+  { key: "gaea", text: "Industrial Settlement (Gaea)" },
+  { key: "ioke", text: "Military Settlement (Ioke)" },
+  { key: "bellona", text: "Military Settlement (Bellona, Enyo, Polemos)" },
+  { key: "minerva", text: "Military Settlement (Minerva)" },
+  { key: "pheobe", text: "Hightech Settlement (Pheobe)" },
+  { key: "asteria", text: "Hightech Settlement (Asteria, Caerus)" },
+  { key: "chronos", text: "Hightech Settlement (Chronos)" },
+  { key: "aergia", text: "Tourism Settlement (Aergia)" },
+  { key: "comos", text: "Tourism Settlement (Comos, Gelos)" },
+  { key: "fufluns", text: "Tourism Settlement (Fufluns)" },
+  { key: "tartarus", text: "Extraction Surface Outpost (Tartarus)" },
+  { key: "aegle", text: "Civilian Surface Outpost (Aegle)" },
+  { key: "tellus", text: "Exploration Surface Outpost (Tellus)" },
+  { key: "io", text: "Outpost Surface Outpost (Io)" },
+  { key: "athena", text: "Scientific Surface Outpost (Athena, Caelus)" },
+  { key: "alala", text: "Military Surface Outpost (Alala, Ares)" },
+  { key: "silenus", text: "Refinery Surface Outpost (Silenus)" },
+  { key: "janus", text: "High Tech Surface Outpost (Janus)" },
+  { key: "molae", text: "Industrial Surface Outpost (Molae, Tellus, Eunostus)" },
 
+  { key: 'l6', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't3so', text: 'Tier 3: Space', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "ocellus", text: "Ocellus Starport (Ocellus)" },
+  { key: "apollo", text: "Orbis Starport (Apollo, Artemis)" },
+
+  { key: 'l7', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't3ss', text: 'Tier 3: Surface', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "zeus", text: "Port Surface Outpost (Zeus, Hera, Poseidon, Aphrodite)" }
 ];
 
 export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateState> {
@@ -65,7 +110,6 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       factionName: '',
       notes: '',
     };
-
   }
 
   render() {

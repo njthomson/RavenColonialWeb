@@ -70,7 +70,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({
         proj: newProj,
         loading: false,
-        disableDelete: !!cmdrName && !!newProj.architectName && newProj.architectName.toLowerCase() === cmdrName.toLowerCase(),
+        disableDelete: !!cmdrName && !!newProj.architectName && newProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
       });
     } else {
       this.setState({ loading: false });
@@ -79,7 +79,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject } = this.state;
+    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject, disableDelete } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -108,7 +108,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }, {
       key: 'btn-delete', text: 'Delete',
       iconProps: { iconName: 'Delete' },
-      disabled: !!proj.architectName,
+      disabled: disableDelete,
       onClick: () => this.setState({ confirmDelete: true }),
     }]
 
@@ -161,21 +161,31 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // show extra row to assign a commodity to a cmdr?
       if (assignCommodity === key && proj.commanders && !editCommodities) {
-        const cmdrOptions = cmdrs
-          // .filter(cmdr => proj.commanders && proj.commanders[cmdr] && !proj.commanders[cmdr].includes(key))
-          .map(k => ({ key: k, text: k }))
-          .sort();
+        if (Object.keys(proj.commanders).length === 0) {
+          // show a warning when there's no cmdrs to add
+          rows.push(<tr>
+            <td colSpan={3}>
+              <MessageBar messageBarType={MessageBarType.warning} onDismiss={() => this.setState({ assignCommodity: undefined })} >You need to add cmdrs first</MessageBar>
+            </td>
+          </tr>
+          );
+        } else {
+          const cmdrOptions = cmdrs
+            // .filter(cmdr => proj.commanders && proj.commanders[cmdr] && !proj.commanders[cmdr].includes(key))
+            .map(k => ({ key: k, text: k }))
+            .sort();
 
-        const assignRow = <tr>
-          <td colSpan={3}>
-            <Stack horizontal>
-              <ComboBox options={cmdrOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} />
-              <IconButton title='Assign' iconProps={{ iconName: 'Add' }} onClick={this.onClickAssign} />
-              <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
-            </Stack>
-          </td>
-        </tr>;
-        rows.push(assignRow);
+          const assignRow = <tr>
+            <td colSpan={3}>
+              <Stack horizontal>
+                <ComboBox options={cmdrOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} />
+                <IconButton title='Assign' iconProps={{ iconName: 'Add' }} onClick={this.onClickAssign} />
+                <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
+              </Stack>
+            </td>
+          </tr>;
+          rows.push(assignRow);
+        }
       }
     }
 
@@ -223,7 +233,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           ec2[key] = ev.target.valueAsNumber;
           this.setState({ editCommodities: ec2 });
         }} />}
-
       </td>
       {!editCommodities && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
     </tr>;
@@ -248,11 +257,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <tr><td>Build type:</td><td><div className='detail'>{proj?.buildType}</div></td></tr>
           <tr><td>System name:</td><td><div className='detail'>{proj?.systemName}</div></td></tr>
           <tr><td>Architect:</td><td>
-            {!editProject && <div className='detail'>{proj?.architectName}</div>}
+            {!editProject && <div className='detail'>{proj?.architectName}&nbsp;</div>}
             {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} />}
           </td></tr>
           <tr><td>Faction:</td><td>
-            {!editProject && <div className='detail'>{proj?.factionName}</div>}
+            {!editProject && <div className='detail'>{proj?.factionName}&nbsp;</div>}
             {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
           </td></tr>
           <tr><td>Notes:</td><td>
@@ -300,7 +309,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <ul>
         {rows}
       </ul>
-      <div hidden={showAddCmdr}><ActionButton text='Add a new Commander?' onClick={this.onShowAddCmdr} iconProps={{ iconName: 'AddFriend' }} /></div>
+      <div hidden={showAddCmdr}>
+        <ActionButton text='Add a new Commander?' onClick={this.onShowAddCmdr} iconProps={{ iconName: 'AddFriend' }} />
+      </div>
       <div className='add-cmdr' hidden={!showAddCmdr}>
         <Stack horizontal tokens={horizontalGapStackTokens}>
           <TextField
@@ -337,6 +348,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   onShowAddCmdr = () => {
     console.log('onShowAddCmdr:', this.state.showAddCmdr);
+    const cmdrName = Store.getCmdr()?.name;
+    const cmdrKnown = cmdrName && this.state.proj && (cmdrName in this.state.proj?.commanders);
+    if (!cmdrKnown) {
+      this.setState({ newCmdr: cmdrName })
+    }
     this.setState({ showAddCmdr: true })
   }
 
@@ -497,9 +513,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         // success - apply new commodity count
         var savedProj: Project = await response.json();
         console.log('onUpdateProjectDetails: savedProj:', savedProj);
+        const cmdrName = Store.getCmdr()?.name;
         this.setState({
           proj: savedProj,
           editProject: undefined,
+          disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
         });
       }
       else {
