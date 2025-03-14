@@ -204,6 +204,20 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   onCreateBuild = async () => {
     // const { systemName, buildName, marketId, buildType, foundStations, errorMsg } = this.state;
 
+    // validate before creating anything
+    const msgs: string[] = [];
+
+    if (this.state.marketId <= 0) { msgs.push('Cannot create build project without a marketID.'); }
+    if (!this.state.buildType) { msgs.push('Cannot create build project without a type.'); }
+    if (!this.state.buildName) { msgs.push('Cannot create build project without a name.'); }
+
+    if (msgs.length > 0) {
+      this.setState({
+        errorMsg: msgs.join(' '),
+      });
+      return;
+    }
+
     const url = `${apiSvcUrl}/api/project/`;
     console.log('ProjectCreate.onCheckSystem:', url);
 
