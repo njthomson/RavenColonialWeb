@@ -1,4 +1,4 @@
-import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
 import { apiSvcUrl, mapCommodityNames, Project } from './types'
 import { Component } from 'react';
@@ -24,6 +24,7 @@ interface ProjectViewState {
   editCommodities?: Record<string, number>;
   editProject?: Partial<Project>;
   disableDelete?: boolean;
+  fixMarketId?: string;
 }
 
 
@@ -131,6 +132,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} ({proj.buildType})</h2>
+        {proj.marketId <= 0 && this.renderMissingMarketId()}
         {!editCommodities && !editProject && <CommandBar className='top-bar' items={cmds} />}
       </div >
 
@@ -531,7 +533,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       })
 
       if (response.status === 200) {
-        // success - apply new commodity count
+        // success
         var savedProj: Project = await response.json();
         console.log('onUpdateProjectDetails: savedProj:', savedProj);
         const cmdrName = Store.getCmdr()?.name;
@@ -540,13 +542,79 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           editProject: undefined,
           disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
         });
-      }
-      else {
+      } else {
         const msg = await response.text();
         this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
       }
     }
 
+  };
+
+  renderMissingMarketId() {
+    const { fixMarketId } = this.state;
+
+    return <>
+      <MessageBar
+        messageBarType={MessageBarType.warning}
+        actions={<MessageBarButton onClick={() => this.setState({ fixMarketId: '' })}>Fix it</MessageBarButton>}
+      >
+        Unfortunately this build project was created without a key piece of information. You can continue to use it as is but the SrvSurvey app cannot auto update commodities needed until this is corrected.
+      </MessageBar>
+      <Modal isOpen={fixMarketId !== undefined}>
+        <div style={{ textAlign: 'left' }}>
+          <h3>Set corrected Market ID</h3>
+          <div>The <code className='grey'>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
+          <ul>
+            <li>Open folder: <code className='grey'>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
+            <li>Find the file named with today's date. Something like: <code className='grey'>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
+            <li>Scroll to the bottom and look for the line with <code className='grey'>"event":"Docked"</code></li>
+            <li>On that line, copy the value of <code className='grey'>MarketID</code> and paste it here</li>
+          </ul>
+
+          <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
+            <TextField
+              name='marketId'
+              value={fixMarketId}
+              onChange={(_, v) => {
+                this.setState({ fixMarketId: v ?? '' });
+              }}
+            />
+            <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.saveNewMarketId} disabled={!(parseInt(this.state.fixMarketId ?? '').toString().trim() === this.state.fixMarketId?.trim())} />
+            <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={() => this.setState({ fixMarketId: undefined })} />
+          </Stack>
+        </div>
+      </Modal>
+    </>;
+  }
+
+  saveNewMarketId = async () => {
+    const { proj, fixMarketId } = this.state;
+    if (!proj?.buildId || !fixMarketId) return;
+
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
+    console.log('saveNewMarketId:', url);
+    const deltaProj = {
+      buildId: proj.buildId,
+      marketId: parseInt(fixMarketId),
+    };
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', },
+      body: JSON.stringify(deltaProj)
+    })
+
+    if (response.status === 200) {
+      // success
+      var savedProj: Project = await response.json();
+      console.log('saveNewMarketId: savedProj:', savedProj);
+      this.setState({
+        proj: savedProj,
+        fixMarketId: undefined,
+      });
+    } else {
+      const msg = await response.text();
+      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
+    }
   };
 
   renderStats() {

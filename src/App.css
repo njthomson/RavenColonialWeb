@@ -38,16 +38,6 @@ footer p {
   padding-left: 60px;
 }
 
-@media (max-width: 400px) {
-  footer {
-    font-size: 12px;
-    line-height: 6px;
-  }
-  footer p {
-    padding-left: 20px;
-  }
-}
-
 h3 {
   border-bottom: #e5e5e5 1px solid;
   /* margin: 0 10px 0 10px; */
@@ -114,6 +104,11 @@ h3 {
   min-width: 350px;
 }
 
+.ms-Dialog-main {
+  padding: 20px;
+  top: -15%;
+}
+
 .ms-TextField,
 .ms-ComboBox-container {
   width: 300px;
@@ -152,4 +147,16 @@ h3 {
 
 .hint {
   font-size: 14px;
+}
+
+
+@media (max-width: 400px) {
+  footer {
+    font-size: 12px;
+    line-height: 6px;
+  }
+
+  footer p {
+    padding-left: 20px;
+  }
 }
