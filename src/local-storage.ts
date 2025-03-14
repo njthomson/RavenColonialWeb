@@ -41,7 +41,6 @@ export namespace Store {
   };
 
   export const addRecentProject = (proj: Project): void => {
-
     // read recent projects and remove entry for this project
     const recentProjects = getRecentProjects()
       .filter(rp => rp.buildId !== proj.buildId);
@@ -59,6 +58,15 @@ export namespace Store {
     if (recentProjects.length > 5) {
       recentProjects.pop();
     }
+
+    const json = JSON.stringify(recentProjects);
+    window.localStorage.setItem(Keys.recentProjects, json)
+  };
+
+  export const removeRecentProject = (buildId: string): void => {
+    // read recent projects and remove entry for this project
+    const recentProjects = getRecentProjects()
+      .filter(rp => rp.buildId !== buildId);
 
     const json = JSON.stringify(recentProjects);
     window.localStorage.setItem(Keys.recentProjects, json)

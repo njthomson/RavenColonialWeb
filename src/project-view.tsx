@@ -43,9 +43,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   componentDidUpdate(prevProps: Readonly<ProjectViewProps>, prevState: Readonly<ProjectViewState>, snapshot?: any): void {
-    if (prevState.proj?.buildId !== this.props.buildId && this.props.buildId) {
+    if (this.props.buildId && prevState.proj?.buildId && prevState.proj.buildId !== this.props.buildId) {
       this.fetchProject(this.props.buildId);
     }
+
+    document.getElementById('auto-focus')?.focus();
   }
 
   async fetchProject(buildId: string | undefined) {
@@ -54,7 +56,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return;
     }
 
-    const url = `${apiSvcUrl}/api/project/${buildId}`;
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
     console.log('Project.fetch: begin buildId:', url);
 
     // await new Promise(resolve => setTimeout(resolve, 250));
@@ -70,11 +72,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({
         proj: newProj,
         loading: false,
-        disableDelete: !!cmdrName && !!newProj.architectName && newProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
+        disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
       });
+      window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
+    } else if (response.status === 404 && buildId) {
+      this.setState({
+        loading: false,
+        errorMsg: 'No project found by that ID',
+      });
+      Store.removeRecentProject(buildId);
+      window.document.title = `Build: ?`;
     } else {
-      this.setState({ loading: false });
-      console.error(`${response.status}: ${response.statusText}`);
+      const msg = `${response.status}: ${response.statusText}`;
+      this.setState({
+        loading: false,
+        errorMsg: msg,
+      });
+      console.error(msg);
     }
   }
 
@@ -87,6 +101,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     if (!proj) {
       return <div className='contain-horiz'>
+        {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         <div className='half'><ProjectQuery /></div>
         <div className='half right'><ProjectCreate /></div>
       </div>;
@@ -131,16 +146,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </div>}
       </div>
 
-      <Modal isOpen={confirmDelete}>
+      <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
         <h3>Are you sure you want to delete?</h3>
         <p>This cannot be undone.</p>
-        <DefaultButton text='Yes' onClick={this.onProjectDelete} />
-        <PrimaryButton text='No' onClick={() => this.setState({ confirmDelete: false })} />
+        <DefaultButton text='Yes' onClick={this.onProjectDelete} style={{ backgroundColor: '#FF8844' }} />
+        &nbsp;
+        <DefaultButton text='No' onClick={() => this.setState({ confirmDelete: false })} autoFocus />
       </Modal>
       <Modal isOpen={confirmComplete}>
         <h3>Are you sure?</h3>
         <p>Congratulations!</p>
         <PrimaryButton text='Yes' onClick={this.onProjectDelete} />
+        &nbsp;
         <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} />
       </Modal>
     </>;
@@ -156,14 +173,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     let flip = false;
     for (const key in proj.commodities) {
       flip = !flip;
-      var row = this.getCommodityRow(proj, key, cmdrs, editCommodities, flip);
+      var row = this.getCommodityRow(proj, key, cmdrs, editCommodities, flip, rows.length === 0);
       rows.push(row)
 
       // show extra row to assign a commodity to a cmdr?
       if (assignCommodity === key && proj.commanders && !editCommodities) {
         if (Object.keys(proj.commanders).length === 0) {
           // show a warning when there's no cmdrs to add
-          rows.push(<tr>
+          rows.push(<tr key={`c${key}`}>
             <td colSpan={3}>
               <MessageBar messageBarType={MessageBarType.warning} onDismiss={() => this.setState({ assignCommodity: undefined })} >You need to add cmdrs first</MessageBar>
             </td>
@@ -175,10 +192,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             .map(k => ({ key: k, text: k }))
             .sort();
 
-          const assignRow = <tr>
+          const assignRow = <tr key='c-edit'>
             <td colSpan={3}>
               <Stack horizontal>
-                <ComboBox options={cmdrOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} />
+                <ComboBox autoFocus options={cmdrOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} />
                 <IconButton title='Assign' iconProps={{ iconName: 'Add' }} onClick={this.onClickAssign} />
                 <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
               </Stack>
@@ -212,7 +229,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </>
   }
 
-  private getCommodityRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number> | undefined, flip: boolean) {
+  private getCommodityRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number> | undefined, flip: boolean, first: boolean) {
     const assigned = cmdrs
       .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
@@ -221,6 +238,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const need = proj.commodities![key];
     const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
+    const inputId = first ? 'auto-focus' : undefined;
     return <tr key={`cc-${key}`} className={className}>
       <td className='commodity-name'>
         <span><CommodityIcon name={key} /> {mapCommodityNames[key]}</span>
@@ -228,7 +246,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </td>
       <td className='commodity-need'>
         {!editCommodities && need.toLocaleString()}
-        {editCommodities && <input className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {
+        {editCommodities && <input id={inputId} className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {
           const ec2 = this.state.editCommodities!;
           ec2[key] = ev.target.valueAsNumber;
           this.setState({ editCommodities: ec2 });
@@ -252,7 +270,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <tbody>
           <tr><td>Build name:</td><td>
             {!editProject && <div className='detail'>{proj?.buildName}</div>}
-            {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} />}
+            {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
           </td></tr>
           <tr><td>Build type:</td><td><div className='detail'>{proj?.buildType}</div></td></tr>
           <tr><td>System name:</td><td><div className='detail'>{proj?.systemName}</div></td></tr>
@@ -315,6 +333,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div className='add-cmdr' hidden={!showAddCmdr}>
         <Stack horizontal tokens={horizontalGapStackTokens}>
           <TextField
+            id='auto-focus'
             name='cmdr'
             value={newCmdr}
             onKeyDown={(ev) => {
@@ -332,7 +351,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   onClickCmdrRemove = async (cmdr: string) => {
     if (!this.state.proj?.buildId || !cmdr) { return; }
 
-    const url = `${apiSvcUrl}/api/project/${this.state.proj.buildId}/link/${cmdr}`;
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(cmdr)}`;
     console.log('onClickCmdrRemove:', url);
     const response = await fetch(url, { method: 'DELETE' })
     console.log('onClickCmdrRemove:', response);
@@ -366,7 +385,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
     const { newCmdr } = this.state;
 
-    const url = `${apiSvcUrl}/api/project/${this.state.proj.buildId}/link/${newCmdr}`;
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(newCmdr)}`;
     console.log('onShowAddCmdr:', url);
     const response = await fetch(url, { method: 'PUT' })
     console.log('onShowAddCmdr:', response);
@@ -386,9 +405,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   onClickAssign = async () => {
     const { proj, assignCommodity, assignCmdr } = this.state;
-    if (!proj || !assignCmdr || !assignCommodity) { return; }
+    if (!proj?.buildId || !assignCmdr || !assignCommodity) { return; }
 
-    const url = `${apiSvcUrl}/api/project/${proj?.buildId}/assign/${assignCmdr}/${assignCommodity}/`;
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(assignCmdr)}/${encodeURIComponent(assignCommodity)}/`;
     console.log('onClickAssign:', url);
     const response = await fetch(url, { method: 'PUT' })
     console.log('onClickAssign:', response);
@@ -408,9 +427,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   onClickUnassign = async (cmdr: string, commodity: string) => {
     const { proj } = this.state;
-    if (!proj?.commanders || !cmdr || !commodity || !proj.commanders[cmdr]) { return; }
+    if (!proj || !proj.buildId || !proj.commanders || !cmdr || !commodity || !proj.commanders[cmdr]) { return; }
 
-    const url = `${apiSvcUrl}/api/project/${proj?.buildId}/assign/${cmdr}/${commodity}/`;
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(cmdr)}/${encodeURIComponent(commodity)}/`;
     console.log('onClickAssign:', url);
     const response = await fetch(url, { method: 'DELETE' })
     console.log('onClickAssign:', response);
@@ -427,15 +446,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   onProjectDelete = async () => {
-    console.log('onProjectDelete:', this.state.showAddCmdr);
+    console.log('onProjectDelete:');
 
-    if (this.state.proj?.buildId) {
-      const url = `${apiSvcUrl}/api/project/${this.state.proj?.buildId}`;
+    const buildId = this.state.proj?.buildId;
+    if (buildId) {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
       console.log('onShowAddCmdr:', url);
       const response = await fetch(url, { method: 'DELETE' })
 
       if (response.status === 202) {
         // success - navigate to home
+        Store.removeRecentProject(buildId);
         window.location.assign(`#`);
         window.location.reload();
       }
@@ -450,8 +471,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj, editCommodities } = this.state;
     console.log('onUpdateProjectCommodities:', editCommodities);
 
-    if (!!proj?.commodities && proj?.buildId && editCommodities) {
-      const url = `${apiSvcUrl}/api/project/${proj?.buildId}`;
+    if (!!proj?.commodities && proj.buildId && editCommodities) {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
       console.log('onUpdateProjectCommodities:', url);
       const deltaProj = {
         buildId: proj.buildId,
@@ -490,8 +511,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj, editProject } = this.state;
     console.log('onUpdateProjectDetails:', editProject);
 
-    if (proj && proj?.buildId && editProject) {
-      const url = `${apiSvcUrl}/api/project/${proj?.buildId}`;
+    if (proj?.buildId && editProject) {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
       console.log('onUpdateProjectDetails:', url);
       const deltaProj: Record<string, string> = {
         buildId: proj.buildId,

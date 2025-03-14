@@ -25,6 +25,7 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
   }
 
   componentDidMount(): void {
+    window.document.title = `Cmdr: ${this.props?.cmdr ?? '?'}`;
     if (this.props.cmdr) {
       this.fetchCmdrProjects(this.props.cmdr);
     }
@@ -40,7 +41,7 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
     this.setState({ loading: true, projects: undefined });
     try {
       if (!cmdr) { return; }
-      const url = `${apiSvcUrl}/api/cmdr/${cmdr}/summary`;
+      const url = `${apiSvcUrl}/api/cmdr/${encodeURIComponent(cmdr)}/summary`;
       console.log('fetchCmdrProjects:', url);
 
       this.setState({ loading: true, projects: undefined });

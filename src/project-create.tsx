@@ -1,16 +1,19 @@
 import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, TextField } from '@fluentui/react';
 import { apiSvcUrl, Project, ProjectRef, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
-import { prepIconLookup } from './prep-costs';
-prepIconLookup();
+// import { prepIconLookup } from './prep-costs';
+// prepIconLookup();
 
 interface ProjectCreateProps {
   systemName?: string;
 }
 
-interface ProjectCreateState extends ProjectRef {
+interface ProjectCreateState extends Omit<ProjectRef, 'marketId'> {
+  marketId: string | undefined;
+  showMarketId: boolean;
   foundStations?: StationEDSM[];
-  errorMsg?: string;
+  msgError?: string;
+  msgClass?: MessageBarType;
 }
 
 
@@ -39,7 +42,7 @@ const buildTypes: IComboBoxOption[] = [
   { key: "necessitas", text: "Scientific Settlement (Necessitas, Ananke, Fauna, Providentia, Antevorta, Porrima)" },
 
   { key: 'l3', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: 't2ss', text: 'Tier 2: Space Stations', itemType: SelectableOptionMenuItemType.Header },
+  { key: 't2so', text: 'Tier 2: Space Stations', itemType: SelectableOptionMenuItemType.Header },
   { key: "coriolis", text: "Coriolis Starport (No Truss, Dual Truss, Quad Truss)" },
   { key: "asteroid", text: "Asteroid Base (Asteroid)" },
 
@@ -102,7 +105,8 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       systemAddress: 0,
       systemName: props.systemName ?? '',
       starPos: [0, 0, 0],
-      marketId: 0,
+      marketId: undefined,
+      showMarketId: false,
       buildId: '',
       buildName: '',
       buildType: 'orbis',
@@ -112,8 +116,13 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     };
   }
 
+  readyToCreate(): boolean {
+    const { buildName, marketId, buildType, systemAddress } = this.state;
+    return !!marketId && parseInt(marketId) > 0 && !!buildType && !!buildName && systemAddress > 0;
+  }
+
   render() {
-    const { systemName, buildName, marketId, buildType, foundStations, errorMsg } = this.state;
+    const { systemName, systemAddress, buildName, marketId, buildType, foundStations, showMarketId, msgError, msgClass } = this.state;
 
     const comboBoxStyles: Partial<IComboBoxStyles> = { root: { maxWidth: 300 } };
 
@@ -121,22 +130,29 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       <div className="create-project">
         <h3>Or start a new build?</h3>
         <div>
-          <TextField name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
+          <TextField id='create-systemName' name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
           <button onClick={this.onCheckSystem} hidden={foundStations && foundStations.length > 0}>check system</button>
         </div>
         <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         {this.renderFoundStations()}
-        {(marketId === -1) && <div>
-          <TextField name='marketId' label='Market ID:' value={marketId.toString()} required={true} description='This value comes from journal files in: %HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous' />
+        {showMarketId && <div>
+          <TextField
+            name='marketId'
+            label='Market ID:'
+            value={marketId}
+            required={true}
+            description='This value comes from journal files in: %HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous'
+            onChange={(_, v) => this.setState({ marketId: v! })}
+          />
         </div>}
 
         <TextField name='buildName' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
         <br />
 
-        {(marketId === 0 && !foundStations) && <div>( check system first )<br /></div>}
-        <PrimaryButton text='Create ...' disabled={!foundStations} onClick={this.onCreateBuild} />
+        {!systemAddress && <div>( check system first )<br /></div>}
+        <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />
         {
-          errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>
+          msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>
         }
       </div>
     </>;
@@ -145,11 +161,11 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   renderFoundStations = () => {
     const { foundStations, marketId, buildName } = this.state;
 
-    if (foundStations && foundStations.length > 0) {
+    if (foundStations) {
 
       const options: IChoiceGroupOption[] = [
         ...foundStations?.map(s => ({ key: s.marketId, text: s.name })),
-        { key: '-1', text: 'Other' }
+        { key: '', text: 'Other' }
       ];
 
       return <>
@@ -159,9 +175,9 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           value={marketId}
           onChange={(_, i) => {
             if (!i) { return; }
-            const name = i.key === '-1' ? buildName : i.text;
+            const name = i.key === '' ? buildName : i.text;
             this.setState({
-              marketId: parseInt(i?.key ?? '-1'),
+              marketId: i?.key ?? '',
               buildName: name,
             });
           }} />
@@ -186,34 +202,56 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         const data2: ResponseEdsmSystem = await response2.json();
 
         console.log('ProjectCreate.onCheckSystem:', data);
-        const foundStations = data.stations.filter(s => s.name.includes('Construction') || s.name.includes('Colonisation'));
+
         this.setState({
           systemAddress: data.id64,
           starPos: [data2.coords.x, data2.coords.y, data2.coords.z],
           systemName: data.name,
-          foundStations
+        });
+
+        const foundStations = data.stations.filter(s => s.name.includes('Construction') || s.name.includes('Colonisation'));
+        if (foundStations.length === 0) {
+          this.setState({
+            showMarketId: true,
+            msgError: 'No known colonization sites. Manual marketID needed.',
+            msgClass: MessageBarType.warning,
+          });
+        } else {
+          this.setState({
+            foundStations
+          });
+        }
+        return;
+      } else {
+        this.setState({
+          msgError: 'Unknown system',
+          msgClass: MessageBarType.error,
         });
         return;
       }
     }
 
-    // still here? no or stations system found
-    this.setState({ errorMsg: `${response.status}: ${response.statusText}` });
+    // still here? EDSM call was not successful
+    this.setState({
+      msgError: `${response.status}: ${response.statusText}`,
+      msgClass: MessageBarType.error,
+    });
   }
 
   onCreateBuild = async () => {
-    // const { systemName, buildName, marketId, buildType, foundStations, errorMsg } = this.state;
+    const { buildName, marketId, buildType } = this.state;
 
     // validate before creating anything
     const msgs: string[] = [];
 
-    if (this.state.marketId <= 0) { msgs.push('Cannot create build project without a marketID.'); }
-    if (!this.state.buildType) { msgs.push('Cannot create build project without a type.'); }
-    if (!this.state.buildName) { msgs.push('Cannot create build project without a name.'); }
+    if (!marketId || !(parseInt(marketId) > 0)) { msgs.push('Cannot create build project without a marketID.'); }
+    if (!buildType) { msgs.push('Cannot create build project without a type.'); }
+    if (!buildName) { msgs.push('Cannot create build project without a name.'); }
 
     if (msgs.length > 0) {
       this.setState({
-        errorMsg: msgs.join(' '),
+        msgError: msgs.join(' '),
+        msgClass: MessageBarType.warning,
       });
       return;
     }
@@ -244,9 +282,17 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       } else {
         console.error('Why no BuildId?', newProj)
       }
+    } else if (response.status === 409) {
+      this.setState({
+        msgError: `Cannot create new build project. There is one tracked in ${this.state.systemName} with marketId: ${this.state.marketId}`,
+        msgClass: MessageBarType.error,
+      });
     } else {
       const msg = await response.text();
-      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
+      this.setState({
+        msgError: `${response.status}: ${response.statusText} ${msg}`,
+        msgClass: MessageBarType.error,
+      });
     }
   }
 

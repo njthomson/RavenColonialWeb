@@ -4,7 +4,6 @@ import { Component } from 'react';
 import { ProjectCreate } from './project-create';
 import { ProjectLink } from './misc';
 
-
 interface ProjectProps {
   find: string | undefined | null;
 }
@@ -17,7 +16,6 @@ interface ProjectState {
   errorMsg?: string;
 }
 
-
 export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   constructor(props: ProjectProps) {
     super(props);
@@ -28,7 +26,14 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     };
   }
 
+  componentDidUpdate(prevProps: Readonly<ProjectProps>, prevState: Readonly<ProjectState>, snapshot?: any): void {
+    if (this.state.rows?.length === 0) {
+      document.getElementById('create-systemName')?.focus();
+    }
+  }
+
   componentDidMount() {
+    window.document.title = `Find: ?`;
     this.findProjects(this.props.find ?? '');
   }
 
@@ -37,11 +42,12 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     window.location.reload();
   }
 
-  findProjects = async (qq: string) => {
-    if (!qq) { return; }
-    const url = `${apiSvcUrl}/api/system/${qq}`;
+  findProjects = async (systemName: string) => {
+    if (!systemName) { return; }
+    const url = `${apiSvcUrl}/api/system/${encodeURIComponent(systemName)}`;
     console.log('ProjectSearch.fetch: begin:', url);
     this.setState({ loading: true });
+    window.document.title = `Find: ${systemName}`;
 
     // await new Promise(resolve => setTimeout(resolve, 1000));
     const response = await fetch(url, { method: 'GET' })
@@ -72,6 +78,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       <div className='half'>
         <div className="projects-query">
           <TextField
+            autoFocus
             name='systemName'
             label="System name:"
             required description="Enter complete system name"
@@ -100,7 +107,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     const { q, loading, rows, find } = this.state;
 
     if (loading) {
-      return <Spinner size={SpinnerSize.large} label={`Searching for projects within: ${q}`} />
+      return <Spinner size={SpinnerSize.large} label={`Searching for projects in: ${q}`} />
     }
 
     if (!rows) { return; }

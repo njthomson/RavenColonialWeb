@@ -1,5 +1,5 @@
 export const About: React.FunctionComponent = () => {
-  // window.location.assign("#about");
+  window.document.title = `About Raven Colonial Corporation`;
 
   return <>
     <div style={{ padding: '8px' }}>

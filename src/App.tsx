@@ -64,7 +64,7 @@ export class App extends Component<AppProps, AppState> {
         id: 'current-cmdr', key: 'current-cmdr',
         iconProps: { iconName: cmdr?.name ? 'Contact' : 'UserWarning' },
         text: cmdr?.name ?? '?',
-        onClick: () => this.setState({ cmdrEdit: cmdr?.name ?? '' }),
+        onClick: () => this.setState({ cmdrEdit: Store.getCmdr()?.name ?? '' }),
       },
       cmdr: cmdr?.name,
       cargoLargeMax: this.largeMax,
@@ -164,7 +164,7 @@ export class App extends Component<AppProps, AppState> {
   }
 
   clearCmdrName = () => {
-    const { cmdrBtn, } = this.state;
+    const { pivot, cmdrBtn, } = this.state;
     Store.clearCmdr();
 
     this.setState({
@@ -176,6 +176,10 @@ export class App extends Component<AppProps, AppState> {
         text: '?',
       },
     });
+
+    if (pivot === TopPivot.cmdr) {
+      window.document.title = `Cmdr: ?`;
+    }
   }
 
   saveCmdrName = () => {

@@ -3,7 +3,7 @@ import { PrimaryButton } from '@fluentui/react';
 import { RecentProjects } from './recent-projects';
 
 export const Home: React.FunctionComponent = () => {
-  console.log('render home');
+  window.document.title = `Raven Colonial Corporation`;
 
   return <>
     <div className='contain-vert'>
