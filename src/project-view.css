@@ -128,3 +128,16 @@
     display: block;
   }
 }
+
+.stats-header {
+  margin-bottom: 10px;
+}
+
+.stats-cmdr-over-time {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.chart {
+  width: 400px;
+}

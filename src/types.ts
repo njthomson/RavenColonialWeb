@@ -20,12 +20,31 @@ export interface ProjectRef extends ProjectRefLite {
 
   architectName?: string;
   factionName?: string;
+  maxNeed: number;
   notes?: string;
 }
 
 export interface Project extends ProjectRef {
+  sumNeed: number;
   commanders: Record<string, string[]>;
   commodities: Record<string, number>;
+}
+
+export interface SupplyStatsSummary {
+  buildId: string;
+  totalCargo: number;
+  totalDeliveries: number;
+  start: string;
+  end: string;
+  cmdrs: Record<string, number>;
+  stats: SupplyStats[],
+}
+
+export interface SupplyStats {
+  time: string;
+  countCargo: number;
+  countDeliveries: number;
+  cmdrs: Record<string, number>;
 }
 
 export interface CmdrSummary {

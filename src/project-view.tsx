@@ -1,11 +1,13 @@
 import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
-import { apiSvcUrl, mapCommodityNames, Project } from './types'
+import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from './types'
 import { Component } from 'react';
 import { ProjectCreate } from './project-create';
 import './project-view.css';
 import { Store } from './local-storage';
 import { CargoRemaining, CommodityIcon } from './misc';
+import { HorizontalBarChart } from '@fluentui/react-charting';
+import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -25,6 +27,8 @@ interface ProjectViewState {
   editProject?: Partial<Project>;
   disableDelete?: boolean;
   fixMarketId?: string;
+  summary?: SupplyStatsSummary;
+  sumTotal: number;
 }
 
 
@@ -36,6 +40,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       newCmdr: '',
       showAddCmdr: false,
       disableDelete: true,
+      sumTotal: 0,
     };
   }
 
@@ -57,12 +62,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return;
     }
 
+    // (not awaiting)
+    this.fetchProjectStats(buildId);
+
     const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
-    console.log('Project.fetch: begin buildId:', url);
-
-    // await new Promise(resolve => setTimeout(resolve, 250));
+    console.log('fetchProject: begin buildId:', url);
     const response = await fetch(url, { method: 'GET' })
-
     if (response.status === 200) {
       const newProj: Project = await response.json();
 
@@ -72,6 +77,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       const cmdrName = Store.getCmdr()?.name;
       this.setState({
         proj: newProj,
+        sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
         loading: false,
         disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
       });
@@ -83,6 +89,31 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
       Store.removeRecentProject(buildId);
       window.document.title = `Build: ?`;
+    } else {
+      const msg = `${response.status}: ${response.statusText}`;
+      this.setState({
+        loading: false,
+        errorMsg: msg,
+      });
+      console.error(msg);
+    }
+  }
+
+  async fetchProjectStats(buildId: string | undefined) {
+    if (!buildId) {
+      this.setState({ loading: false });
+      return;
+    }
+
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/stats`;
+    console.log('fetchProjectStats:', url);
+    const response = await fetch(url, { method: 'GET' })
+    if (response.status === 200) {
+      const stats: SupplyStatsSummary = await response.json();
+
+      this.setState({
+        summary: stats,
+      });
     } else {
       const msg = `${response.status}: ${response.statusText}`;
       this.setState({
@@ -142,10 +173,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           {this.renderCommodities()}
         </div>}
 
-        {!editCommodities && <div className='half'>
+        {!editCommodities && <>
           {this.renderProjectDetails(proj, editProject!)}
-          {/* {this.renderStats()} */}
-        </div>}
+          {!editProject && this.renderStats()}
+        </>}
+
       </div>
 
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
@@ -166,7 +198,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, assignCmdr, editCommodities } = this.state;
+    const { proj, assignCommodity, assignCmdr, editCommodities, sumTotal } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     const rows = [];
@@ -207,8 +239,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         }
       }
     }
-
-    const sumTotal = Object.values(proj.commodities).reduce((total, current) => total += current, 0);
 
     return <>
       {editCommodities && <>
@@ -261,37 +291,38 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   renderProjectDetails(proj: Project, editProject: Partial<Project>) {
     const className = !!editProject ? 'project-edit' : 'project';
 
-    return <div className={className}>
-      {editProject && <>
-        <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
-        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editProject: undefined, })} />
-      </>}
+    return <div className='half'>
+      <div className={className}>
+        {editProject && <>
+          <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
+          <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editProject: undefined, })} />
+        </>}
 
-      {!editProject && <h3>Build:</h3>}
-      <table>
-        <tbody>
-          <tr><td>Build name:</td><td>
-            {!editProject && <div className='detail'>{proj?.buildName}</div>}
-            {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
-          </td></tr>
-          <tr><td>Build type:</td><td><div className='detail'>{proj?.buildType}</div></td></tr>
-          <tr><td>System name:</td><td><div className='detail'>{proj?.systemName}</div></td></tr>
-          <tr><td>Architect:</td><td>
-            {!editProject && <div className='detail'>{proj?.architectName}&nbsp;</div>}
-            {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} />}
-          </td></tr>
-          <tr><td>Faction:</td><td>
-            {!editProject && <div className='detail'>{proj?.factionName}&nbsp;</div>}
-            {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
-          </td></tr>
-          <tr><td>Notes:</td><td>
-            {!editProject && <div className='detail notes'>{proj?.notes}&nbsp;</div>}
-            {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} />}
-          </td></tr>
-        </tbody>
-      </table>
-      {!editProject && this.renderCommanders()}
-
+        {!editProject && <h3>Build:</h3>}
+        <table>
+          <tbody>
+            <tr><td>Build name:</td><td>
+              {!editProject && <div className='detail'>{proj?.buildName}</div>}
+              {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
+            </td></tr>
+            <tr><td>Build type:</td><td><div className='detail'>{proj?.buildType}</div></td></tr>
+            <tr><td>System name:</td><td><div className='detail'>{proj?.systemName}</div></td></tr>
+            <tr><td>Architect:</td><td>
+              {!editProject && <div className='detail'>{proj?.architectName}&nbsp;</div>}
+              {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} />}
+            </td></tr>
+            <tr><td>Faction:</td><td>
+              {!editProject && <div className='detail'>{proj?.factionName}&nbsp;</div>}
+              {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
+            </td></tr>
+            <tr><td>Notes:</td><td>
+              {!editProject && <div className='detail notes'>{proj?.notes}&nbsp;</div>}
+              {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} />}
+            </td></tr>
+          </tbody>
+        </table>
+        {!editProject && this.renderCommanders()}
+      </div>
     </div>;
   };
 
@@ -498,6 +529,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         console.log('onUpdateCommodities: savedProj:', savedProj);
         this.setState({
           proj: savedProj,
+          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           editCommodities: undefined,
         });
       }
@@ -539,6 +571,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const cmdrName = Store.getCmdr()?.name;
         this.setState({
           proj: savedProj,
+          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           editProject: undefined,
           disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
         });
@@ -609,6 +642,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.log('saveNewMarketId: savedProj:', savedProj);
       this.setState({
         proj: savedProj,
+        sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
         fixMarketId: undefined,
       });
     } else {
@@ -618,8 +652,41 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   };
 
   renderStats() {
-    return <>
-      <div>stat!</div>
-    </>;
+    const { summary, proj, sumTotal } = this.state;
+    if (!summary || !proj) return;
+
+    // roughly calculate progress by the curremt sum from the highest value known
+    const approxProgress = proj.maxNeed - sumTotal;
+
+    const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
+    return <div className='half'>
+      <h3>Progress:</h3>
+      {!!summary.totalDeliveries && <div className='stats-header'>
+        Total cargo delivered: <span className='grey'>{summary.totalCargo.toLocaleString()}</span> from <span className='grey'>{summary.totalDeliveries.toLocaleString()}</span> deliveries
+      </div>}
+
+      {approxProgress > 0 && <HorizontalBarChart
+        className="chart"
+        data={[{
+          chartTitle: 'Total progress:',
+          chartData: [{ horizontalBarChartdata: { x: approxProgress, y: proj.maxNeed }, },],
+        }]}
+        chartDataMode={'percentage'} enableGradient
+      />}
+
+      <ChartByCmdrs summary={summary} cmdrColors={cmdrColors} />
+
+      {!!summary.totalDeliveries && <>
+        <div className='stats-cmdr-over-time'>Deliveries by time:</div>
+        <ChartByCmdrsOverTime summary={summary} />
+      </>}
+
+      {!summary.totalDeliveries && <div>
+        No tracked deliveries.
+        <br />
+        Use <a href='https://github.com/njthomson/SrvSurvey/wiki'>SrvSurvey</a> to track deliveries made.
+      </div>}
+
+    </div>;
   }
 }

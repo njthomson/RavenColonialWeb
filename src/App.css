@@ -47,6 +47,7 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  width: fit-content;
 }
 
 .contain-vert {
@@ -54,12 +55,13 @@ h3 {
   flex-wrap: nowrap;
   flex-direction: column;
   align-items: center;
+  width: fit-content;
 }
 
 .half {
   min-width: 400px;
   flex-grow: 1;
-  margin: 8px;
+  margin: 20px;
 }
 
 .center {

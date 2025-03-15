@@ -112,6 +112,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       buildType: 'orbis',
       architectName: '',
       factionName: '',
+      maxNeed: 0,
       notes: '',
     };
   }
