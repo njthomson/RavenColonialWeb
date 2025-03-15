@@ -48,7 +48,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.fetchProject(this.props.buildId);
     }
 
-    document.getElementById('auto-focus')?.focus();
+    // document.getElementById('auto-focus')?.focus();
   }
 
   async fetchProject(buildId: string | undefined) {
