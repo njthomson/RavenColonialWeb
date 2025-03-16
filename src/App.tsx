@@ -157,7 +157,7 @@ export class App extends Component<AppProps, AppState> {
     switch (pivot) {
       case TopPivot.home: return <Home />;
       case TopPivot.find: return <ProjectSearch find={find} />;
-      case TopPivot.build: return <ProjectView buildId={bid} />;
+      case TopPivot.build: return <ProjectView buildId={bid} cmdr={cmdr} />;
       case TopPivot.cmdr: return <Cmdr cmdr={cmdr} />;
       case TopPivot.about: return <About />;
     }

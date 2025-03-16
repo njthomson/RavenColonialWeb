@@ -151,6 +151,11 @@ h3 {
   font-size: 14px;
 }
 
+.button-pair {
+  button {
+    margin: 0 8px 0 8px;
+  }
+}
 
 @media (max-width: 400px) {
   footer {

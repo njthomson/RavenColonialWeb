@@ -3,6 +3,7 @@ import { Project, ProjectRefLite } from "./types";
 enum Keys {
   cmdr = 'cmdr',
   recentProjects = 'recentProjects',
+  deliver = 'deliver',
 }
 
 interface CmdrData {
@@ -71,4 +72,19 @@ export namespace Store {
     const json = JSON.stringify(recentProjects);
     window.localStorage.setItem(Keys.recentProjects, json)
   };
+
+  export const setDeliver = (deliver: Record<string, number>): void => {
+    window.localStorage.setItem(Keys.deliver, JSON.stringify(deliver));
+  }
+
+  export const getDeliver = (): Record<string, number> => {
+    const json = window.localStorage.getItem(Keys.deliver);
+    if (json) {
+      const data = JSON.parse(json) as Record<string, number>;
+      return data;
+    } else {
+      return {};
+    }
+  };
+
 }

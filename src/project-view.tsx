@@ -1,4 +1,4 @@
-import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
 import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from './types'
 import { Component } from 'react';
@@ -11,10 +11,12 @@ import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
 
 interface ProjectViewProps {
   buildId?: string;
+  cmdr?: string;
 }
 
 interface ProjectViewState {
   proj?: Project;
+  mode: Mode;
   loading: boolean;
   showAddCmdr: boolean;
   newCmdr?: string;
@@ -29,18 +31,33 @@ interface ProjectViewState {
   fixMarketId?: string;
   summary?: SupplyStatsSummary;
   sumTotal: number;
+
+  nextDelivery: Record<string, number>;
+  nextCommodity?: string;
+  nextAmount?: number;
+  showBubble: boolean;
 }
 
+enum Mode {
+  view,
+  editCommodities,
+  editProject,
+  deliver,
+}
 
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   constructor(props: ProjectViewProps) {
     super(props);
     this.state = {
       loading: true,
+      mode: Mode.view,
       newCmdr: '',
       showAddCmdr: false,
       disableDelete: true,
       sumTotal: 0,
+
+      showBubble: !props.cmdr,
+      nextDelivery: Store.getDeliver(),
     };
   }
 
@@ -53,7 +70,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.fetchProject(this.props.buildId);
     }
 
-    // document.getElementById('auto-focus')?.focus();
+    if (!prevProps.cmdr && !!this.props.cmdr) {
+      this.setState({ showBubble: !!this.props.cmdr });
+    }
   }
 
   async fetchProject(buildId: string | undefined) {
@@ -125,7 +144,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { proj, loading, confirmDelete, confirmComplete, errorMsg, editCommodities, editProject, disableDelete } = this.state;
+    const { mode, proj, loading, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -139,14 +158,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div>;
     }
 
-    const cmds: ICommandBarItemProps[] = [{
-      key: 'edit-commodities', text: 'Edit commodities',
-      iconProps: { iconName: 'AllAppsMirrored' },
-      onClick: () => this.setState({ editCommodities: { ...this.state.proj?.commodities } }),
+    const commands: ICommandBarItemProps[] = [{
+      key: 'deliver-cargo', text: 'Deliver',
+      iconProps: { iconName: 'DeliveryTruck' },
+      onClick: () => {
+        this.setState({ mode: Mode.deliver });
+        setTimeout(() => document.getElementById('deliver-commodity-input')?.focus(), 10);
+      },
     }, {
       key: 'btn-edit', text: 'Edit project',
       iconProps: { iconName: 'Edit' },
-      onClick: () => this.setState({ editProject: { ...this.state.proj } }),
+      onClick: () => this.setState({ mode: Mode.editProject, editProject: { ...this.state.proj } }),
+    }, {
+      key: 'edit-commodities', text: 'Edit commodities',
+      iconProps: { iconName: 'AllAppsMirrored' },
+      onClick: () => {
+        this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj?.commodities } });
+        setTimeout(() => document.getElementById('first-commodity-edit')?.focus(), 10);
+      }
     }, {
       key: 'btn-complete', text: 'Complete',
       iconProps: { iconName: 'Completed' },
@@ -162,22 +191,20 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
-        <h2><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} ({proj.buildType})</h2>
+        <h2 className='project-title'><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName}</h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
-        {!editCommodities && !editProject && <CommandBar className='top-bar' items={cmds} />}
+        {mode === Mode.view && <CommandBar className='top-bar' items={commands} />}
       </div >
 
       <div className='contain-horiz'>
-        {!editProject && <div className='half'>
-          {!editCommodities && <h3>Commodities:</h3>}
+        {(mode === Mode.view || mode === Mode.editCommodities) && <div className='half'>
+          {mode === Mode.view && <h3>Commodities:</h3>}
           {this.renderCommodities()}
         </div>}
 
-        {!editCommodities && <>
-          {this.renderProjectDetails(proj, editProject!)}
-          {!editProject && this.renderStats()}
-        </>}
+        {(mode === Mode.view || mode === Mode.editProject) && this.renderProjectDetails(proj, editProject!)}
 
+        {mode === Mode.view && this.renderStats()}
       </div>
 
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
@@ -187,6 +214,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         &nbsp;
         <DefaultButton text='No' onClick={() => this.setState({ confirmDelete: false })} autoFocus />
       </Modal>
+
       <Modal isOpen={confirmComplete}>
         <h3>Are you sure?</h3>
         <p>Congratulations!</p>
@@ -194,6 +222,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         &nbsp;
         <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} />
       </Modal>
+
+      {mode === Mode.deliver && this.renderDeliver()}
     </>;
   }
 
@@ -243,7 +273,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <>
       {editCommodities && <>
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
-        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editCommodities: undefined, })} />
+        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
       </>}
 
       <table className='commodities' cellSpacing={0} cellPadding={0}>
@@ -270,7 +300,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const need = proj.commodities![key];
     const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
-    const inputId = first ? 'auto-focus' : undefined;
+    const inputId = first ? 'first-commodity-edit' : undefined;
     return <tr key={`cc-${key}`} className={className}>
       <td className='commodity-name'>
         <span><CommodityIcon name={key} /> {mapCommodityNames[key]}</span>
@@ -295,7 +325,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div className={className}>
         {editProject && <>
           <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
-          <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ editProject: undefined, })} />
+          <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editProject: undefined, })} />
         </>}
 
         {!editProject && <h3>Build:</h3>}
@@ -366,7 +396,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div className='add-cmdr' hidden={!showAddCmdr}>
         <Stack horizontal tokens={horizontalGapStackTokens}>
           <TextField
-            id='auto-focus'
+            id='new-cmdr-edit'
             name='cmdr'
             value={newCmdr}
             onKeyDown={(ev) => {
@@ -406,6 +436,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ newCmdr: cmdrName })
     }
     this.setState({ showAddCmdr: true })
+    setTimeout(() => document.getElementById('new-cmdr-edit')?.focus(), 10);
   }
 
   onClickAddCmdr = async () => {
@@ -531,6 +562,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           proj: savedProj,
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           editCommodities: undefined,
+          mode: Mode.view,
         });
       }
       else {
@@ -574,13 +606,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           editProject: undefined,
           disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
+          mode: Mode.view,
         });
       } else {
         const msg = await response.text();
         this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
       }
     }
-
   };
 
   renderMissingMarketId() {
@@ -677,16 +709,193 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <ChartByCmdrs summary={summary} cmdrColors={cmdrColors} />
 
       {!!summary.totalDeliveries && <>
-        <div className='stats-cmdr-over-time'>Deliveries by time:</div>
+        <div className='stats-cmdr-over-time'>Deliveries per hour:</div>
         <ChartByCmdrsOverTime summary={summary} />
       </>}
 
       {!summary.totalDeliveries && <div>
-        No tracked deliveries.
+        No tracked deliveries yet.
         <br />
-        Use <a href='https://github.com/njthomson/SrvSurvey/wiki'>SrvSurvey</a> to track deliveries made.
+        Use <a href='https://github.com/njthomson/SrvSurvey/wiki'>SrvSurvey</a> to track deliveries automatically.
       </div>}
 
     </div>;
   }
+
+  renderDeliver() {
+    const { proj, nextDelivery, nextCommodity, nextAmount, showBubble } = this.state;
+    if (!proj) return;
+
+    const cargoOptions = Object.keys(proj.commodities)
+      .filter(k => !(k in nextDelivery))
+      .map(k => ({ key: k, text: mapCommodityNames[k] }))
+      .sort();
+
+    const deliveries = Object.keys(nextDelivery)
+      .map(k => <tr key={`dk${k}`}>
+        <td>{mapCommodityNames[k]}</td>
+        <td>
+          <input
+            className='deliver-amount-edit'
+            type='number'
+            value={nextDelivery[k].toLocaleString()}
+            onChange={(ev) => {
+              const newNextDelivery = { ...this.state.nextDelivery };
+              newNextDelivery[k] = parseInt(ev.target.value);
+              this.setState({
+                nextDelivery: newNextDelivery,
+              });
+            }}
+          />
+        </td>
+        <td>
+          <IconButton
+            title='Remove'
+            iconProps={{ iconName: 'Delete' }}
+            onClick={() => {
+              const newNextDelivery = { ...this.state.nextDelivery };
+              delete newNextDelivery[k];
+              this.setState({
+                nextDelivery: newNextDelivery,
+              });
+            }}
+          />
+        </td>
+      </tr>)
+
+    const sumTotal = Object.values(nextDelivery).reduce((sum, v) => sum += v, 0);
+
+    return <div className='delivery'>
+      <div className='button-pair'>
+        <PrimaryButton text='Deliver' iconProps={{ iconName: 'DeliveryTruck' }} onClick={this.submitDelivery} disabled={sumTotal === 0} />
+        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => {
+          this.setState({ mode: Mode.view });
+          //Store.setDeliver(nextDelivery);
+        }} />
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th className='commodity-name'>Commodity:</th>
+            <th className='commodity-need'>Amount:</th>
+          </tr>
+        </thead>
+        <tbody>
+          {deliveries}
+          <tr className='hint'>
+            <td>Total:</td>
+            <td className='right grey'>{sumTotal}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* <ComboBox autoFocus options={cargoOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} /> */}
+      <Stack horizontal verticalAlign='end'>
+        <ComboBox
+          id='deliver-commodity'
+          autoFocus
+          className='deliver-commodity'
+          label='New commodity:'
+          style={{ width: 200 }}
+          options={cargoOptions}
+          selectedKey={nextCommodity}
+          onChange={(_, o) => this.setState({ nextCommodity: `${o?.key}` })}
+          onKeyDown={(ev) => { if (ev.key === 'Enter') { this.addNextCommodity(); } }}
+        />
+        <TextField
+          className='deliver-amount'
+          label='Amount:'
+          name='next-amount'
+          width={100}
+          styles={{ fieldGroup: { width: 60, textAlign: 'end' } }}
+          value={nextAmount?.toString() ?? '0'}
+          onChange={(_, v) => {
+            const num = parseInt(v ?? '0')
+            this.setState({ nextAmount: num > 0 ? num : 0 });
+          }}
+          onKeyDown={(ev) => { if (ev.key === 'Enter') { this.addNextCommodity(); } }}
+        />
+        <IconButton
+          title='Add'
+          iconProps={{ iconName: 'Add' }}
+          style={{ alignContent: 'end' }}
+          onClick={this.addNextCommodity}
+        />
+        <IconButton
+          title='Cancel'
+          iconProps={{ iconName: 'Cancel' }}
+          onClick={() => this.setState({ nextAmount: 0, nextCommodity: '' })}
+        />
+      </Stack>
+
+      {showBubble && <TeachingBubble
+        target={'#current-cmdr'}
+        headline='Who are you?'
+        hasCloseButton={true}
+        onDismiss={() => { this.setState({ showBubble: false }) }}
+      >
+        Enter your cmdr's name to get credit for this delivery.
+      </TeachingBubble>}
+
+    </div>;
+  }
+
+  addNextCommodity = () => {
+    const { nextCommodity, nextAmount } = this.state;
+    if (!nextCommodity || !nextAmount) return;
+
+    // append current
+    const newNextDelivery = { ...(this.state.nextDelivery ?? {}) };
+    newNextDelivery[nextCommodity] = nextAmount;
+    this.setState({
+      nextDelivery: newNextDelivery,
+      nextCommodity: '',
+      nextAmount: 0,
+    });
+    setTimeout(() => document.getElementById('deliver-commodity-input')?.focus(), 10);
+  };
+
+  submitDelivery = async () => {
+    const buildId = this.state.proj?.buildId;
+    const nextDelivery = this.state.nextDelivery;
+    const cmdr = Store.getCmdr()?.name;
+    if (!buildId || !nextDelivery || !this.state.proj) return;
+
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/supply/${cmdr}`;
+    console.log('submitDelivery:', url);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', },
+      body: JSON.stringify(nextDelivery),
+    })
+
+    if (response.status === 200) {
+      // success
+      var newCommodities: Record<string, number> = await response.json();
+      console.log('submitDelivery: newCommodities:', newCommodities);
+
+      // update commodity counts on current project
+      const updateProj = this.state.proj;
+      for (const k in newCommodities) {
+        updateProj.commodities[k] = newCommodities[k];
+      }
+
+      // update state and re-fetch stats
+      this.setState({
+        proj: updateProj,
+        sumTotal: Object.values(newCommodities).reduce((total, current) => total += current, 0),
+        mode: Mode.view,
+      });
+      Store.setDeliver(nextDelivery);
+      this.fetchProjectStats(buildId);
+    }
+    else {
+      const msg = await response.text();
+      this.setState({
+        errorMsg: `${response.status}: ${response.statusText} ${msg}`,
+      });
+    }
+  };
 }
+

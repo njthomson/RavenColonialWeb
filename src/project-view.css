@@ -2,6 +2,10 @@
   background-color: yellow;
 } */
 
+.project-title {
+  margin: 10px;
+}
+
 .commodities th {
   text-align: left;
   padding: 0 10px 0 10px;
@@ -38,7 +42,6 @@
 .commodities .glue {
   white-space: nowrap;
 }
-
 
 .commodities tr:hover .btn-assign {
   display: inline;
@@ -105,6 +108,45 @@
 }
 
 
+.stats-header {
+  margin-bottom: 10px;
+}
+
+.stats-cmdr-over-time {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.chart {
+  width: 400px;
+}
+
+.cmdrs-over-time {
+  overflow: hidden;
+}
+
+.delivery {
+  padding: 10px;
+}
+
+.delivery .commodity-name {
+  text-align: left;
+  width: 195px;
+}
+
+.deliver-amount-edit {
+  text-align: right;
+  width: 50px;
+  margin: 0;
+}
+
+.deliver-amount input, .deliver-amount {
+  text-align: right;
+  width: 60px;
+}
+
+/* --- Adjustments for smaller screens --- */
+
 @media (max-width: 400px) {
   .commodities {
     font-size: 12px;
@@ -127,17 +169,4 @@
     width: 200px;
     display: block;
   }
-}
-
-.stats-header {
-  margin-bottom: 10px;
-}
-
-.stats-cmdr-over-time {
-  margin-top: 10px;
-  font-size: 12px;
-}
-
-.chart {
-  width: 400px;
 }

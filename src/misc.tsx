@@ -14,7 +14,6 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
   return <span className="project-link">
     {!props.noSys && <><a href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</a> : </>}<a className="project-name" href={`#build=${props.proj.buildId}`}><Icon iconName='Manufacturing' /> {props.proj.buildName}</a> ({props.proj.buildType})
   </span>;
-
 };
 
 
@@ -51,5 +50,5 @@ export const CargoRemaining: FunctionComponent<{ sumTotal: number }> = (props) =
     Remaining cargo to deliver: <span className='grey'>{props.sumTotal.toLocaleString()}</span>
     <br />
     Large ship:<span className='grey'>{tripsLarge} trips</span> or Medium ship:<span className='grey'>{tripsMed} trips</span>
-  </div>
+  </div>;
 };

@@ -75,6 +75,7 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
       {showBubble && <TeachingBubble
         target={'#current-cmdr'}
         headline='Who are you?'
+        hasCloseButton={true}
         onDismiss={() => { this.setState({ showBubble: false }) }}
       >
         Enter your cmdr's name to proceed.
@@ -96,7 +97,7 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
 
     for (const proj of projects ?? []) {
       // a row the the project link
-      const rowP = <tr><td colSpan={5}><li className='header'><ProjectLink proj={proj} /></li></td></tr>;
+      const rowP = <tr key={`cp${proj.buildId}`}><td colSpan={5}><li className='header'><ProjectLink proj={proj} /></li></td></tr>;
       rows.push(rowP);
       // add rows with commodity assignments?
       if (proj.commanders[cmdr]?.length > 0) {
@@ -105,7 +106,7 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
           flip = !flip;
           const className = 'assignment' + (flip ? '' : ' odd');
           const commodityClass = mapCommodityType[commodity]!;
-          const rowC = <tr className={className}>
+          const rowC = <tr className={className} key={`cp${proj.buildId}-${commodity}`}>
             <td className='init'></td>
             <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
             <td className='icon d'><CommodityIcon name={commodityClass} /></td>
@@ -124,7 +125,9 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
         {loading && <Spinner size={SpinnerSize.large} label={`Loading projects and assignments ...`} />}
         {!loading && <>
           <table className='cmdr-projects' cellSpacing={0}>
-            {rows}
+            <tbody>
+              {rows}
+            </tbody>
           </table>
           <CargoRemaining sumTotal={sumTotal} />
         </>}

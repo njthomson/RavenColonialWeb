@@ -1,7 +1,7 @@
 // type Pair<S> = [S | undefined, Dispatch<SetStateAction<S | undefined>>]
 
-// export const apiSvcUrl = 'https://localhost:7007';
-export const apiSvcUrl = 'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net';
+ export const apiSvcUrl = // 'https://localhost:7007'; /*
+  'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
 
 export interface ProjectRefLite {
   buildId: string;
