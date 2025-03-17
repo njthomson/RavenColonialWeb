@@ -32,10 +32,11 @@ interface ProjectViewState {
   summary?: SupplyStatsSummary;
   sumTotal: number;
 
+  showBubble: boolean;
+
   nextDelivery: Record<string, number>;
   nextCommodity?: string;
-  nextAmount?: number;
-  showBubble: boolean;
+  submitting: boolean;
 }
 
 enum Mode {
@@ -58,6 +59,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       showBubble: !props.cmdr,
       nextDelivery: Store.getDeliver(),
+      submitting: false,
     };
   }
 
@@ -228,7 +230,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, assignCmdr, editCommodities, sumTotal } = this.state;
+    const { proj, assignCommodity, assignCmdr, editCommodities, sumTotal, submitting } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     const rows = [];
@@ -271,10 +273,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     return <>
-      {editCommodities && <>
+      {editCommodities && !submitting && <div className='button-pair'>
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
-      </>}
+      </div>}
+      {submitting && <Spinner
+        className='submitting'
+        label="Updating commodities ..."
+        labelPosition="right"
+      />}
 
       <table className='commodities' cellSpacing={0} cellPadding={0}>
         <thead>
@@ -323,10 +330,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <div className='half'>
       <div className={className}>
-        {editProject && <>
+        {editProject && !this.state.submitting && <div className='button-pair'>
           <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
           <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editProject: undefined, })} />
-        </>}
+        </div>}
+        {this.state.submitting && <Spinner
+        className='submitting'
+        label="Updating project ..."
+        labelPosition="right"
+      />}
+
 
         {!editProject && <h3>Build:</h3>}
         <table>
@@ -548,6 +561,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           deltaProj.commodities[key] = editCommodities[key];
         }
       }
+
+      // add a little artificial delay so the spinner doesn't flicker in and out
+      this.setState({ submitting: true });
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', },
@@ -563,11 +581,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           editCommodities: undefined,
           mode: Mode.view,
+          submitting: false,
         });
       }
       else {
         const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
+        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
       }
     }
 
@@ -590,6 +609,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           deltaProj[kk] = editProject[kk]?.toString()!;
         }
       }
+
+      // add a little artificial delay so the spinner doesn't flicker in and out
+      this.setState({ submitting: true });
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', },
@@ -607,10 +631,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           editProject: undefined,
           disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
           mode: Mode.view,
+          submitting: false,
         });
       } else {
         const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
+        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
       }
     }
   };
@@ -701,7 +726,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         className="chart"
         data={[{
           chartTitle: 'Total progress:',
-          chartData: [{ horizontalBarChartdata: { x: approxProgress, y: proj.maxNeed }, },],
+          chartData: [{ horizontalBarChartdata: { x: approxProgress, y: proj.maxNeed } },],
         }]}
         chartDataMode={'percentage'} enableGradient
       />}
@@ -723,7 +748,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderDeliver() {
-    const { proj, nextDelivery, nextCommodity, nextAmount, showBubble } = this.state;
+    const { proj, nextDelivery, nextCommodity, showBubble, submitting } = this.state;
     if (!proj) return;
 
     const cargoOptions = Object.keys(proj.commodities)
@@ -736,6 +761,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <td>{mapCommodityNames[k]}</td>
         <td>
           <input
+            id={`deliver-${k}-input`}
             className='deliver-amount-edit'
             type='number'
             value={nextDelivery[k].toLocaleString()}
@@ -745,6 +771,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               this.setState({
                 nextDelivery: newNextDelivery,
               });
+            }}
+            onKeyDown={(ev) => {
+              if (ev.key === 'Enter') {
+                this.setState({ nextCommodity: '', });
+                setTimeout(() => document.getElementById(`deliver-commodity-input`)?.focus(), 10);
+              }
             }}
           />
         </td>
@@ -764,17 +796,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </tr>)
 
     const sumTotal = Object.values(nextDelivery).reduce((sum, v) => sum += v, 0);
+    const noNextCommodities = Object.values(nextDelivery).length === 0;
+    const addingCommidity = nextCommodity !== undefined || noNextCommodities;
 
     return <div className='delivery'>
-      <div className='button-pair'>
-        <PrimaryButton text='Deliver' iconProps={{ iconName: 'DeliveryTruck' }} onClick={this.submitDelivery} disabled={sumTotal === 0} />
+      {!submitting && <div className='button-pair'>
+        <PrimaryButton text='Deliver' iconProps={{ iconName: 'DeliveryTruck' }} onClick={this.submitDelivery} disabled={sumTotal === 0 || submitting} hidden={true} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => {
           this.setState({ mode: Mode.view });
           //Store.setDeliver(nextDelivery);
         }} />
-      </div>
+      </div>}
+      {submitting && <Spinner
+        className='submitting'
+        label="Submitting delivery ..."
+        labelPosition="right"
+      />}
 
-      <table>
+      {!noNextCommodities && <table cellSpacing={0}>
         <thead>
           <tr>
             <th className='commodity-name'>Commodity:</th>
@@ -783,15 +822,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </thead>
         <tbody>
           {deliveries}
-          <tr className='hint'>
-            <td>Total:</td>
-            <td className='right grey'>{sumTotal}</td>
-          </tr>
         </tbody>
-      </table>
+        <tfoot>
+          <tr className='hint'>
+            <td className='total-txt'>Total:</td>
+            <td className='total-num'><input value={sumTotal} readOnly /></td>
+          </tr>
+        </tfoot>
+      </table>}
 
       {/* <ComboBox autoFocus options={cargoOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} /> */}
-      <Stack horizontal verticalAlign='end'>
+      {addingCommidity && <Stack horizontal verticalAlign='end'>
         <ComboBox
           id='deliver-commodity'
           autoFocus
@@ -800,19 +841,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           style={{ width: 200 }}
           options={cargoOptions}
           selectedKey={nextCommodity}
-          onChange={(_, o) => this.setState({ nextCommodity: `${o?.key}` })}
-          onKeyDown={(ev) => { if (ev.key === 'Enter') { this.addNextCommodity(); } }}
-        />
-        <TextField
-          className='deliver-amount'
-          label='Amount:'
-          name='next-amount'
-          width={100}
-          styles={{ fieldGroup: { width: 60, textAlign: 'end' } }}
-          value={nextAmount?.toString() ?? '0'}
-          onChange={(_, v) => {
-            const num = parseInt(v ?? '0')
-            this.setState({ nextAmount: num > 0 ? num : 0 });
+          onChange={(_, o) => {
+            this.setState({ nextCommodity: `${o?.key}` });
+            document.getElementById('deliver-amount')?.focus();
           }}
           onKeyDown={(ev) => { if (ev.key === 'Enter') { this.addNextCommodity(); } }}
         />
@@ -821,13 +852,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           iconProps={{ iconName: 'Add' }}
           style={{ alignContent: 'end' }}
           onClick={this.addNextCommodity}
+          disabled={!nextCommodity}
         />
         <IconButton
           title='Cancel'
           iconProps={{ iconName: 'Cancel' }}
-          onClick={() => this.setState({ nextAmount: 0, nextCommodity: '' })}
+          onClick={() => this.setState({ nextCommodity: undefined })}
         />
-      </Stack>
+      </Stack>}
+
+      {!addingCommidity && <ActionButton text='Add commodity?' iconProps={{ iconName: 'Add' }} onClick={() => this.setState({ nextCommodity: '' })} />}
 
       {showBubble && <TeachingBubble
         target={'#current-cmdr'}
@@ -842,28 +876,32 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   addNextCommodity = () => {
-    const { nextCommodity, nextAmount } = this.state;
-    if (!nextCommodity || !nextAmount) return;
+    const { nextCommodity } = this.state;
+    if (!nextCommodity) return;
 
     // append current
     const newNextDelivery = { ...(this.state.nextDelivery ?? {}) };
-    newNextDelivery[nextCommodity] = nextAmount;
+    newNextDelivery[nextCommodity] = 0;
     this.setState({
       nextDelivery: newNextDelivery,
-      nextCommodity: '',
-      nextAmount: 0,
+      nextCommodity: undefined,
     });
-    setTimeout(() => document.getElementById('deliver-commodity-input')?.focus(), 10);
+    setTimeout(() => document.getElementById(`deliver-${nextCommodity}-input`)?.focus(), 10);
   };
 
   submitDelivery = async () => {
     const buildId = this.state.proj?.buildId;
     const nextDelivery = this.state.nextDelivery;
-    const cmdr = Store.getCmdr()?.name;
+    const cmdr = Store.getCmdr()?.name ?? 'unknown';
     if (!buildId || !nextDelivery || !this.state.proj) return;
 
     const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/supply/${cmdr}`;
     console.log('submitDelivery:', url);
+
+    // add a little artificial delay so the spinner doesn't flicker in and out
+    this.setState({ submitting: true });
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', },
@@ -885,6 +923,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({
         proj: updateProj,
         sumTotal: Object.values(newCommodities).reduce((total, current) => total += current, 0),
+        submitting: false,
         mode: Mode.view,
       });
       Store.setDeliver(nextDelivery);
@@ -894,6 +933,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       const msg = await response.text();
       this.setState({
         errorMsg: `${response.status}: ${response.statusText} ${msg}`,
+        submitting: false,
       });
     }
   };
