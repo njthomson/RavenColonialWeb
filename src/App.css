@@ -147,6 +147,10 @@ h3 {
   padding: 0 4px 0 4px;
 }
 
+.navy {
+  background-color: navy;
+}
+
 .hint {
   font-size: 14px;
 }

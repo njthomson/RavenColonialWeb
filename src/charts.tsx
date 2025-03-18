@@ -34,7 +34,7 @@ export const ChartByCmdrs: FunctionComponent<{ summary: SupplyStatsSummary, cmdr
   </div>;
 };
 
-export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSummary }> = (props) => {
+export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSummary, complete: boolean }> = (props) => {
   const { summary } = props;
   const colors = getColorTable(Object.keys(summary.cmdrs));
 
@@ -43,11 +43,13 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
     chartData: mapDay(ss, colors),
   }));
 
-  // and add an extra entry, so the chart extends to the current time
-  data.push({
-    xAxisPoint: new Date(),
-    chartData: [],
-  });
+  // and add an extra entry, so the chart extends to the current time (if not complete)
+  if (!props.complete) {
+    data.push({
+      xAxisPoint: new Date(),
+      chartData: [],
+    });
+  }
 
   return <div>
     <VerticalStackedBarChart

@@ -1,6 +1,7 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, TextField } from '@fluentui/react';
-import { apiSvcUrl, Project, ProjectRef, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
+import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, IconButton, MessageBar, MessageBarType,  PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { apiSvcUrl, Project, CreateProject, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
+import { Store } from './local-storage';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -8,9 +9,10 @@ interface ProjectCreateProps {
   systemName?: string;
 }
 
-interface ProjectCreateState extends Omit<ProjectRef, 'marketId'> {
+interface ProjectCreateState extends Omit<CreateProject, 'marketId'> {
   marketId: string | undefined;
   showMarketId: boolean;
+  showMarketIdHelp: boolean;
   foundStations?: StationEDSM[];
   msgError?: string;
   msgClass?: MessageBarType;
@@ -107,12 +109,14 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       starPos: [0, 0, 0],
       marketId: undefined,
       showMarketId: false,
+      showMarketIdHelp: false,
       buildId: '',
       buildName: '',
       buildType: 'orbis',
       architectName: '',
       factionName: '',
       maxNeed: 0,
+      complete: false,
       notes: '',
     };
   }
@@ -123,7 +127,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   }
 
   render() {
-    const { systemName, systemAddress, buildName, marketId, buildType, foundStations, showMarketId, msgError, msgClass } = this.state;
+    const { systemName, systemAddress, buildName, marketId, buildType, foundStations, showMarketId, showMarketIdHelp, msgError, msgClass } = this.state;
 
     const comboBoxStyles: Partial<IComboBoxStyles> = { root: { maxWidth: 300 } };
 
@@ -131,30 +135,47 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       <div className="create-project">
         <h3>Or start a new build?</h3>
         <div>
-          <TextField id='create-systemName' name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
-          <button onClick={this.onCheckSystem} hidden={foundStations && foundStations.length > 0}>check system</button>
+          <Stack horizontal style={{ alignItems: 'flex-end' }}>
+            <TextField id='create-systemName' name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
+            <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} />
+          </Stack>
         </div>
-        <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         {this.renderFoundStations()}
         {showMarketId && <div>
-          <TextField
-            name='marketId'
-            label='Market ID:'
-            value={marketId}
-            required={true}
-            description='This value comes from journal files in: %HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous'
-            onChange={(_, v) => this.setState({ marketId: v! })}
-          />
+          <Stack horizontal style={{ alignItems: 'flex-end' }}>
+            <TextField
+              id='manual-marketId'
+              name='marketId'
+              label='Market ID:'
+              value={marketId}
+              required={true}
+              onChange={(_, v) => this.setState({ marketId: v! })}
+            />
+            <IconButton title='How to find the marketId' iconProps={{ iconName: 'Info' }} onClick={() => this.setState({ showMarketIdHelp: true })} />
+          </Stack>
+
+          {showMarketIdHelp && <TeachingBubble
+            target={'#manual-marketId'}
+            hasCloseButton={true}
+            onDismiss={() => { this.setState({ showMarketIdHelp: false }) }}
+          >
+            <div>The <code className='navy'>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
+            <ul>
+              <li>Open folder: <code className='navy'>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
+              <li>Find the file named with today's date. Something like: <code className='navy'>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
+              <li>Scroll to the bottom and look for the line with <code className='navy'>"event":"Docked"</code></li>
+              <li>On that line, copy the value of <code className='navy'>MarketID</code></li>
+            </ul>
+          </TeachingBubble>}
         </div>}
 
         <TextField name='buildName' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
+        <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         <br />
 
-        {!systemAddress && <div>( check system first )<br /></div>}
-        <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />
-        {
-          msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>
-        }
+        {!!systemAddress &&<PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
+        {!systemAddress && <PrimaryButton text='Search sites ...' onClick={this.onCheckSystem} />}
+        {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
       </div>
     </>;
   }
@@ -166,7 +187,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
       const options: IChoiceGroupOption[] = [
         ...foundStations?.map(s => ({ key: s.marketId, text: s.name })),
-        { key: '', text: 'Other' }
+        { key: '-1', text: 'Other' }
       ];
 
       return <>
@@ -177,10 +198,20 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           onChange={(_, i) => {
             if (!i) { return; }
             const name = i.key === '' ? buildName : i.text;
-            this.setState({
-              marketId: i?.key ?? '',
-              buildName: name,
-            });
+            if (i.key === '-1') {
+              this.setState({
+                marketId: '',
+                showMarketId: true
+              });
+            } else {
+              this.setState({
+                marketId: i?.key ?? '',
+                showMarketId: false,
+              });
+              if (!this.state.buildName) {
+                this.setState({ buildName: name, });
+              }
+            }
           }} />
       </>;
     }
@@ -190,6 +221,12 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     if (!this.state.systemName) { return; }
     const url = `https://www.edsm.net/api-system-v1/stations?systemName=` + encodeURIComponent(this.state.systemName);
     console.log('ProjectCreate.onCheckSystem:', url);
+
+    this.setState({
+      showMarketId: false,
+      foundStations: undefined,
+    });
+
     const response = await fetch(url);
     //console.log('ProjectCreate.onCheckSystem:', response);
 
@@ -208,6 +245,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           systemAddress: data.id64,
           starPos: [data2.coords.x, data2.coords.y, data2.coords.z],
           systemName: data.name,
+          msgError: undefined,
         });
 
         const foundStations = data.stations.filter(s => s.name.includes('Construction') || s.name.includes('Colonisation'));
@@ -261,9 +299,17 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     console.log('ProjectCreate.onCheckSystem:', url);
 
     const body = {
-      ...this.state
+      ...this.state,
     };
     delete body.foundStations;
+    delete body.msgError;
+    delete body.msgClass;
+  
+    const cmdr = Store.getCmdr()?.name;
+    if (cmdr) {
+      body.commanders = {};
+      body.commanders[cmdr] = [];
+    }
 
     const response = await fetch(url, {
       method: 'PUT',

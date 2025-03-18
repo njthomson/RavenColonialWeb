@@ -103,6 +103,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
       });
       window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
+      if (newProj.complete)
+        window.document.title += ' (completed)';
+
     } else if (response.status === 404 && buildId) {
       this.setState({
         loading: false,
@@ -146,7 +149,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete } = this.state;
+    const { mode, proj, loading, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, sumTotal, submitting } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -160,6 +163,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div>;
     }
 
+    // prep CommandBar buttons
     const commands: ICommandBarItemProps[] = [{
       key: 'deliver-cargo', text: 'Deliver',
       iconProps: { iconName: 'DeliveryTruck' },
@@ -167,6 +171,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         this.setState({ mode: Mode.deliver });
         setTimeout(() => document.getElementById('deliver-commodity-input')?.focus(), 10);
       },
+      disabled: proj.complete,
     }, {
       key: 'btn-edit', text: 'Edit project',
       iconProps: { iconName: 'Edit' },
@@ -181,7 +186,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }, {
       key: 'btn-complete', text: 'Complete',
       iconProps: { iconName: 'Completed' },
-      disabled: true,
+      disabled: sumTotal !== 0 || proj.complete,
       onClick: () => this.setState({ confirmComplete: true }),
     }, {
       key: 'btn-delete', text: 'Delete',
@@ -193,7 +198,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
-        <h2 className='project-title'><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName}</h2>
+        <h2 className='project-title'><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} {proj.complete && <span> (completed)</span>}</h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
         {mode === Mode.view && <CommandBar className='top-bar' items={commands} />}
       </div >
@@ -212,17 +217,22 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
         <h3>Are you sure you want to delete?</h3>
         <p>This cannot be undone.</p>
-        <DefaultButton text='Yes' onClick={this.onProjectDelete} style={{ backgroundColor: '#FF8844' }} />
+        <DefaultButton text='Yes' onClick={this.onProjectDelete} style={{ backgroundColor: '#FF8844' }} disabled={submitting} />
         &nbsp;
-        <DefaultButton text='No' onClick={() => this.setState({ confirmDelete: false })} autoFocus />
+        <DefaultButton text='No' onClick={() => this.setState({ confirmDelete: false })} disabled={submitting} autoFocus />
       </Modal>
 
       <Modal isOpen={confirmComplete}>
-        <h3>Are you sure?</h3>
-        <p>Congratulations!</p>
-        <PrimaryButton text='Yes' onClick={this.onProjectDelete} />
+        <h3>Congratulations!</h3>
+        <p>
+          This project will no longer be findable once marked as complete, but remain visible for Commanders linked to it.
+          <br />
+          <br />
+          Are you sure?
+        </p>
+        <PrimaryButton text='Yes' onClick={this.onProjectComplete} disabled={submitting} />
         &nbsp;
-        <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} />
+        <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} disabled={submitting} />
       </Modal>
 
       {mode === Mode.deliver && this.renderDeliver()}
@@ -230,7 +240,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, assignCmdr, editCommodities, sumTotal, submitting } = this.state;
+    const { proj, assignCommodity, assignCmdr, editCommodities, sumTotal, submitting, mode } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     const rows = [];
@@ -277,7 +287,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
       </div>}
-      {submitting && <Spinner
+      {submitting && mode === Mode.editCommodities && <Spinner
         className='submitting'
         label="Updating commodities ..."
         labelPosition="right"
@@ -335,10 +345,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editProject: undefined, })} />
         </div>}
         {this.state.submitting && <Spinner
-        className='submitting'
-        label="Updating project ..."
-        labelPosition="right"
-      />}
+          className='submitting'
+          label="Updating project ..."
+          labelPosition="right"
+        />}
 
 
         {!editProject && <h3>Build:</h3>}
@@ -523,24 +533,49 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   onProjectDelete = async () => {
-    console.log('onProjectDelete:');
-
     const buildId = this.state.proj?.buildId;
-    if (buildId) {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
-      console.log('onShowAddCmdr:', url);
-      const response = await fetch(url, { method: 'DELETE' })
+    if (!buildId) return;
 
-      if (response.status === 202) {
-        // success - navigate to home
-        Store.removeRecentProject(buildId);
-        window.location.assign(`#`);
-        window.location.reload();
-      }
-      else {
-        const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
-      }
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
+    console.log('onProjectDelete:', url);
+
+    // add a little artificial delay so the spinner doesn't flicker in and out
+    this.setState({ submitting: true });
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const response = await fetch(url, { method: 'DELETE' })
+
+    if (response.status === 202) {
+      // success - navigate to home
+      Store.removeRecentProject(buildId);
+      window.location.assign(`#`);
+      window.location.reload();
+    }
+    else {
+      const msg = await response.text();
+      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+    }
+  }
+
+  onProjectComplete = async () => {
+    const buildId = this.state.proj?.buildId;
+    if (!buildId) return;
+
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/complete`;
+    console.log('onProjectComplete:', url);
+
+    // add a little artificial delay so the spinner doesn't flicker in and out
+    this.setState({ submitting: true });
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const response = await fetch(url, { method: 'POST' })
+
+    if (response.status === 202) {
+      window.location.reload();
+    }
+    else {
+      const msg = await response.text();
+      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
     }
   }
 
@@ -735,7 +770,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       {!!summary.totalDeliveries && <>
         <div className='stats-cmdr-over-time'>Deliveries per hour:</div>
-        <ChartByCmdrsOverTime summary={summary} />
+        <ChartByCmdrsOverTime summary={summary} complete={proj.complete} />
       </>}
 
       {!summary.totalDeliveries && <div>
@@ -895,7 +930,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const cmdr = Store.getCmdr()?.name ?? 'unknown';
     if (!buildId || !nextDelivery || !this.state.proj) return;
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/supply/${cmdr}`;
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/supply/${encodeURIComponent(cmdr)}`;
     console.log('submitDelivery:', url);
 
     // add a little artificial delay so the spinner doesn't flicker in and out

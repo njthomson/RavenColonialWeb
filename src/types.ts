@@ -1,6 +1,6 @@
 // type Pair<S> = [S | undefined, Dispatch<SetStateAction<S | undefined>>]
 
- export const apiSvcUrl = // 'https://localhost:7007'; /*
+export const apiSvcUrl = //'https://localhost:7007'; /*
   'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
 
 export interface ProjectRefLite {
@@ -20,8 +20,13 @@ export interface ProjectRef extends ProjectRefLite {
 
   architectName?: string;
   factionName?: string;
+  complete: boolean;
   maxNeed: number;
   notes?: string;
+}
+
+export interface CreateProject extends ProjectRef {
+  commanders?: Record<string, string[]>;
 }
 
 export interface Project extends ProjectRef {

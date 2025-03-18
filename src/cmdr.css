@@ -1,14 +1,11 @@
 .cmdr-projects .header {
-  padding: 16px 8px 4px 8px;
-}
-
-.cmdr-projects .assignment {
-  text-align: right;
-  width: fit-content;
+  padding: 8px 8px 4px 8px;
 }
 
 .cmdr-projects .commodity {
+  width: 275px;
   padding: 0 8px 0 8px;
+  text-align: right;
 }
 
 .cmdr-projects .init {

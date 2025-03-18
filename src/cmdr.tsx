@@ -89,47 +89,61 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
   }
 
   renderCmdrProjects() {
-    const cmdr = this.props.cmdr!;
+    const cmdr = this.props.cmdr?.toLowerCase() ?? '';
     const { projects, loading } = this.state;
 
     const rows = [];
     let sumTotal = 0;
 
-    for (const proj of projects ?? []) {
+    for (const p of projects ?? []) {
+      if (p.complete) continue;
+
       // a row the the project link
-      const rowP = <tr key={`cp${proj.buildId}`}><td colSpan={5}><li className='header'><ProjectLink proj={proj} /></li></td></tr>;
+      const rowP = <tr key={`cp${p.buildId}`}><td colSpan={4}><li className='header'><ProjectLink proj={p} /></li></td></tr>;
       rows.push(rowP);
+
       // add rows with commodity assignments?
-      if (proj.commanders[cmdr]?.length > 0) {
+      if (p.commanders[cmdr]?.length > 0) {
         let flip = true;
-        for (const commodity of proj.commanders[cmdr]) {
+        for (const commodity of p.commanders[cmdr]) {
+          // if (!p.commodities![commodity]) continue;
+
           flip = !flip;
           const className = 'assignment' + (flip ? '' : ' odd');
           const commodityClass = mapCommodityType[commodity]!;
-          const rowC = <tr className={className} key={`cp${proj.buildId}-${commodity}`}>
-            <td className='init'></td>
+          const rowC = <tr className={className} key={`cp${p.buildId}-${commodity}`}>
             <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
             <td className='icon d'><CommodityIcon name={commodityClass} /></td>
-            <td className='need d'>{proj.commodities![commodity].toLocaleString()}</td>
+            <td className='need d'>{p.commodities![commodity].toLocaleString()}</td>
             <td className='filler'></td>
           </tr>;
           rows.push(rowC);
-          sumTotal += proj.commodities![commodity];
+          sumTotal += p.commodities![commodity];
         }
       }
     }
 
+    const completedProjects = !projects ? [] : projects
+      .filter(p => p.complete)
+      .map(p => <li key={`cp${p.buildId}`}><ProjectLink proj={p} /></li>);
+
     return <>
       <div className='half'>
-        <h3>Your projects and assignments:</h3>
+        <h3>Active projects and assignments:</h3>
         {loading && <Spinner size={SpinnerSize.large} label={`Loading projects and assignments ...`} />}
         {!loading && <>
-          <table className='cmdr-projects' cellSpacing={0}>
+          <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
             <tbody>
               {rows}
             </tbody>
           </table>
           <CargoRemaining sumTotal={sumTotal} />
+        </>}
+
+        {completedProjects.length > 0 && <>
+          <br />
+          <h3>Completed projects:</h3>
+          <ul className='completed'>{completedProjects}</ul>
         </>}
       </div>
     </>;
