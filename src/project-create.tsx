@@ -1,4 +1,4 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, IconButton, MessageBar, MessageBarType,  PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { apiSvcUrl, Project, CreateProject, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
 import { Store } from './local-storage';
@@ -127,7 +127,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   }
 
   render() {
-    const { systemName, systemAddress, buildName, marketId, buildType, foundStations, showMarketId, showMarketIdHelp, msgError, msgClass } = this.state;
+    const { systemName, systemAddress, buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass } = this.state;
 
     const comboBoxStyles: Partial<IComboBoxStyles> = { root: { maxWidth: 300 } };
 
@@ -173,7 +173,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         <br />
 
-        {!!systemAddress &&<PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
+        {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
         {!systemAddress && <PrimaryButton text='Search sites ...' onClick={this.onCheckSystem} />}
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
       </div>
@@ -304,7 +304,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     delete body.foundStations;
     delete body.msgError;
     delete body.msgClass;
-  
+
     const cmdr = Store.getCmdr()?.name;
     if (cmdr) {
       body.commanders = {};
