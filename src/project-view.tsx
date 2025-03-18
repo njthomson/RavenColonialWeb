@@ -959,7 +959,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // update state and re-fetch stats
       this.setState({
         proj: updateProj,
-        sumTotal: Object.values(newCommodities).reduce((total, current) => total += current, 0),
+        sumTotal: Object.values(updateProj).reduce((total, current) => total += current, 0),
         submitting: false,
         mode: Mode.view,
       });
