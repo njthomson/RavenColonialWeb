@@ -86,40 +86,48 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     // (not awaiting)
     this.fetchProjectStats(buildId);
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
-    console.log('fetchProject: begin buildId:', url);
-    const response = await fetch(url, { method: 'GET' })
-    if (response.status === 200) {
-      const newProj: Project = await response.json();
+    try {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
+      console.log('fetchProject: begin buildId:', url);
+      const response = await fetch(url, { method: 'GET' });
+      if (response.status === 200) {
+        const newProj: Project = await response.json();
 
-      console.log('Project.fetch: end buildId:', newProj);
-      Store.addRecentProject(newProj);
+        console.log('Project.fetch: end buildId:', newProj);
+        Store.addRecentProject(newProj);
 
-      const cmdrName = Store.getCmdr()?.name;
-      this.setState({
-        proj: newProj,
-        sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
-        loading: false,
-        disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
-      });
-      window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
-      if (newProj.complete)
-        window.document.title += ' (completed)';
+        const cmdrName = Store.getCmdr()?.name;
+        this.setState({
+          proj: newProj,
+          sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
+          loading: false,
+          disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
+        });
+        window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
+        if (newProj.complete)
+          window.document.title += ' (completed)';
 
-    } else if (response.status === 404 && buildId) {
+      } else if (response.status === 404 && buildId) {
+        this.setState({
+          loading: false,
+          errorMsg: 'No project found by that ID',
+        });
+        Store.removeRecentProject(buildId);
+        window.document.title = `Build: ?`;
+      } else {
+        const msg = `${response.status}: ${response.statusText}`;
+        this.setState({
+          loading: false,
+          errorMsg: msg,
+        });
+        console.error(msg);
+      }
+    } catch (err: any) {
       this.setState({
         loading: false,
-        errorMsg: 'No project found by that ID',
+        errorMsg: err.message,
       });
-      Store.removeRecentProject(buildId);
-      window.document.title = `Build: ?`;
-    } else {
-      const msg = `${response.status}: ${response.statusText}`;
-      this.setState({
-        loading: false,
-        errorMsg: msg,
-      });
-      console.error(msg);
+      console.error(err.stack);
     }
   }
 
@@ -129,22 +137,29 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return;
     }
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/stats`;
-    console.log('fetchProjectStats:', url);
-    const response = await fetch(url, { method: 'GET' })
-    if (response.status === 200) {
-      const stats: SupplyStatsSummary = await response.json();
+    try {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/stats`;
+      console.log('fetchProjectStats:', url);
+      const response = await fetch(url, { method: 'GET' });
+      if (response.status === 200) {
+        const stats: SupplyStatsSummary = await response.json();
 
+        this.setState({
+          summary: stats,
+        });
+      } else {
+        const msg = `${response.status}: ${response.statusText}`;
+        this.setState({
+          loading: false,
+          errorMsg: msg,
+        });
+        console.error(msg);
+      }
+    } catch (err: any) {
       this.setState({
-        summary: stats,
+        errorMsg: err.message,
       });
-    } else {
-      const msg = `${response.status}: ${response.statusText}`;
-      this.setState({
-        loading: false,
-        errorMsg: msg,
-      });
-      console.error(msg);
+      console.error(err.stack);
     }
   }
 
@@ -439,17 +454,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   onClickCmdrRemove = async (cmdr: string) => {
     if (!this.state.proj?.buildId || !cmdr) { return; }
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(cmdr)}`;
-    console.log('onClickCmdrRemove:', url);
-    const response = await fetch(url, { method: 'DELETE' })
-    console.log('onClickCmdrRemove:', response);
+    try {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(cmdr)}`;
+      console.log('onClickCmdrRemove:', url);
+      const response = await fetch(url, { method: 'DELETE' });
+      console.log('onClickCmdrRemove:', response);
 
-    if (response.status === 202) {
-      // success - remove from in-memory data
-      const { proj } = this.state;
-      if (!proj.commanders) { proj.commanders = {}; }
-      delete proj.commanders[cmdr];
-      this.setState({ proj });
+      if (response.status === 202) {
+        // success - remove from in-memory data
+        const { proj } = this.state;
+        if (!proj.commanders) { proj.commanders = {}; }
+        delete proj.commanders[cmdr];
+        this.setState({ proj });
+      }
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
     }
   }
 
@@ -472,65 +494,84 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
       return;
     }
-    const { newCmdr } = this.state;
+    try {
+      const { newCmdr } = this.state;
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(newCmdr)}`;
-    console.log('onShowAddCmdr:', url);
-    const response = await fetch(url, { method: 'PUT' })
-    console.log('onShowAddCmdr:', response);
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(newCmdr)}`;
+      console.log('onShowAddCmdr:', url);
+      const response = await fetch(url, { method: 'PUT' });
+      console.log('onShowAddCmdr:', response);
 
-    if (response.status === 202) {
-      // success - add to in-memory data
-      const { proj } = this.state;
-      if (!proj.commanders) { proj.commanders = {}; }
-      proj.commanders[newCmdr] = [];
+      if (response.status === 202) {
+        // success - add to in-memory data
+        const { proj } = this.state;
+        if (!proj.commanders) { proj.commanders = {}; }
+        proj.commanders[newCmdr] = [];
+        this.setState({
+          showAddCmdr: false,
+          newCmdr: '',
+          proj
+        });
+      }
+    } catch (err: any) {
       this.setState({
-        showAddCmdr: false,
-        newCmdr: '',
-        proj
+        errorMsg: err.message,
       });
+      console.error(err.stack);
     }
   }
 
   onClickAssign = async () => {
     const { proj, assignCommodity, assignCmdr } = this.state;
     if (!proj?.buildId || !assignCmdr || !assignCommodity) { return; }
+    try {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(assignCmdr)}/${encodeURIComponent(assignCommodity)}/`;
+      console.log('onClickAssign:', url);
+      const response = await fetch(url, { method: 'PUT' });
+      console.log('onClickAssign:', response);
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(assignCmdr)}/${encodeURIComponent(assignCommodity)}/`;
-    console.log('onClickAssign:', url);
-    const response = await fetch(url, { method: 'PUT' })
-    console.log('onClickAssign:', response);
+      if (response.status === 202) {
+        // success - add to in-memory data
+        if (!proj.commanders) { proj.commanders = {}; }
+        if (!proj.commanders[assignCmdr]) { proj.commanders[assignCmdr] = []; }
 
-    if (response.status === 202) {
-      // success - add to in-memory data
-      if (!proj.commanders) { proj.commanders = {}; }
-      if (!proj.commanders[assignCmdr]) { proj.commanders[assignCmdr] = []; }
-
-      proj.commanders[assignCmdr].push(assignCommodity)
+        proj.commanders[assignCmdr].push(assignCommodity)
+        this.setState({
+          assignCommodity: undefined,
+          proj
+        });
+      }
+    } catch (err: any) {
       this.setState({
-        assignCommodity: undefined,
-        proj
+        errorMsg: err.message,
       });
+      console.error(err.stack);
     }
   }
 
   onClickUnassign = async (cmdr: string, commodity: string) => {
     const { proj } = this.state;
     if (!proj || !proj.buildId || !proj.commanders || !cmdr || !commodity || !proj.commanders[cmdr]) { return; }
+    try {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(cmdr)}/${encodeURIComponent(commodity)}/`;
+      console.log('onClickAssign:', url);
+      const response = await fetch(url, { method: 'DELETE' })
+      console.log('onClickAssign:', response);
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(cmdr)}/${encodeURIComponent(commodity)}/`;
-    console.log('onClickAssign:', url);
-    const response = await fetch(url, { method: 'DELETE' })
-    console.log('onClickAssign:', response);
+      if (response.status === 202) {
+        // success - remove from to in-memory data
 
-    if (response.status === 202) {
-      // success - remove from to in-memory data
-
-      const idx = proj.commanders[cmdr].indexOf(commodity)
-      proj.commanders[cmdr].splice(idx, 1);
+        const idx = proj.commanders[cmdr].indexOf(commodity)
+        proj.commanders[cmdr].splice(idx, 1);
+        this.setState({
+          proj
+        });
+      }
+    } catch (err: any) {
       this.setState({
-        proj
+        errorMsg: err.message,
       });
+      console.error(err.stack);
     }
   }
 
@@ -545,17 +586,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     this.setState({ submitting: true });
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const response = await fetch(url, { method: 'DELETE' })
+    try {
+      const response = await fetch(url, { method: 'DELETE' });
 
-    if (response.status === 202) {
-      // success - navigate to home
-      Store.removeRecentProject(buildId);
-      window.location.assign(`#`);
-      window.location.reload();
-    }
-    else {
-      const msg = await response.text();
-      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+      if (response.status === 202) {
+        // success - navigate to home
+        Store.removeRecentProject(buildId);
+        window.location.assign(`#`);
+        window.location.reload();
+      }
+      else {
+        const msg = await response.text();
+        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+      }
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
     }
   }
 
@@ -570,14 +618,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     this.setState({ submitting: true });
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const response = await fetch(url, { method: 'POST' })
+    try {
+      const response = await fetch(url, { method: 'POST' });
 
-    if (response.status === 202) {
-      window.location.reload();
-    }
-    else {
-      const msg = await response.text();
-      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+      if (response.status === 202) {
+        window.location.reload();
+      }
+      else {
+        const msg = await response.text();
+        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+      }
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
     }
   }
 
@@ -602,31 +657,37 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify(deltaProj)
-      })
-
-      if (response.status === 200) {
-        // success - apply new commodity count
-        var savedProj: Project = await response.json();
-        console.log('onUpdateCommodities: savedProj:', savedProj);
-        this.setState({
-          proj: savedProj,
-          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-          editCommodities: undefined,
-          mode: Mode.view,
-          submitting: false,
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', },
+          body: JSON.stringify(deltaProj)
         });
-      }
-      else {
-        const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+
+        if (response.status === 200) {
+          // success - apply new commodity count
+          var savedProj: Project = await response.json();
+          console.log('onUpdateCommodities: savedProj:', savedProj);
+          this.setState({
+            proj: savedProj,
+            sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+            editCommodities: undefined,
+            mode: Mode.view,
+            submitting: false,
+          });
+        }
+        else {
+          const msg = await response.text();
+          this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+        }
+      } catch (err: any) {
+        this.setState({
+          errorMsg: err.message,
+        });
+        console.error(err.stack);
       }
     }
-
   };
 
   onUpdateProjectDetails = async () => {
@@ -651,28 +712,35 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ submitting: true });
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify(deltaProj)
-      })
-
-      if (response.status === 200) {
-        // success
-        var savedProj: Project = await response.json();
-        console.log('onUpdateProjectDetails: savedProj:', savedProj);
-        const cmdrName = Store.getCmdr()?.name;
-        this.setState({
-          proj: savedProj,
-          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-          editProject: undefined,
-          disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
-          mode: Mode.view,
-          submitting: false,
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', },
+          body: JSON.stringify(deltaProj)
         });
-      } else {
-        const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+
+        if (response.status === 200) {
+          // success
+          var savedProj: Project = await response.json();
+          console.log('onUpdateProjectDetails: savedProj:', savedProj);
+          const cmdrName = Store.getCmdr()?.name;
+          this.setState({
+            proj: savedProj,
+            sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+            editProject: undefined,
+            disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
+            mode: Mode.view,
+            submitting: false,
+          });
+        } else {
+          const msg = await response.text();
+          this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
+        }
+      } catch (err: any) {
+        this.setState({
+          errorMsg: err.message,
+        });
+        console.error(err.stack);
       }
     }
   };
@@ -718,30 +786,37 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj, fixMarketId } = this.state;
     if (!proj?.buildId || !fixMarketId) return;
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
-    console.log('saveNewMarketId:', url);
-    const deltaProj = {
-      buildId: proj.buildId,
-      marketId: parseInt(fixMarketId),
-    };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', },
-      body: JSON.stringify(deltaProj)
-    })
-
-    if (response.status === 200) {
-      // success
-      var savedProj: Project = await response.json();
-      console.log('saveNewMarketId: savedProj:', savedProj);
-      this.setState({
-        proj: savedProj,
-        sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-        fixMarketId: undefined,
+    try {
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
+      console.log('saveNewMarketId:', url);
+      const deltaProj = {
+        buildId: proj.buildId,
+        marketId: parseInt(fixMarketId),
+      };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify(deltaProj)
       });
-    } else {
-      const msg = await response.text();
-      this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
+
+      if (response.status === 200) {
+        // success
+        var savedProj: Project = await response.json();
+        console.log('saveNewMarketId: savedProj:', savedProj);
+        this.setState({
+          proj: savedProj,
+          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+          fixMarketId: undefined,
+        });
+      } else {
+        const msg = await response.text();
+        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
+      }
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
     }
   };
 
@@ -939,39 +1014,46 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     this.setState({ submitting: true });
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', },
-      body: JSON.stringify(nextDelivery),
-    })
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify(nextDelivery),
+      });
 
-    if (response.status === 200) {
-      // success
-      var newCommodities: Record<string, number> = await response.json();
-      console.log('submitDelivery: newCommodities:', newCommodities);
+      if (response.status === 200) {
+        // success
+        var newCommodities: Record<string, number> = await response.json();
+        console.log('submitDelivery: newCommodities:', newCommodities);
 
-      // update commodity counts on current project
-      const updateProj = this.state.proj;
-      for (const k in newCommodities) {
-        updateProj.commodities[k] = newCommodities[k];
+        // update commodity counts on current project
+        const updateProj = this.state.proj;
+        for (const k in newCommodities) {
+          updateProj.commodities[k] = newCommodities[k];
+        }
+
+        // update state and re-fetch stats
+        this.setState({
+          proj: updateProj,
+          sumTotal: Object.values(updateProj).reduce((total, current) => total += current, 0),
+          submitting: false,
+          mode: Mode.view,
+        });
+        Store.setDeliver(nextDelivery);
+        this.fetchProjectStats(buildId);
       }
-
-      // update state and re-fetch stats
+      else {
+        const msg = await response.text();
+        this.setState({
+          errorMsg: `${response.status}: ${response.statusText} ${msg}`,
+          submitting: false,
+        });
+      }
+    } catch (err: any) {
       this.setState({
-        proj: updateProj,
-        sumTotal: Object.values(updateProj).reduce((total, current) => total += current, 0),
-        submitting: false,
-        mode: Mode.view,
+        errorMsg: err.message,
       });
-      Store.setDeliver(nextDelivery);
-      this.fetchProjectStats(buildId);
-    }
-    else {
-      const msg = await response.text();
-      this.setState({
-        errorMsg: `${response.status}: ${response.statusText} ${msg}`,
-        submitting: false,
-      });
+      console.error(err.stack);
     }
   };
 }

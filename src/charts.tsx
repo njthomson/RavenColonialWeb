@@ -62,6 +62,7 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
       width={400}
       height={200}
       styles={{ chartWrapper: 'cmdrs-over-time' }}
+      barWidth={4}
       enableReflow
     />
   </div>;

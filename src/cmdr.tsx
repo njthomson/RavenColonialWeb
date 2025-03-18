@@ -47,7 +47,7 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
       this.setState({ loading: true, projects: undefined });
 
       // await new Promise(resolve => setTimeout(resolve, 2500));
-      const response = await fetch(url, { method: 'GET' })
+      const response = await fetch(url, { method: 'GET' });
       if (response.status === 200) {
         const cmdrSummary: CmdrSummary = await response.json();
 
@@ -57,6 +57,11 @@ export class Cmdr extends Component<CmdrProps, CmdrState> {
         this.setState({ errorMsg: msg });
         console.error(msg);
       }
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
     } finally {
       this.setState({
         loading: false

@@ -48,26 +48,34 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     console.log('ProjectSearch.fetch: begin:', url);
     this.setState({ loading: true });
     window.document.title = `Find: ${systemName}`;
+    try {
 
-    // await new Promise(resolve => setTimeout(resolve, 1000));
-    const response = await fetch(url, { method: 'GET' })
+      // await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(url, { method: 'GET' });
 
-    if (response.status === 200) {
-      const newRows: ProjectRef[] = await response.json();
+      if (response.status === 200) {
+        const newRows: ProjectRef[] = await response.json();
 
-      console.log('Project.ProjectSearch: end', newRows);
+        console.log('Project.ProjectSearch: end', newRows);
+        this.setState({
+          loading: false,
+          rows: newRows,
+        });
+      } else {
+        const txt = await response.text();
+        const msg = `${response.status}: ${response.statusText} ${txt}`;
+        this.setState({
+          errorMsg: msg,
+          loading: false,
+        });
+        console.error(msg);
+      }
+    } catch (err: any) {
       this.setState({
         loading: false,
-        rows: newRows,
+        errorMsg: err.message,
       });
-    } else {
-      const txt = await response.text();
-      const msg = `${response.status}: ${response.statusText} ${txt}`;
-      this.setState({
-        errorMsg: msg,
-        loading: false,
-      });
-      console.error(msg);
+      console.error(err.stack);
     }
   }
 
