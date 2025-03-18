@@ -13,7 +13,10 @@ body {
   font-size: 16px;
   padding: 0px;
   padding-bottom: 30px;
-  min-width: 400px;
+  /* min-width: 400px; */
+  min-width: fit-content;
+  /* width: fit-content; */
+  width: 100%;
 }
 
 .top-bar {
