@@ -143,6 +143,12 @@ h3 {
   background-color: cyan;
 }
 
+.create-project .hint {
+  margin: 8px 0 8px 0;
+  display:flex;
+  align-items: center;
+}
+
 /* misc  */
 
 .grey {

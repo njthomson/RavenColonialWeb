@@ -1,4 +1,4 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, Icon, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { apiSvcUrl, Project, CreateProject, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
 import { Store } from './local-storage';
@@ -171,7 +171,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
         <TextField name='buildName' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
         <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
-        <br />
+        <div className='hint'><Icon iconName='Info' />&nbsp;<span>Exact cargo requirements are random and will require some adjustments.</span></div>
 
         {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
         {!systemAddress && <PrimaryButton text='Search sites ...' onClick={this.onCheckSystem} />}
