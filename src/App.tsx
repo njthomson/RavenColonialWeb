@@ -133,7 +133,7 @@ export class App extends Component<AppProps, AppState> {
         <Modal isOpen={editingCmdr}>
           <div className="edit-cmdr">
             <h2>Who are you?</h2>
-            <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} autoFocus />
+            <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} onKeyDown={(ev) => {if (ev.key === 'Enter') { this.saveCmdrName(); }}} autoFocus />
             <Slider min={0} max={794} value={cargoLargeMax} label='Large ship max capacity:' onChange={v => this.setState({ cargoLargeMax: v })} />
             <Slider min={0} max={400} value={cargoMediumMax} label='Medium ship max capacity:' onChange={v => this.setState({ cargoMediumMax: v })} />
             <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>

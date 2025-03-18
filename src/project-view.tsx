@@ -225,10 +225,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <Modal isOpen={confirmComplete}>
         <h3>Congratulations!</h3>
         <p>
-          This project will no longer be findable once marked as complete, but remain visible for Commanders linked to it.
-          <br />
-          <br />
           Are you sure?
+          <br />
+          <br />
+          This project will no longer be findable once marked as complete.
+          <br />
+          It will remain visible for Commanders linked to it.
         </p>
         <PrimaryButton text='Yes' onClick={this.onProjectComplete} disabled={submitting} />
         &nbsp;
