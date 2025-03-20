@@ -5,7 +5,7 @@ import { Component } from 'react';
 import { ProjectCreate } from './project-create';
 import './project-view.css';
 import { Store } from './local-storage';
-import { CargoRemaining, CommodityIcon } from './misc';
+import { BuildType, CargoRemaining, CommodityIcon } from './misc';
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
 
@@ -325,7 +325,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </>
   }
 
-  private getCommodityRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number> | undefined, flip: boolean, first: boolean) {
+  getCommodityRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number> | undefined, flip: boolean, first: boolean) {
     const assigned = cmdrs
       .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
@@ -372,21 +372,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <table>
           <tbody>
             <tr><td>Build name:</td><td>
-              {!editProject && <div className='detail'>{proj?.buildName}</div>}
+              {!editProject && <div className='detail'>{proj.buildName}</div>}
               {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
             </td></tr>
-            <tr><td>Build type:</td><td><div className='detail'>{proj?.buildType}</div></td></tr>
-            <tr><td>System name:</td><td><div className='detail'>{proj?.systemName}</div></td></tr>
+            <tr><td>Build type:</td><td><div className='detail'><BuildType buildType={proj.buildType} /></div></td></tr>
+            <tr><td>System name:</td><td><div className='detail'>{proj.systemName}</div></td></tr>
             <tr><td>Architect:</td><td>
-              {!editProject && <div className='detail'>{proj?.architectName}&nbsp;</div>}
+              {!editProject && <div className='detail'>{proj.architectName}&nbsp;</div>}
               {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} />}
             </td></tr>
             <tr><td>Faction:</td><td>
-              {!editProject && <div className='detail'>{proj?.factionName}&nbsp;</div>}
+              {!editProject && <div className='detail'>{proj.factionName}&nbsp;</div>}
               {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
             </td></tr>
             <tr><td>Notes:</td><td>
-              {!editProject && <div className='detail notes'>{proj?.notes}&nbsp;</div>}
+              {!editProject && <div className='detail notes'>{proj.notes}&nbsp;</div>}
               {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} />}
             </td></tr>
           </tbody>
@@ -846,7 +846,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <ChartByCmdrs summary={summary} cmdrColors={cmdrColors} />
 
       {!!summary.totalDeliveries && <>
-        <div className='stats-cmdr-over-time'>Deliveries per hour:</div>
+        <div className='stats-cmdr-over-time'>Cargo deliveries per hour:</div>
         <ChartByCmdrsOverTime summary={summary} complete={proj.complete} />
       </>}
 

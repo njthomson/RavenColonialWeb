@@ -3,6 +3,7 @@ import { FunctionComponent } from "react";
 import { mapCommodityIcon, mapCommodityType, ProjectRefLite } from "./types";
 import { Icon } from "@fluentui/react";
 import { Store } from "./local-storage";
+import { buildTypes } from './project-create';
 
 interface ProjectLinkProps {
   proj: ProjectRefLite;
@@ -12,7 +13,9 @@ interface ProjectLinkProps {
 export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
   // {!props.noSys && <><Icon iconName='LocationOutline' /> {props.proj.systemName}: </>}<a href={`#build=${props.proj.buildId}`}><Icon iconName='CityNext2' /> {props.proj.buildName}</a> ({props.proj.buildType})
   return <span className="project-link">
-    {!props.noSys && <><a href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</a> : </>}<a className="project-name" href={`#build=${props.proj.buildId}`}><Icon iconName='Manufacturing' /> {props.proj.buildName}</a> ({props.proj.buildType})
+    {!props.noSys && <><a href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</a> : </>}
+     <a className="project-name" href={`#build=${props.proj.buildId}`}><Icon iconName='Manufacturing' /> {props.proj.buildName}</a>
+     &nbsp;- <BuildType buildType={props.proj.buildType}/>
   </span>;
 };
 
@@ -51,4 +54,18 @@ export const CargoRemaining: FunctionComponent<{ sumTotal: number }> = (props) =
     <br />
     Large ship:<span className='grey'>{tripsLarge} trips</span> or Medium ship:<span className='grey'>{tripsMed} trips</span>
   </div>;
+};
+
+export const BuildType: FunctionComponent<{ buildType: string }> = (props) => {
+
+  const match = buildTypes.find(i => i.text.toLowerCase().includes(props.buildType));
+
+  if (!match) {
+    console.error(`Why no match for: ${props.buildType} ?`)
+    return <span>{props.buildType}</span>;
+  }
+
+  // remove the trailing "(aa, bb, cc)" so we can use just the build type in question
+  const displayName = match.text.substring(0, match.text.indexOf('('));
+  return <span key={`bt${props.buildType}`}>{displayName}({props.buildType})</span>;
 };

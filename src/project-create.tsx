@@ -19,7 +19,7 @@ interface ProjectCreateState extends Omit<CreateProject, 'marketId'> {
 }
 
 
-const buildTypes: IComboBoxOption[] = [
+export const buildTypes: IComboBoxOption[] = [
   { key: 't1so', text: 'Tier 1: Space Outposts', itemType: SelectableOptionMenuItemType.Header },
   { key: "plutus", text: "Commercial Outpost (Plutus)" },
   { key: "vulcan", text: "Industrial Outpost (Vulcan)" },
