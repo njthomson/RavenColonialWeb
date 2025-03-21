@@ -1,13 +1,14 @@
-import { ActionButton, ComboBox, CommandBar, DefaultButton, ICommandBarItemProps, IconButton, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenu, DefaultButton, Dropdown, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
 import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from './types'
-import { Component } from 'react';
+import { Component, CSSProperties } from 'react';
 import { ProjectCreate } from './project-create';
 import './project-view.css';
 import { Store } from './local-storage';
-import { BuildType, CargoRemaining, CommodityIcon } from './misc';
+import { BuildType, CargoRemaining, CommodityIcon, delayFocus, flattenObj, getTypeForCargo } from './misc';
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
+import { appTheme } from './theme';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -17,6 +18,8 @@ interface ProjectViewProps {
 interface ProjectViewState {
   proj?: Project;
   mode: Mode;
+  sort: SortMode;
+  sortChanging: boolean;
   loading: boolean;
   showAddCmdr: boolean;
   newCmdr?: string;
@@ -37,6 +40,7 @@ interface ProjectViewState {
   nextDelivery: Record<string, number>;
   nextCommodity?: string;
   submitting: boolean;
+  cargoContextItems?: IContextualMenuItem[];
 }
 
 enum Mode {
@@ -46,12 +50,21 @@ enum Mode {
   deliver,
 }
 
+enum SortMode {
+  alpha = 'Alpha sort',
+  group = 'Group by type',
+}
+
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   constructor(props: ProjectViewProps) {
     super(props);
+
+    const sortMode = Store.getSort();
     this.state = {
       loading: true,
       mode: Mode.view,
+      sort: sortMode as SortMode ?? SortMode.group,
+      sortChanging: false,
       newCmdr: '',
       showAddCmdr: false,
       disableDelete: true,
@@ -184,7 +197,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       iconProps: { iconName: 'DeliveryTruck' },
       onClick: () => {
         this.setState({ mode: Mode.deliver });
-        setTimeout(() => document.getElementById('deliver-commodity-input')?.focus(), 10);
+        delayFocus('deliver-commodity');
       },
       disabled: proj.complete,
     }, {
@@ -196,7 +209,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       iconProps: { iconName: 'AllAppsMirrored' },
       onClick: () => {
         this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj?.commodities } });
-        setTimeout(() => document.getElementById('first-commodity-edit')?.focus(), 10);
+        delayFocus('first-commodity-edit');
       }
     }, {
       key: 'btn-complete', text: 'Complete',
@@ -220,7 +233,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       <div className='contain-horiz'>
         {(mode === Mode.view || mode === Mode.editCommodities) && <div className='half'>
-          {mode === Mode.view && <h3>Commodities:</h3>}
           {this.renderCommodities()}
         </div>}
 
@@ -256,61 +268,100 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </>;
   }
 
+  getGroupedCommodities(): Record<string, string[]> {
+    const { proj, sort } = this.state;
+    if (!proj?.commodities) throw new Error("Why no commodities?");
+
+    const sorted = Object.keys(proj.commodities)
+    sorted.sort();
+
+    // just alpha sort
+    if (sort === SortMode.alpha) {
+      return { alpha: sorted };
+    }
+
+    const dd = Object.keys(proj.commodities).reduce((d, c) => {
+      const t = getTypeForCargo(c);
+      if (!d[t]) d[t] = [];
+      d[t].push(c);
+
+      return d;
+    }, {} as Record<string, string[]>);
+    return dd;
+  }
+
   renderCommodities() {
-    const { proj, assignCommodity, assignCmdr, editCommodities, sumTotal, submitting, mode } = this.state;
+    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, sortChanging } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     const rows = [];
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
 
     let flip = false;
-    for (const key in proj.commodities) {
+    const groupedCommodities = this.getGroupedCommodities();
+    const groupsAndCommodityKeys = flattenObj(groupedCommodities);
+
+    for (const key of groupsAndCommodityKeys) {
+      if (key in groupedCommodities) {
+        // group row
+        if (sort !== SortMode.alpha) {
+          rows.push(<tr className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}><td colSpan={3} className='hint'>{key}</td></tr>)
+        }
+        continue;
+      }
+
       flip = !flip;
-      var row = this.getCommodityRow(proj, key, cmdrs, editCommodities, flip, rows.length === 0);
+      var row: JSX.Element = mode === Mode.editCommodities
+        ? this.getCommodityEditRow(proj, key, cmdrs, editCommodities!, flip, rows.length === 0)
+        : this.getCommodityRow(proj, key, cmdrs, flip, rows.length === 0);
       rows.push(row)
 
       // show extra row to assign a commodity to a cmdr?
       if (assignCommodity === key && proj.commanders && !editCommodities) {
-        if (Object.keys(proj.commanders).length === 0) {
-          // show a warning when there's no cmdrs to add
-          rows.push(<tr key={`c${key}`}>
-            <td colSpan={3}>
-              <MessageBar messageBarType={MessageBarType.warning} onDismiss={() => this.setState({ assignCommodity: undefined })} >You need to add cmdrs first</MessageBar>
-            </td>
-          </tr>
-          );
-        } else {
-          const cmdrOptions = cmdrs
-            // .filter(cmdr => proj.commanders && proj.commanders[cmdr] && !proj.commanders[cmdr].includes(key))
-            .map(k => ({ key: k, text: k }))
-            .sort();
-
-          const assignRow = <tr key='c-edit'>
-            <td colSpan={3}>
-              <Stack horizontal>
-                <ComboBox autoFocus options={cmdrOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} />
-                <IconButton title='Assign' iconProps={{ iconName: 'Add' }} onClick={this.onClickAssign} />
-                <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
-              </Stack>
-            </td>
-          </tr>;
-          rows.push(assignRow);
-        }
+        rows.push(this.getCommodityAssignmentRow(key, proj, cmdrs));
       }
     }
 
     return <>
+      {mode === Mode.view && <h3>
+        Commodities:
+        <ActionButton
+          id='menu-sort'
+          iconProps={{ iconName: 'Sort' }}
+          onClick={(ev) => {
+            this.setState({ sortChanging: true });
+            ev.preventDefault();
+          }}
+        > {sort}</ActionButton>
+        <ContextualMenu
+          target='#menu-sort'
+          hidden={!sortChanging}
+          onDismiss={() => this.setState({ sortChanging: false })}
+          items={[{
+            key: SortMode.alpha,
+            text: SortMode.alpha,
+            onClick: () => { this.setState({ sort: SortMode.alpha }); Store.setSort(SortMode.alpha); },
+          },
+          {
+            key: SortMode.group,
+            text: SortMode.group,
+            onClick: () => { this.setState({ sort: SortMode.group }); Store.setSort(SortMode.group); },
+          }]}
+        />
+      </h3>}
+
       {editCommodities && !submitting && <div className='button-pair'>
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
       </div>}
+
       {submitting && mode === Mode.editCommodities && <Spinner
         className='submitting'
         label="Updating commodities ..."
         labelPosition="right"
       />}
 
-      <table className='commodities' cellSpacing={0} cellPadding={0}>
+      <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
             <th className='commodity-name'>Commodity:</th>
@@ -325,30 +376,100 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </>
   }
 
-  getCommodityRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number> | undefined, flip: boolean, first: boolean) {
-    const assigned = cmdrs
-      .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
-      .map(k => {
-        return <span className='removable' key={`$${key}-${k}`}> <span className='glue'>📌{k}</span><button className='btn' title={`Remove assignment of ${key} from ${k}`} onClick={() => { this.onClickUnassign(k, key); }}>x</button></span>;
-      });
+  getCommodityAssignmentRow(key: string, proj: Project, cmdrs: string[]) {
+    if (Object.keys(proj.commanders).length === 0) {
+      // show a warning when there's no cmdrs to add
+      return <tr key={`c${key}`}>
+        <td colSpan={3}>
+          <MessageBar messageBarType={MessageBarType.warning} onDismiss={() => this.setState({ assignCommodity: undefined })} >You need to add commanders first</MessageBar>
+        </td>
+      </tr>;
+    } else {
+      const cmdrOptions = cmdrs
+        .filter(cmdr => proj.commanders && proj.commanders[cmdr] && !proj.commanders[cmdr].includes(key))
+        .map(k => ({ key: k, text: k }))
+        .sort();
+
+      const assignRow = <tr key='c-edit'>
+        <td colSpan={3}>
+          <Stack horizontal>
+            <Dropdown
+              id='assign-cmdr'
+              openOnKeyboardFocus
+              placeholder='Assign a commander'
+              options={cmdrOptions}
+              selectedKey={this.state.assignCmdr}
+              onChange={(_, o) => this.onClickAssign(`${o?.key}`)}
+              onDismiss={() => this.setState({ assignCommodity: undefined })}
+            />
+            <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
+          </Stack>
+        </td>
+      </tr>;
+      return assignRow;
+    }
+  }
+
+  getCommodityEditRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number>, flip: boolean, first: boolean): JSX.Element {
 
     const need = proj.commodities![key];
     const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
     const inputId = first ? 'first-commodity-edit' : undefined;
+
     return <tr key={`cc-${key}`} className={className}>
       <td className='commodity-name'>
         <span><CommodityIcon name={key} /> {mapCommodityNames[key]}</span>
-        {!editCommodities && <button className='btn-assign' onClick={() => this.setState({ assignCommodity: key })} title={`Assign a commander to commodity: ${key}`}>+</button>}
       </td>
       <td className='commodity-need'>
-        {!editCommodities && need.toLocaleString()}
-        {editCommodities && <input id={inputId} className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {
+        <input id={inputId} className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {
           const ec2 = this.state.editCommodities!;
           ec2[key] = ev.target.valueAsNumber;
           this.setState({ editCommodities: ec2 });
-        }} />}
+        }} />
       </td>
-      {!editCommodities && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
+    </tr>;
+  }
+
+  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, first: boolean): JSX.Element {
+    const assigned = cmdrs
+      .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
+      .map(k => {
+        return <>
+          <span className='removable' key={`$${key}-${k}`}> <span className='glue'>📌{k}</span>
+            <Icon
+              className='btn'
+              iconName='Delete'
+              title={`Remove assignment of ${mapCommodityNames[key]} from ${k}`}
+              style={{ color: appTheme.palette.themePrimary }}
+              onClick={() => this.onClickUnassign(k, key)}
+            />
+          </span>
+        </>;
+      });
+
+    const need = proj.commodities![key];
+    const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
+
+    const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
+
+    return <tr key={`cc-${key}`} className={className} style={style}>
+      <td className='commodity-name'>
+        <CommodityIcon name={key} /> {mapCommodityNames[key]}
+        <Icon
+          className='btn-assign'
+          iconName='Add' // GlobalNavButton
+          title={`Assign a commander to commodity: ${key}`}
+          style={{ color: appTheme.palette.themePrimary }}
+          onClick={() => {
+            this.setState({ assignCommodity: key });
+            delayFocus('assign-cmdr');
+          }}
+        />
+      </td>
+      <td className='commodity-need'>
+        {need.toLocaleString()}
+      </td>
+      <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>
     </tr>;
   }
 
@@ -415,7 +536,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       var row = <li key={`@${key}`}>
         <span className='removable'>
           {key}
-          <button className='btn' title={`Remove commander ${key} from this project`} onClick={() => { this.onClickCmdrRemove(key); }}>x</button>
+          <Icon className='btn' iconName='Delete' title={`Assign a commander to commodity: ${key}`} style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }} onClick={() => { this.onClickCmdrRemove(key); }} />
         </span>
         {/* <span>{assigned}</span> */}
       </li>;
@@ -483,7 +604,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ newCmdr: cmdrName })
     }
     this.setState({ showAddCmdr: true })
-    setTimeout(() => document.getElementById('new-cmdr-edit')?.focus(), 10);
+    delayFocus('new-cmdr-edit');
   }
 
   onClickAddCmdr = async () => {
@@ -521,8 +642,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  onClickAssign = async () => {
-    const { proj, assignCommodity, assignCmdr } = this.state;
+  onClickAssign = async (assignCmdr: string) => {
+    const { proj, assignCommodity } = this.state;
     if (!proj?.buildId || !assignCmdr || !assignCommodity) { return; }
     try {
       const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(assignCmdr)}/${encodeURIComponent(assignCommodity)}/`;
@@ -657,7 +778,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       try {
         const response = await fetch(url, {
           method: 'POST',
@@ -887,14 +1008,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             onKeyDown={(ev) => {
               if (ev.key === 'Enter') {
                 this.setState({ nextCommodity: '', });
-                setTimeout(() => document.getElementById(`deliver-commodity-input`)?.focus(), 10);
+                delayFocus('deliver-commodity');
+              } else if (ev.key === 'Escape') {
+                this.setState({ mode: Mode.view });
               }
             }}
           />
         </td>
         <td>
           <IconButton
-            title='Remove'
+            title={`Remove ${mapCommodityNames[k]}`}
             iconProps={{ iconName: 'Delete' }}
             onClick={() => {
               const newNextDelivery = { ...this.state.nextDelivery };
@@ -916,7 +1039,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <PrimaryButton text='Deliver' iconProps={{ iconName: 'DeliveryTruck' }} onClick={this.submitDelivery} disabled={sumTotal === 0 || submitting} hidden={true} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => {
           this.setState({ mode: Mode.view });
-          //Store.setDeliver(nextDelivery);
         }} />
       </div>}
       {submitting && <Spinner
@@ -938,33 +1060,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <tfoot>
           <tr className='hint'>
             <td className='total-txt'>Total:</td>
-            <td className='total-num'><input value={sumTotal} readOnly /></td>
+            <td className='total-num'><input value={sumTotal} readOnly tabIndex={-1} /></td>
           </tr>
         </tfoot>
       </table>}
 
-      {/* <ComboBox autoFocus options={cargoOptions} selectedKey={assignCmdr} onChange={(_, o) => this.setState({ assignCmdr: `${o?.key}` })} /> */}
       {addingCommidity && <Stack horizontal verticalAlign='end'>
-        <ComboBox
+        <Dropdown
           id='deliver-commodity'
-          autoFocus
+          openOnKeyboardFocus
           className='deliver-commodity'
           label='New commodity:'
+          placeholder='Choose a commodity...'
           style={{ width: 200 }}
           options={cargoOptions}
           selectedKey={nextCommodity}
           onChange={(_, o) => {
-            this.setState({ nextCommodity: `${o?.key}` });
+            this.addNextCommodity(`${o?.key}`);
             document.getElementById('deliver-amount')?.focus();
           }}
-          onKeyDown={(ev) => { if (ev.key === 'Enter') { this.addNextCommodity(); } }}
-        />
-        <IconButton
-          title='Add'
-          iconProps={{ iconName: 'Add' }}
-          style={{ alignContent: 'end' }}
-          onClick={this.addNextCommodity}
-          disabled={!nextCommodity}
+          onDismiss={() => this.setState({ nextCommodity: undefined })}
         />
         <IconButton
           title='Cancel'
@@ -973,7 +1088,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />
       </Stack>}
 
-      {!addingCommidity && <ActionButton text='Add commodity?' iconProps={{ iconName: 'Add' }} onClick={() => this.setState({ nextCommodity: '' })} />}
+      {!addingCommidity && <ActionButton text='Add commodity?' iconProps={{ iconName: 'Add' }} onClick={() => { this.setState({ nextCommodity: '' }); delayFocus('deliver-commodity'); }} />}
 
       {showBubble && <TeachingBubble
         target={'#current-cmdr'}
@@ -987,8 +1102,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </div>;
   }
 
-  addNextCommodity = () => {
-    const { nextCommodity } = this.state;
+  addNextCommodity = (nextCommodity: string) => {
     if (!nextCommodity) return;
 
     // append current
@@ -998,7 +1112,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       nextDelivery: newNextDelivery,
       nextCommodity: undefined,
     });
-    setTimeout(() => document.getElementById(`deliver-${nextCommodity}-input`)?.focus(), 10);
+    delayFocus(`deliver-${nextCommodity}-input`);
   };
 
   submitDelivery = async () => {
@@ -1035,7 +1149,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         // update state and re-fetch stats
         this.setState({
           proj: updateProj,
-          sumTotal: Object.values(updateProj).reduce((total, current) => total += current, 0),
+          sumTotal: Object.values(updateProj.commodities).reduce((total, current) => total += current, 0),
           submitting: false,
           mode: Mode.view,
         });

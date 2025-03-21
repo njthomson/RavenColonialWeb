@@ -1,9 +1,10 @@
 import './misc.css';
 import { FunctionComponent } from "react";
-import { mapCommodityIcon, mapCommodityType, ProjectRefLite } from "./types";
+import { mapCommodityIcon, mapCommodityNames, mapCommodityType, ProjectRefLite } from "./types";
 import { Icon } from "@fluentui/react";
 import { Store } from "./local-storage";
 import { buildTypes } from './project-create';
+import cargoTypes from './assets/cargo-types.json';
 
 interface ProjectLinkProps {
   proj: ProjectRefLite;
@@ -14,8 +15,8 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
   // {!props.noSys && <><Icon iconName='LocationOutline' /> {props.proj.systemName}: </>}<a href={`#build=${props.proj.buildId}`}><Icon iconName='CityNext2' /> {props.proj.buildName}</a> ({props.proj.buildType})
   return <span className="project-link">
     {!props.noSys && <><a href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</a> : </>}
-     <a className="project-name" href={`#build=${props.proj.buildId}`}><Icon iconName='Manufacturing' /> {props.proj.buildName}</a>
-     &nbsp;- <BuildType buildType={props.proj.buildType}/>
+    <a className="project-name" href={`#build=${props.proj.buildId}`}><Icon iconName='Manufacturing' /> {props.proj.buildName}</a>
+    &nbsp;- <BuildType buildType={props.proj.buildType} />
   </span>;
 };
 
@@ -69,3 +70,32 @@ export const BuildType: FunctionComponent<{ buildType: string }> = (props) => {
   const displayName = match.text.substring(0, match.text.indexOf('('));
   return <span key={`bt${props.buildType}`}>{displayName}({props.buildType})</span>;
 };
+
+export const getTypeForCargo = (cargo: string) => {
+
+  const mapCargoType = cargoTypes as Record<string, string[]>;
+  for (const type in mapCargoType) {
+    if (mapCargoType[type].includes(mapCommodityNames[cargo]))
+      return type;
+  }
+
+  console.error(`Unknown type for cargo: ${cargo}`);
+  return '?';
+};
+
+export const flattenObj = (obj: Record<string, string[]>): string[] => {
+  const list: string[] = [];
+  const sortedKeys = Object.keys(obj);
+  sortedKeys.sort();
+
+  for (const key of sortedKeys) {
+    list.push(key);
+    list.push(...obj[key]);
+  }
+
+  return list;
+};
+
+export const delayFocus = (target: string, delay = 10): void => {
+  setTimeout(() => document.getElementById(target)?.focus(), delay);
+}

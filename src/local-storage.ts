@@ -4,6 +4,7 @@ enum Keys {
   cmdr = 'cmdr',
   recentProjects = 'recentProjects',
   deliver = 'deliver',
+  sortMode = 'sortMode',
 }
 
 interface CmdrData {
@@ -85,6 +86,14 @@ export namespace Store {
     } else {
       return {};
     }
+  };
+
+  export const setSort = (sortMode: string): void => {
+    window.localStorage.setItem(Keys.sortMode, sortMode);
+  }
+
+  export const getSort = (): string | undefined => {
+    return window.localStorage.getItem(Keys.sortMode) ?? undefined;
   };
 
 }

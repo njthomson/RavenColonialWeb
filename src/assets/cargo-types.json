@@ -12,8 +12,9 @@
     "Surface Stabilisers",
     "Synthetic Reagents",
     "Tritium",
-    "Water",
-    "Consumer Items",
+    "Water"
+  ],
+  "Consumer Items": [
     "Clothing",
     "Consumer Technology",
     "Domestic Appliances",
@@ -26,8 +27,9 @@
     "Narcotics",
     "Onionhead Gamma Strain",
     "Tobacco",
-    "Wine",
-    "Foods",
+    "Wine"
+  ],
+  "Foods": [
     "Algae",
     "Animal Meat",
     "Coffee",
@@ -106,8 +108,9 @@
     "Thallium",
     "Thorium",
     "Titanium",
-    "Uranium",
-    "Minerals",
+    "Uranium"
+  ],
+  "Minerals": [
     "Alexandrite",
     "Bauxite",
     "Benitoite",
