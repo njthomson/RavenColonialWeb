@@ -33,6 +33,7 @@ export interface Project extends ProjectRef {
   sumNeed: number;
   commanders: Record<string, string[]>;
   commodities: Record<string, number>;
+  ready: string[];
 }
 
 export interface SupplyStatsSummary {
@@ -130,11 +131,13 @@ export const mapCommodityIcon: Record<string, string> = {
   ConsumerItems: 'ShoppingCart',
   LegalDrugs: 'ClassroomLogo',
   Foods: 'EatDrink',
-  Industrial: 'CubeShape', // 'CubeShape',
+  Industrial: 'CubeShape',
+  'Industrial Materials': 'CubeShape',
   Machinery: 'ProductVariant', // 'CubeShape',
   Medicines: 'Health', //'Medical',
   Metals: 'WebAppBuilderModule', //'ViewInAR',
   Minerals: 'Diamond',
+  Textiles: 'Shirt',
   Salvage: 'Quantity',
   Technology: 'Robot',
   Waste: 'RecycleBin',
@@ -212,6 +215,7 @@ export const mapCommodityNames: Record<string, string> = {
   "muonimager": "Muon Imager",
   "basicmedicines": "Basic Medicines",
   "combatstabilizers": "Combat Stabilizers",
+  "combatstabilisers": "Combat Stabilizers",
   "militarygradefabrics": "Military Grade Fabrics",
   "advancedcatalysers": "Advanced Catalysers",
   "wine": "Wine",

@@ -1,10 +1,11 @@
 import { Project, ProjectRefLite } from "./types";
 
-enum Keys {
+enum Stored {
   cmdr = 'cmdr',
   recentProjects = 'recentProjects',
   deliver = 'deliver',
   sortMode = 'sortMode',
+  hideCompleted = 'hideCompleted',
 }
 
 interface CmdrData {
@@ -15,11 +16,11 @@ interface CmdrData {
 
 export namespace Store {
   export const clearCmdr = (): void => {
-    window.localStorage.removeItem(Keys.cmdr);
+    window.localStorage.removeItem(Stored.cmdr);
   }
 
   export const getCmdr = (): CmdrData | undefined => {
-    const json = window.localStorage.getItem(Keys.cmdr);
+    const json = window.localStorage.getItem(Stored.cmdr);
     if (json) {
       return JSON.parse(json);
     } else {
@@ -28,12 +29,12 @@ export namespace Store {
   }
 
   export const setCmdr = (cmdr: CmdrData): void => {
-    window.localStorage.setItem(Keys.cmdr, JSON.stringify(cmdr));
+    window.localStorage.setItem(Stored.cmdr, JSON.stringify(cmdr));
   }
 
 
   export const getRecentProjects = () => {
-    const json = window.localStorage.getItem(Keys.recentProjects);
+    const json = window.localStorage.getItem(Stored.recentProjects);
     if (json) {
       const data = JSON.parse(json) as ProjectRefLite[];
       return data;
@@ -62,7 +63,7 @@ export namespace Store {
     }
 
     const json = JSON.stringify(recentProjects);
-    window.localStorage.setItem(Keys.recentProjects, json)
+    window.localStorage.setItem(Stored.recentProjects, json)
   };
 
   export const removeRecentProject = (buildId: string): void => {
@@ -71,15 +72,15 @@ export namespace Store {
       .filter(rp => rp.buildId !== buildId);
 
     const json = JSON.stringify(recentProjects);
-    window.localStorage.setItem(Keys.recentProjects, json)
+    window.localStorage.setItem(Stored.recentProjects, json)
   };
 
   export const setDeliver = (deliver: Record<string, number>): void => {
-    window.localStorage.setItem(Keys.deliver, JSON.stringify(deliver));
+    window.localStorage.setItem(Stored.deliver, JSON.stringify(deliver));
   }
 
   export const getDeliver = (): Record<string, number> => {
-    const json = window.localStorage.getItem(Keys.deliver);
+    const json = window.localStorage.getItem(Stored.deliver);
     if (json) {
       const data = JSON.parse(json) as Record<string, number>;
       return data;
@@ -88,12 +89,24 @@ export namespace Store {
     }
   };
 
-  export const setSort = (sortMode: string): void => {
-    window.localStorage.setItem(Keys.sortMode, sortMode);
+  export const setCommoditySort = (sortMode: string): void => {
+    window.localStorage.setItem(Stored.sortMode, sortMode);
   }
 
-  export const getSort = (): string | undefined => {
-    return window.localStorage.getItem(Keys.sortMode) ?? undefined;
+  export const getCommoditySort = (): string | undefined => {
+    return window.localStorage.getItem(Stored.sortMode) ?? undefined;
+  };
+
+  export const setCommodityHideCompleted = (hideCompleted: boolean): void => {
+    window.localStorage.setItem(Stored.hideCompleted, JSON.stringify(hideCompleted));
+  }
+
+  export const getCommodityHideCompleted = (): boolean => {
+    const json = window.localStorage.getItem(Stored.hideCompleted);
+    if (!json)
+      return false;
+    else
+      return JSON.parse(json) as boolean;
   };
 
 }

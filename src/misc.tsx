@@ -23,19 +23,17 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
 
 export const CommodityIcon: FunctionComponent<{ name: string }> = (props) => {
 
-  let commodityClass = '';
-  let iconName = '';
+  let commodityClass = getTypeForCargo(props.name);
+  let iconName = mapCommodityIcon[commodityClass]!;
 
-  if (props.name in mapCommodityType) {
-    commodityClass = mapCommodityType[props.name];
+  if (commodityClass) {
     iconName = mapCommodityIcon[commodityClass]!;
   } else if (props.name in mapCommodityIcon) {
-    commodityClass = props.name;
     iconName = mapCommodityIcon[props.name];
   } else {
     console.error(`Unexpected: ${props.name}`);
     commodityClass = 'Unknown';
-    iconName = 'Close';
+    iconName = 'ChromeClose';
 
     mapCommodityType[props.name] = 'xxx'
     console.log(mapCommodityType);

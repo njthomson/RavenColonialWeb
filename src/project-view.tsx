@@ -1,4 +1,4 @@
-import { ActionButton, CommandBar, ContextualMenu, DefaultButton, Dropdown, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
 import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from './types'
 import { Component, CSSProperties } from 'react';
@@ -29,6 +29,7 @@ interface ProjectViewState {
   assignCommodity?: string;
   assignCmdr?: string;
   editCommodities?: Record<string, number>;
+  editReady: Set<string>;
   editProject?: Partial<Project>;
   disableDelete?: boolean;
   fixMarketId?: string;
@@ -36,11 +37,13 @@ interface ProjectViewState {
   sumTotal: number;
 
   showBubble: boolean;
+  hideDoneRows: boolean;
 
   nextDelivery: Record<string, number>;
   nextCommodity?: string;
   submitting: boolean;
   cargoContextItems?: IContextualMenuItem[];
+  cargoContext?: string;
 }
 
 enum Mode {
@@ -59,7 +62,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   constructor(props: ProjectViewProps) {
     super(props);
 
-    const sortMode = Store.getSort();
+    const sortMode = Store.getCommoditySort();
     this.state = {
       loading: true,
       mode: Mode.view,
@@ -70,6 +73,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       disableDelete: true,
       sumTotal: 0,
 
+      editReady: new Set<string>(),
+      hideDoneRows: Store.getCommodityHideCompleted(),
       showBubble: !props.cmdr,
       nextDelivery: Store.getDeliver(),
       submitting: false,
@@ -112,6 +117,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const cmdrName = Store.getCmdr()?.name;
         this.setState({
           proj: newProj,
+          editReady: new Set(newProj.ready),
           sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
           loading: false,
           disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
@@ -269,10 +275,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   getGroupedCommodities(): Record<string, string[]> {
-    const { proj, sort } = this.state;
+    const { proj, sort, hideDoneRows } = this.state;
     if (!proj?.commodities) throw new Error("Why no commodities?");
 
     const sorted = Object.keys(proj.commodities)
+      .filter(k => !hideDoneRows || proj.commodities[k] > 0);
     sorted.sort();
 
     // just alpha sort
@@ -280,7 +287,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return { alpha: sorted };
     }
 
-    const dd = Object.keys(proj.commodities).reduce((d, c) => {
+    const dd = sorted.reduce((d, c) => {
       const t = getTypeForCargo(c);
       if (!d[t]) d[t] = [];
       d[t].push(c);
@@ -291,7 +298,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, sortChanging } = this.state;
+    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, sortChanging, hideDoneRows } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     const rows = [];
@@ -305,7 +312,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (key in groupedCommodities) {
         // group row
         if (sort !== SortMode.alpha) {
-          rows.push(<tr className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}><td colSpan={3} className='hint'>{key}</td></tr>)
+          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}><td colSpan={3} className='hint'>{key}</td></tr>)
         }
         continue;
       }
@@ -324,15 +331,27 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <>
       {mode === Mode.view && <h3>
-        Commodities:
+        Commodities:&nbsp;
         <ActionButton
           id='menu-sort'
           iconProps={{ iconName: 'Sort' }}
           onClick={(ev) => {
             this.setState({ sortChanging: true });
-            ev.preventDefault();
           }}
-        > {sort}</ActionButton>
+        >
+          {sort}
+        </ActionButton>
+        <ActionButton
+          id='menu-sort'
+          iconProps={{ iconName: hideDoneRows ? 'ThumbnailViewMirrored' : 'AllAppsMirrored' }}
+          title={hideDoneRows ? 'Hiding completed commodies' : 'Showing all commodities'}
+          text={hideDoneRows ? 'Active' : 'All'}
+          onClick={() => {
+            this.setState({ hideDoneRows: !hideDoneRows });
+            Store.setCommodityHideCompleted(!hideDoneRows);
+          }}
+        />
+
         <ContextualMenu
           target='#menu-sort'
           hidden={!sortChanging}
@@ -340,12 +359,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           items={[{
             key: SortMode.alpha,
             text: SortMode.alpha,
-            onClick: () => { this.setState({ sort: SortMode.alpha }); Store.setSort(SortMode.alpha); },
+            onClick: () => { this.setState({ sort: SortMode.alpha }); Store.setCommoditySort(SortMode.alpha); },
           },
           {
             key: SortMode.group,
             text: SortMode.group,
-            onClick: () => { this.setState({ sort: SortMode.group }); Store.setSort(SortMode.group); },
+            onClick: () => { this.setState({ sort: SortMode.group }); Store.setCommoditySort(SortMode.group); },
           }]}
         />
       </h3>}
@@ -431,20 +450,20 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, first: boolean): JSX.Element {
+    const displayName = mapCommodityNames[key];
+
     const assigned = cmdrs
       .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
-        return <>
-          <span className='removable' key={`$${key}-${k}`}> <span className='glue'>📌{k}</span>
-            <Icon
-              className='btn'
-              iconName='Delete'
-              title={`Remove assignment of ${mapCommodityNames[key]} from ${k}`}
-              style={{ color: appTheme.palette.themePrimary }}
-              onClick={() => this.onClickUnassign(k, key)}
-            />
-          </span>
-        </>;
+        return <span className='removable' key={`$${key}-${k}`}> <span className='glue'>📌{k}</span>
+          <Icon
+            className='btn'
+            iconName='Delete'
+            title={`Remove assignment of ${displayName} from ${k}`}
+            style={{ color: appTheme.palette.themePrimary }}
+            onClick={() => this.onClickUnassign(k, key)}
+          />
+        </span>;
       });
 
     const need = proj.commodities![key];
@@ -452,22 +471,61 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
 
+    const isContextTarget = this.state.cargoContext === key;
+    const isReady = this.state.editReady.has(key);
+
+    const menuItems: IContextualMenuItem[] = [
+      {
+        key: 'assign-cmdr',
+        text: 'Assign to a commander ...',
+        onClick: () => {
+          this.setState({ assignCommodity: key });
+          delayFocus('assign-cmdr');
+        },
+      },
+      { key: 'divider_1', itemType: ContextualMenuItemType.Divider, },
+      {
+        key: 'toggle-ready',
+        text: isReady ? 'Clear ready' : 'Set ready',
+        onClick: () => this.onToggleReady(this.state.proj!.buildId, key, isReady),
+      }
+    ];
+
+    if (need > 0 && false) {
+      menuItems.push({
+        key: 'set-to-zero',
+        text: 'Set need to zero',
+        onClick: () => {
+          // this.setState({ assignCommodity: key });
+          // delayFocus('assign-cmdr');
+        },
+      });
+    }
+
     return <tr key={`cc-${key}`} className={className} style={style}>
-      <td className='commodity-name'>
-        <CommodityIcon name={key} /> {mapCommodityNames[key]}
+      <td className='commodity-name' id={`cargo-${key}`}>
+        <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
+        &nbsp;
+        {isReady && <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
+
+        {isContextTarget && <ContextualMenu
+          target={`#cn-${key}`}
+          onDismiss={() => this.setState({ cargoContext: undefined })}
+          items={menuItems}
+        />}
+
         <Icon
           className='btn-assign'
-          iconName='Add' // GlobalNavButton
-          title={`Assign a commander to commodity: ${key}`}
+          iconName='ContextMenu'
+          title={`Commands for: ${key}`}
           style={{ color: appTheme.palette.themePrimary }}
           onClick={() => {
-            this.setState({ assignCommodity: key });
-            delayFocus('assign-cmdr');
+            this.setState({ cargoContext: key });
           }}
         />
       </td>
       <td className='commodity-need'>
-        {need.toLocaleString()}
+        <span className='t'>{need.toLocaleString()}</span>
       </td>
       <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>
     </tr>;
@@ -696,6 +754,35 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
+  onToggleReady = async (buildId: string, commodity: string, isReady: boolean) => {
+    try {
+
+      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/ready`;
+      console.log('onToggleReady:', url);
+      const response = await fetch(url, {
+        method: isReady ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify([commodity])
+      });
+      console.log('onToggleReady:', response);
+
+      if (response.status === 202) {
+        // success - remove from in-memory data
+        const editReady = this.state.editReady;
+        if (isReady)
+          editReady.delete(commodity)
+        else
+          editReady.add(commodity)
+        this.setState({ editReady });
+      }
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
+    }
+  }
+
   onProjectDelete = async () => {
     const buildId = this.state.proj?.buildId;
     if (!buildId) return;
@@ -792,6 +879,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           console.log('onUpdateCommodities: savedProj:', savedProj);
           this.setState({
             proj: savedProj,
+            editReady: new Set(savedProj.ready),
             sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
             editCommodities: undefined,
             mode: Mode.view,
@@ -847,6 +935,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           const cmdrName = Store.getCmdr()?.name;
           this.setState({
             proj: savedProj,
+            editReady: new Set(savedProj.ready),
             sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
             editProject: undefined,
             disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
@@ -926,6 +1015,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         console.log('saveNewMarketId: savedProj:', savedProj);
         this.setState({
           proj: savedProj,
+          editReady: new Set(savedProj.ready),
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           fixMarketId: undefined,
         });
@@ -985,7 +1075,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!proj) return;
 
     const cargoOptions = Object.keys(proj.commodities)
-      .filter(k => !(k in nextDelivery))
+      .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
       .map(k => ({ key: k, text: mapCommodityNames[k] }))
       .sort();
 
@@ -1149,6 +1239,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         // update state and re-fetch stats
         this.setState({
           proj: updateProj,
+          editReady: new Set(updateProj.ready),
           sumTotal: Object.values(updateProj.commodities).reduce((total, current) => total += current, 0),
           submitting: false,
           mode: Mode.view,

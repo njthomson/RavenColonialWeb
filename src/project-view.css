@@ -12,7 +12,15 @@
   height: 20px;
 }
 
-.commodities .btn-assign {
+.commodities .done {
+  color: grey;
+}
+
+.commodities .done .t {
+  text-decoration: line-through;
+}
+
+.commodities tr .btn-assign {
   display: none;
   margin-left: 4px;
   cursor: pointer;
@@ -28,12 +36,6 @@
 .commodities .group td {
   padding-left: 5px;
 }
-
-.commodities .done {
-  color: grey;
-  text-decoration: line-through;
-}
-
 .commodities .assigned {
   white-space: nowrap;
 }
