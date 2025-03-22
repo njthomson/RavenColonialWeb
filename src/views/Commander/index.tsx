@@ -1,8 +1,8 @@
-import './cmdr.css';
+import './index.css';
 import { MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
-import { apiSvcUrl, CmdrSummary, mapCommodityNames, mapCommodityType, Project } from './types';
-import { CargoRemaining, CommodityIcon, ProjectLink } from './misc';
+import { apiSvcUrl, CmdrSummary, mapCommodityNames, mapCommodityType, Project } from '../../types';
+import { CargoRemaining, CommodityIcon, ProjectLink } from '../../misc';
 
 interface CmdrProps {
   cmdr?: string | undefined;
@@ -15,7 +15,7 @@ interface CmdrState {
   errorMsg?: string;
 }
 
-export class Cmdr extends Component<CmdrProps, CmdrState> {
+export class Commander extends Component<CmdrProps, CmdrState> {
   constructor(props: CmdrProps) {
     super(props);
 

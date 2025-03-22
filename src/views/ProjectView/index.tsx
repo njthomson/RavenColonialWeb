@@ -1,14 +1,15 @@
+import './index.css';
+
 import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
-import { ProjectQuery } from './project-query';
-import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from './types'
+import { ProjectQuery } from '../../project-query';
+import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from '../../types'
 import { Component, CSSProperties } from 'react';
-import { ProjectCreate } from './project-create';
-import './project-view.css';
-import { Store } from './local-storage';
-import { BuildType, CargoRemaining, CommodityIcon, delayFocus, flattenObj, getTypeForCargo } from './misc';
+import { ProjectCreate } from '../../project-create';
+import { Store } from '../../local-storage';
+import { BuildType, CargoRemaining, CommodityIcon, delayFocus, flattenObj, getTypeForCargo } from '../../misc';
 import { HorizontalBarChart } from '@fluentui/react-charting';
-import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
-import { appTheme } from './theme';
+import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from '../../charts';
+import { appTheme } from '../../theme';
 
 interface ProjectViewProps {
   buildId?: string;

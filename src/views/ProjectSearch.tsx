@@ -1,8 +1,8 @@
 import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
-import { apiSvcUrl, ProjectRef } from './types';
+import { apiSvcUrl, ProjectRef } from '../types';
 import { Component } from 'react';
-import { ProjectCreate } from './project-create';
-import { ProjectLink } from './misc';
+import { ProjectCreate } from '../project-create';
+import { ProjectLink } from '../misc';
 
 interface ProjectProps {
   find: string | undefined | null;

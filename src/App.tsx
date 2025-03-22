@@ -1,13 +1,9 @@
 import './App.css';
 import { Component, } from 'react';
 import { CommandBar, DefaultButton, ICommandBarItemProps, IContextualMenuItem, initializeIcons, Modal, PrimaryButton, Slider, Stack, TextField, ThemeProvider } from '@fluentui/react';
-import { About } from './about';
-import { Home } from './home';
+import { About, Home, ProjectSearch, ProjectView, Commander } from './views';
 import { TopPivot } from './types'
-import { ProjectSearch } from './project-search';
 import { appTheme } from './theme';
-import { ProjectView } from './project-view';
-import { Cmdr } from './cmdr';
 import { Store } from './local-storage';
 
 // Initialize icons in case this example uses them
@@ -158,7 +154,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.home: return <Home />;
       case TopPivot.find: return <ProjectSearch find={find} />;
       case TopPivot.build: return <ProjectView buildId={bid} cmdr={cmdr} />;
-      case TopPivot.cmdr: return <Cmdr cmdr={cmdr} />;
+      case TopPivot.cmdr: return <Commander cmdr={cmdr} />;
       case TopPivot.about: return <About />;
     }
   }
