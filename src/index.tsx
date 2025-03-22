@@ -1,7 +1,7 @@
+import { mergeStyles } from '@fluentui/react';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { App } from './App';
-import { mergeStyles } from '@fluentui/react';
 import reportWebVitals from './reportWebVitals';
 
 // Inject some global styles

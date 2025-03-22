@@ -1,8 +1,9 @@
 import './index.css';
+
 import { MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
+import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
 import { apiSvcUrl, CmdrSummary, mapCommodityNames, mapCommodityType, Project } from '../../types';
-import { CargoRemaining, CommodityIcon, ProjectLink } from '../../misc';
 
 interface CmdrProps {
   cmdr?: string | undefined;

@@ -1,12 +1,7 @@
-import { FunctionComponent } from "react";
-import { SupplyStats, SupplyStatsSummary } from "./types";
 import { getColorFromToken, IChartDataPoint, ILegend, IVerticalStackedChartProps, IVSChartDataPoint, Legends, StackedBarChart, VerticalStackedBarChart } from "@fluentui/react-charting";
-
-export const getColorTable = (tokens: string[]): Record<string, string> => {
-  const colors: Record<string, string> = {};
-  tokens.forEach((k, n) => colors[k] = `qualitative.${n + 1}`);
-  return colors;
-};
+import { FunctionComponent } from "react";
+import { getColorTable } from "../misc";
+import { SupplyStats, SupplyStatsSummary } from "../types";
 
 export const ChartByCmdrs: FunctionComponent<{ summary: SupplyStatsSummary, cmdrColors: Record<string, string> }> = (props) => {
   const { summary, cmdrColors } = props;

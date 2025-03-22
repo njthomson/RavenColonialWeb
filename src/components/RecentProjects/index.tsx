@@ -1,6 +1,7 @@
-import './recent-projects.css';
-import { Store } from "./local-storage";
-import { ProjectLink } from './misc';
+import './index.css';
+
+import { ProjectLink } from '../';
+import { Store } from "../../local-storage";
 
 export const RecentProjects: React.FunctionComponent = () => {
 

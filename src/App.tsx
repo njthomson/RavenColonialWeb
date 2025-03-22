@@ -1,10 +1,11 @@
 import './App.css';
-import { Component, } from 'react';
+
 import { CommandBar, DefaultButton, ICommandBarItemProps, IContextualMenuItem, initializeIcons, Modal, PrimaryButton, Slider, Stack, TextField, ThemeProvider } from '@fluentui/react';
-import { About, Home, ProjectSearch, ProjectView, Commander } from './views';
-import { TopPivot } from './types'
-import { appTheme } from './theme';
+import { Component, } from 'react';
 import { Store } from './local-storage';
+import { appTheme } from './theme';
+import { TopPivot } from './types';
+import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
 
 // Initialize icons in case this example uses them
 initializeIcons();

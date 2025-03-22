@@ -1,7 +1,7 @@
 import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, Icon, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
-import { apiSvcUrl, Project, CreateProject, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
 import { Component } from 'react';
-import { Store } from './local-storage';
+import { Store } from '../local-storage';
+import { apiSvcUrl, CreateProject, Project, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from '../types';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 

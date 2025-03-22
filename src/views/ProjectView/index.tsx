@@ -1,15 +1,13 @@
 import './index.css';
 
 import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
-import { ProjectQuery } from '../../project-query';
-import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from '../../types'
-import { Component, CSSProperties } from 'react';
-import { ProjectCreate } from '../../project-create';
-import { Store } from '../../local-storage';
-import { BuildType, CargoRemaining, CommodityIcon, delayFocus, flattenObj, getTypeForCargo } from '../../misc';
 import { HorizontalBarChart } from '@fluentui/react-charting';
-import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from '../../charts';
+import { Component, CSSProperties } from 'react';
+import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, CommodityIcon, ProjectCreate, ProjectQuery } from '../../components';
+import { Store } from '../../local-storage';
+import { delayFocus, flattenObj, getColorTable, getTypeForCargo } from '../../misc';
 import { appTheme } from '../../theme';
+import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from '../../types';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -555,7 +553,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {!editProject && <div className='detail'>{proj.buildName}</div>}
               {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
             </td></tr>
-            <tr><td>Build type:</td><td><div className='detail'><BuildType buildType={proj.buildType} /></div></td></tr>
+            <tr><td>Build type:</td><td><div className='detail'><BuildTypeDisplay buildType={proj.buildType} /></div></td></tr>
             <tr><td>System name:</td><td><div className='detail'>{proj.systemName}</div></td></tr>
             <tr><td>Architect:</td><td>
               {!editProject && <div className='detail'>{proj.architectName}&nbsp;</div>}
