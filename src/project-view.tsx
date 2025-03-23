@@ -312,7 +312,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (key in groupedCommodities) {
         // group row
         if (sort !== SortMode.alpha) {
-          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}><td colSpan={3} className='hint'>{key}</td></tr>)
+          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}>
+            <td colSpan={3} className='hint'> {key}</td>
+          </tr>)
         }
         continue;
       }
@@ -431,13 +433,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   getCommodityEditRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number>, flip: boolean, first: boolean): JSX.Element {
 
+    const displayName = mapCommodityNames[key];
     const need = proj.commodities![key];
     const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
     const inputId = first ? 'first-commodity-edit' : undefined;
+    const isReady = this.state.editReady.has(key);
 
     return <tr key={`cc-${key}`} className={className}>
       <td className='commodity-name'>
-        <span><CommodityIcon name={key} /> {mapCommodityNames[key]}</span>
+        <span><CommodityIcon name={key} /> {displayName} </span>
+        {isReady && <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
       </td>
       <td className='commodity-need'>
         <input id={inputId} className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {

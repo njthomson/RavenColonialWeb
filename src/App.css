@@ -21,6 +21,7 @@ body {
 
 .top-bar {
   border-bottom: 1px solid #e5e5e5;
+  border-top: 1px solid #e5e5e5;
   box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
   min-height: fit-content;
 }
