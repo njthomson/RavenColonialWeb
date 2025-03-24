@@ -1,6 +1,6 @@
 import './misc.css';
 import { FunctionComponent } from "react";
-import { mapCommodityIcon, mapCommodityNames, mapCommodityType, ProjectRefLite } from "./types";
+import { mapCommodityIcon, mapCommodityNames, ProjectRefLite } from "./types";
 import { Icon } from "@fluentui/react";
 import { Store } from "./local-storage";
 import { buildTypes } from './project-create';
@@ -38,9 +38,6 @@ export const CommodityIcon: FunctionComponent<{ name: string }> = (props) => {
     console.error(`Unexpected: ${props.name}`);
     commodityClass = 'Unknown';
     iconName = 'ChromeClose';
-
-    mapCommodityType[props.name] = 'xxx'
-    console.log(mapCommodityType);
   }
 
   return <Icon className="commodity-icon" iconName={iconName} title={commodityClass} />;

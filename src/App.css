@@ -135,6 +135,14 @@ h3 {
   margin-bottom: 8px;
 }
 
+.edit-cmdr .ms-Slider {
+  width: 244px;
+  margin-right: 10px;
+}
+
+.edit-cmdr .spin-slide {
+  width: 88px;
+}
 
 .yellow {
   background-color: yellow;

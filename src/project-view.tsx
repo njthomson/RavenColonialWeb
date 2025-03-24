@@ -238,7 +238,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div >
 
       <div className='contain-horiz'>
-        {(mode === Mode.view || mode === Mode.editCommodities) && <div className='half'>
+        {(mode === Mode.editCommodities || (mode === Mode.view && !proj.complete)) && <div className='half'>
           {this.renderCommodities()}
         </div>}
 
@@ -256,7 +256,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </Modal>
 
       <Modal isOpen={confirmComplete}>
-        <h3>Congratulations!</h3>
         <p>
           Are you sure?
           <br />
@@ -279,7 +278,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!proj?.commodities) throw new Error("Why no commodities?");
 
     const sorted = Object.keys(proj.commodities)
-      .filter(k => !hideDoneRows || proj.commodities[k] > 0);
+      .filter(k => !hideDoneRows || proj.commodities[k] > 0 || proj.complete);
     sorted.sort();
 
     // just alpha sort
@@ -300,6 +299,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   renderCommodities() {
     const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, sortChanging, hideDoneRows } = this.state;
     if (!proj?.commodities) { return <div />; }
+
+    // do not render list if nothing left to deliver
+    if (sumTotal === 0 && mode !== Mode.editCommodities) {
+      return <>
+        <div>Congratulations!</div>
+        <br />
+        <PrimaryButton iconProps={{ iconName: 'Completed' }} onClick={() => this.setState({ confirmComplete: true })}>Mark project complete</PrimaryButton>
+      </>;
+    }
 
     const rows = [];
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
@@ -1093,6 +1101,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             className='deliver-amount-edit'
             type='number'
             value={nextDelivery[k].toLocaleString()}
+            min={0}
+            max={Math.min(proj.commodities[k], Store.getCmdr()?.largeMax ?? 800)}
+            style={{ backgroundColor: nextDelivery[k] > proj.commodities[k] ? 'yellow' : '' }}
+            onFocus={(ev) => {
+              ev.target.type = 'text';
+              ev.target.setSelectionRange(0, 10);
+              ev.target.type = 'number';
+            }}
             onChange={(ev) => {
               const newNextDelivery = { ...this.state.nextDelivery };
               newNextDelivery[k] = parseInt(ev.target.value);
@@ -1111,6 +1127,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           />
         </td>
         <td>
+          <ActionButton
+            title='Set max value'
+            iconProps={{ iconName: 'CirclePlus' }}
+            onClick={() => {
+              const newNextDelivery = { ...this.state.nextDelivery };
+              newNextDelivery[k] = Math.min(proj.commodities[k], Store.getCmdr()?.largeMax ?? 800)
+              this.setState({
+                nextDelivery: newNextDelivery,
+              });
+              delayFocus(`deliver-${k}-input`);
+            }} >{proj.commodities[k]}
+          </ActionButton>
           <IconButton
             title={`Remove ${mapCommodityNames[k]}`}
             iconProps={{ iconName: 'Delete' }}
