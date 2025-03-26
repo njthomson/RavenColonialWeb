@@ -3,24 +3,26 @@ import "./index.css";
 import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { getTypeForCargo } from "../../misc";
-import { mapCommodityIcon, mapCommodityType } from "../../types";
+import { mapCommodityIcon } from "../../types";
 
 export const CommodityIcon: FunctionComponent<{ name: string; }> = (props) => {
 
-  let commodityClass = getTypeForCargo(props.name);
-  let iconName = mapCommodityIcon[commodityClass]!;
+  let commodityClass = '';
+  let iconName = '';
 
-  if (commodityClass) {
-    iconName = mapCommodityIcon[commodityClass]!;
-  } else if (props.name in mapCommodityIcon) {
+  if (props.name in mapCommodityIcon) {
+    commodityClass = props.name;
+
     iconName = mapCommodityIcon[props.name];
-  } else {
+  } 
+  if (!iconName) {
+    commodityClass = getTypeForCargo(props.name);
+    iconName = mapCommodityIcon[commodityClass]!;
+  } 
+  if (!iconName)  {
     console.error(`Unexpected: ${props.name}`);
     commodityClass = 'Unknown';
     iconName = 'ChromeClose';
-
-    mapCommodityType[props.name] = 'xxx';
-    console.log(mapCommodityType);
   }
 
   return <Icon className="commodity-icon" iconName={iconName} title={commodityClass} />;

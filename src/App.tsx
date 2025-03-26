@@ -1,6 +1,6 @@
 import './App.css';
 
-import { CommandBar, DefaultButton, ICommandBarItemProps, IContextualMenuItem, initializeIcons, Modal, PrimaryButton, Slider, Stack, TextField, ThemeProvider } from '@fluentui/react';
+import { CommandBar, DefaultButton, ICommandBarItemProps, IContextualMenuItem, initializeIcons, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
 import { Store } from './local-storage';
 import { appTheme } from './theme';
@@ -130,9 +130,17 @@ export class App extends Component<AppProps, AppState> {
         <Modal isOpen={editingCmdr}>
           <div className="edit-cmdr">
             <h2>Who are you?</h2>
-            <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} onKeyDown={(ev) => {if (ev.key === 'Enter') { this.saveCmdrName(); }}} autoFocus />
-            <Slider min={0} max={794} value={cargoLargeMax} label='Large ship max capacity:' onChange={v => this.setState({ cargoLargeMax: v })} />
-            <Slider min={0} max={400} value={cargoMediumMax} label='Medium ship max capacity:' onChange={v => this.setState({ cargoMediumMax: v })} />
+            <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} onKeyDown={(ev) => { if (ev.key === 'Enter') { this.saveCmdrName(); } }} autoFocus />
+            <Label>Large ship max capacity:</Label>
+            <Stack horizontal>
+              <Slider showValue={false} min={0} max={794} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
+              <SpinButton className='spin-slide' value={cargoLargeMax.toString()} onChange={(_, v) => this.setState({ cargoLargeMax: parseInt(v!) })} />
+            </Stack>
+            <Label>Medium ship max capacity:</Label>
+            <Stack horizontal>
+              <Slider showValue={false} min={0} max={400} value={cargoMediumMax} onChange={v => this.setState({ cargoMediumMax: v })} />
+              <SpinButton className='spin-slide' value={cargoMediumMax.toString()} onChange={(_, v) => this.setState({ cargoMediumMax: parseInt(v!) })} />
+            </Stack>
             <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
               <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.saveCmdrName} />
               <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.clearCmdrName} />
