@@ -1,6 +1,5 @@
-import './home.css';
 import { PrimaryButton } from '@fluentui/react';
-import { RecentProjects } from './recent-projects';
+import { RecentProjects } from '../components';
 
 export const Home: React.FunctionComponent = () => {
   window.document.title = `Raven Colonial Corporation`;
