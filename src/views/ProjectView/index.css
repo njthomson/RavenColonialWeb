@@ -76,6 +76,12 @@
   border-right: #e5e5e5 1px solid;
 }
 
+.commodities .commodity-diff {
+  text-align: right;
+  padding: 0 5px 0 5px;
+  border-right: #e5e5e5 1px solid;
+}
+
 .commodity-num {
   width: 80px;
   text-align: right;

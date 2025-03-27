@@ -44,7 +44,7 @@ footer p {
 
 h3 {
   border-bottom: #e5e5e5 1px solid;
-  margin: 0 10px 0 0;
+  margin: 0 10px 4px 0;
 }
 
 .contain-horiz {
@@ -74,9 +74,12 @@ h3 {
   margin: 8px;
 }
 
-
 .right {
   float: right;
+}
+
+.ms-Spinner {
+  margin-top: 10px;
 }
 
 .ms-Dialog-main {
@@ -181,6 +184,12 @@ h3 {
 
 i {
   cursor: pointer;
+}
+
+.bubble {
+  border-radius: 5px;
+  padding: 0 5px 0 5px;
+  margin: 1px;
 }
 
 @media (max-width: 400px) {
