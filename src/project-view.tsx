@@ -27,8 +27,11 @@ interface ProjectViewState {
   confirmDelete?: boolean;
   confirmComplete?: boolean;
   errorMsg?: string;
+
   assignCommodity?: string;
   assignCmdr?: string;
+  hasAssignments?: boolean;
+
   editCommodities?: Record<string, number>;
   editReady: Set<string>;
   editProject?: Partial<Project>;
@@ -142,6 +145,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           proj: newProj,
           editReady: new Set(newProj.ready),
           sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
+          hasAssignments: Object.keys(newProj.commanders).reduce((s, c) => s += newProj.commanders[c].length, 0) > 0,
           loading: false,
           disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
           deliverMarketId: deliverMarketId,
@@ -219,7 +223,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, sumTotal, submitting } = this.state;
+    const { mode, proj, loading, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -253,11 +257,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj?.commodities } });
         delayFocus('first-commodity-edit');
       }
-    }, {
-      key: 'btn-complete', text: 'Complete',
-      iconProps: { iconName: 'Completed' },
-      disabled: sumTotal !== 0 || proj.complete,
-      onClick: () => this.setState({ confirmComplete: true }),
     }, {
       key: 'btn-delete', text: 'Delete',
       iconProps: { iconName: 'Delete' },
@@ -333,7 +332,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, hideDoneRows, hideFCColumns, fcCargo } = this.state;
+    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     // do not render list if nothing left to deliver
@@ -351,15 +350,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     let flip = false;
     const groupedCommodities = this.getGroupedCommodities();
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
-    let fcCount = Object.keys(fcCargo).length;
-    if (fcCount > 0) fcCount++;
+
+    let colSpan = 0;
+    const fcCount = Object.keys(fcCargo).length;
+    if (fcCount > 0) colSpan += fcCount + 1;
+    if (hasAssignments) colSpan++;
 
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
         // group row
         if (sort !== SortMode.alpha) {
           rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}>
-            <td colSpan={3 + fcCount} className='hint'> {key}</td>
+            <td colSpan={2 + colSpan} className='hint'> {key}</td>
           </tr>)
         }
         continue;
@@ -405,7 +407,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {fcCount > 0 && <ActionButton
           id='menu-sort'
           iconProps={{ iconName: hideFCColumns ? 'AirplaneSolid' : 'Airplane' }}
-          title={hideFCColumns ? 'Showing FC columns' : 'Hiding FC columns'}
+          title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}
           onClick={() => {
             this.setState({ hideFCColumns: !hideFCColumns });
             store.commodityHideFCColumns = !hideFCColumns;
@@ -428,9 +430,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <thead>
           <tr>
             <th className='commodity-name'>Commodity</th>
-            <th className='commodity-need'>Need</th>
-            {!editCommodities && hideFCColumns && this.getCargoFCHeaders()}
-            {!editCommodities && <th className='commodity-assigned'>Assigned</th>}
+            <th className='commodity-need' title='Total needed for this commodity'>Need</th>
+            {!editCommodities && !hideFCColumns && colSpan > 0 && this.getCargoFCHeaders()}
+            {!editCommodities && hasAssignments && <th className='commodity-assigned'>Assigned</th>}
           </tr>
         </thead>
         <tbody>{rows}</tbody>
@@ -442,7 +444,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   getCargoFCHeaders() {
     return [
-      <th key={`fcc-have`} className='commodity-need' >Have</th>,
+      <th key={`fcc-have`} className='commodity-need' title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
       ...Object.keys(this.state.fcCargo).map(k => {
         const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
         return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} >{fc.name}</th>;
@@ -454,7 +456,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (Object.keys(proj.commanders).length === 0) {
       // show a warning when there's no cmdrs to add
       return <tr key={`c${key}`}>
-        <td colSpan={3}>
+        <td colSpan={2}>
           <MessageBar messageBarType={MessageBarType.warning} onDismiss={() => this.setState({ assignCommodity: undefined })} >You need to add commanders first</MessageBar>
         </td>
       </tr>;
@@ -465,7 +467,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         .sort();
 
       const assignRow = <tr key='c-edit'>
-        <td colSpan={3}>
+        <td colSpan={2}>
           <Stack horizontal>
             <Dropdown
               id='assign-cmdr'
@@ -512,9 +514,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const currentCmdr = store.cmdrName;
 
     const assigned = cmdrs
-      .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
+      .filter(k => cmdrs.some(() => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
-        return <span className='removable' key={`$${key}-${k}`} style={{ backgroundColor: k === currentCmdr ? appTheme.palette.yellowLight : undefined }}> <span className={`glue ${k === currentCmdr ? 'active-cmdr' : ''}`} >📌{k}</span>
+        return <span className='removable bubble' key={`$${key}-${k}`} style={{ backgroundColor: k === currentCmdr ? 'lightcyan' : undefined }}>
+          <span className={`glue ${k === currentCmdr ? 'active-cmdr' : ''}`} >📌{k}</span>
           <Icon
             className='btn'
             iconName='Delete'
@@ -552,6 +555,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const fcCargoKeys = Object.keys(this.state.fcCargo);
     const sumCargoFC = fcCargoKeys.reduce((sum, marketId) => sum += this.state.fcCargo[marketId][key] ?? 0, 0);
+    let diffCargoFC = (sumCargoFC - need).toLocaleString();
+    if (!diffCargoFC.startsWith('-')) diffCargoFC = '+' + diffCargoFC;
 
     if (need > 0) {
       menuItems.push({
@@ -561,7 +566,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
     }
 
-    // Financial BarChart4 AirplaneSolid SingleBookmarkSolid
+    let fcDiffCellColor = '';
+    if (need > 0) {
+      fcDiffCellColor = sumCargoFC >= need
+        ? 'lime'
+        : appTheme.palette.yellow;
+    }
 
     return <tr key={`cc-${key}`} className={className} style={style}>
       <td className='commodity-name' id={`cargo-${key}`}>
@@ -587,14 +597,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           }}
         />
       </td>
-      <td className='commodity-need' style={{ backgroundColor: sumCargoFC >= need && need > 0 ? 'lime' : undefined }}>
+
+      <td className='commodity-need' >
         <span className='t'>{need.toLocaleString()}</span>
       </td>
-      {fcCargoKeys.length > 0 && this.state.hideFCColumns && <>
-        <td key='fcc-have' className='commodity-need' style={{ backgroundColor: sumCargoFC >= need && need > 0 ? 'lime' : undefined }} ><span className='t'>{sumCargoFC > 0 ? sumCargoFC.toLocaleString() : ''}</span></td>
-        {fcCargoKeys.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' ><span className='t'>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span></td>)}
+
+      {fcCargoKeys.length > 0 && !this.state.hideFCColumns && <>
+        {/* The FC Diff cell, then a cell for each FC */}
+        <td key='fcc-have' className='commodity-diff'  >
+          <div className='bubble' style={{ backgroundColor: fcDiffCellColor }} >
+            {sumCargoFC > 0 ? diffCargoFC : ''}
+          </div>
+        </td>
+        {fcCargoKeys.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' >
+          <span className='t'>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span>
+        </td>)}
       </>}
-      <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>
+
+      {this.state.hasAssignments && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
     </tr>;
   }
 
@@ -661,11 +681,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       var row = <li key={`@${key}`}>
         <span className='removable'>
           {key}
-          <Icon className='btn' iconName='Delete' title={`Remove commander: ${key}`} style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }} onClick={() => { this.onClickCmdrRemove(key); }} />
+          <Icon
+            className='btn'
+            iconName='Delete'
+            title={`Remove commander: ${key}`}
+            style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }}
+            onClick={() => { this.onClickCmdrRemove(key); }}
+          />
         </span>
       </li>;
       rows.push(row)
     }
+
     return <>
       <h3>{Object.keys(proj.commanders).length ?? 0} Commanders:</h3>
       <ul>
@@ -682,6 +709,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             value={newCmdr}
             onKeyDown={(ev) => {
               if (ev.key === 'Enter') { this.onClickAddCmdr(); }
+              if (ev.key === 'Escape') { this.setState({ showAddCmdr: false }); }
             }}
             onChange={(_, v) => this.setState({ newCmdr: v })}
           />
@@ -879,6 +907,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         proj.commanders[assignCmdr].push(assignCommodity)
         this.setState({
           assignCommodity: undefined,
+          hasAssignments: Object.keys(proj.commanders).reduce((s, c) => s += proj.commanders[c].length, 0) > 0,
           proj
         });
       }
@@ -905,7 +934,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const idx = proj.commanders[cmdr].indexOf(commodity)
         proj.commanders[cmdr].splice(idx, 1);
         this.setState({
-          proj
+          proj,
+          hasAssignments: Object.keys(proj.commanders).reduce((s, c) => s += proj.commanders[c].length, 0) > 0,
         });
       }
     } catch (err: any) {
@@ -1043,6 +1073,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             proj: savedProj,
             editReady: new Set(savedProj.ready),
             sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+            hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
             editCommodities: undefined,
             mode: Mode.view,
             submitting: false,
@@ -1099,6 +1130,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             proj: savedProj,
             editReady: new Set(savedProj.ready),
             sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+            hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
             editProject: undefined,
             disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
             mode: Mode.view,
@@ -1179,6 +1211,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           proj: savedProj,
           editReady: new Set(savedProj.ready),
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+          hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
           fixMarketId: undefined,
         });
       } else {
@@ -1271,18 +1304,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           />
         </td>
         <td>
-          <ActionButton
-            title='Set max value'
-            iconProps={{ iconName: 'CirclePlus' }}
-            onClick={() => {
-              const newNextDelivery = { ...this.state.nextDelivery };
-              newNextDelivery[k] = Math.min(proj.commodities[k], store.cmdr?.largeMax ?? 800)
-              this.setState({
-                nextDelivery: newNextDelivery,
-              });
-              delayFocus(`deliver-${k}-input`);
-            }} >{proj.commodities[k]}
-          </ActionButton>
           <IconButton
             title={`Remove ${mapCommodityNames[k]}`}
             iconProps={{ iconName: 'Delete' }}
@@ -1294,6 +1315,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               });
             }}
           />
+          <ActionButton
+            title='Set ship max or amount needed'
+            iconProps={{ iconName: 'CirclePlus' }}
+            onClick={() => {
+              const newNextDelivery = { ...this.state.nextDelivery };
+              newNextDelivery[k] = Math.min(proj.commodities[k], store.cmdr?.largeMax ?? 800)
+              this.setState({
+                nextDelivery: newNextDelivery,
+              });
+              delayFocus(`deliver-${k}-input`);
+            }} >{proj.commodities[k]}
+          </ActionButton>
+
         </td>
       </tr>)
 
@@ -1484,12 +1518,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   };
 
-  async deliverToFC(marketId: string, nextDelivery: Record<string, number>) {
+  async deliverToFC() {
     try {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
       await new Promise(resolve => setTimeout(resolve, 500));
-
 
     } catch (err: any) {
       this.setState({
