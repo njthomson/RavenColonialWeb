@@ -1,7 +1,3 @@
-// type Pair<S> = [S | undefined, Dispatch<SetStateAction<S | undefined>>]
-
-export const apiSvcUrl = //'https://localhost:7007'; /*
-  'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
 
 export interface ProjectRefLite {
   buildId: string;
@@ -34,6 +30,14 @@ export interface Project extends ProjectRef {
   commanders: Record<string, string[]>;
   commodities: Record<string, number>;
   ready: string[];
+  linkedFC: ProjectFC[];
+}
+
+export interface ProjectFC {
+  marketId: number;
+  name: string;
+  displayName: string;
+  assign: string[];
 }
 
 export interface SupplyStatsSummary {
@@ -69,22 +73,19 @@ export interface TopState {
   proj?: Project | undefined;
 }
 
-
 export interface AppProps {
   ts: TopState;
   setTS: React.Dispatch<React.SetStateAction<TopState>>;
 }
-
-
 
 export enum TopPivot {
   home = 'home',
   find = 'find',
   build = 'build',
   cmdr = 'cmdr',
+  fc = 'fc',
   about = 'about',
 }
-
 
 export interface ResponseEdsmStations {
   id: number;
@@ -124,6 +125,28 @@ export interface ResponseEdsmSystem {
     y: number;
     z: number;
   }
+}
+
+export enum SortMode {
+  alpha = 'Alpha sort',
+  group = 'Group by type',
+}
+
+export interface QuickSearchStation {
+  market_id: number;
+  name: string;
+  carrier_name?: string;
+  system_id64: number;
+  system_x: number;
+  system_y: number;
+  system_z: number;
+}
+
+export interface KnownFC {
+  marketId: number;
+  name: string;
+  displayName: string;
+  cargo: Record<string, number>;
 }
 
 export const mapCommodityIcon: Record<string, string> = {

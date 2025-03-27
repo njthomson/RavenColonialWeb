@@ -2,10 +2,10 @@ import './App.css';
 
 import { CommandBar, DefaultButton, ICommandBarItemProps, IContextualMenuItem, initializeIcons, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
-import { Store } from './local-storage';
+import { store } from './local-storage';
 import { appTheme } from './theme';
 import { TopPivot } from './types';
-import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
+import { About, Commander, FleetCarrier, Home, ProjectSearch, ProjectView } from './views';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -17,6 +17,7 @@ interface AppState {
   pivot: TopPivot;
   nearItems: ICommandBarItemProps[];
   cmdrBtn: ICommandBarItemProps;
+  hashId?: string;
   bid?: string;
   find?: string;
 
@@ -34,7 +35,7 @@ export class App extends Component<AppProps, AppState> {
   constructor(props: AppProps) {
     super(props);
 
-    const cmdr = Store.getCmdr();
+    const cmdr = store.cmdr;
     this.largeMax = cmdr?.largeMax ?? 790;
     this.medMax = cmdr?.medMax ?? 400;
 
@@ -54,6 +55,9 @@ export class App extends Component<AppProps, AppState> {
         key: 'cmdr', text: 'Cmdr',
         onClick: (_, i) => this.clickNearItem(i),
       }, {
+        key: 'fc', text: 'FC',
+        onClick: (_, i) => this.clickNearItem(i),
+      }, {
         key: 'about', text: 'About',
         onClick: (_, i) => this.clickNearItem(i),
       }],
@@ -61,7 +65,7 @@ export class App extends Component<AppProps, AppState> {
         id: 'current-cmdr', key: 'current-cmdr',
         iconProps: { iconName: cmdr?.name ? 'Contact' : 'UserWarning' },
         text: cmdr?.name ?? '?',
-        onClick: () => this.setState({ cmdrEdit: Store.getCmdr()?.name ?? '' }),
+        onClick: () => this.setState({ cmdrEdit: store.cmdr?.name ?? '' }),
       },
       cmdr: cmdr?.name,
       cargoLargeMax: this.largeMax,
@@ -85,7 +89,6 @@ export class App extends Component<AppProps, AppState> {
   };
 
   componentDidMount(): void {
-    // console.warn(`** App.componentDidMount`);
     this.setStateFromHash();
   }
 
@@ -103,12 +106,13 @@ export class App extends Component<AppProps, AppState> {
         // searching for build projects
         nextState.pivot = TopPivot.find;
         nextState.find = params.get('find') ?? undefined;
-      }
-
-      else if (params.has('build')) {
+      } else if (params.has('build')) {
         // viewing a build project
         nextState.pivot = TopPivot.build;
         nextState.bid = params.get('build') ?? undefined;
+      } else if (params.has('fc')) {
+        nextState.pivot = TopPivot.fc;
+        nextState.hashId = params.get('fc') ?? undefined;
       } else {
         nextState.pivot = TopPivot.home;
       }
@@ -157,20 +161,21 @@ export class App extends Component<AppProps, AppState> {
   }
 
   renderBody() {
-    const { pivot, bid, find, cmdr } = this.state;
+    const { pivot, bid, find, cmdr, hashId } = this.state;
 
     switch (pivot) {
       case TopPivot.home: return <Home />;
       case TopPivot.find: return <ProjectSearch find={find} />;
       case TopPivot.build: return <ProjectView buildId={bid} cmdr={cmdr} />;
       case TopPivot.cmdr: return <Commander cmdr={cmdr} />;
+      case TopPivot.fc: return <FleetCarrier marketId={hashId} />;
       case TopPivot.about: return <About />;
     }
   }
 
   clearCmdrName = () => {
     const { pivot, cmdrBtn, } = this.state;
-    Store.clearCmdr();
+    store.clearCmdr();
 
     this.setState({
       cmdr: undefined,
@@ -190,11 +195,11 @@ export class App extends Component<AppProps, AppState> {
   saveCmdrName = () => {
     const { cmdrBtn, cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
     if (!!cmdrEdit) {
-      Store.setCmdr({
+      store.cmdr = {
         name: cmdrEdit,
         largeMax: cargoLargeMax,
         medMax: cargoMediumMax,
-      });
+      };
 
       this.setState({
         cmdr: cmdrEdit,

@@ -1,11 +1,13 @@
-import { Project, ProjectRefLite } from "./types";
+import { Project, ProjectRefLite, SortMode } from "./types";
 
 enum Stored {
   cmdr = 'cmdr',
   recentProjects = 'recentProjects',
   deliver = 'deliver',
+  deliverDestination = 'deliverDestination',
   sortMode = 'sortMode',
   hideCompleted = 'hideCompleted',
+  hideFC = 'hideFC',
 }
 
 interface CmdrData {
@@ -14,12 +16,16 @@ interface CmdrData {
   medMax: number;
 }
 
-export namespace Store {
-  export const clearCmdr = (): void => {
+class LocalStorage {
+  clearCmdr(): void {
     window.localStorage.removeItem(Stored.cmdr);
   }
 
-  export const getCmdr = (): CmdrData | undefined => {
+  get cmdrName() {
+    return this.cmdr?.name ?? '';
+  }
+
+  get cmdr(): CmdrData | undefined {
     const json = window.localStorage.getItem(Stored.cmdr);
     if (json) {
       return JSON.parse(json);
@@ -28,12 +34,11 @@ export namespace Store {
     }
   }
 
-  export const setCmdr = (cmdr: CmdrData): void => {
+  set cmdr(cmdr: CmdrData | undefined) {
     window.localStorage.setItem(Stored.cmdr, JSON.stringify(cmdr));
   }
 
-
-  export const getRecentProjects = () => {
+  get recentProjects(): ProjectRefLite[] {
     const json = window.localStorage.getItem(Stored.recentProjects);
     if (json) {
       const data = JSON.parse(json) as ProjectRefLite[];
@@ -41,11 +46,11 @@ export namespace Store {
     } else {
       return [];
     }
-  };
+  }
 
-  export const addRecentProject = (proj: Project): void => {
+  addRecentProject(proj: Project): void {
     // read recent projects and remove entry for this project
-    const recentProjects = getRecentProjects()
+    const recentProjects = this.recentProjects
       .filter(rp => rp.buildId !== proj.buildId);
 
     const newRef: ProjectRefLite = {
@@ -64,22 +69,22 @@ export namespace Store {
 
     const json = JSON.stringify(recentProjects);
     window.localStorage.setItem(Stored.recentProjects, json)
-  };
+  }
 
-  export const removeRecentProject = (buildId: string): void => {
+  removeRecentProject(buildId: string): void {
     // read recent projects and remove entry for this project
-    const recentProjects = getRecentProjects()
+    const recentProjects = this.recentProjects
       .filter(rp => rp.buildId !== buildId);
 
     const json = JSON.stringify(recentProjects);
     window.localStorage.setItem(Stored.recentProjects, json)
-  };
+  }
 
-  export const setDeliver = (deliver: Record<string, number>): void => {
+  set deliver(deliver: Record<string, number>) {
     window.localStorage.setItem(Stored.deliver, JSON.stringify(deliver));
   }
 
-  export const getDeliver = (): Record<string, number> => {
+  get deliver(): Record<string, number> {
     const json = window.localStorage.getItem(Stored.deliver);
     if (json) {
       const data = JSON.parse(json) as Record<string, number>;
@@ -87,21 +92,29 @@ export namespace Store {
     } else {
       return {};
     }
-  };
+  }
 
-  export const setCommoditySort = (sortMode: string): void => {
+  set commoditySort(sortMode: SortMode) {
     window.localStorage.setItem(Stored.sortMode, sortMode);
   }
 
-  export const getCommoditySort = (): string | undefined => {
-    return window.localStorage.getItem(Stored.sortMode) ?? undefined;
-  };
+  get commoditySort(): SortMode {
+    return window.localStorage.getItem(Stored.sortMode) as SortMode ?? SortMode.group;
+  }
 
-  export const setCommodityHideCompleted = (hideCompleted: boolean): void => {
+  set deliverDestination(sortMode: string) {
+    window.localStorage.setItem(Stored.deliverDestination, sortMode);
+  }
+
+  get deliverDestination(): string {
+    return window.localStorage.getItem(Stored.deliverDestination) ?? 'site';
+  }
+
+  set commodityHideCompleted(hideCompleted: boolean) {
     window.localStorage.setItem(Stored.hideCompleted, JSON.stringify(hideCompleted));
   }
 
-  export const getCommodityHideCompleted = (): boolean => {
+  get commodityHideCompleted(): boolean {
     const json = window.localStorage.getItem(Stored.hideCompleted);
     if (!json)
       return false;
@@ -109,4 +122,18 @@ export namespace Store {
       return JSON.parse(json) as boolean;
   };
 
+  set commodityHideFCColumns(hideFC: boolean) {
+    window.localStorage.setItem(Stored.hideFC, JSON.stringify(hideFC));
+  }
+
+  get commodityHideFCColumns(): boolean {
+    const json = window.localStorage.getItem(Stored.hideFC);
+    if (!json)
+      return false;
+    else
+      return JSON.parse(json) as boolean;
+  };
+
 }
+
+export const store = new LocalStorage();

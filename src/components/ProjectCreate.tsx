@@ -1,7 +1,8 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IComboBoxStyles, Icon, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, Icon, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component } from 'react';
-import { Store } from '../local-storage';
-import { apiSvcUrl, CreateProject, Project, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from '../types';
+import { apiSvcUrl } from '../api';
+import { store } from '../local-storage';
+import { CreateProject, Project, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from '../types';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -129,8 +130,6 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   render() {
     const { systemName, systemAddress, buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass } = this.state;
 
-    const comboBoxStyles: Partial<IComboBoxStyles> = { root: { maxWidth: 300 } };
-
     return <>
       <div className="create-project">
         <h3>Or start a new build?</h3>
@@ -170,7 +169,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         </div>}
 
         <TextField name='buildName' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
-        <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={comboBoxStyles} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
+        <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={{ root: { maxWidth: 300 } }} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         <div className='hint'><Icon iconName='Info' />&nbsp;<span>Exact cargo requirements are random and will require some adjustments.</span></div>
 
         {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
@@ -305,7 +304,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     delete body.msgError;
     delete body.msgClass;
 
-    const cmdr = Store.getCmdr()?.name;
+    const cmdr = store.cmdrName;
     if (cmdr) {
       body.commanders = {};
       body.commanders[cmdr] = [];

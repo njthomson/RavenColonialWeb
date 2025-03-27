@@ -2,8 +2,9 @@ import './index.css';
 
 import { MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
+import { apiSvcUrl } from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
-import { apiSvcUrl, CmdrSummary, mapCommodityNames, mapCommodityType, Project } from '../../types';
+import { CmdrSummary, mapCommodityNames, mapCommodityType, Project } from '../../types';
 
 interface CmdrProps {
   cmdr?: string | undefined;
@@ -11,8 +12,8 @@ interface CmdrProps {
 
 interface CmdrState {
   showBubble: boolean;
-  loading?: boolean;
   projects?: Project[],
+  loading?: boolean;
   errorMsg?: string;
 }
 

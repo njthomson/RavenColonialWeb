@@ -35,3 +35,11 @@ export const flattenObj = (obj: Record<string, string[]>): string[] => {
 export const delayFocus = (target: string, delay = 10): void => {
   setTimeout(() => document.getElementById(target)?.focus(), delay);
 }
+
+export const fcFullName = (name: string, displayName: string) => {
+  if (name === displayName) {
+    return name;
+  } else {
+    return `${displayName} (${name})`;
+  }
+};

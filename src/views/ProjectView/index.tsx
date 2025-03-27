@@ -1,13 +1,14 @@
 import './index.css';
 
-import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IStackTokens, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, IStackTokens, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { Component, CSSProperties } from 'react';
-import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, CommodityIcon, ProjectCreate, ProjectQuery } from '../../components';
-import { Store } from '../../local-storage';
-import { delayFocus, flattenObj, getColorTable, getTypeForCargo } from '../../misc';
+import { api, apiSvcUrl } from '../../api';
+import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, CommodityIcon, FindFC, ProjectCreate, ProjectQuery } from '../../components';
+import { store } from '../../local-storage';
+import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo } from '../../misc';
 import { appTheme } from '../../theme';
-import { apiSvcUrl, mapCommodityNames, Project, SupplyStatsSummary } from '../../types';
+import { mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -18,7 +19,6 @@ interface ProjectViewState {
   proj?: Project;
   mode: Mode;
   sort: SortMode;
-  sortChanging: boolean;
   loading: boolean;
   showAddCmdr: boolean;
   newCmdr?: string;
@@ -37,12 +37,20 @@ interface ProjectViewState {
 
   showBubble: boolean;
   hideDoneRows: boolean;
+  hideFCColumns: boolean;
 
   nextDelivery: Record<string, number>;
   nextCommodity?: string;
+  deliverMarketId: string;
   submitting: boolean;
   cargoContextItems?: IContextualMenuItem[];
   cargoContext?: string;
+
+  showAddFC: boolean;
+  fcMatchMarketId?: string;
+  fcMatchError?: string;
+
+  fcCargo: Record<string, Record<string, number>>;
 }
 
 enum Mode {
@@ -52,31 +60,31 @@ enum Mode {
   deliver,
 }
 
-enum SortMode {
-  alpha = 'Alpha sort',
-  group = 'Group by type',
-}
-
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
+
   constructor(props: ProjectViewProps) {
     super(props);
 
-    const sortMode = Store.getCommoditySort();
+    const sortMode = store.commoditySort;
     this.state = {
       loading: true,
       mode: Mode.view,
       sort: sortMode as SortMode ?? SortMode.group,
-      sortChanging: false,
       newCmdr: '',
       showAddCmdr: false,
       disableDelete: true,
       sumTotal: 0,
 
       editReady: new Set<string>(),
-      hideDoneRows: Store.getCommodityHideCompleted(),
+      hideDoneRows: store.commodityHideCompleted,
+      hideFCColumns: store.commodityHideFCColumns,
       showBubble: !props.cmdr,
-      nextDelivery: Store.getDeliver(),
+      nextDelivery: store.deliver,
+      deliverMarketId: store.deliverDestination,
       submitting: false,
+
+      showAddFC: false,
+      fcCargo: {},
     };
   }
 
@@ -94,6 +102,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
+  getFullFCName(marketId: string) {
+    const fc = this.state.proj?.linkedFC.find(fc => fc.marketId.toString() === marketId);
+    if (fc)
+      return fcFullName(fc.name, fc.displayName);
+    else
+      return '?';
+  }
+
   async fetchProject(buildId: string | undefined) {
     if (!buildId) {
       this.setState({ loading: false });
@@ -102,6 +118,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // (not awaiting)
     this.fetchProjectStats(buildId);
+    this.fetchCargoFC(buildId);
 
     try {
       const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
@@ -111,26 +128,30 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const newProj: Project = await response.json();
 
         console.log('Project.fetch: end buildId:', newProj);
-        Store.addRecentProject(newProj);
+        store.addRecentProject(newProj);
 
-        const cmdrName = Store.getCmdr()?.name;
+        // last destination not in this build project
+        let deliverMarketId = this.state.deliverMarketId;
+        if (!newProj.linkedFC.find(fc => fc.marketId.toString() === store.deliverDestination)) {
+          deliverMarketId = 'site';
+        }
+
         this.setState({
           proj: newProj,
           editReady: new Set(newProj.ready),
           sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
           loading: false,
-          disableDelete: !!cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== cmdrName.toLowerCase()),
+          disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
+          deliverMarketId: deliverMarketId,
         });
         window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
-        if (newProj.complete)
-          window.document.title += ' (completed)';
-
+        if (newProj.complete) window.document.title += ' (completed)';
       } else if (response.status === 404 && buildId) {
         this.setState({
           loading: false,
           errorMsg: 'No project found by that ID',
         });
-        Store.removeRecentProject(buildId);
+        store.removeRecentProject(buildId);
         window.document.title = `Build: ?`;
       } else {
         const msg = `${response.status}: ${response.statusText}`;
@@ -149,36 +170,50 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  async fetchProjectStats(buildId: string | undefined) {
+  fetchProjectStats(buildId: string | undefined) {
     if (!buildId) {
       this.setState({ loading: false });
       return;
     }
 
-    try {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/stats`;
-      console.log('fetchProjectStats:', url);
-      const response = await fetch(url, { method: 'GET' });
-      if (response.status === 200) {
-        const stats: SupplyStatsSummary = await response.json();
+    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/stats`;
+    console.log('fetchProjectStats:', url);
+    fetch(url, { method: 'GET' })
+      .then(async (response) => {
 
-        this.setState({
-          summary: stats,
-        });
-      } else {
-        const msg = `${response.status}: ${response.statusText}`;
-        this.setState({
-          loading: false,
-          errorMsg: msg,
-        });
-        console.error(msg);
-      }
-    } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
+        if (response.status === 200) {
+          const stats: SupplyStatsSummary = await response.json();
+
+          this.setState({
+            summary: stats,
+          });
+        } else {
+          const msg = `${response.status}: ${response.statusText}`;
+          this.setState({
+            loading: false,
+            errorMsg: msg,
+          });
+          console.error(msg);
+        }
+      })
+      .catch(err => {
+        this.setState({ errorMsg: err.message, });
+        console.error(err.stack);
       });
-      console.error(err.stack);
-    }
+  }
+
+  async fetchCargoFC(buildId: string) {
+    // don't bother calling when we know there are zero FCs
+    if (this.state.proj && Object.keys(this.state.proj.linkedFC).length === 0) return;
+
+    api.project.getCargoFC(buildId)
+      .then(fcCargo => {
+        this.setState({ fcCargo: fcCargo });
+      })
+      .catch(err => {
+        this.setState({ errorMsg: err.message, });
+        console.error(err.stack);
+      });
   }
 
   render() {
@@ -296,7 +331,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, sortChanging, hideDoneRows } = this.state;
+    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, hideDoneRows, hideFCColumns, fcCargo } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     // do not render list if nothing left to deliver
@@ -314,18 +349,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     let flip = false;
     const groupedCommodities = this.getGroupedCommodities();
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
+    let fcCount = Object.keys(fcCargo).length;
+    if (fcCount > 0) fcCount++;
 
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
         // group row
         if (sort !== SortMode.alpha) {
           rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}>
-            <td colSpan={3} className='hint'> {key}</td>
+            <td colSpan={3 + fcCount} className='hint'> {key}</td>
           </tr>)
         }
         continue;
       }
 
+      // TODO: Entirely split commodity edit and view rendering
       flip = !flip;
       var row: JSX.Element = mode === Mode.editCommodities
         ? this.getCommodityEditRow(proj, key, cmdrs, editCommodities!, flip, rows.length === 0)
@@ -344,8 +382,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <ActionButton
           id='menu-sort'
           iconProps={{ iconName: 'Sort' }}
-          onClick={(ev) => {
-            this.setState({ sortChanging: true });
+          onClick={() => {
+            const newSort = sort === SortMode.alpha ? SortMode.group : SortMode.alpha;
+            this.setState({ sort: newSort });
+            store.commoditySort = newSort;
           }}
         >
           {sort}
@@ -357,25 +397,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           text={hideDoneRows ? 'Active' : 'All'}
           onClick={() => {
             this.setState({ hideDoneRows: !hideDoneRows });
-            Store.setCommodityHideCompleted(!hideDoneRows);
+            store.commodityHideCompleted = !hideDoneRows;
           }}
         />
-
-        <ContextualMenu
-          target='#menu-sort'
-          hidden={!sortChanging}
-          onDismiss={() => this.setState({ sortChanging: false })}
-          items={[{
-            key: SortMode.alpha,
-            text: SortMode.alpha,
-            onClick: () => { this.setState({ sort: SortMode.alpha }); Store.setCommoditySort(SortMode.alpha); },
-          },
-          {
-            key: SortMode.group,
-            text: SortMode.group,
-            onClick: () => { this.setState({ sort: SortMode.group }); Store.setCommoditySort(SortMode.group); },
-          }]}
-        />
+        {fcCount > 0 && <ActionButton
+          id='menu-sort'
+          iconProps={{ iconName: hideFCColumns ? 'AirplaneSolid' : 'Airplane' }}
+          title={hideFCColumns ? 'Showing FC columns' : 'Hiding FC columns'}
+          onClick={() => {
+            this.setState({ hideFCColumns: !hideFCColumns });
+            store.commodityHideFCColumns = !hideFCColumns;
+          }}
+        />}
       </h3>}
 
       {editCommodities && !submitting && <div className='button-pair'>
@@ -392,9 +425,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
-            <th className='commodity-name'>Commodity:</th>
-            <th className='commodity-need'>Need:</th>
-            {!editCommodities && <th className='commodity-assigned'>Assigned:</th>}
+            <th className='commodity-name'>Commodity</th>
+            <th className='commodity-need'>Need</th>
+            {!editCommodities && hideFCColumns && this.getCargoFCHeaders()}
+            {!editCommodities && <th className='commodity-assigned'>Assigned</th>}
           </tr>
         </thead>
         <tbody>{rows}</tbody>
@@ -402,6 +436,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       {!editCommodities && <CargoRemaining sumTotal={sumTotal} />}
     </>
+  }
+
+  getCargoFCHeaders() {
+    return [
+      <th key={`fcc-have`} className='commodity-need' >Have</th>,
+      ...Object.keys(this.state.fcCargo).map(k => {
+        const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
+        return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} >{fc.name}</th>;
+      })
+    ];
   }
 
   getCommodityAssignmentRow(key: string, proj: Project, cmdrs: string[]) {
@@ -463,11 +507,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, first: boolean): JSX.Element {
     const displayName = mapCommodityNames[key];
+    const currentCmdr = store.cmdrName;
 
     const assigned = cmdrs
       .filter(k => cmdrs.some(cmdr => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
-        return <span className='removable' key={`$${key}-${k}`}> <span className='glue'>📌{k}</span>
+        return <span className='removable' key={`$${key}-${k}`} style={{ backgroundColor: k === currentCmdr ? appTheme.palette.yellowLight : undefined }}> <span className={`glue ${k === currentCmdr ? 'active-cmdr' : ''}`} >📌{k}</span>
           <Icon
             className='btn'
             iconName='Delete'
@@ -498,27 +543,31 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       { key: 'divider_1', itemType: ContextualMenuItemType.Divider, },
       {
         key: 'toggle-ready',
-        text: isReady ? 'Clear ready' : 'Set ready',
+        text: isReady ? 'Clear ready' : 'Mark ready',
         onClick: () => this.onToggleReady(this.state.proj!.buildId, key, isReady),
       }
     ];
 
-    if (need > 0 && false) {
+    const fcCargoKeys = Object.keys(this.state.fcCargo);
+    const sumCargoFC = fcCargoKeys.reduce((sum, marketId) => sum += this.state.fcCargo[marketId][key] ?? 0, 0);
+
+    if (need > 0) {
       menuItems.push({
         key: 'set-to-zero',
-        text: 'Set need to zero',
-        onClick: () => {
-          // this.setState({ assignCommodity: key });
-          // delayFocus('assign-cmdr');
-        },
+        text: 'Set to zero',
+        onClick: () => this.deliverToZero(key, need),
       });
     }
+
+    // Financial BarChart4 AirplaneSolid SingleBookmarkSolid
 
     return <tr key={`cc-${key}`} className={className} style={style}>
       <td className='commodity-name' id={`cargo-${key}`}>
         <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
         &nbsp;
-        {isReady && <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
+        {isReady && <Icon iconName='CompletedSolid' title={`${displayName} is ready`} />}
+        &nbsp;
+        {sumCargoFC >= need && <Icon iconName='AirplaneSolid' title={`Enough ${displayName} loaded on FCs`} />}
 
         {isContextTarget && <ContextualMenu
           target={`#cn-${key}`}
@@ -527,7 +576,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />}
 
         <Icon
-          className='btn-assign'
+          className='btn'
           iconName='ContextMenu'
           title={`Commands for: ${key}`}
           style={{ color: appTheme.palette.themePrimary }}
@@ -536,9 +585,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           }}
         />
       </td>
-      <td className='commodity-need'>
+      <td className='commodity-need' style={{ backgroundColor: sumCargoFC >= need && need > 0 ? 'lime' : undefined }}>
         <span className='t'>{need.toLocaleString()}</span>
       </td>
+      {fcCargoKeys.length > 0 && this.state.hideFCColumns && <>
+        <td key='fcc-have' className='commodity-need' style={{ backgroundColor: sumCargoFC >= need && need > 0 ? 'lime' : undefined }} ><span className='t'>{sumCargoFC > 0 ? sumCargoFC.toLocaleString() : ''}</span></td>
+        {fcCargoKeys.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' ><span className='t'>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span></td>)}
+      </>}
       <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>
     </tr>;
   }
@@ -583,6 +636,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           </tbody>
         </table>
         {!editProject && this.renderCommanders()}
+        {!editProject && this.renderLinkedFC()}
       </div>
     </div>;
   };
@@ -602,20 +656,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const rows = [];
     for (const key in proj.commanders) {
-      // var assigned = proj.commanders[key].map(v => <span key={`@${key}-${v}`}> 📌{v}</span>);
       var row = <li key={`@${key}`}>
         <span className='removable'>
           {key}
-          <Icon className='btn' iconName='Delete' title={`Assign a commander to commodity: ${key}`} style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }} onClick={() => { this.onClickCmdrRemove(key); }} />
+          <Icon className='btn' iconName='Delete' title={`Remove commander: ${key}`} style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }} onClick={() => { this.onClickCmdrRemove(key); }} />
         </span>
-        {/* <span>{assigned}</span> */}
       </li>;
       rows.push(row)
     }
-    const horizontalGapStackTokens: IStackTokens = {
-      childrenGap: 10,
-      padding: 10,
-    };
     return <>
       <h3>{Object.keys(proj.commanders).length ?? 0} Commanders:</h3>
       <ul>
@@ -624,8 +672,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div hidden={showAddCmdr}>
         <ActionButton text='Add a new Commander?' onClick={this.onShowAddCmdr} iconProps={{ iconName: 'AddFriend' }} />
       </div>
-      <div className='add-cmdr' hidden={!showAddCmdr}>
-        <Stack horizontal tokens={horizontalGapStackTokens}>
+      {showAddCmdr && <div className='add-cmdr'>
+        <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
           <TextField
             id='new-cmdr-edit'
             name='cmdr'
@@ -638,7 +686,63 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <PrimaryButton text='Add' onClick={this.onClickAddCmdr} iconProps={{ iconName: 'Add' }} />
           <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddCmdr: false })} />
         </Stack>
+      </div>}
+    </>
+  }
+
+  renderLinkedFC() {
+    const { proj, showAddFC, fcMatchMarketId, fcMatchError } = this.state;
+    if (!proj) { return <div />; }
+
+    const rows = proj.linkedFC.map(item => (<li key={`@${item.marketId}`}>
+      <span className='removable'>
+        <a href={`#fc=${item.marketId}`}>{fcFullName(item.name, item.displayName)}</a>
+        <Icon
+          className='btn'
+          iconName='Delete'
+          title={`Unlink FC: ${item.displayName} (${item.name})`}
+          style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }}
+          onClick={() => { this.onClickUnlinkFC(proj.buildId, item.marketId); }}
+        />
+      </span>
+    </li>));
+
+    return <>
+      <h3>{proj.linkedFC.length ?? 0} Linked Fleet Carriers:</h3>
+      <ul>
+        {rows}
+      </ul>
+      <div hidden={showAddFC}>
+        <ActionButton text='Link to a Fleet Carrier?' onClick={() => {
+          this.setState({
+            showAddFC: true,
+            fcMatchError: undefined
+          });
+          delayFocus('add-fc-combo-input');
+        }}
+          iconProps={{ iconName: 'AddLink' }} />
       </div>
+
+      {showAddFC && <div>
+        <Label>Enter Fleet Carrier name:</Label>
+        <Stack className='add-fc' horizontal tokens={{ childrenGap: 10, padding: 10, }}>
+          <FindFC
+            errorMsg={fcMatchError}
+            onMarketId={(marketId) => {
+
+              if (marketId) {
+                if (this.state.proj?.linkedFC.find(fc => fc.marketId.toString() === marketId))
+                  this.setState({ fcMatchError: `FC already linked` });
+                else
+                  this.setState({ fcMatchMarketId: marketId, fcMatchError: undefined });
+              }
+            }}
+          />
+
+          <PrimaryButton text='Link' onClick={this.onClickLinkFC} iconProps={{ iconName: 'Airplane' }} disabled={!fcMatchMarketId || !!fcMatchError} />
+          <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddFC: false, fcMatchError: undefined })} />
+        </Stack>
+      </div>}
     </>
   }
 
@@ -668,7 +772,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   onShowAddCmdr = () => {
     console.log('onShowAddCmdr:', this.state.showAddCmdr);
-    const cmdrName = Store.getCmdr()?.name;
+    const cmdrName = store.cmdrName;
     const cmdrKnown = cmdrName && this.state.proj && (cmdrName in this.state.proj?.commanders);
     if (!cmdrKnown) {
       this.setState({ newCmdr: cmdrName })
@@ -710,6 +814,50 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
       console.error(err.stack);
     }
+  }
+
+  onClickLinkFC = async () => {
+    const buildId = this.state.proj?.buildId;
+    const marketId = this.state.fcMatchMarketId;
+    if (buildId && marketId) {
+      try {
+        const linkedFCs = await api.project.linkFC(buildId, marketId);
+        this.updateLinkedFC(buildId, linkedFCs);
+      } catch (err: any) {
+        this.setState({ errorMsg: err.message, });
+        console.error(err.stack);
+      }
+    }
+  }
+
+  onClickUnlinkFC = async (buildId: string, marketId: number) => {
+    try {
+      // remove cargo counts before making the API call
+      const fcCargoTemp = { ...this.state.fcCargo };
+      delete fcCargoTemp[marketId];
+      this.setState({ fcCargo: fcCargoTemp });
+
+      const linkedFCs = await api.project.unlinkFC(buildId, marketId);
+      this.updateLinkedFC(buildId, linkedFCs);
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message, });
+      console.error(err.stack);
+    }
+  }
+
+  updateLinkedFC(buildId: string, linkedFCs: ProjectFC[]) {
+    const updatedProj = {
+      ...this.state.proj!,
+      linkedFC: linkedFCs,
+    };
+    this.setState({
+      proj: updatedProj,
+      showAddFC: false,
+      deliverMarketId: linkedFCs.find(fc => fc.marketId.toString() === this.state.deliverMarketId)?.marketId.toString() ?? 'site',
+      fcMatchError: undefined,
+      errorMsg: undefined,
+    });
+    this.fetchCargoFC(buildId);
   }
 
   onClickAssign = async (assignCmdr: string) => {
@@ -811,7 +959,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       if (response.status === 202) {
         // success - navigate to home
-        Store.removeRecentProject(buildId);
+        store.removeRecentProject(buildId);
         window.location.assign(`#`);
         window.location.reload();
       }
@@ -944,7 +1092,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           // success
           var savedProj: Project = await response.json();
           console.log('onUpdateProjectDetails: savedProj:', savedProj);
-          const cmdrName = Store.getCmdr()?.name;
+          const cmdrName = store.cmdrName;
           this.setState({
             proj: savedProj,
             editReady: new Set(savedProj.ready),
@@ -1083,13 +1231,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderDeliver() {
-    const { proj, nextDelivery, nextCommodity, showBubble, submitting } = this.state;
+    const { proj, nextDelivery, nextCommodity, showBubble, submitting, fcCargo, deliverMarketId } = this.state;
     if (!proj) return;
-
-    const cargoOptions = Object.keys(proj.commodities)
-      .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
-      .map(k => ({ key: k, text: mapCommodityNames[k] }))
-      .sort();
 
     const deliveries = Object.keys(nextDelivery)
       .map(k => <tr key={`dk${k}`}>
@@ -1099,10 +1242,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             id={`deliver-${k}-input`}
             className='deliver-amount-edit'
             type='number'
-            value={nextDelivery[k].toLocaleString()}
+            value={nextDelivery[k]}
             min={0}
-            max={Math.min(proj.commodities[k], Store.getCmdr()?.largeMax ?? 800)}
-            style={{ backgroundColor: nextDelivery[k] > proj.commodities[k] ? 'yellow' : '' }}
+            max={Math.min(proj.commodities[k], store.cmdr?.largeMax ?? 800)}
+            style={{ backgroundColor: deliverMarketId === 'site' && nextDelivery[k] > proj.commodities[k] ? appTheme.palette.yellowLight : '' }}
             onFocus={(ev) => {
               ev.target.type = 'text';
               ev.target.setSelectionRange(0, 10);
@@ -1131,7 +1274,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             iconProps={{ iconName: 'CirclePlus' }}
             onClick={() => {
               const newNextDelivery = { ...this.state.nextDelivery };
-              newNextDelivery[k] = Math.min(proj.commodities[k], Store.getCmdr()?.largeMax ?? 800)
+              newNextDelivery[k] = Math.min(proj.commodities[k], store.cmdr?.largeMax ?? 800)
               this.setState({
                 nextDelivery: newNextDelivery,
               });
@@ -1156,13 +1299,45 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const noNextCommodities = Object.values(nextDelivery).length === 0;
     const addingCommidity = nextCommodity !== undefined || noNextCommodities;
 
+    // build up delivery options if there are FCs we can deliver to
+    const fcCargoKeys = Object.keys(fcCargo);
+    const cargoOptions = Object.keys(proj.commodities)
+      .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
+      .map(k => ({ key: k, text: mapCommodityNames[k] }))
+      .sort();
+
+    const destinationOptions: IDropdownOption[] = [
+      { key: 'site', text: 'Construction site', data: { icon: 'Manufacturing' } },
+      { key: 'divider_1', text: '-', itemType: DropdownMenuItemType.Divider },
+      ...fcCargoKeys.map(marketId => ({ key: marketId, text: this.getFullFCName(marketId) }))
+    ];
+
+    const destinationPicker = <Dropdown
+      id='deliver-destination'
+      openOnKeyboardFocus
+      placeholder='Choose a destination...'
+      style={{ width: 200 }}
+      options={destinationOptions}
+      onRenderOption={(o) => { return <><Icon iconName={o?.data?.icon ?? 'Airplane'} />&nbsp;{o?.text}</>; }}
+      dropdownWidth='auto'
+      selectedKey={deliverMarketId}
+      onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() })}
+    />;
+
     return <div className='delivery'>
-      {!submitting && <div className='button-pair'>
-        <PrimaryButton text='Deliver' iconProps={{ iconName: 'DeliveryTruck' }} onClick={this.submitDelivery} disabled={sumTotal === 0 || submitting} hidden={true} />
+      {!submitting && <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
+        <PrimaryButton
+          text='Deliver'
+          disabled={sumTotal === 0 || submitting || !deliverMarketId}
+          iconProps={{ iconName: 'DeliveryTruck' }}
+          onClick={this.deliverToSite}
+        />
+        {fcCargoKeys.length > 0 && destinationPicker}
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => {
           this.setState({ mode: Mode.view });
         }} />
-      </div>}
+      </Stack>}
+
       {submitting && <Spinner
         className='submitting'
         label="Submitting delivery ..."
@@ -1212,14 +1387,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       {!addingCommidity && <ActionButton text='Add commodity?' iconProps={{ iconName: 'Add' }} onClick={() => { this.setState({ nextCommodity: '' }); delayFocus('deliver-commodity'); }} />}
 
-      {showBubble && <TeachingBubble
-        target={'#current-cmdr'}
-        headline='Who are you?'
-        hasCloseButton={true}
-        onDismiss={() => { this.setState({ showBubble: false }) }}
-      >
-        Enter your cmdr's name to get credit for this delivery.
-      </TeachingBubble>}
+      {
+        showBubble && <TeachingBubble
+          target={'#current-cmdr'}
+          headline='Who are you?'
+          hasCloseButton={true}
+          onDismiss={() => { this.setState({ showBubble: false }) }}
+        >
+          Enter your cmdr's name to get credit for this delivery.
+        </TeachingBubble>
+      }
 
     </div>;
   }
@@ -1237,55 +1414,66 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     delayFocus(`deliver-${nextCommodity}-input`);
   };
 
-  submitDelivery = async () => {
-    const buildId = this.state.proj?.buildId;
-    const nextDelivery = this.state.nextDelivery;
-    const cmdr = Store.getCmdr()?.name ?? 'unknown';
-    if (!buildId || !nextDelivery || !this.state.proj) return;
+  deliverToZero(commodity: string, count: number) {
+    // update local count state before API call
+    const updateProj = this.state.proj!;
+    updateProj.commodities[commodity] = 0;
+    this.setState({ proj: updateProj });
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/supply/${encodeURIComponent(cmdr)}`;
-    console.log('submitDelivery:', url);
+    const cargo: Record<string, number> = {};
+    cargo[commodity] = count;
+    this.deliverToSite2(
+      this.state.proj?.buildId!,
+      cargo,
+      'site'
+    );
+  }
 
-    // add a little artificial delay so the spinner doesn't flicker in and out
-    this.setState({ submitting: true });
-    await new Promise(resolve => setTimeout(resolve, 500));
+  deliverToSite = async () => {
+    const { proj, nextDelivery, deliverMarketId } = this.state;
+    this.deliverToSite2(proj?.buildId!, nextDelivery, deliverMarketId);
+  }
 
+  deliverToSite2 = async (buildId: string, nextDelivery: Record<string, number>, deliverMarketId: string) => {
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify(nextDelivery),
-      });
+      // add a little artificial delay so the spinner doesn't flicker in and out
+      this.setState({ submitting: true });
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (response.status === 200) {
-        // success
-        var newCommodities: Record<string, number> = await response.json();
-        console.log('submitDelivery: newCommodities:', newCommodities);
+      const nextState: Partial<ProjectViewState> = {
+        submitting: false,
+        mode: Mode.view,
+        deliverMarketId: deliverMarketId,
+      }
+      if (deliverMarketId === 'site') {
+        // deliver to the construction site
+        const newCommodities = await api.project.deliverToSite(buildId, store.cmdrName ?? 'unknown', nextDelivery);
 
         // update commodity counts on current project
-        const updateProj = this.state.proj;
+        const updateProj = this.state.proj!;
         for (const k in newCommodities) {
           updateProj.commodities[k] = newCommodities[k];
         }
 
         // update state and re-fetch stats
-        this.setState({
-          proj: updateProj,
-          editReady: new Set(updateProj.ready),
-          sumTotal: Object.values(updateProj.commodities).reduce((total, current) => total += current, 0),
-          submitting: false,
-          mode: Mode.view,
-        });
-        Store.setDeliver(nextDelivery);
+        nextState.proj = updateProj;
+        nextState.editReady = new Set(updateProj.ready);
+        nextState.sumTotal = Object.values(updateProj.commodities).reduce((total, current) => total += current, 0);
         this.fetchProjectStats(buildId);
+      } else {
+        // deliver to some FC
+        const newCommodities = await api.fc.deliverToFC(deliverMarketId, nextDelivery);
+
+        // update commodity counts on the FC project
+        const fcCargoUpdate = this.state.fcCargo;
+        const fcCargo = fcCargoUpdate[deliverMarketId];
+        for (const k in newCommodities) { fcCargo[k] = newCommodities[k]; }
+        nextState.fcCargo = fcCargoUpdate;
       }
-      else {
-        const msg = await response.text();
-        this.setState({
-          errorMsg: `${response.status}: ${response.statusText} ${msg}`,
-          submitting: false,
-        });
-      }
+
+      this.setState(nextState as ProjectViewState);
+      store.deliver = nextDelivery;
+      store.deliverDestination = deliverMarketId;
     } catch (err: any) {
       this.setState({
         errorMsg: err.message,
@@ -1293,5 +1481,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.error(err.stack);
     }
   };
+
+  async deliverToFC(marketId: string, nextDelivery: Record<string, number>) {
+    try {
+      // add a little artificial delay so the spinner doesn't flicker in and out
+      this.setState({ submitting: true });
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+
+    } catch (err: any) {
+      this.setState({
+        errorMsg: err.message,
+      });
+      console.error(err.stack);
+    }
+  }
+
 }
 

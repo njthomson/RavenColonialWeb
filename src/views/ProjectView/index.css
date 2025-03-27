@@ -2,6 +2,18 @@
   margin: 10px;
 }
 
+.add-fc {
+  align-items: flex-start;
+}
+
+.add-fc .ms-ComboBox-container {
+  width: 230px;
+}
+
+.add-fc-upper {
+  padding: 8px;
+}
+
 .commodities th {
   text-align: left;
   padding: 0 10px 0 5px;
@@ -20,38 +32,47 @@
   text-decoration: line-through;
 }
 
-.commodities tr .btn-assign {
-  display: none;
-  margin-left: 4px;
+.commodities tr .btn {
+  visibility: hidden;
+  width: 16px;
   cursor: pointer;
   position: relative;
   top: 2px;
 }
 
-.commodities tbody .commodity-name {
-  padding: 0 10px 0 10px;
+.commodities tr:hover .btn {
+  visibility: visible;
+}
+
+.commodities .commodity-name {
   min-width: 240px;
+  border-right: #e5e5e5 1px solid;
+}
+
+.commodities tbody .commodity-name {
+  padding-left: 10px;
 }
 
 .commodities .group td {
   padding-left: 5px;
 }
+
 .commodities .assigned {
   white-space: nowrap;
+  padding-right: 20px;
+}
+
+.commodities .assigned:hover {
+  padding-right: 0px;
 }
 
 .commodities .glue {
   white-space: nowrap;
 }
 
-.commodities tr:hover .btn-assign {
-  display: inline;
-}
-
 .commodities .commodity-need {
   text-align: right;
   padding: 0 10px 0 10px;
-  border-left: #e5e5e5 1px solid;
   border-right: #e5e5e5 1px solid;
 }
 
@@ -61,12 +82,7 @@
 }
 
 .removable {
-  padding: 2px;
   align-items: center;
-}
-
-.removable lbl {
-  padding: 2px;
 }
 
 .removable .btn {
@@ -75,6 +91,10 @@
   position: relative;
   top: 2px;
   cursor: pointer;
+}
+
+.removable:hover  {
+  background-color: #e5e5e5;
 }
 
 .removable:hover .btn {

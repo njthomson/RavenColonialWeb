@@ -14,12 +14,12 @@ export const CommodityIcon: FunctionComponent<{ name: string; }> = (props) => {
     commodityClass = props.name;
 
     iconName = mapCommodityIcon[props.name];
-  } 
+  }
   if (!iconName) {
     commodityClass = getTypeForCargo(props.name);
     iconName = mapCommodityIcon[commodityClass]!;
-  } 
-  if (!iconName)  {
+  }
+  if (!iconName) {
     console.error(`Unexpected: ${props.name}`);
     commodityClass = 'Unknown';
     iconName = 'ChromeClose';
