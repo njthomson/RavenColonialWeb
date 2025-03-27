@@ -44,7 +44,7 @@ footer p {
 
 h3 {
   border-bottom: #e5e5e5 1px solid;
-  /* margin: 0 10px 0 10px; */
+  margin: 0 10px 0 0;
 }
 
 .contain-horiz {
@@ -65,7 +65,7 @@ h3 {
 .half {
   min-width: 400px;
   flex-grow: 1;
-  margin: 20px;
+  margin: 10px;
 }
 
 .center {

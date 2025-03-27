@@ -2,7 +2,7 @@ import './misc.css';
 import { FunctionComponent } from "react";
 import { mapCommodityIcon, mapCommodityNames, ProjectRefLite } from "./types";
 import { Icon } from "@fluentui/react";
-import { Store } from "./local-storage";
+import { store } from "./local-storage";
 import { buildTypes } from './project-create';
 import cargoTypes from './assets/cargo-types.json';
 
@@ -29,12 +29,12 @@ export const CommodityIcon: FunctionComponent<{ name: string }> = (props) => {
   if (props.name in mapCommodityIcon) {
     commodityClass = props.name;
     iconName = mapCommodityIcon[props.name];
-  } 
+  }
   if (!iconName) {
     commodityClass = getTypeForCargo(props.name);
     iconName = mapCommodityIcon[commodityClass]!;
-  } 
-  if (!iconName)  {
+  }
+  if (!iconName) {
     console.error(`Unexpected: ${props.name}`);
     commodityClass = 'Unknown';
     iconName = 'ChromeClose';
@@ -45,7 +45,7 @@ export const CommodityIcon: FunctionComponent<{ name: string }> = (props) => {
 
 
 export const CargoRemaining: FunctionComponent<{ sumTotal: number }> = (props) => {
-  const cmdr = Store.getCmdr();
+  const cmdr = store.cmdr;
   const tripsLarge = Math.ceil(props.sumTotal / (cmdr?.largeMax ?? 794));
   const tripsMed = Math.ceil(props.sumTotal / (cmdr?.medMax ?? 400));
 
@@ -98,3 +98,12 @@ export const flattenObj = (obj: Record<string, string[]>): string[] => {
 export const delayFocus = (target: string, delay = 10): void => {
   setTimeout(() => document.getElementById(target)?.focus(), delay);
 }
+
+export const fcFullName = (name: string, displayName: string) => {
+  if (name === displayName) {
+    return name;
+  } else {
+    return `${displayName} (${name})`;
+  }
+};
+
