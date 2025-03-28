@@ -1,0 +1,26 @@
+
+.edit-cargo {
+  display: inline-block;
+}
+
+.edit-cargo .name {
+  text-align: left;
+  width: 240px;
+}
+.edit-cargo .amount {
+  text-align: center;
+}
+
+.edit-cargo thead .ms-Stack{
+  align-items: center;
+}
+
+.edit-cargo tbody input {
+  text-align: right;
+  width: 60px;
+}
+
+
+.edit-cargo tbody .odd {
+  background-color: yellow;
+}

@@ -1,6 +1,6 @@
 import './misc.css';
 import { FunctionComponent } from "react";
-import { mapCommodityIcon, mapCommodityNames, ProjectRefLite } from "./types";
+import { mapCommodityIcon, mapCommodityNames, ProjectRefLite, SortMode } from "./types";
 import { Icon } from "@fluentui/react";
 import { store } from "./local-storage";
 import { buildTypes } from './project-create';
@@ -82,6 +82,26 @@ export const getTypeForCargo = (cargo: string) => {
   return '?';
 };
 
+export const getGroupedCommodities = (cargoNames: string[], sort: SortMode): Record<string, string[]> => {
+
+  const sorted = cargoNames
+  sorted.sort();
+
+  // just alpha sort
+  if (sort === SortMode.alpha) {
+    return { alpha: sorted };
+  }
+
+  const dd = sorted.reduce((d, c) => {
+    const t = getTypeForCargo(c);
+    if (!d[t]) d[t] = [];
+    d[t].push(c);
+
+    return d;
+  }, {} as Record<string, string[]>);
+  return dd;
+};
+
 export const flattenObj = (obj: Record<string, string[]>): string[] => {
   const list: string[] = [];
   const sortedKeys = Object.keys(obj);
@@ -107,3 +127,7 @@ export const fcFullName = (name: string, displayName: string) => {
   }
 };
 
+export const sumCargo = (cargo: Record<string, number>): number => {
+  const sum = Object.values(cargo).reduce((s,v) => s += v, 0);
+  return sum;
+}

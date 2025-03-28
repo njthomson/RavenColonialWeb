@@ -124,4 +124,5 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
       });
       this.comboFindFC.current?.focus(true);
     }
-  };}
+  };
+}

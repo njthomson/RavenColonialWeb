@@ -157,7 +157,7 @@ h3 {
 
 .create-project .hint {
   margin: 8px 0 8px 0;
-  display:flex;
+  display: flex;
   align-items: center;
 }
 
@@ -180,6 +180,16 @@ h3 {
   button {
     margin: 0 8px 8px 0;
   }
+}
+
+/* Icons as buttons (they're smaller) */
+.icon-btn {
+  padding: 2px;
+  height: unset;
+}
+
+.icon-btn:hover {
+  background-color: #e5e5e5;
 }
 
 i {
