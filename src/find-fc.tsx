@@ -32,13 +32,13 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
       this.props.onMarketId(this.state.marketId);
     }
 
-    if (this.props.errorMsg !== this.state.errorMsg) {
+    if (this.props.errorMsg && this.props.errorMsg !== this.state.errorMsg) {
       this.setState({ errorMsg: this.props.errorMsg });
     }
   }
 
   render() {
-    const { matches: fcMatches, matchName, errorMsg } = this.state;
+    const { matches, matchName, errorMsg } = this.state;
 
     return <>
       <ComboBox
@@ -49,7 +49,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
         styles={{ root: { maxWidth: 300 } }}
         allowFreeform
         autoComplete='off'
-        options={fcMatches}
+        options={matches}
         onRenderUpperContent={() => {
           if (!matchName || matchName.length < 4)
             return <div className='add-fc-upper'>Type 4 characters to begin search</div>;
@@ -99,8 +99,11 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     if (txt.length < 4) return;
 
     if (this.props.match) {
+      this.setState({ matches: [] });
+
       // MATCH the FC from those known to us
       const matches = await api.fc.match(txt);
+
       const keys = Object.keys(matches);
       this.setState({
         errorMsg: keys.length === 0 ? 'No matches found. Try Carrier ID?' : undefined,
@@ -112,8 +115,11 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
       });
       this.comboFindFC.current?.focus(true);
     } else {
+      this.setState({ matches: [] });
+
       // FIND the FC via Spansh
       const matches = await api.fc.find(txt);
+
       this.setState({
         errorMsg: matches.length === 0 ? 'No matches found. Try Carrier ID?' : undefined,
         marketId: undefined,

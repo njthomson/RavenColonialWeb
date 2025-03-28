@@ -761,10 +761,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             onMarketId={(marketId) => {
 
               if (marketId) {
-                if (this.state.proj?.linkedFC.find(fc => fc.marketId.toString() === marketId))
-                  this.setState({ fcMatchError: `FC already linked` });
-                else
+                if (this.state.proj?.linkedFC.find(fc => fc.marketId.toString() === marketId)) {
+                  this.setState({ fcMatchMarketId: undefined, fcMatchError: `FC already linked` });
+                } else {
                   this.setState({ fcMatchMarketId: marketId, fcMatchError: undefined });
+                }
+              } else {
+                this.setState({ fcMatchMarketId: undefined, fcMatchError: undefined });
               }
             }}
           />
