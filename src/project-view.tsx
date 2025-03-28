@@ -5,12 +5,13 @@ import { Component, CSSProperties } from 'react';
 import { ProjectCreate } from './project-create';
 import './project-view.css';
 import { store } from './local-storage';
-import { BuildType, CargoRemaining, CommodityIcon, delayFocus, fcFullName, flattenObj, getTypeForCargo } from './misc';
+import { BuildType, CargoRemaining, CommodityIcon, flattenObj, getTypeForCargo } from './misc';
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
 import { appTheme } from './theme';
-import { api, apiSvcUrl } from './api';
+import { delayFocus, fcFullName } from './util';
 import { FindFC } from './find-fc';
+import * as api from './api';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -121,105 +122,55 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return;
     }
 
-    // (not awaiting)
-    this.fetchProjectStats(buildId);
-    this.fetchCargoFC(buildId);
-
     try {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
-      console.log('fetchProject: begin buildId:', url);
-      const response = await fetch(url, { method: 'GET' });
-      if (response.status === 200) {
-        const newProj: Project = await response.json();
+      this.setState({ loading: true });
 
-        console.log('Project.fetch: end buildId:', newProj);
-        store.addRecentProject(newProj);
+      // (not awaiting)
+      this.fetchProjectStats(buildId);
+      this.fetchCargoFC(buildId);
 
-        // last destination not in this build project
-        let deliverMarketId = this.state.deliverMarketId;
-        if (!newProj.linkedFC.find(fc => fc.marketId.toString() === store.deliverDestination)) {
-          deliverMarketId = 'site';
-        }
 
-        this.setState({
-          proj: newProj,
-          editReady: new Set(newProj.ready),
-          sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
-          hasAssignments: Object.keys(newProj.commanders).reduce((s, c) => s += newProj.commanders[c].length, 0) > 0,
-          loading: false,
-          disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
-          deliverMarketId: deliverMarketId,
-        });
-        window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
-        if (newProj.complete) window.document.title += ' (completed)';
-      } else if (response.status === 404 && buildId) {
-        this.setState({
-          loading: false,
-          errorMsg: 'No project found by that ID',
-        });
-        store.removeRecentProject(buildId);
-        window.document.title = `Build: ?`;
-      } else {
-        const msg = `${response.status}: ${response.statusText}`;
-        this.setState({
-          loading: false,
-          errorMsg: msg,
-        });
-        console.error(msg);
+      const newProj = await api.project.get(buildId);
+      // console.log('Project.fetch: end buildId:', newProj);
+      store.addRecentProject(newProj);
+
+      // last destination not in this build project
+      let deliverMarketId = this.state.deliverMarketId;
+      if (!newProj.linkedFC.find(fc => fc.marketId.toString() === store.deliverDestination)) {
+        deliverMarketId = 'site';
       }
-    } catch (err: any) {
+
       this.setState({
+        proj: newProj,
+        editReady: new Set(newProj.ready),
+        sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
+        hasAssignments: Object.keys(newProj.commanders).reduce((s, c) => s += newProj.commanders[c].length, 0) > 0,
         loading: false,
-        errorMsg: err.message,
+        disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
+        deliverMarketId: deliverMarketId,
       });
-      console.error(err.stack);
+
+      window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
+      if (newProj.complete) window.document.title += ' (completed)';
+
+    } catch (err: any) {
+      this.setState({ loading: false, errorMsg: err.message, });
     }
   }
 
-  fetchProjectStats(buildId: string | undefined) {
-    if (!buildId) {
-      this.setState({ loading: false });
-      return;
-    }
-
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/stats`;
-    console.log('fetchProjectStats:', url);
-    fetch(url, { method: 'GET' })
-      .then(async (response) => {
-
-        if (response.status === 200) {
-          const stats: SupplyStatsSummary = await response.json();
-
-          this.setState({
-            summary: stats,
-          });
-        } else {
-          const msg = `${response.status}: ${response.statusText}`;
-          this.setState({
-            loading: false,
-            errorMsg: msg,
-          });
-          console.error(msg);
-        }
-      })
-      .catch(err => {
-        this.setState({ errorMsg: err.message, });
-        console.error(err.stack);
-      });
+  fetchProjectStats(buildId: string) {
+    api.project.getStats(buildId)
+      .then(stats => this.setState({ summary: stats }))
+      .catch(err => this.setState({ errorMsg: err.message }));
   }
 
-  async fetchCargoFC(buildId: string) {
+  fetchCargoFC(buildId: string) {
     // don't bother calling when we know there are zero FCs
     if (this.state.proj && Object.keys(this.state.proj.linkedFC).length === 0) return;
 
     api.project.getCargoFC(buildId)
-      .then(fcCargo => {
-        this.setState({ fcCargo: fcCargo });
-      })
-      .catch(err => {
-        this.setState({ errorMsg: err.message, });
-        console.error(err.stack);
-      });
+      .then(fcCargo => this.setState({ fcCargo: fcCargo }))
+      .catch(err => this.setState({ errorMsg: err.message }));
   }
 
   render() {
@@ -238,31 +189,45 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     // prep CommandBar buttons
-    const commands: ICommandBarItemProps[] = [{
-      key: 'deliver-cargo', text: 'Deliver',
-      iconProps: { iconName: 'DeliveryTruck' },
-      onClick: () => {
-        this.setState({ mode: Mode.deliver });
-        delayFocus('deliver-commodity');
+    const commands: ICommandBarItemProps[] = [
+      {
+        key: 'deliver-cargo',
+        text: 'Deliver',
+        iconProps: { iconName: 'DeliveryTruck' },
+        disabled: proj.complete,
+        onClick: () => {
+          this.setState({ mode: Mode.deliver });
+          delayFocus('deliver-commodity');
+        },
       },
-      disabled: proj.complete,
-    }, {
-      key: 'btn-edit', text: 'Edit project',
-      iconProps: { iconName: 'Edit' },
-      onClick: () => this.setState({ mode: Mode.editProject, editProject: { ...this.state.proj } }),
-    }, {
-      key: 'edit-commodities', text: 'Edit commodities',
-      iconProps: { iconName: 'AllAppsMirrored' },
-      onClick: () => {
-        this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj?.commodities } });
-        delayFocus('first-commodity-edit');
+      {
+        key: 'btn-edit',
+        text: 'Edit project',
+        iconProps: { iconName: 'Edit' },
+        onClick: () => this.setState({ mode: Mode.editProject, editProject: { ...this.state.proj } }),
+      },
+      {
+        key: 'edit-commodities',
+        text: 'Edit commodities',
+        iconProps: { iconName: 'AllAppsMirrored' },
+        onClick: () => {
+          this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj?.commodities } });
+          delayFocus('first-commodity-edit');
+        }
+      },
+      {
+        key: 'btn-refresh',
+        text: 'Refresh',
+        iconProps: { iconName: 'Refresh' },
+        onClick: () => this.fetchProject(proj.buildId),
+      },
+      {
+        key: 'btn-delete', text: 'Delete',
+        iconProps: { iconName: 'Delete' },
+        disabled: disableDelete,
+        onClick: () => this.setState({ confirmDelete: true }),
       }
-    }, {
-      key: 'btn-delete', text: 'Delete',
-      iconProps: { iconName: 'Delete' },
-      disabled: disableDelete,
-      onClick: () => this.setState({ confirmDelete: true }),
-    }]
+    ];
 
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
@@ -783,23 +748,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!this.state.proj?.buildId || !cmdr) { return; }
 
     try {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(cmdr)}`;
-      console.log('onClickCmdrRemove:', url);
-      const response = await fetch(url, { method: 'DELETE' });
-      console.log('onClickCmdrRemove:', response);
+      await api.project.unlinkCmdr(this.state.proj.buildId, cmdr);
 
-      if (response.status === 202) {
-        // success - remove from in-memory data
-        const { proj } = this.state;
-        if (!proj.commanders) { proj.commanders = {}; }
-        delete proj.commanders[cmdr];
-        this.setState({ proj });
-      }
+      // success - remove from in-memory data
+      const { proj } = this.state;
+      if (!proj.commanders) { proj.commanders = {}; }
+      delete proj.commanders[cmdr];
+      this.setState({ proj });
+
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   }
 
@@ -824,28 +782,20 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
     try {
       const { newCmdr } = this.state;
+      await api.project.linkCmdr(this.state.proj.buildId, newCmdr);
 
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(this.state.proj.buildId)}/link/${encodeURIComponent(newCmdr)}`;
-      console.log('onShowAddCmdr:', url);
-      const response = await fetch(url, { method: 'PUT' });
-      console.log('onShowAddCmdr:', response);
-
-      if (response.status === 202) {
-        // success - add to in-memory data
-        const { proj } = this.state;
-        if (!proj.commanders) { proj.commanders = {}; }
-        proj.commanders[newCmdr] = [];
-        this.setState({
-          showAddCmdr: false,
-          newCmdr: '',
-          proj
-        });
-      }
-    } catch (err: any) {
+      // success - add to in-memory data
+      const { proj } = this.state;
+      if (!proj.commanders) { proj.commanders = {}; }
+      proj.commanders[newCmdr] = [];
       this.setState({
-        errorMsg: err.message,
+        showAddCmdr: false,
+        newCmdr: '',
+        proj
       });
-      console.error(err.stack);
+
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message });
     }
   }
 
@@ -855,10 +805,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (buildId && marketId) {
       try {
         const linkedFCs = await api.project.linkFC(buildId, marketId);
+
         this.updateLinkedFC(buildId, linkedFCs);
+
       } catch (err: any) {
-        this.setState({ errorMsg: err.message, });
-        console.error(err.stack);
+        this.setState({ errorMsg: err.message });
       }
     }
   }
@@ -871,10 +822,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ fcCargo: fcCargoTemp });
 
       const linkedFCs = await api.project.unlinkFC(buildId, marketId);
+
       this.updateLinkedFC(buildId, linkedFCs);
+
     } catch (err: any) {
-      this.setState({ errorMsg: err.message, });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   }
 
@@ -897,28 +849,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj, assignCommodity } = this.state;
     if (!proj?.buildId || !assignCmdr || !assignCommodity) { return; }
     try {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(assignCmdr)}/${encodeURIComponent(assignCommodity)}/`;
-      console.log('onClickAssign:', url);
-      const response = await fetch(url, { method: 'PUT' });
-      console.log('onClickAssign:', response);
+      await api.project.assignCmdr(proj.buildId, assignCmdr, assignCommodity);
 
-      if (response.status === 202) {
-        // success - add to in-memory data
-        if (!proj.commanders) { proj.commanders = {}; }
-        if (!proj.commanders[assignCmdr]) { proj.commanders[assignCmdr] = []; }
+      // success - add to in-memory data
+      if (!proj.commanders) { proj.commanders = {}; }
+      if (!proj.commanders[assignCmdr]) { proj.commanders[assignCmdr] = []; }
 
-        proj.commanders[assignCmdr].push(assignCommodity)
-        this.setState({
-          assignCommodity: undefined,
-          hasAssignments: Object.keys(proj.commanders).reduce((s, c) => s += proj.commanders[c].length, 0) > 0,
-          proj
-        });
-      }
-    } catch (err: any) {
+      proj.commanders[assignCmdr].push(assignCommodity)
       this.setState({
-        errorMsg: err.message,
+        assignCommodity: undefined,
+        hasAssignments: Object.keys(proj.commanders).reduce((s, c) => s += proj.commanders[c].length, 0) > 0,
+        proj
       });
-      console.error(err.stack);
+
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message });
     }
   }
 
@@ -926,55 +871,35 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj } = this.state;
     if (!proj || !proj.buildId || !proj.commanders || !cmdr || !commodity || !proj.commanders[cmdr]) { return; }
     try {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}/assign/${encodeURIComponent(cmdr)}/${encodeURIComponent(commodity)}/`;
-      console.log('onClickAssign:', url);
-      const response = await fetch(url, { method: 'DELETE' })
-      console.log('onClickAssign:', response);
+      await api.project.unAssignCmdr(proj.buildId, cmdr, commodity);
 
-      if (response.status === 202) {
-        // success - remove from to in-memory data
-
-        const idx = proj.commanders[cmdr].indexOf(commodity)
-        proj.commanders[cmdr].splice(idx, 1);
-        this.setState({
-          proj,
-          hasAssignments: Object.keys(proj.commanders).reduce((s, c) => s += proj.commanders[c].length, 0) > 0,
-        });
-      }
-    } catch (err: any) {
+      // success - remove from to in-memory data
+      const idx = proj.commanders[cmdr].indexOf(commodity)
+      proj.commanders[cmdr].splice(idx, 1);
       this.setState({
-        errorMsg: err.message,
+        proj,
+        hasAssignments: Object.keys(proj.commanders).reduce((s, c) => s += proj.commanders[c].length, 0) > 0,
       });
-      console.error(err.stack);
+
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message });
     }
   }
 
   onToggleReady = async (buildId: string, commodity: string, isReady: boolean) => {
     try {
+      await api.project.setReady(buildId, [commodity], isReady);
 
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/ready`;
-      console.log('onToggleReady:', url);
-      const response = await fetch(url, {
-        method: isReady ? 'DELETE' : 'POST',
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify([commodity])
-      });
-      console.log('onToggleReady:', response);
+      // success - remove from in-memory data
+      const editReady = this.state.editReady;
+      if (isReady)
+        editReady.delete(commodity)
+      else
+        editReady.add(commodity)
+      this.setState({ editReady });
 
-      if (response.status === 202) {
-        // success - remove from in-memory data
-        const editReady = this.state.editReady;
-        if (isReady)
-          editReady.delete(commodity)
-        else
-          editReady.add(commodity)
-        this.setState({ editReady });
-      }
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   }
 
@@ -982,31 +907,20 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const buildId = this.state.proj?.buildId;
     if (!buildId) return;
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}`;
-    console.log('onProjectDelete:', url);
-
     // add a little artificial delay so the spinner doesn't flicker in and out
     this.setState({ submitting: true });
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      const response = await fetch(url, { method: 'DELETE' });
+      await api.project.delete(buildId);
 
-      if (response.status === 202) {
-        // success - navigate to home
-        store.removeRecentProject(buildId);
-        window.location.assign(`#`);
-        window.location.reload();
-      }
-      else {
-        const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
-      }
+      // success - navigate to home
+      store.removeRecentProject(buildId);
+      window.location.assign(`#`);
+      window.location.reload();
+
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   }
 
@@ -1014,38 +928,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const buildId = this.state.proj?.buildId;
     if (!buildId) return;
 
-    const url = `${apiSvcUrl}/api/project/${encodeURIComponent(buildId)}/complete`;
-    console.log('onProjectComplete:', url);
-
     // add a little artificial delay so the spinner doesn't flicker in and out
     this.setState({ submitting: true });
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      const response = await fetch(url, { method: 'POST' });
+      await api.project.complete(buildId);
 
-      if (response.status === 202) {
-        window.location.reload();
-      }
-      else {
-        const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
-      }
+      window.location.reload();
+
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   }
 
   onUpdateProjectCommodities = async () => {
     const { proj, editCommodities } = this.state;
-    console.log('onUpdateProjectCommodities:', editCommodities);
 
     if (!!proj?.commodities && proj.buildId && editCommodities) {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
-      console.log('onUpdateProjectCommodities:', url);
       const deltaProj = {
         buildId: proj.buildId,
         commodities: {} as Record<string, number>
@@ -1062,46 +962,29 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', },
-          body: JSON.stringify(deltaProj)
+        const savedProj = await api.project.update(proj.buildId, deltaProj);
+
+        // success - apply new commodity count
+        this.setState({
+          proj: savedProj,
+          editReady: new Set(savedProj.ready),
+          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+          hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
+          editCommodities: undefined,
+          mode: Mode.view,
+          submitting: false,
         });
 
-        if (response.status === 200) {
-          // success - apply new commodity count
-          var savedProj: Project = await response.json();
-          console.log('onUpdateCommodities: savedProj:', savedProj);
-          this.setState({
-            proj: savedProj,
-            editReady: new Set(savedProj.ready),
-            sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-            hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
-            editCommodities: undefined,
-            mode: Mode.view,
-            submitting: false,
-          });
-        }
-        else {
-          const msg = await response.text();
-          this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
-        }
       } catch (err: any) {
-        this.setState({
-          errorMsg: err.message,
-        });
-        console.error(err.stack);
+        this.setState({ errorMsg: err.message });
       }
     }
   };
 
   onUpdateProjectDetails = async () => {
     const { proj, editProject } = this.state;
-    console.log('onUpdateProjectDetails:', editProject);
 
     if (proj?.buildId && editProject) {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
-      console.log('onUpdateProjectDetails:', url);
       const deltaProj: Record<string, string> = {
         buildId: proj.buildId,
       };
@@ -1118,36 +1001,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', },
-          body: JSON.stringify(deltaProj)
+        const savedProj = await api.project.update(proj.buildId, deltaProj);
+
+        // success
+        const cmdrName = store.cmdrName;
+        this.setState({
+          proj: savedProj,
+          editReady: new Set(savedProj.ready),
+          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+          hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
+          editProject: undefined,
+          disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
+          mode: Mode.view,
+          submitting: false,
         });
 
-        if (response.status === 200) {
-          // success
-          var savedProj: Project = await response.json();
-          console.log('onUpdateProjectDetails: savedProj:', savedProj);
-          const cmdrName = store.cmdrName;
-          this.setState({
-            proj: savedProj,
-            editReady: new Set(savedProj.ready),
-            sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-            hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
-            editProject: undefined,
-            disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
-            mode: Mode.view,
-            submitting: false,
-          });
-        } else {
-          const msg = await response.text();
-          this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}`, submitting: false });
-        }
       } catch (err: any) {
-        this.setState({
-          errorMsg: err.message,
-        });
-        console.error(err.stack);
+        this.setState({ errorMsg: err.message });
       }
     }
   };
@@ -1194,38 +1064,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!proj?.buildId || !fixMarketId) return;
 
     try {
-      const url = `${apiSvcUrl}/api/project/${encodeURIComponent(proj.buildId)}`;
-      console.log('saveNewMarketId:', url);
       const deltaProj = {
         buildId: proj.buildId,
         marketId: parseInt(fixMarketId),
       };
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', },
-        body: JSON.stringify(deltaProj)
+      const savedProj = await api.project.update(proj.buildId, deltaProj);
+
+      // success
+      console.log('saveNewMarketId: savedProj:', savedProj);
+      this.setState({
+        proj: savedProj,
+        editReady: new Set(savedProj.ready),
+        sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+        hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
+        fixMarketId: undefined,
       });
 
-      if (response.status === 200) {
-        // success
-        var savedProj: Project = await response.json();
-        console.log('saveNewMarketId: savedProj:', savedProj);
-        this.setState({
-          proj: savedProj,
-          editReady: new Set(savedProj.ready),
-          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-          hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
-          fixMarketId: undefined,
-        });
-      } else {
-        const msg = await response.text();
-        this.setState({ errorMsg: `${response.status}: ${response.statusText} ${msg}` });
-      }
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   };
 
@@ -1513,10 +1369,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       store.deliver = nextDelivery;
       store.deliverDestination = deliverMarketId;
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   };
 
@@ -1527,10 +1380,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
+      this.setState({ errorMsg: err.message });
     }
   }
 

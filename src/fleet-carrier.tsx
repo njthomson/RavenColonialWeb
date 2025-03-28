@@ -2,10 +2,10 @@ import './cmdr.css';
 import { DefaultButton, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef } from 'react';
 import { FindFC } from './find-fc';
-import { api } from './api';
 import { KnownFC } from './types';
 import { EditCargo } from './edit-cargo';
 import { appTheme } from './theme';
+import * as api from './api';
 
 interface FleetCarrierProps {
   marketId?: string;

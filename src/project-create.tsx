@@ -1,8 +1,8 @@
 import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, Icon, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
-import { Project, CreateProject, ResponseEdsmStations, ResponseEdsmSystem, StationEDSM } from './types'
+import { CreateProject, StationEDSM } from './types'
 import { Component } from 'react';
 import { store } from './local-storage';
-import { apiSvcUrl } from './api';
+import * as api from './api';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -10,6 +10,7 @@ interface ProjectCreateProps {
   systemName?: string;
 }
 
+// TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
 interface ProjectCreateState extends Omit<CreateProject, 'marketId'> {
   marketId: string | undefined;
   showMarketId: boolean;
@@ -113,7 +114,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       showMarketIdHelp: false,
       buildId: '',
       buildName: '',
-      buildType: 'orbis',
+      buildType: '',
       architectName: '',
       factionName: '',
       maxNeed: 0,
@@ -218,62 +219,53 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
   onCheckSystem = async () => {
     if (!this.state.systemName) { return; }
-    const url = `https://www.edsm.net/api-system-v1/stations?systemName=` + encodeURIComponent(this.state.systemName);
-    console.log('ProjectCreate.onCheckSystem:', url);
 
     this.setState({
       showMarketId: false,
       foundStations: undefined,
     });
+    try {
 
-    const response = await fetch(url);
-    //console.log('ProjectCreate.onCheckSystem:', response);
 
-    if (response.status === 200) {
-      // success - add to in-memory data
-      const data: ResponseEdsmStations = await response.json();
-      if (data.id64) {
-        // look up x,y,z values
-        const response2 = await fetch(`https://www.edsm.net/api-v1/system?showCoordinates=1&systemName=` + encodeURIComponent(this.state.systemName));
-        console.log('ProjectCreate.onCheckSystem2:', response2);
-        const data2: ResponseEdsmSystem = await response2.json();
+      const data = await api.edsm.findStationsInSystem(this.state.systemName);
+      //console.log('ProjectCreate.onCheckSystem:', data);
 
-        console.log('ProjectCreate.onCheckSystem:', data);
-
-        this.setState({
-          systemAddress: data.id64,
-          starPos: [data2.coords.x, data2.coords.y, data2.coords.z],
-          systemName: data.name,
-          msgError: undefined,
-        });
-
-        const foundStations = data.stations.filter(s => s.name.includes('Construction') || s.name.includes('Colonisation'));
-        if (foundStations.length === 0) {
-          this.setState({
-            showMarketId: true,
-            msgError: 'No known colonization sites. Manual marketID needed.',
-            msgClass: MessageBarType.warning,
-          });
-        } else {
-          this.setState({
-            foundStations
-          });
-        }
-        return;
-      } else {
+      if (!data?.id64) {
+        // system not known
         this.setState({
           msgError: 'Unknown system',
           msgClass: MessageBarType.error,
         });
         return;
       }
+
+      // look up x,y,z values
+      const data2 = await api.edsm.findSystem(this.state.systemName);
+      // console.log('ProjectCreate.onCheckSystem:', data);
+
+      this.setState({
+        systemAddress: data.id64,
+        starPos: [data2.coords.x, data2.coords.y, data2.coords.z],
+        systemName: data.name,
+        msgError: undefined,
+      });
+
+      const foundStations = data.stations.filter(s => s.name.includes('Construction') || s.name.includes('Colonisation'));
+      if (foundStations.length === 0) {
+        this.setState({
+          showMarketId: true,
+          msgError: 'No known colonization sites. Manual marketID needed.',
+          msgClass: MessageBarType.warning,
+        });
+      } else {
+        this.setState({
+          foundStations
+        });
+      }
+    } catch (err: any) {
+      this.setState({ msgError: err.message, msgClass: MessageBarType.error });
     }
 
-    // still here? EDSM call was not successful
-    this.setState({
-      msgError: `${response.status}: ${response.statusText}`,
-      msgClass: MessageBarType.error,
-    });
   }
 
   onCreateBuild = async () => {
@@ -294,51 +286,36 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       return;
     }
 
-    const url = `${apiSvcUrl}/api/project/`;
-    console.log('ProjectCreate.onCheckSystem:', url);
+    try {
+      // TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
+      const body = {
+        ...this.state,
+      };
+      delete body.foundStations;
+      delete body.msgError;
+      delete body.msgClass;
 
-    const body = {
-      ...this.state,
-    };
-    delete body.foundStations;
-    delete body.msgError;
-    delete body.msgClass;
-
-    const cmdr = store.cmdrName;
-    if (cmdr) {
-      body.commanders = {};
-      body.commanders[cmdr] = [];
-    }
-
-    const response = await fetch(url, {
-      method: 'PUT',
-      // referrer: '',
-      // referrerPolicy: 'no-referrer',
-      headers: { 'Content-Type': 'application/json', },
-      body: JSON.stringify(body),
-    });
-    console.log('ProjectCreate.onCreateBuild:', response);
-
-    if (response.status === 200) {
-      // redirect to viewer
-      const newProj: Project = await response.json();
-      if (newProj.buildId) {
-        window.location.assign(`#build=${newProj.buildId}`);
-        window.location.reload();
-      } else {
-        console.error('Why no BuildId?', newProj)
+      const cmdr = store.cmdrName;
+      if (cmdr) {
+        body.commanders = {};
+        body.commanders[cmdr] = [];
       }
-    } else if (response.status === 409) {
-      this.setState({
-        msgError: `Cannot create new build project. There is one tracked in ${this.state.systemName} with marketId: ${this.state.marketId}`,
-        msgClass: MessageBarType.error,
-      });
-    } else {
-      const msg = await response.text();
-      this.setState({
-        msgError: `${response.status}: ${response.statusText} ${msg}`,
-        msgClass: MessageBarType.error,
-      });
+
+      // call the API
+      const newProj = await api.project.create(body as any);
+
+      window.location.assign(`#build=${newProj.buildId}`);
+      window.location.reload();
+
+    } catch (err: any) {
+      if (err.statusCode === 409) {
+        this.setState({
+          msgError: `Cannot create new build project. Already tracking marketId: ${this.state.marketId} in ${this.state.systemName}`,
+          msgClass: MessageBarType.error,
+        });
+      } else {
+        this.setState({ msgError: err.message, msgClass: MessageBarType.error });
+      }
     }
   }
 

@@ -3,7 +3,7 @@ import { ProjectRef } from './types';
 import { Component } from 'react';
 import { ProjectCreate } from './project-create';
 import { ProjectLink } from './misc';
-import { apiSvcUrl } from './api';
+import * as api from './api';
 
 interface ProjectProps {
   find: string | undefined | null;
@@ -45,38 +45,18 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
   findProjects = async (systemName: string) => {
     if (!systemName) { return; }
-    const url = `${apiSvcUrl}/api/system/${encodeURIComponent(systemName)}`;
-    console.log('ProjectSearch.fetch: begin:', url);
     this.setState({ loading: true });
     window.document.title = `Find: ${systemName}`;
+
     try {
-
-      // await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await fetch(url, { method: 'GET' });
-
-      if (response.status === 200) {
-        const newRows: ProjectRef[] = await response.json();
-
-        console.log('Project.ProjectSearch: end', newRows);
-        this.setState({
-          loading: false,
-          rows: newRows,
-        });
-      } else {
-        const txt = await response.text();
-        const msg = `${response.status}: ${response.statusText} ${txt}`;
-        this.setState({
-          errorMsg: msg,
-          loading: false,
-        });
-        console.error(msg);
-      }
-    } catch (err: any) {
+      const matches = await api.project.findBySystem(systemName);
       this.setState({
         loading: false,
-        errorMsg: err.message,
+        rows: matches,
       });
-      console.error(err.stack);
+
+    } catch (err: any) {
+      this.setState({ loading: false, errorMsg: err.message, });
     }
   }
 
