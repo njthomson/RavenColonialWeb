@@ -1,5 +1,5 @@
 import cargoTypes from './assets/cargo-types.json';
-import { mapCommodityNames } from "./types";
+import { mapCommodityNames, SortMode } from "./types";
 
 export const getColorTable = (tokens: string[]): Record<string, string> => {
   const colors: Record<string, string> = {};
@@ -17,6 +17,26 @@ export const getTypeForCargo = (cargo: string) => {
 
   console.error(`Unknown type for cargo: ${cargo}`);
   return '?';
+};
+
+export const getGroupedCommodities = (cargoNames: string[], sort: SortMode): Record<string, string[]> => {
+
+  const sorted = cargoNames
+  sorted.sort();
+
+  // just alpha sort
+  if (sort === SortMode.alpha) {
+    return { alpha: sorted };
+  }
+
+  const dd = sorted.reduce((d, c) => {
+    const t = getTypeForCargo(c);
+    if (!d[t]) d[t] = [];
+    d[t].push(c);
+
+    return d;
+  }, {} as Record<string, string[]>);
+  return dd;
 };
 
 export const flattenObj = (obj: Record<string, string[]>): string[] => {
@@ -43,3 +63,8 @@ export const fcFullName = (name: string, displayName: string) => {
     return `${displayName} (${name})`;
   }
 };
+
+export const sumCargo = (cargo: Record<string, number>): number => {
+  const sum = Object.values(cargo).reduce((s,v) => s += v, 0);
+  return sum;
+}

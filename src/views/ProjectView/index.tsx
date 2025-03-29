@@ -1337,8 +1337,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const fcCargoKeys = Object.keys(fcCargo);
     const cargoOptions = Object.keys(proj.commodities)
       .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
-      .map(k => ({ key: k, text: mapCommodityNames[k] }))
-      .sort();
+      .map(k => ({ key: k, text: mapCommodityNames[k] }));
 
     const destinationOptions: IDropdownOption[] = [
       { key: 'site', text: 'Construction site', data: { icon: 'Manufacturing' } },

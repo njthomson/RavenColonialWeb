@@ -1,8 +1,9 @@
-import { Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef } from 'react';
 import { api } from '../api';
-import { KnownFC, mapCommodityNames } from '../types';
-import { CommodityIcon, FindFC } from '../components';
+import { EditCargo, FindFC } from '../components';
+import { appTheme } from '../theme';
+import { KnownFC } from '../types';
 
 interface FleetCarrierProps {
   marketId?: string;
@@ -15,11 +16,13 @@ interface FleetCarrierState {
 
   loading: boolean;
   fc?: KnownFC;
-  cargo: Record<string, number>;
+  editCargo: Record<string, number>;
+  editDisplayName?: string;
 }
 
 export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState> {
   private findFC = createRef<FindFC>();
+  firstCargo: Record<string, number> = {};
 
   constructor(props: FleetCarrierProps) {
     super(props);
@@ -27,58 +30,29 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     this.state = {
       nextMarketId: this.props.marketId,
       loading: false,
-      cargo: {},
+      editCargo: {},
       // showBubble: !this.props.cmdr,
     };
   }
 
   componentDidMount(): void {
     window.document.title = `FC: ${this.props?.marketId ?? '?'}`;
+
     if (this.props.marketId) {
       this.setState({ loading: true })
+      // fetch FC data...
       api.fc.get(this.props.marketId)
-        .then(fc => this.setState({ loading: false, fc: fc, cargo: fc.cargo }))
+        .then(fc => {
+          this.setState({
+            loading: false,
+            fc: fc,
+            editCargo: fc.cargo,
+            editDisplayName: fc.displayName,
+          });
+        })
         .catch(err => this.setState({ loading: false, errorMsg: err.message }));
     }
   }
-
-  componentDidUpdate(prevProps: Readonly<FleetCarrierProps>, prevState: Readonly<FleetCarrierState>, snapshot?: any): void {
-    // if (prevProps.cmdr !== this.props.cmdr) {
-    //   this.fetchCmdrProjects(this.props.cmdr);
-    // }
-  }
-
-  // async fetchCmdrProjects(cmdr: string | undefined): Promise<void> {
-  //   this.setState({ loading: true, projects: undefined });
-  //   try {
-  //     if (!cmdr) { return; }
-  //     const url = `${apiSvcUrl}/api/cmdr/${encodeURIComponent(cmdr)}/summary`;
-  //     console.log('fetchCmdrProjects:', url);
-
-  //     this.setState({ loading: true, projects: undefined });
-
-  //     // await new Promise(resolve => setTimeout(resolve, 2500));
-  //     const response = await fetch(url, { method: 'GET' });
-  //     if (response.status === 200) {
-  //       const cmdrSummary: CmdrSummary = await response.json();
-
-  //       this.setState({ projects: cmdrSummary.projects });
-  //     } else {
-  //       const msg = `${response.status}: ${response.statusText}`;
-  //       this.setState({ errorMsg: msg });
-  //       console.error(msg);
-  //     }
-  //   } catch (err: any) {
-  //     this.setState({
-  //       errorMsg: err.message,
-  //     });
-  //     console.error(err.stack);
-  //   } finally {
-  //     this.setState({
-  //       loading: false
-  //     });
-  //   }
-  // }
 
   render() {
     const { errorMsg } = this.state;
@@ -112,7 +86,6 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           iconProps={{ iconName: 'Search' }}
           onClick={() => {
             this.setState({ errorMsg: !!errorMsg ? '' : 'oops' })
-            console.log('!');
             window.location.assign(`#fc=${nextMarketId}`);
             window.location.reload();
           }}
@@ -122,77 +95,117 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   renderFC() {
-    const { loading, fc, cargo } = this.state;
+    const { loading, fc } = this.state;
     if (!fc) return;
 
     return <>
       {loading && <Spinner size={SpinnerSize.large} label={`Loading  ...`} />}
-      <div className='hint' style={{backgroundColor: 'lightcyan'}}>(temporary UI)</div>
-
-      <table>
-        <tbody>
-          <tr>
-            <td>Name:</td>
-            <td className='grey'>{fc.displayName} ({fc.name})</td>
-          </tr>
-          <tr>
-            <td>MarketId:</td>
-            <td className='grey'>{fc.marketId}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {this.renderCargo(fc.marketId, cargo)}
+      <br />
+      {this.renderFields()}
+      {this.renderCargo(fc.marketId)}
     </>;
   }
 
-  renderCargo(marketId: number, cargo: Record<string, number>) {
+  renderFields() {
+    const { fc, editDisplayName } = this.state;
+    if (!fc) return;
 
-    const cargoKeys = Object.keys(cargo);
+    return <table>
+      <tbody>
+        <tr>
+          <td>Raw name:</td>
+          <td className='grey'>{fc.name}</td>
+        </tr>
+        <tr>
+          <td>Carrier name:</td>
+          <td>
+            <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
+              <input
+                type='text'
+                value={editDisplayName}
+                onChange={(ev) => this.setState({ editDisplayName: ev.target.value })}
+              />
 
-    const rows = cargoKeys.map(key => {
-      const displayName = mapCommodityNames[key];
-      return <tr key={`c-${key}`}>
-        <td>
-          <CommodityIcon name={key} /> {displayName}
-        </td>
-        <td>
-          <input
-            type='number'
-            min={0}
-            value={cargo[key]}
-            onChange={(ev) => {
-              const cargoUpdate = this.state.cargo;
-              cargoUpdate[key] = ev.target.valueAsNumber;
-              this.setState({ cargo: cargoUpdate });
-            }}
-          />
-        </td>
-      </tr>
-    });
-
-
-    return <>
-      <table>
-        <thead><tr>
-          <th>Commodity:</th>
-          <th>Amount:</th>
-        </tr></thead>
-        <tbody>
-          {rows}
-        </tbody>
-      </table>
-      <PrimaryButton
-        text='Update cargo'
-        onClick={() => {
-          this.setState({ loading: true});
-          api.fc.updateCargo(this.state.fc!.marketId, this.state.cargo)
-            .then(cargoUpdated => {
-              this.setState({ loading: false, cargo: cargoUpdated });
-            })
-            .catch(err => this.setState({ loading: false, errorMsg: err.message }));
-        }}
-      />
-    </>
+              {/* Toggle sort order button */}
+              <IconButton
+                className='icon-btn'
+                title='Update display name'
+                iconProps={{ iconName: 'Save' }}
+                disabled={fc.displayName === editDisplayName}
+                style={{ color: appTheme.palette.themePrimary }}
+                onClick={this.onUpdateFields}
+              />
+            </Stack>
+          </td>
+        </tr>
+        <tr>
+          <td>MarketId:</td>
+          <td className='grey'>{fc.marketId}</td>
+        </tr>
+      </tbody>
+    </table>;
   }
+
+  onUpdateFields = async () => {
+    this.setState({ loading: true });
+    try {
+
+      const fcUpdated = await api.fc.updateFields(this.state.fc!.marketId, {
+        displayName: this.state.editDisplayName!
+      });
+      this.setState({
+        loading: false,
+        fc: fcUpdated,
+        editCargo: fcUpdated.cargo,
+        editDisplayName: fcUpdated.displayName,
+      });
+    } catch (err: any) {
+      this.setState({ loading: false, errorMsg: err.message });
+    }
+  }
+
+  renderCargo(marketId: number) {
+    const { editCargo } = this.state;
+
+    return <div style={{ display: 'inline-block' }}>
+      <br />
+      <EditCargo cargo={editCargo} onChange={cargo => this.setState({ editCargo: cargo })} />
+      <br />
+      <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
+        <PrimaryButton
+          text='Update cargo'
+          iconProps={{ iconName: 'Save' }}
+          onClick={this.onUpdateCargo}
+        />
+        <DefaultButton
+          text='Cancel'
+          iconProps={{ iconName: 'Cancel' }}
+          onClick={() => {
+            this.setState({ editCargo: this.state.fc!.cargo });
+            window.history.back();
+          }}
+        />
+      </Stack>
+    </div>;
+  }
+
+  onUpdateCargo = async () => {
+    this.setState({ loading: true });
+
+    try {
+      // the API call is update, not patch delta. Make sure we have entries with zero for anything the user removed
+      const cargoEdit = { ...this.state.editCargo };
+      for (const key in this.state.fc!.cargo) {
+        if (!(key in cargoEdit)) {
+          cargoEdit[key] = 0;
+        }
+      }
+
+      const cargoUpdated = await api.fc.updateCargo(this.state.fc!.marketId, cargoEdit);
+      this.setState({ loading: false, editCargo: cargoUpdated });
+      window.history.back();
+    } catch (err: any) {
+      this.setState({ loading: false, errorMsg: err.message });
+    }
+  };
 }

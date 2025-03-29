@@ -52,6 +52,25 @@ export const api = {
       throw new Error(msg);
     },
 
+    updateFields: async (marketId: number, fields: { displayName: string }): Promise<KnownFC> => {
+      const url = `${apiSvcUrl}/api/fc/${encodeURIComponent(marketId)}`;
+      console.log('api.project.updateFields:', url);
+
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify(fields)
+      });
+
+      if (response.status === 200) {
+        var fcUpdated: KnownFC = await response.json();
+        return fcUpdated;
+      }
+
+      const msg = await response.text();
+      throw new Error(msg);
+    },
+
     updateCargo: async (marketId: number, cargo: Record<string, number>): Promise<Record<string, number>> => {
       const url = `${apiSvcUrl}/api/fc/${encodeURIComponent(marketId)}/cargo`;
       console.log('api.project.updateCargo:', url);
