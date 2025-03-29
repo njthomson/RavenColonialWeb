@@ -1,6 +1,6 @@
 import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { ProjectQuery } from './project-query';
-import { mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from './types'
+import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from './types'
 import { Component, CSSProperties } from 'react';
 import { ProjectCreate } from './project-create';
 import './project-view.css';
@@ -9,9 +9,10 @@ import { BuildType, CargoRemaining, CommodityIcon, flattenObj, getTypeForCargo }
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
 import { appTheme } from './theme';
-import { delayFocus, fcFullName } from './util';
+import { delayFocus, fcFullName, sumCargo } from './util';
 import { FindFC } from './find-fc';
 import * as api from './api';
+import { EditCargo } from './edit-cargo';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -33,7 +34,7 @@ interface ProjectViewState {
   assignCmdr?: string;
   hasAssignments?: boolean;
 
-  editCommodities?: Record<string, number>;
+  editCommodities?: Cargo;
   editReady: Set<string>;
   editProject?: Partial<Project>;
   disableDelete?: boolean;
@@ -45,18 +46,16 @@ interface ProjectViewState {
   hideDoneRows: boolean;
   hideFCColumns: boolean;
 
-  nextDelivery: Record<string, number>;
-  nextCommodity?: string;
+  nextDelivery: Cargo;
   deliverMarketId: string;
   submitting: boolean;
-  cargoContextItems?: IContextualMenuItem[];
   cargoContext?: string;
 
   showAddFC: boolean;
   fcMatchMarketId?: string;
   fcMatchError?: string;
 
-  fcCargo: Record<string, Record<string, number>>;
+  fcCargo: Record<string, Cargo>;
 }
 
 enum Mode {
@@ -150,6 +149,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         deliverMarketId: deliverMarketId,
       });
 
+      // if ALL commodities have a count of 10 - it means the project is brand new and we want people to edit them to real numbers
+      if (Object.values(newProj.commodities).every(v => v === 10)) {
+        this.setState({
+          mode: Mode.editCommodities,
+          editCommodities: { ...newProj.commodities },
+        });
+        delayFocus('first-commodity-edit');
+      }
+
       window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
       if (newProj.complete) window.document.title += ' (completed)';
 
@@ -211,7 +219,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         text: 'Edit commodities',
         iconProps: { iconName: 'AllAppsMirrored' },
         onClick: () => {
-          this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj?.commodities } });
+          this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj!.commodities } });
           delayFocus('first-commodity-edit');
         }
       },
@@ -225,7 +233,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'btn-delete', text: 'Delete',
         iconProps: { iconName: 'Delete' },
         disabled: disableDelete,
-        onClick: () => this.setState({ confirmDelete: true }),
+        onClick: () => {
+          this.setState({ confirmDelete: true });
+          delayFocus('delete-no');
+        },
       }
     ];
 
@@ -250,9 +261,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
         <h3>Are you sure you want to delete?</h3>
         <p>This cannot be undone.</p>
-        <DefaultButton text='Yes' onClick={this.onProjectDelete} style={{ backgroundColor: '#FF8844' }} disabled={submitting} />
+        <DefaultButton
+          text='Yes'
+          disabled={submitting}
+          iconProps={{ iconName: 'Warning' }}
+          style={{ backgroundColor: appTheme.palette.yellowLight }}
+          onClick={this.onProjectDelete}
+        />
         &nbsp;
-        <DefaultButton text='No' onClick={() => this.setState({ confirmDelete: false })} disabled={submitting} autoFocus />
+        <DefaultButton
+          text='No'
+          id='delete-no'
+          iconProps={{ iconName: 'Cancel' }}
+          disabled={submitting}
+          onClick={() => this.setState({ confirmDelete: false })}
+        />
       </Modal>
 
       <Modal isOpen={confirmComplete}>
@@ -321,6 +344,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (fcCount > 0) colSpan += fcCount + 1;
     if (hasAssignments) colSpan++;
 
+    let first = true;
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
         // group row
@@ -335,15 +359,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // TODO: Entirely split commodity edit and view rendering
       flip = !flip;
       var row: JSX.Element = mode === Mode.editCommodities
-        ? this.getCommodityEditRow(proj, key, cmdrs, editCommodities!, flip, rows.length === 0)
-        : this.getCommodityRow(proj, key, cmdrs, flip, rows.length === 0);
+        ? this.getCommodityEditRow(proj, key, cmdrs, editCommodities!, flip, first)
+        : this.getCommodityRow(proj, key, cmdrs, flip, first);
       rows.push(row)
+      first = false;
 
       // show extra row to assign a commodity to a cmdr?
       if (assignCommodity === key && proj.commanders && !editCommodities) {
         rows.push(this.getCommodityAssignmentRow(key, proj, cmdrs));
       }
     }
+
+    const isDefaultCargo = Object.values(proj.commodities).every(v => v === 10)
 
     return <>
       {mode === Mode.view && <h3>
@@ -383,6 +410,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {editCommodities && !submitting && <div className='button-pair'>
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
+
+        {isDefaultCargo && <MessageBar
+          messageBarType={MessageBarType.warning}
+          actions={<MessageBarButton
+            onClick={this.setDefaultApproxCargoCounts}
+          >
+            Use approximate values
+          </MessageBarButton>}
+        >
+          <div>Please enter actual required cargo numbers.</div>
+          <div>This will help accurately track progress as you make deliveries.</div>
+          <div>You may proceed with approximate default values if you prefer.</div>
+        </MessageBar>}
       </div>}
 
       {submitting && mode === Mode.editCommodities && <Spinner
@@ -451,7 +491,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  getCommodityEditRow(proj: Project, key: string, cmdrs: string[], editCommodities: Record<string, number>, flip: boolean, first: boolean): JSX.Element {
+  getCommodityEditRow(proj: Project, key: string, cmdrs: string[], editCommodities: Cargo, flip: boolean, first: boolean): JSX.Element {
 
     const displayName = mapCommodityNames[key];
     const need = proj.commodities![key];
@@ -465,11 +505,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {isReady && <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
       </td>
       <td className='commodity-need'>
-        <input id={inputId} className='commodity-num' type='number' value={editCommodities[key]} min={0} onChange={(ev) => {
-          const ec2 = this.state.editCommodities!;
-          ec2[key] = ev.target.valueAsNumber;
-          this.setState({ editCommodities: ec2 });
-        }} />
+        <input
+          id={inputId}
+          className='commodity-num'
+          type='number'
+          value={editCommodities[key]}
+          min={0}
+          onChange={(ev) => {
+            const ec2 = this.state.editCommodities!;
+            ec2[key] = ev.target.valueAsNumber;
+            this.setState({ editCommodities: ec2 });
+          }}
+          onFocus={(ev) => {
+            ev.target.type = 'text';
+            ev.target.setSelectionRange(0, 10);
+            ev.target.type = 'number';
+          }}
+        />
       </td>
     </tr>;
   }
@@ -948,7 +1000,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!!proj?.commodities && proj.buildId && editCommodities) {
       const deltaProj = {
         buildId: proj.buildId,
-        commodities: {} as Record<string, number>
+        commodities: {} as Cargo
       };
       // only send deltas
       for (const key in editCommodities) {
@@ -980,6 +1032,29 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     }
   };
+
+  setDefaultApproxCargoCounts = async () => {
+    try {
+      // add a little artificial delay so the spinner doesn't flicker in and out
+      this.setState({ submitting: true });
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const savedProj = await api.project.setDefaultCargo(this.state.proj?.buildId!)
+      // success - apply new commodity count
+      this.setState({
+        proj: savedProj,
+        editReady: new Set(savedProj.ready),
+        sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+        hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
+        editCommodities: undefined,
+        mode: Mode.view,
+        submitting: false,
+      });
+
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message });
+    }
+  }
 
   onUpdateProjectDetails = async () => {
     const { proj, editProject } = this.state;
@@ -1125,81 +1200,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderDeliver() {
-    const { proj, nextDelivery, nextCommodity, showBubble, submitting, fcCargo, deliverMarketId } = this.state;
+    const { proj, sort, nextDelivery, showBubble, submitting, fcCargo, deliverMarketId } = this.state;
     if (!proj) return;
-
-    const deliveries = Object.keys(nextDelivery)
-      .map(k => <tr key={`dk${k}`}>
-        <td>{mapCommodityNames[k]}</td>
-        <td>
-          <input
-            id={`deliver-${k}-input`}
-            className='deliver-amount-edit'
-            type='number'
-            value={nextDelivery[k]}
-            min={0}
-            max={Math.min(proj.commodities[k], store.cmdr?.largeMax ?? 800)}
-            style={{ backgroundColor: deliverMarketId === 'site' && nextDelivery[k] > proj.commodities[k] ? appTheme.palette.yellowLight : '' }}
-            onFocus={(ev) => {
-              ev.target.type = 'text';
-              ev.target.setSelectionRange(0, 10);
-              ev.target.type = 'number';
-            }}
-            onChange={(ev) => {
-              const newNextDelivery = { ...this.state.nextDelivery };
-              newNextDelivery[k] = parseInt(ev.target.value);
-              this.setState({
-                nextDelivery: newNextDelivery,
-              });
-            }}
-            onKeyDown={(ev) => {
-              if (ev.key === 'Enter') {
-                this.setState({ nextCommodity: '', });
-                delayFocus('deliver-commodity');
-              } else if (ev.key === 'Escape') {
-                this.setState({ mode: Mode.view });
-              }
-            }}
-          />
-        </td>
-        <td>
-          <IconButton
-            title={`Remove ${mapCommodityNames[k]}`}
-            iconProps={{ iconName: 'Delete' }}
-            onClick={() => {
-              const newNextDelivery = { ...this.state.nextDelivery };
-              delete newNextDelivery[k];
-              this.setState({
-                nextDelivery: newNextDelivery,
-              });
-            }}
-          />
-          <ActionButton
-            title='Set ship max or amount needed'
-            iconProps={{ iconName: 'CirclePlus' }}
-            onClick={() => {
-              const newNextDelivery = { ...this.state.nextDelivery };
-              newNextDelivery[k] = Math.min(proj.commodities[k], store.cmdr?.largeMax ?? 800)
-              this.setState({
-                nextDelivery: newNextDelivery,
-              });
-              delayFocus(`deliver-${k}-input`);
-            }} >{proj.commodities[k]}
-          </ActionButton>
-
-        </td>
-      </tr>)
-
-    const sumTotal = Object.values(nextDelivery).reduce((sum, v) => sum += v, 0);
-    const noNextCommodities = Object.values(nextDelivery).length === 0;
-    const addingCommidity = nextCommodity !== undefined || noNextCommodities;
 
     // build up delivery options if there are FCs we can deliver to
     const fcCargoKeys = Object.keys(fcCargo);
-    const cargoOptions = Object.keys(proj.commodities)
-      .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
-      .map(k => ({ key: k, text: mapCommodityNames[k] }));
-
     const destinationOptions: IDropdownOption[] = [
       { key: 'site', text: 'Construction site', data: { icon: 'Manufacturing' } },
       { key: 'divider_1', text: '-', itemType: DropdownMenuItemType.Divider },
@@ -1218,11 +1223,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() })}
     />;
 
+    // valid cargo names that can be included on a delivery
+    const validCargoKeys = Object.keys(proj.commodities)
+      .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
+
     return <div className='delivery'>
       {!submitting && <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
         <PrimaryButton
           text='Deliver'
-          disabled={sumTotal === 0 || submitting || !deliverMarketId}
+          disabled={submitting || !deliverMarketId || sumCargo(nextDelivery) === 0}
           iconProps={{ iconName: 'DeliveryTruck' }}
           onClick={this.deliverToSite}
         />
@@ -1238,48 +1247,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         labelPosition="right"
       />}
 
-      {!noNextCommodities && <table cellSpacing={0}>
-        <thead>
-          <tr>
-            <th className='commodity-name'>Commodity:</th>
-            <th className='commodity-need'>Amount:</th>
-          </tr>
-        </thead>
-        <tbody>
-          {deliveries}
-        </tbody>
-        <tfoot>
-          <tr className='hint'>
-            <td className='total-txt'>Total:</td>
-            <td className='total-num'><input value={sumTotal} readOnly tabIndex={-1} /></td>
-          </tr>
-        </tfoot>
-      </table>}
-
-      {addingCommidity && <Stack horizontal verticalAlign='end'>
-        <Dropdown
-          id='deliver-commodity'
-          openOnKeyboardFocus
-          className='deliver-commodity'
-          label='New commodity:'
-          placeholder='Choose a commodity...'
-          style={{ width: 200 }}
-          options={cargoOptions}
-          selectedKey={nextCommodity}
-          onChange={(_, o) => {
-            this.addNextCommodity(`${o?.key}`);
-            document.getElementById('deliver-amount')?.focus();
-          }}
-          onDismiss={() => this.setState({ nextCommodity: undefined })}
-        />
-        <IconButton
-          title='Cancel'
-          iconProps={{ iconName: 'Cancel' }}
-          onClick={() => this.setState({ nextCommodity: undefined })}
-        />
-      </Stack>}
-
-      {!addingCommidity && <ActionButton text='Add commodity?' iconProps={{ iconName: 'Add' }} onClick={() => { this.setState({ nextCommodity: '' }); delayFocus('deliver-commodity'); }} />}
+      <EditCargo
+        cargo={nextDelivery}
+        readyNames={Array.from(this.state.editReady)}
+        maxCounts={proj.commodities}
+        validNames={validCargoKeys}
+        sort={sort}
+        addButtonBelow={true}
+        showTotalsRow
+        onChange={cargo => this.setState({ nextDelivery: cargo })}
+      />
 
       {
         showBubble && <TeachingBubble
@@ -1295,26 +1272,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </div>;
   }
 
-  addNextCommodity = (nextCommodity: string) => {
-    if (!nextCommodity) return;
-
-    // append current
-    const newNextDelivery = { ...(this.state.nextDelivery ?? {}) };
-    newNextDelivery[nextCommodity] = 0;
-    this.setState({
-      nextDelivery: newNextDelivery,
-      nextCommodity: undefined,
-    });
-    delayFocus(`deliver-${nextCommodity}-input`);
-  };
-
   deliverToZero(commodity: string, count: number) {
     // update local count state before API call
     const updateProj = this.state.proj!;
     updateProj.commodities[commodity] = 0;
     this.setState({ proj: updateProj });
 
-    const cargo: Record<string, number> = {};
+    const cargo: Cargo = {};
     cargo[commodity] = count;
     this.deliverToSite2(
       this.state.proj?.buildId!,
@@ -1328,7 +1292,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     this.deliverToSite2(proj?.buildId!, nextDelivery, deliverMarketId);
   }
 
-  deliverToSite2 = async (buildId: string, nextDelivery: Record<string, number>, deliverMarketId: string) => {
+  deliverToSite2 = async (buildId: string, nextDelivery: Cargo, deliverMarketId: string) => {
     try {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
@@ -1372,17 +1336,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ errorMsg: err.message });
     }
   };
-
-  async deliverToFC() {
-    try {
-      // add a little artificial delay so the spinner doesn't flicker in and out
-      this.setState({ submitting: true });
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-    } catch (err: any) {
-      this.setState({ errorMsg: err.message });
-    }
-  }
 
 }
 

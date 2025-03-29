@@ -171,8 +171,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
     return <div style={{ display: 'inline-block' }}>
       <br />
-      <EditCargo cargo={editCargo} onChange={cargo => this.setState({ editCargo: cargo })} />
-      <br />
+
       <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
         <PrimaryButton
           text='Update cargo'
@@ -188,6 +187,8 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           }}
         />
       </Stack>
+      <br />
+      <EditCargo cargo={editCargo} onChange={cargo => this.setState({ editCargo: cargo })} addButtonBelow showTotalsRow />
     </div>;
   }
 
