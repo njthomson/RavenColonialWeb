@@ -1,8 +1,7 @@
 import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
 import { Component } from 'react';
-import { apiSvcUrl } from '../api';
-import { ProjectLink } from '../components';
-import { ProjectCreate } from '../components';
+import * as api from '../api';
+import { ProjectCreate, ProjectLink } from '../components';
 import { ProjectRef } from '../types';
 
 interface ProjectProps {
@@ -45,38 +44,18 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
   findProjects = async (systemName: string) => {
     if (!systemName) { return; }
-    const url = `${apiSvcUrl}/api/system/${encodeURIComponent(systemName)}`;
-    console.log('ProjectSearch.fetch: begin:', url);
     this.setState({ loading: true });
     window.document.title = `Find: ${systemName}`;
+
     try {
-
-      // await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await fetch(url, { method: 'GET' });
-
-      if (response.status === 200) {
-        const newRows: ProjectRef[] = await response.json();
-
-        console.log('Project.ProjectSearch: end', newRows);
-        this.setState({
-          loading: false,
-          rows: newRows,
-        });
-      } else {
-        const txt = await response.text();
-        const msg = `${response.status}: ${response.statusText} ${txt}`;
-        this.setState({
-          errorMsg: msg,
-          loading: false,
-        });
-        console.error(msg);
-      }
-    } catch (err: any) {
+      const matches = await api.project.findBySystem(systemName);
       this.setState({
         loading: false,
-        errorMsg: err.message,
+        rows: matches,
       });
-      console.error(err.stack);
+
+    } catch (err: any) {
+      this.setState({ loading: false, errorMsg: err.message, });
     }
   }
 

@@ -4,9 +4,9 @@ import { ActionButton, Dropdown, Icon, IDropdownOption, SelectableOptionMenuItem
 import { Component, CSSProperties } from 'react';
 import { CommodityIcon } from '..';
 import { store } from '../../local-storage';
-import { delayFocus, flattenObj, getGroupedCommodities, sumCargo } from '../../misc';
 import { appTheme } from '../../theme';
 import { mapCommodityNames, SortMode } from '../../types';
+import { delayFocus, flattenObj, getGroupedCommodities, sumCargo } from '../../util';
 
 interface EditCargoProps {
   /** Coutns of named commodities */
@@ -146,7 +146,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   renderRows() {
     const { cargo, sort } = this.state;
 
-    const cargoNames = Object.keys(cargo)
+    const cargoNames = Object.keys(cargo).filter(c => c in mapCommodityNames); // filter out names unrelated to Colonization
     const groupedCargo = getGroupedCommodities(cargoNames, sort);
     const groupsAndCommodityKeys = flattenObj(groupedCargo);
 

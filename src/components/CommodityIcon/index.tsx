@@ -2,7 +2,7 @@ import "./index.css";
 
 import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
-import { getTypeForCargo } from "../../misc";
+import { getTypeForCargo } from "../../util";
 import { mapCommodityIcon } from "../../types";
 
 export const CommodityIcon: FunctionComponent<{ name: string; }> = (props) => {

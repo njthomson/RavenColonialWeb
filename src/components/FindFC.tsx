@@ -1,6 +1,6 @@
 import { ComboBox, IComboBox, IComboBoxOption } from '@fluentui/react';
 import { Component, createRef } from 'react';
-import { api } from '../api';
+import * as api from '../api';
 
 interface FindFCProps {
   onMarketId: (marketId: string | undefined) => void;
@@ -62,7 +62,6 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
             marketId: o?.key.toString(),
             errorMsg: undefined
           });
-          console.warn(`==> ${o?.key} / ${v}`);
         }}
       />
     </>;

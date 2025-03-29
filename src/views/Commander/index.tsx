@@ -2,9 +2,9 @@ import './index.css';
 
 import { MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
-import { apiSvcUrl } from '../../api';
+import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
-import { CmdrSummary, mapCommodityNames, mapCommodityType, Project } from '../../types';
+import { mapCommodityNames, mapCommodityType, Project } from '../../types';
 
 interface CmdrProps {
   cmdr?: string | undefined;
@@ -43,31 +43,21 @@ export class Commander extends Component<CmdrProps, CmdrState> {
     this.setState({ loading: true, projects: undefined });
     try {
       if (!cmdr) { return; }
-      const url = `${apiSvcUrl}/api/cmdr/${encodeURIComponent(cmdr)}/summary`;
-      console.log('fetchCmdrProjects:', url);
 
-      this.setState({ loading: true, projects: undefined });
+      this.setState({
+        loading: true,
+        projects: undefined
+      });
 
-      // await new Promise(resolve => setTimeout(resolve, 2500));
-      const response = await fetch(url, { method: 'GET' });
-      if (response.status === 200) {
-        const cmdrSummary: CmdrSummary = await response.json();
+      const cmdrSummary = await api.cmdr.getSummary(cmdr);
 
-        this.setState({ projects: cmdrSummary.projects });
-      } else {
-        const msg = `${response.status}: ${response.statusText}`;
-        this.setState({ errorMsg: msg });
-        console.error(msg);
-      }
+      this.setState({
+        loading: false,
+        projects: cmdrSummary.projects
+      });
+
     } catch (err: any) {
-      this.setState({
-        errorMsg: err.message,
-      });
-      console.error(err.stack);
-    } finally {
-      this.setState({
-        loading: false
-      });
+      this.setState({ loading: false, errorMsg: err.message });
     }
   }
 

@@ -1,4 +1,19 @@
 
+export class RequestError extends Error {
+  constructor(
+    public statusCode: number,
+    public statusText: string,
+    bodyText?: string
+  ) {
+    super(`${statusCode}: ${statusText}` + (bodyText ? ` - ${bodyText}` : ''));
+    this.name = 'RequestError';
+    //console.error(`${statusCode}: ${statusText}` + (bodyText ? `\n\n${bodyText}` : ''));
+  }
+}
+
+/** A dictionary of string cargo name to a count numeric value */
+export type Cargo = Record<string, number>;
+
 export interface ProjectRefLite {
   buildId: string;
   buildName: string;
