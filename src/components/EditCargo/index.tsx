@@ -5,26 +5,32 @@ import { Component, CSSProperties } from 'react';
 import { CommodityIcon } from '..';
 import { store } from '../../local-storage';
 import { appTheme } from '../../theme';
-import { mapCommodityNames, SortMode } from '../../types';
+import { Cargo, mapCommodityNames, SortMode } from '../../types';
 import { delayFocus, flattenObj, getGroupedCommodities, sumCargo } from '../../util';
 
 interface EditCargoProps {
-  /** Coutns of named commodities */
-  cargo: Record<string, number>;
-  noAdd?: boolean;
-  noDelete?: boolean;
-  maxCounts?: Record<string, number>;
-
-  /** The set of valid that can be added */
-  cargoNames?: string[];
-
+  /** Counts of cargo */
+  cargo: Cargo;
+  /** Max values of cargo */
+  maxCounts?: Cargo;
+  /** Names of cargo items valid to be added */
+  validNames?: string[];
+  /** Names of cargo that have been marked as ready */
   readyNames?: string[];
 
-  onChange?: (cargo: Record<string, number>) => void;
+  sort?: SortMode;
+  noAdd?: boolean;
+  noDelete?: boolean;
+  showTotalsRow?: boolean;
+
+  /** Show the add button below the table, vs next to the sort order button */
+  addButtonBelow?: boolean;
+
+  onChange?: (cargo: Cargo) => void;
 }
 
 interface EditCargoState {
-  cargo: Record<string, number>;
+  cargo: Cargo;
   canAddMore: boolean;
   sort: SortMode;
   newCargo?: string;
@@ -37,17 +43,17 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     super(props);
 
     // limit to the given names, or all relevant commodities if not
-    this.cargoNames = props.cargoNames ?? Object.keys(mapCommodityNames)
+    this.cargoNames = props.validNames ?? Object.keys(mapCommodityNames)
     this.cargoNames.sort();
 
     this.state = {
       cargo: props.cargo,
       canAddMore: this.getCanAddMore(props, props.cargo),
-      sort: SortMode.group,
+      sort: props.sort ?? SortMode.group,
     };
   }
 
-  getCanAddMore(props: EditCargoProps, cargo: Record<string, number>): boolean {
+  getCanAddMore(props: EditCargoProps, cargo: Cargo): boolean {
     return !props.noAdd && this.cargoNames.filter(k => !(k in cargo)).length > 0;
   }
 
@@ -80,7 +86,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     }
   }
 
-  updateCargoState(func: (cargoUpdate: Record<string, number>) => void, extra?: Partial<EditCargoState>): void {
+  updateCargoState(func: (cargoUpdate: Cargo) => void, extra?: Partial<EditCargoState>): void {
     // pull from state, change it then push to state
     const cargoUpdate = { ...this.state.cargo };
     func(cargoUpdate);
@@ -91,12 +97,15 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   }
 
   render() {
-    const { sort, canAddMore, newCargo } = this.state;
+    const { cargo, sort, canAddMore, newCargo } = this.state;
+    const { addButtonBelow, showTotalsRow: totalsRow } = this.props;
+
+    const hasCargoRows = Object.values(cargo).length > 0;
 
     const showAddNew = newCargo !== undefined;
 
     return <div className='edit-cargo'>
-      <table cellSpacing={0}>
+      {hasCargoRows && <table cellSpacing={0}>
         <thead>
           <tr>
 
@@ -116,7 +125,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
                 />
 
                 {/* Add new items button */}
-                {canAddMore && <ActionButton
+                {canAddMore && !addButtonBelow && <ActionButton
                   className='icon-btn'
                   title='Add a new cargo item'
                   text='Add'
@@ -137,9 +146,21 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         <tbody>
           {this.renderRows()}
         </tbody>
-      </table>
+
+        {totalsRow && this.renderTotalsRow()}
+      </table>}
 
       {showAddNew && this.renderAddNew()}
+
+      {!showAddNew && canAddMore && addButtonBelow && <ActionButton
+        text='Add commodity?'
+        iconProps={{ iconName: 'Add' }}
+        onClick={() => {
+          this.setState({ newCargo: '' });
+          delayFocus('new-cargo');
+        }}
+      />}
+
     </div>;
   }
 
@@ -152,10 +173,9 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
     let flip = true;
     return groupsAndCommodityKeys.map(key => {
-      flip = !flip;
       return key in groupedCargo
         ? this.renderGroupRow(key, sort)
-        : this.renderItemRow(key, flip);
+        : this.renderItemRow(key, flip = !flip);
     });
   }
 
@@ -230,7 +250,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         {/* Add max button - if we have maxCounts */}
         {maxCounts && maxCounts[key] && <ActionButton
           className='icon-btn'
-          title='Set ship max or amount needed'
+          title='Set amount needed, or ship max'
           iconProps={{ iconName: 'CirclePlus' }}
           onClick={() => {
             this.updateCargoState(uc => uc[key] = Math.min(this.props.maxCounts![key], store.cmdr?.largeMax ?? 800));
@@ -240,6 +260,19 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         </ActionButton>}
       </td>
     </tr>;
+  }
+
+  renderTotalsRow() {
+    const { cargo } = this.state;
+
+    const sumTotal = sumCargo(cargo).toLocaleString();
+    return <tfoot>
+      <tr className='hint'>
+        <td className='total-txt'>Total:</td>
+        <td className='total-num'><input value={sumTotal} readOnly tabIndex={-1} /></td>
+        <td></td>
+      </tr>
+    </tfoot>;
   }
 
   renderAddNew() {

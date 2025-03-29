@@ -37,6 +37,10 @@ export const project = {
     return await callAPI<void>(`/api/project/${encodeURIComponent(buildId)}`, 'DELETE');
   },
 
+  setDefaultCargo: async (buildId: string): Promise<Project> => {
+    return await callAPI<Project>(`/api/project/${encodeURIComponent(buildId)}/cargo/default`, 'POST');
+  },
+
   complete: async (buildId: string): Promise<Project> => {
     return await callAPI<Project>(`/api/project/${encodeURIComponent(buildId)}/complete`, 'POST');
   },

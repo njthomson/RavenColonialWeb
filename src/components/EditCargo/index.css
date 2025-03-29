@@ -6,6 +6,7 @@
   text-align: left;
   width: 240px;
 }
+
 .edit-cargo .amount {
   text-align: center;
 }
@@ -19,6 +20,13 @@
   width: 60px;
 }
 
-.edit-cargo tbody .odd {
-  background-color: yellow;
+.edit-cargo tfoot .total-txt {
+  text-align: right;
+  padding-right: 5px;
+}
+
+.edit-cargo tfoot .total-num input {
+  text-align: center;
+  width: 60px;
+  border: 0;
 }
