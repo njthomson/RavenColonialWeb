@@ -1,4 +1,4 @@
-import { TextField, PrimaryButton } from '@fluentui/react';
+import { PrimaryButton, TextField } from '@fluentui/react';
 import { useState } from 'react';
 
 export const ProjectQuery: React.FunctionComponent = () => {

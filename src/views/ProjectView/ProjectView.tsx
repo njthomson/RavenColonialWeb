@@ -1,18 +1,14 @@
-import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
-import { ProjectQuery } from './project-query';
-import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from './types'
-import { Component, CSSProperties } from 'react';
-import { ProjectCreate } from './project-create';
-import './project-view.css';
-import { store } from './local-storage';
-import { BuildType, CargoRemaining, CommodityIcon, flattenObj, getTypeForCargo } from './misc';
+import './ProjectView.css';
+
+import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, IStackTokens, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { HorizontalBarChart } from '@fluentui/react-charting';
-import { ChartByCmdrs, ChartByCmdrsOverTime, getColorTable } from './charts';
-import { appTheme } from './theme';
-import { delayFocus, fcFullName, sumCargo } from './util';
-import { FindFC } from './find-fc';
-import * as api from './api';
-import { EditCargo } from './edit-cargo';
+import { Component, CSSProperties } from 'react';
+import * as api from '../../api';
+import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, CommodityIcon, EditCargo, FindFC, ProjectCreate, ProjectQuery } from '../../components';
+import { store } from '../../local-storage';
+import { appTheme } from '../../theme';
+import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
+import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -658,7 +654,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {!editProject && <div className='detail'>{proj.buildName}</div>}
               {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
             </td></tr>
-            <tr><td>Build type:</td><td><div className='detail'><BuildType buildType={proj.buildType} /></div></td></tr>
+            <tr><td>Build type:</td><td><div className='detail'><BuildTypeDisplay buildType={proj.buildType} /></div></td></tr>
             <tr><td>System name:</td><td><div className='detail'>{proj.systemName}</div></td></tr>
             <tr><td>Architect:</td><td>
               {!editProject && <div className='detail'>{proj.architectName}&nbsp;</div>}

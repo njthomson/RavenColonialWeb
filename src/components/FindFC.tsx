@@ -1,6 +1,6 @@
 import { ComboBox, IComboBox, IComboBoxOption } from '@fluentui/react';
 import { Component, createRef } from 'react';
-import * as api from './api';
+import * as api from '../api';
 
 interface FindFCProps {
   onMarketId: (marketId: string | undefined) => void;

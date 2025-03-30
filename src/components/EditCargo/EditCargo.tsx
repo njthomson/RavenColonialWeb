@@ -1,11 +1,12 @@
-import './edit-cargo.css';
+import './EditCargo.css';
+
 import { ActionButton, Dropdown, Icon, IDropdownOption, SelectableOptionMenuItemType, Stack } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
-import { CommodityIcon, flattenObj, getGroupedCommodities } from './misc';
-import { Cargo, mapCommodityNames, SortMode } from './types';
-import { store } from './local-storage';
-import { appTheme } from './theme';
-import { sumCargo, delayFocus } from './util';
+import { CommodityIcon } from '..';
+import { store } from '../../local-storage';
+import { appTheme } from '../../theme';
+import { Cargo, mapCommodityNames, SortMode } from '../../types';
+import { delayFocus, flattenObj, getGroupedCommodities, sumCargo } from '../../util';
 
 interface EditCargoProps {
   /** Counts of cargo */
@@ -326,4 +327,3 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   }
 
 }
-

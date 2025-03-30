@@ -1,5 +1,7 @@
 import { RequestError } from "../types";
-import { apiSvcUrl } from "../util";
+
+export const apiSvcUrl = //'https://localhost:7007'; /*
+  'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net';
 
 const logApiCalls = true;
 
