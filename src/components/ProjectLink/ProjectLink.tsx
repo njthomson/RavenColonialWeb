@@ -1,8 +1,8 @@
-import "./index.css";
+import "./ProjectLink.css";
 
 import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
-import { BuildTypeDisplay } from '../';
+import { BuildTypeDisplay } from '..';
 import { ProjectRefLite } from "../../types";
 
 interface ProjectLinkProps {

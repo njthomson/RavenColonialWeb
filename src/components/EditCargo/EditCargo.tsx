@@ -1,4 +1,4 @@
-import './index.css';
+import './EditCargo.css';
 
 import { ActionButton, Dropdown, Icon, IDropdownOption, SelectableOptionMenuItemType, Stack } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';

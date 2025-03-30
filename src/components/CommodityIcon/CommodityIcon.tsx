@@ -1,4 +1,4 @@
-import "./index.css";
+import "./CommodityIcon.css";
 
 import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";

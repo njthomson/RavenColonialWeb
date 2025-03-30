@@ -1,4 +1,4 @@
-import './index.css';
+import './CargoRemaining.css';
 
 import { FunctionComponent } from 'react';
 import { store } from '../../local-storage';

@@ -1,4 +1,4 @@
-import './index.css';
+import './Commander.css';
 
 import { MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
