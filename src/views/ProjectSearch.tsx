@@ -87,7 +87,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         {this.renderRows()}
       </div>
 
-      <div className='half right'><ProjectCreate systemName={this.props.find!} /></div>
+      <div className='half right'><ProjectCreate systemName={this.props.find!} existingProjects={this.state.rows ?? []} /></div>
     </div>
   }
 

@@ -2,12 +2,13 @@ import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, Icon, IconB
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
-import { CreateProject, StationEDSM } from '../types';
+import { CreateProject, ProjectRef, StationEDSM } from '../types';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
 interface ProjectCreateProps {
   systemName?: string;
+  existingProjects: ProjectRef[];
 }
 
 // TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
@@ -250,7 +251,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         msgError: undefined,
       });
 
-      const foundStations = data.stations.filter(s => s.name.includes('Construction') || s.name.includes('Colonisation'));
+      const foundStations = data.stations.filter(s => (s.name.includes('Construction') || s.name.includes('Colonisation')) && !this.props.existingProjects.every(p => p.marketId.toString() !== s.marketId));
       if (foundStations.length === 0) {
         this.setState({
           showMarketId: true,

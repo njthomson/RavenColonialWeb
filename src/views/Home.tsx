@@ -13,7 +13,7 @@ export const Home: React.FunctionComponent = () => {
         From the old earth Abrahamic religions, we were told to "go forth, and multiply."
         <br />
         <br />
-        <PrimaryButton text='Find a project ...' onClick={() => {
+        <PrimaryButton text='Find or start a project ...' onClick={() => {
           window.location.assign("#find");
           window.location.reload();
         }} />

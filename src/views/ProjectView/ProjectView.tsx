@@ -1,6 +1,6 @@
 import './ProjectView.css';
 
-import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, IStackTokens, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { Component, CSSProperties } from 'react';
 import * as api from '../../api';
@@ -9,6 +9,7 @@ import { store } from '../../local-storage';
 import { appTheme } from '../../theme';
 import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
 import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
+import { CopyButton } from '../../components/CopyButton';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -20,6 +21,7 @@ interface ProjectViewState {
   mode: Mode;
   sort: SortMode;
   loading: boolean;
+  refreshing?: boolean;
   showAddCmdr: boolean;
   newCmdr?: string;
   confirmDelete?: boolean;
@@ -111,14 +113,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return '?';
   }
 
-  async fetchProject(buildId: string | undefined) {
+  async fetchProject(buildId: string | undefined, refreshing: boolean = false) {
     if (!buildId) {
       this.setState({ loading: false });
       return;
     }
 
     try {
-      this.setState({ loading: true });
+      this.setState({
+        loading: !refreshing,
+        refreshing: refreshing,
+      });
 
       // (not awaiting)
       this.fetchProjectStats(buildId);
@@ -141,6 +146,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
         hasAssignments: Object.keys(newProj.commanders).reduce((s, c) => s += newProj.commanders[c].length, 0) > 0,
         loading: false,
+        refreshing: false,
         disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
         deliverMarketId: deliverMarketId,
       });
@@ -150,7 +156,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         this.setState({
           mode: Mode.editCommodities,
           editCommodities: { ...newProj.commodities },
+          sort: SortMode.alpha,
         });
+        store.commoditySort = SortMode.alpha;
         delayFocus('first-commodity-edit');
       }
 
@@ -158,7 +166,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (newProj.complete) window.document.title += ' (completed)';
 
     } catch (err: any) {
-      this.setState({ loading: false, errorMsg: err.message, });
+      this.setState({ loading: false, refreshing: false, errorMsg: err.message, });
     }
   }
 
@@ -178,7 +186,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -188,7 +196,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return <div className='contain-horiz'>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         <div className='half'><ProjectQuery /></div>
-        <div className='half right'><ProjectCreate /></div>
+        <div className='half right'><ProjectCreate existingProjects={[]} /></div>
       </div>;
     }
 
@@ -198,7 +206,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'deliver-cargo',
         text: 'Deliver',
         iconProps: { iconName: 'DeliveryTruck' },
-        disabled: proj.complete,
+        disabled: proj.complete || refreshing,
         onClick: () => {
           this.setState({ mode: Mode.deliver });
           delayFocus('deliver-commodity');
@@ -208,12 +216,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'btn-edit',
         text: 'Edit project',
         iconProps: { iconName: 'Edit' },
+        disabled: refreshing,
         onClick: () => this.setState({ mode: Mode.editProject, editProject: { ...this.state.proj } }),
       },
       {
         key: 'edit-commodities',
         text: 'Edit commodities',
         iconProps: { iconName: 'AllAppsMirrored' },
+        disabled: refreshing,
         onClick: () => {
           this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj!.commodities } });
           delayFocus('first-commodity-edit');
@@ -223,12 +233,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'btn-refresh',
         text: 'Refresh',
         iconProps: { iconName: 'Refresh' },
-        onClick: () => this.fetchProject(proj.buildId),
+        disabled: refreshing,
+        onClick: () => this.fetchProject(proj.buildId, true),
       },
       {
         key: 'btn-delete', text: 'Delete',
         iconProps: { iconName: 'Delete' },
-        disabled: disableDelete,
+        disabled: disableDelete || refreshing,
         onClick: () => {
           this.setState({ confirmDelete: true });
           delayFocus('delete-no');
@@ -239,7 +250,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
-        <h2 className='project-title'><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} {proj.complete && <span> (completed)</span>}</h2>
+        <h2 className='project-title'><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} {proj.complete && <span> (completed)</span>}<span style={{ fontSize: 16 }}><CopyButton text={proj.buildName} /></span></h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
         {mode === Mode.view && <CommandBar className='top-bar' items={commands} />}
       </div >
@@ -498,7 +509,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <tr key={`cc-${key}`} className={className}>
       <td className='commodity-name'>
         <span><CommodityIcon name={key} /> {displayName} </span>
-        {isReady && <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
+        {isReady && <Icon className='icon-inline' iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
       </td>
       <td className='commodity-need'>
         <input
@@ -590,9 +601,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <td className='commodity-name' id={`cargo-${key}`}>
         <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
         &nbsp;
-        {isReady && <Icon iconName='CompletedSolid' title={`${displayName} is ready`} />}
+        {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
         &nbsp;
-        {sumCargoFC >= need && <Icon iconName='AirplaneSolid' title={`Enough ${displayName} loaded on FCs`} />}
+        {sumCargoFC >= need && <Icon className='icon-inline' iconName='AirplaneSolid' title={`Enough ${displayName} loaded on FCs`} />}
 
         {isContextTarget && <ContextualMenu
           target={`#cn-${key}`}
@@ -712,7 +723,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {rows}
       </ul>
       <div hidden={showAddCmdr}>
-        <ActionButton text='Add a new Commander?' onClick={this.onShowAddCmdr} iconProps={{ iconName: 'AddFriend' }} />
+        <ActionButton
+          text='Add a new Commander?'
+          iconProps={{ iconName: 'AddFriend' }}
+          onClick={this.onShowAddCmdr}
+        />
       </div>
       {showAddCmdr && <div className='add-cmdr'>
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
@@ -756,14 +771,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {rows}
       </ul>
       <div hidden={showAddFC}>
-        <ActionButton text='Link to a Fleet Carrier?' onClick={() => {
-          this.setState({
-            showAddFC: true,
-            fcMatchError: undefined
-          });
-          delayFocus('add-fc-combo-input');
-        }}
-          iconProps={{ iconName: 'AddLink' }} />
+        <ActionButton
+          text='Link to a Fleet Carrier?'
+          iconProps={{ iconName: 'Airplane' }}
+          onClick={() => {
+            this.setState({
+              showAddFC: true,
+              fcMatchError: undefined
+            });
+            delayFocus('add-fc-combo-input');
+          }}
+        />
       </div>
 
       {showAddFC && <div>
@@ -1187,6 +1205,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </>}
 
       {!summary.totalDeliveries && <div>
+        <br />
         No tracked deliveries yet.
         <br />
         Use <a href='https://github.com/njthomson/SrvSurvey/wiki'>SrvSurvey</a> to track deliveries automatically.
@@ -1213,7 +1232,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       placeholder='Choose a destination...'
       style={{ width: 200 }}
       options={destinationOptions}
-      onRenderOption={(o) => { return <><Icon iconName={o?.data?.icon ?? 'Airplane'} />&nbsp;{o?.text}</>; }}
+      onRenderOption={(o) => { return <><Icon className='icon-inline' iconName={o?.data?.icon ?? 'Airplane'} />&nbsp;{o?.text}</>; }}
       dropdownWidth='auto'
       selectedKey={deliverMarketId}
       onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() })}

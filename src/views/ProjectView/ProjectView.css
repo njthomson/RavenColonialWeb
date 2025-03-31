@@ -44,6 +44,14 @@
   visibility: visible;
 }
 
+.commodities tr .btn:hover {
+  background-color: #e5e5e5;
+}
+
+.commodities tr .btn:active {
+  background-color: #cdcdcd;
+}
+
 .commodities .commodity-name {
   min-width: 240px;
   border-right: #e5e5e5 1px solid;
@@ -89,17 +97,19 @@
 
 .removable {
   align-items: center;
+  line-height: 12px;
 }
 
 .removable .btn {
   display: none;
-  margin-left: 4px;
+  margin: 0 0 0 4px;
+  padding: 0;
   position: relative;
   top: 2px;
   cursor: pointer;
 }
 
-.removable:hover  {
+.removable:hover {
   background-color: #e5e5e5;
 }
 

@@ -192,8 +192,18 @@ h3 {
   background-color: #e5e5e5;
 }
 
+.icon-btn:active {
+  background-color: #cdcdcd;
+  color: white;
+}
+
 i {
   cursor: pointer;
+}
+
+i.icon-inline {
+  position: relative;
+  top: 2px;
 }
 
 .bubble {
