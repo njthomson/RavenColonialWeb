@@ -216,6 +216,7 @@ export const mapCommodityType: Record<string, string> = {
   "waterpurifiers": "Technology",
 }
 
+/** A map of Colonization relevant cargo item names to display names */
 export const mapCommodityNames: Record<string, string> = {
   "liquidoxygen": "Liquid Oxygen",
   "water": "Water",
