@@ -1,8 +1,8 @@
-import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
+import { ActionButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { ProjectCreate, ProjectLink } from '../components';
-import { ProjectRef } from '../types';
+import { ProjectRef, ProjectRefComplete } from '../types';
 
 interface ProjectProps {
   find: string | undefined | null;
@@ -14,6 +14,9 @@ interface ProjectState {
   loading: boolean;
   rows?: ProjectRef[];
   errorMsg?: string;
+
+  completed?: ProjectRefComplete[];
+  showCompleted?: boolean;
 }
 
 export class ProjectSearch extends Component<ProjectProps, ProjectState> {
@@ -48,6 +51,11 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     window.document.title = `Find: ${systemName}`;
 
     try {
+      // look-up completed projects in parallel
+      api.project.findCompletedBySystem(systemName)
+        .then(completed => this.setState({ completed: completed }))
+        .catch(err => this.setState({ loading: false, errorMsg: err.message, }));
+
       const matches = await api.project.findBySystem(systemName);
       this.setState({
         loading: false,
@@ -60,7 +68,12 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   }
 
   render() {
-    const { q, loading, errorMsg } = this.state;
+    const { q, loading, errorMsg, rows, completed, showCompleted } = this.state;
+
+    const knownMarketIds = [
+      ...rows?.map(p => p.marketId.toString()) ?? [],
+      ...completed?.map(p => p.marketId.toString()) ?? [],
+    ];
 
     return <div className='contain-horiz'>
       <div className='half'>
@@ -85,9 +98,21 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         </div>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         {this.renderRows()}
+
+        {completed && <>
+          <ActionButton
+            iconProps={{ iconName: showCompleted ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
+            text={`${completed.length} Completed projects`}
+            title={showCompleted ? 'Showing completed projects' : 'Hiding completed projects'}
+            onClick={() => this.setState({ showCompleted: !showCompleted })}
+          />
+          {showCompleted && completed.map(p => <li key={`pc${p.buildId}`}><ProjectLink proj={p} noSys={true} /></li>)}
+        </>}
       </div>
 
-      <div className='half right'><ProjectCreate systemName={this.props.find!} existingProjects={this.state.rows ?? []} /></div>
+      <div className='half right'>
+        <ProjectCreate systemName={this.props.find!} knownMarketIds={knownMarketIds} />
+      </div>
     </div>
   }
 
@@ -108,9 +133,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       const listItems = rows.map(r => <li key={r.buildId}><ProjectLink proj={r} noSys={true} /></li>)
       return <div className="projects-list">
         <h2>{rows?.length ?? '?'} Build projects in: <a href={`#find=${find}`}>{find}</a></h2>
-        <ul>
-          {listItems}
-        </ul>
+        {listItems}
       </div>
     }
   }

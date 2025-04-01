@@ -21,8 +21,11 @@ export interface ProjectRefLite {
   systemName: string;
 }
 
-export interface ProjectRef extends ProjectRefLite {
+export interface ProjectRefComplete extends ProjectRefLite {
   marketId: number;
+}
+
+export interface ProjectRef extends ProjectRefComplete {
   systemAddress: number;
   starPos: number[];
 

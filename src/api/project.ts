@@ -1,4 +1,4 @@
-import { Cargo, CreateProject, Project, ProjectFC, ProjectRef, SupplyStatsSummary } from "../types";
+import { Cargo, CreateProject, Project, ProjectFC, ProjectRef, ProjectRefComplete, SupplyStatsSummary } from "../types";
 import { callAPI } from "./api-util";
 
 /** Project APIs */
@@ -6,6 +6,10 @@ export const project = {
 
   findBySystem: async (systemName: string): Promise<ProjectRef[]> => {
     return await callAPI<ProjectRef[]>(`/api/system/${encodeURIComponent(systemName)}`);
+  },
+
+  findCompletedBySystem: async (systemName: string): Promise<ProjectRefComplete[]> => {
+    return await callAPI<ProjectRefComplete[]>(`/api/system/${encodeURIComponent(systemName)}/complete`);
   },
 
   create: async (project: CreateProject): Promise<Project> => {

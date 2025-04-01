@@ -196,7 +196,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return <div className='contain-horiz'>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         <div className='half'><ProjectQuery /></div>
-        <div className='half right'><ProjectCreate existingProjects={[]} /></div>
+        <div className='half right'><ProjectCreate knownMarketIds={[]} /></div>
       </div>;
     }
 

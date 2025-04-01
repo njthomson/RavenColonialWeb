@@ -2,18 +2,19 @@ import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, Icon, IconB
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
-import { CreateProject, ProjectRef, StationEDSM } from '../types';
+import { CreateProject, StationEDSM } from '../types';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
 interface ProjectCreateProps {
   systemName?: string;
-  existingProjects: ProjectRef[];
+  knownMarketIds: string[];
 }
 
 // TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
 interface ProjectCreateState extends Omit<CreateProject, 'marketId'> {
   marketId: string | undefined;
+  checking?: boolean;
   showMarketId: boolean;
   showMarketIdHelp: boolean;
   foundStations?: StationEDSM[];
@@ -130,7 +131,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   }
 
   render() {
-    const { systemName, systemAddress, buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass } = this.state;
+    const { systemName, systemAddress, buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking } = this.state;
 
     return <>
       <div className="create-project">
@@ -138,7 +139,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         <div>
           <Stack horizontal style={{ alignItems: 'flex-end' }}>
             <TextField id='create-systemName' name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
-            <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} />
+            <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking} />
           </Stack>
         </div>
         {this.renderFoundStations()}
@@ -175,7 +176,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         <div className='hint'><Icon iconName='Info' />&nbsp;<span>Exact cargo requirements are random and will require some adjustments.</span></div>
 
         {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
-        {!systemAddress && <PrimaryButton text='Search sites ...' onClick={this.onCheckSystem} />}
+        {!systemAddress && <PrimaryButton text='Search sites ...' onClick={this.onCheckSystem} disabled={checking} />}
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
       </div>
     </>;
@@ -222,6 +223,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     if (!this.state.systemName) { return; }
 
     this.setState({
+      checking: true,
       showMarketId: false,
       foundStations: undefined,
     });
@@ -234,6 +236,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       if (!data?.id64) {
         // system not known
         this.setState({
+          checking: false,
           msgError: 'Unknown system',
           msgClass: MessageBarType.error,
         });
@@ -245,13 +248,14 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       // console.log('ProjectCreate.onCheckSystem:', data);
 
       this.setState({
+        checking: false,
         systemAddress: data.id64,
         starPos: [data2.coords.x, data2.coords.y, data2.coords.z],
         systemName: data.name,
         msgError: undefined,
       });
 
-      const foundStations = data.stations.filter(s => (s.name.includes('Construction') || s.name.includes('Colonisation')) && !this.props.existingProjects.every(p => p.marketId.toString() !== s.marketId));
+      const foundStations = data.stations.filter(s => (s.name.includes('Construction') || s.name.includes('Colonisation')) && !this.props.knownMarketIds.includes(s.marketId.toString()));
       if (foundStations.length === 0) {
         this.setState({
           showMarketId: true,
