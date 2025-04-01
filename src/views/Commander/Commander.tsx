@@ -1,10 +1,11 @@
 import './Commander.css';
 
-import { MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
+import { Icon, MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
 import { mapCommodityNames, mapCommodityType, Project } from '../../types';
+import { store } from '../../local-storage';
 
 interface CmdrProps {
   cmdr?: string | undefined;
@@ -96,7 +97,14 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       if (p.complete) continue;
 
       // a row the the project link
-      const rowP = <tr key={`cp${p.buildId}`}><td colSpan={4}><li className='header'><ProjectLink proj={p} /></li></td></tr>;
+      const rowP = <tr key={`cp${p.buildId}`}>
+        <td colSpan={4}>
+          <li className='header'>
+            <ProjectLink proj={p} />
+            {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' className='icon-inline' title='This is your current primary project' />}
+          </li>
+        </td>
+      </tr>;
       rows.push(rowP);
 
       // add rows with commodity assignments?

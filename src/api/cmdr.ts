@@ -8,4 +8,12 @@ export const cmdr = {
     return await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/summary`);
   },
 
+  getPrimary: async (cmdr: string): Promise<string> => {
+    return await callAPI<string>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary`);
+  },
+
+  setPrimary: async (cmdr: string, buildId: string): Promise<void> => {
+    await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary/${buildId}`, 'PUT');
+  },
+
 };

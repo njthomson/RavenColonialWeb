@@ -8,6 +8,7 @@ enum Stored {
   sortMode = 'sortMode',
   hideCompleted = 'hideCompleted',
   hideFC = 'hideFC',
+  primaryBuildId = 'primaryBuildId',
 }
 
 interface CmdrData {
@@ -133,6 +134,14 @@ class LocalStorage {
     else
       return JSON.parse(json) as boolean;
   };
+
+  set primaryBuildId(primaryBuildId: string) {
+    window.localStorage.setItem(Stored.primaryBuildId, primaryBuildId);
+  }
+
+  get primaryBuildId(): string {
+    return window.localStorage.getItem(Stored.primaryBuildId) ?? '';
+  }
 
 }
 

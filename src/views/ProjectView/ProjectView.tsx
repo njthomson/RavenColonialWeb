@@ -21,6 +21,7 @@ interface ProjectViewState {
   mode: Mode;
   sort: SortMode;
   loading: boolean;
+  primaryBuildId?: string;
   refreshing?: boolean;
   showAddCmdr: boolean;
   newCmdr?: string;
@@ -71,6 +72,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const sortMode = store.commoditySort;
     this.state = {
       loading: true,
+      primaryBuildId: store.primaryBuildId,
       mode: Mode.view,
       sort: sortMode as SortMode ?? SortMode.group,
       newCmdr: '',
@@ -96,7 +98,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   componentDidUpdate(prevProps: Readonly<ProjectViewProps>, prevState: Readonly<ProjectViewState>, snapshot?: any): void {
-    if (this.props.buildId && prevState.proj?.buildId && prevState.proj.buildId !== this.props.buildId) {
+    if (this.props.buildId && prevState.proj?.buildId && prevProps.buildId !== this.props.buildId) {
       this.fetchProject(this.props.buildId);
     }
 
@@ -185,8 +187,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .catch(err => this.setState({ errorMsg: err.message }));
   }
 
+  async setAsPrimary(buildId: string) {
+    // add a little artificial delay so UI doesn't flicker
+    this.setState({ refreshing: true })
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    api.cmdr.setPrimary(store.cmdrName, buildId)
+      .then(() => {
+        store.primaryBuildId = buildId;
+        this.setState({ refreshing: false, primaryBuildId: buildId });
+      })
+      .catch(err => this.setState({ refreshing: false, errorMsg: err.message }));
+  }
+
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -244,13 +259,25 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           this.setState({ confirmDelete: true });
           delayFocus('delete-no');
         },
+      },
+      {
+        key: 'btn-primary', text: 'Primary',
+        iconProps: { iconName: proj.buildId === primaryBuildId ? 'SingleBookmarkSolid' : 'SingleBookmark' },
+        title: proj.buildId === primaryBuildId ? 'This is your current primary project' : 'Set this as your current primary project',
+        disabled: proj.buildId === primaryBuildId || refreshing,
+        onClick: () => {
+          this.setAsPrimary(proj.buildId);
+        },
       }
     ];
 
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
-        <h2 className='project-title'><a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} {proj.complete && <span> (completed)</span>}<span style={{ fontSize: 16 }}><CopyButton text={proj.buildName} /></span></h2>
+        <h2 className='project-title'>
+          <a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} {proj.complete && <span> (completed)</span>}
+          <span style={{ fontSize: 16 }}><CopyButton text={proj.buildName} /></span>
+        </h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
         {mode === Mode.view && <CommandBar className='top-bar' items={commands} />}
       </div >

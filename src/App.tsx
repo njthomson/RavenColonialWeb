@@ -1,5 +1,6 @@
 import './App.css';
 
+import * as api from './api';
 import { CommandBar, DefaultButton, IContextualMenuItem, initializeIcons, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
 import { store } from './local-storage';
@@ -62,6 +63,13 @@ export class App extends Component<AppProps, AppState> {
 
   componentDidMount(): void {
     this.setStateFromHash();
+    this.fetchPrimaryBuildId();
+  }
+
+  fetchPrimaryBuildId() {
+    api.cmdr.getPrimary(store.cmdrName)
+      .then(buildId => store.primaryBuildId = buildId)
+      .catch(err => console.error(err.message));
   }
 
   setStateFromHash() {
