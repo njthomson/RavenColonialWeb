@@ -26,6 +26,14 @@ class LocalStorage {
     return this.cmdr?.name ?? '';
   }
 
+  set cmdrName(cmdrName: string) {
+    const data = {
+      ...this.cmdr ?? {},
+      name: cmdrName
+    } as CmdrData;
+    this.cmdr = data;
+  }
+
   get cmdr(): CmdrData | undefined {
     const json = window.localStorage.getItem(Stored.cmdr);
     if (json) {

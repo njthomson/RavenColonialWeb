@@ -78,8 +78,6 @@ export class App extends Component<AppProps, AppState> {
 
     if (window.location.hash === '#about') {
       nextState.pivot = TopPivot.about;
-    } else if (window.location.hash === '#cmdr') {
-      nextState.pivot = TopPivot.cmdr;
     } else {
       const params = new URLSearchParams(window.location.hash?.substring(1));
       if (params.has('find')) {
@@ -94,6 +92,20 @@ export class App extends Component<AppProps, AppState> {
         // view details about a Fleet Carrier
         nextState.pivot = TopPivot.fc;
         nextState.hashId = params.get('fc') ?? undefined;
+      } else if (params.has('cmdr')) {
+        // Cmdr specific data
+        nextState.pivot = TopPivot.cmdr;
+        const hashCmdr = params.get('cmdr');
+        if (hashCmdr) {
+          // update to new name and clean the hash
+          console.log(`Chanding cmdr: ${store.cmdrName} => ${hashCmdr}`);
+          store.cmdrName = hashCmdr;
+          nextState.cmdr = hashCmdr;
+          window.location.hash = `#cmdr`;
+          this.fetchPrimaryBuildId();
+        } else {
+          nextState.cmdr = store.cmdrName;
+        }
       } else {
         nextState.pivot = TopPivot.home;
       }
@@ -131,8 +143,8 @@ export class App extends Component<AppProps, AppState> {
           farItems={[{
             id: 'current-cmdr', key: 'current-cmdr',
             iconProps: { iconName: store.cmdrName ? 'Contact' : 'UserWarning' },
-            text: store.cmdrName ?? '?',
-            onClick: () => this.setState({ cmdrEdit: store.cmdr?.name ?? '' }),
+            text: this.state.cmdr,
+            onClick: () => this.setState({ cmdrEdit: this.state.cmdr }),
           }]}
         />
         {this.renderBody()}

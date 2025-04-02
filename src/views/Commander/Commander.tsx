@@ -137,11 +137,13 @@ export class Commander extends Component<CmdrProps, CmdrState> {
         <h3>Active projects and assignments:</h3>
         {loading && <Spinner size={SpinnerSize.large} label={`Loading projects and assignments ...`} />}
         {!loading && <>
-          <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
-            <tbody>
-              {rows}
-            </tbody>
-          </table>
+          <ul>
+            <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
+              <tbody>
+                {rows}
+              </tbody>
+            </table>
+          </ul>
           <CargoRemaining sumTotal={sumTotal} />
         </>}
 
