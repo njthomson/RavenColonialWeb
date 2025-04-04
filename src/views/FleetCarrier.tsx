@@ -78,7 +78,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         <FindFC
           match
           errorMsg={errorMsg}
-          onMarketId={(marketId) => this.setState({ nextMarketId: marketId })}
+          onMatch={(marketId) => this.setState({ nextMarketId: marketId })}
         />
 
         <PrimaryButton

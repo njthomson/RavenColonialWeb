@@ -145,6 +145,19 @@ export interface ResponseEdsmSystem {
   }
 }
 
+export interface ResponseEdsmTypeAhead {
+  id: number;
+  value: string;
+  communityName?: string;
+  coordinatesLocked: boolean;
+  coords: {
+    x: number;
+    y: number;
+    z: number;
+  },
+  haveDuplicate: boolean;
+}
+
 export enum SortMode {
   alpha = 'Alpha sort',
   group = 'Group by type',

@@ -1,7 +1,7 @@
-import { ActionButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TextField } from '@fluentui/react';
+import { ActionButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
-import { ProjectCreate, ProjectLink } from '../components';
+import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
 import { ProjectRef, ProjectRefComplete } from '../types';
 
 interface ProjectProps {
@@ -42,7 +42,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
   onFind = () => {
     window.location.assign(`#find=${this.state.q}`);
-    window.location.reload();
+    this.findProjects(this.state.q!);
   }
 
   findProjects = async (systemName: string) => {
@@ -80,17 +80,11 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         <h3>Find an existing project</h3>
 
         <div className="projects-query">
-          <TextField
-            autoFocus required
-            name='systemName'
-            label="System name:"
-            title='Enter a complete system name'
-            description="Enter complete system name"
-            value={q}
-            onChange={(_, v) => this.setState({ q: v })}
-            disabled={loading}
-            onKeyDown={(ev) => {
-              if (ev.key === 'Enter') { this.onFind(); }
+          <FindSystemName
+            text={q}
+            onMatch={(text) => {
+              this.setState({ q: text });
+              setTimeout(() => this.onFind(), 10);
             }}
           />
           <br />
@@ -116,7 +110,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       </div>
 
       <div className='half right'>
-        <ProjectCreate systemName={this.props.find!} knownMarketIds={knownMarketIds} />
+        <ProjectCreate systemName={q} knownMarketIds={knownMarketIds} />
       </div>
     </div>
   }

@@ -1,35 +1,41 @@
-import { ComboBox, IComboBox, IComboBoxOption } from '@fluentui/react';
+import { ComboBox, IComboBox, IComboBoxOption, Label } from '@fluentui/react';
 import { Component, createRef } from 'react';
 import * as api from '../api';
 
-interface FindFCProps {
+interface FindSystemNameProps {
   onMatch: (marketId: string | undefined) => void;
+  text?: string;
   errorMsg?: string;
   match?: boolean;
 }
 
-interface FindFCState {
+interface FindSystemNameState {
   matches: IComboBoxOption[];
-  marketId?: string;
+  text?: string;
   matchName?: string;
   errorMsg?: string;
 }
 
-export class FindFC extends Component<FindFCProps, FindFCState> {
+export class FindSystemName extends Component<FindSystemNameProps, FindSystemNameState> {
   private comboFindFC = createRef<IComboBox>();
   private comboFindPendingTypeCount = 0;
 
-  constructor(props: FindFCProps) {
+  constructor(props: FindSystemNameProps) {
     super(props);
     this.state = {
+      text: props.text ?? '',
       matches: [],
       errorMsg: props.errorMsg,
     };
   }
 
-  componentDidUpdate(prevProps: Readonly<FindFCProps>, prevState: Readonly<FindFCState>, snapshot?: any): void {
-    if (prevState.marketId !== this.state.marketId) {
-      this.props.onMatch(this.state.marketId);
+  componentDidUpdate(prevProps: Readonly<FindSystemNameProps>, prevState: Readonly<FindSystemNameState>, snapshot?: any): void {
+    if (this.state.text && prevState.text !== this.state.text) {
+      this.props.onMatch(this.state.text);
+    }
+
+    if (this.props.text && prevProps.text !== this.props.text && this.props.text !== this.state.text) {
+      this.setState({ text: this.props.text });
     }
 
     if (this.props.errorMsg && this.props.errorMsg !== this.state.errorMsg) {
@@ -38,11 +44,12 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
   }
 
   render() {
-    const { matches, matchName, errorMsg } = this.state;
+    const { text, matches, matchName, errorMsg } = this.state;
 
     return <>
+      <Label required={true}>System name:</Label>
       <ComboBox
-        id='add-fc-combo'
+        text={text}
         componentRef={this.comboFindFC}
         openOnKeyboardFocus
         errorMessage={errorMsg}
@@ -59,7 +66,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
         onInputValueChange={this.onMatch}
         onChange={(_, o, i, v) => {
           this.setState({
-            marketId: o?.key.toString(),
+            text: o?.key.toString(),
             errorMsg: undefined
           });
         }}
@@ -68,7 +75,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
   }
 
   onMatch = async (txt: string) => {
-    this.setState({ errorMsg: undefined, marketId: undefined });
+    this.setState({ errorMsg: undefined, text: undefined });
     this.comboFindPendingTypeCount++;
     // wait half a second, only proceed if no other typing happened since
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -76,7 +83,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     if (this.comboFindPendingTypeCount > 0) {
       // don't search if empty string
       this.setState({
-        marketId: undefined,
+        text: undefined,
         errorMsg: undefined,
         matches: [],
       });
@@ -86,7 +93,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     if (txt.length === 0) {
       // don't search if empty string
       this.setState({
-        marketId: undefined,
+        text: undefined,
         errorMsg: undefined,
         matches: [],
       });
@@ -97,37 +104,20 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     this.setState({ matchName: txt, });
     if (txt.length < 3) return;
 
-    if (this.props.match) {
-      this.setState({ matches: [] });
+    this.setState({ matches: [] });
 
-      // MATCH the FC from those known to us
-      const matches = await api.fc.match(txt);
+    // MATCH the FC from those known to us
+    const matches = await api.edsm.findSystems(txt);
 
-      const keys = Object.keys(matches);
-      this.setState({
-        errorMsg: keys.length === 0 ? 'No matches found. Try Carrier ID?' : undefined,
-        marketId: undefined,
-        matches: keys.map(k => ({
-          key: k,
-          text: matches[k],
-        }))
-      });
-      this.comboFindFC.current?.focus(true);
-    } else {
-      this.setState({ matches: [] });
+    this.setState({
+      errorMsg: matches.length === 0 ? 'No matches found. Try Carrier ID?' : undefined,
+      text: undefined,
+      matches: matches.map(m => ({
+        key: m.value,
+        text: m.value,
+      }))
+    });
+    this.comboFindFC.current?.focus(true);
 
-      // FIND the FC via Spansh
-      const matches = await api.fc.find(txt);
-
-      this.setState({
-        errorMsg: matches.length === 0 ? 'No matches found. Try Carrier ID?' : undefined,
-        marketId: undefined,
-        matches: matches.map(m => ({
-          key: m.market_id,
-          text: m.carrier_name ? `${m.carrier_name} (${m.name})` : m.name,
-        }))
-      });
-      this.comboFindFC.current?.focus(true);
-    }
   };
 }

@@ -843,7 +843,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <Stack className='add-fc' horizontal tokens={{ childrenGap: 10, padding: 10, }}>
           <FindFC
             errorMsg={fcMatchError}
-            onMarketId={(marketId) => {
+            onMatch={(marketId) => {
 
               if (marketId) {
                 if (this.state.proj?.linkedFC.find(fc => fc.marketId.toString() === marketId)) {

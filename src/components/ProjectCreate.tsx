@@ -130,6 +130,12 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     return !!marketId && parseInt(marketId) > 0 && !!buildType && !!buildName && systemAddress > 0;
   }
 
+  componentDidUpdate(prevProps: Readonly<ProjectCreateProps>, prevState: Readonly<ProjectCreateState>, snapshot?: any): void {
+    if (this.props.systemName && prevProps.systemName !== this.props.systemName) {
+      this.setState({ systemName: this.props.systemName ?? '' });
+    }
+  }
+
   render() {
     const { systemName, systemAddress, buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking } = this.state;
 
@@ -245,7 +251,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       }
 
       // look up x,y,z values
-      const data2 = await api.edsm.findSystem(this.state.systemName);
+      const data2 = await api.edsm.getSystem(this.state.systemName);
       // console.log('ProjectCreate.onCheckSystem:', data);
 
       this.setState({
