@@ -130,10 +130,9 @@ export class Commander extends Component<CmdrProps, CmdrState> {
 
           flip = !flip;
           const className = 'assignment' + (flip ? '' : ' odd');
-          const commodityClass = mapCommodityType[commodity]!;
           const rowC = <tr className={className} key={`cp${p.buildId}-${commodity}`}>
             <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
-            <td className='icon d'><CommodityIcon name={commodityClass} /></td>
+            <td className='icon d'><CommodityIcon name={commodity} /></td>
             <td className='need d'>{p.commodities![commodity].toLocaleString()}</td>
             <td className='filler'></td>
           </tr>;
@@ -157,7 +156,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
             </tbody>
           </table>
         </ul>
-        {sumTotal > 0 && <CargoRemaining sumTotal={sumTotal} />}
+        {sumTotal > 0 && <div className='cargo-remaining'><CargoRemaining sumTotal={sumTotal} label='Remaining cargo to deliver' /></div>}
       </>}
 
       {completedProjects.length > 0 && <>

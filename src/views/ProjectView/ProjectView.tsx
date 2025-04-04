@@ -378,6 +378,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (fcCount > 0) colSpan += fcCount + 1;
     if (hasAssignments) colSpan++;
 
+    // calculate sum cargo diff for all FCs per commodity name
+    const fcMarketIds = Object.keys(fcCargo);
+    const mapSumCargoDiff = Object.keys(mapCommodityNames).reduce((map, key) => {
+      const need = proj.commodities[key];
+      if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
+      return map;
+    }, {} as Cargo);
+    // calculate sum of diffs that are negative
+    const fcSumCargoDeficit = Object.values(mapSumCargoDiff)
+      .filter(v => v < 0)
+      .reduce((sum, v) => sum += -v, 0);
+
     let first = true;
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
@@ -394,7 +406,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       flip = !flip;
       var row: JSX.Element = mode === Mode.editCommodities
         ? this.getCommodityEditRow(proj, key, cmdrs, editCommodities!, flip, first)
-        : this.getCommodityRow(proj, key, cmdrs, flip, first);
+        : this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff);
       rows.push(row)
       first = false;
 
@@ -477,7 +489,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <tbody>{rows}</tbody>
       </table>
 
-      {!editCommodities && <CargoRemaining sumTotal={sumTotal} />}
+      {!editCommodities && <div className='cargo-remaining'>
+        <CargoRemaining sumTotal={sumTotal} label='Remaining cargo' />
+        {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
+      </div>}
     </>
   }
 
@@ -560,7 +575,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </tr>;
   }
 
-  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, first: boolean): JSX.Element {
+  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo): JSX.Element {
     const displayName = mapCommodityNames[key];
     const currentCmdr = store.cmdrName;
 
@@ -604,12 +619,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     ];
 
-    const fcCargoKeys = Object.keys(this.state.fcCargo);
-    const sumCargoFC = fcCargoKeys.reduce((sum, marketId) => sum += this.state.fcCargo[marketId][key] ?? 0, 0);
-    let diffCargoFC = (sumCargoFC - need).toLocaleString();
-    if (!diffCargoFC.startsWith('-') && diffCargoFC !== '0') diffCargoFC = '+' + diffCargoFC;
-    if (diffCargoFC === '0') diffCargoFC = '✔️';
-
     if (need > 0) {
       menuItems.push({
         key: 'set-to-zero',
@@ -618,12 +627,27 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
     }
 
+    const sumCargoDiff = mapSumCargoDiff[key] ?? 0;
+    let diffCargoFC = (sumCargoDiff).toLocaleString();
+    if (!diffCargoFC.startsWith('-') && diffCargoFC !== '0') diffCargoFC = '+' + diffCargoFC;
+
+    // prepare an element for the FC diff cell
+    const fcSumTitle = sumCargoDiff > 0
+      ? `FCs have a surplus of: ${sumCargoDiff} ${displayName}`
+      : `FCs are short by: ${-sumCargoDiff} ${displayName}`;
+    let fcSumElement = <></>;
+    if (need > 0 && sumCargoDiff === 0) {
+      fcSumElement = <Icon className='icon-inline' iconName='CheckMark' title={`FCs have enough ${displayName}`} style={{ cursor: 'Default', textAlign: 'center', width: '100%' }} />;
+    } else if (need > 0 || sumCargoDiff > 0) {
+      fcSumElement = <span title={fcSumTitle}>{diffCargoFC}</span>;
+    }
+    // prepare bubble colour for FC diff cell
     let fcDiffCellColor = '';
     if (need > 0) {
-      fcDiffCellColor = sumCargoFC >= need
-        ? 'lime'
-        : appTheme.palette.yellow;
+      fcDiffCellColor = sumCargoDiff >= 0 ? 'lime' : appTheme.palette.yellow;
     }
+
+    const fcMarketIds = Object.keys(this.state.fcCargo);
 
     return <tr key={`cc-${key}`} className={className} style={style}>
       <td className='commodity-name' id={`cargo-${key}`}>
@@ -631,7 +655,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         &nbsp;
         {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
         &nbsp;
-        {sumCargoFC >= need && <Icon className='icon-inline' iconName='AirplaneSolid' title={`Enough ${displayName} loaded on FCs`} />}
+        {sumCargoDiff >= 0 && need > 0 && <Icon className='icon-inline' iconName='AirplaneSolid' title={fcSumTitle} />}
 
         {isContextTarget && <ContextualMenu
           target={`#cn-${key}`}
@@ -654,15 +678,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <span className='t'>{need.toLocaleString()}</span>
       </td>
 
-      {fcCargoKeys.length > 0 && !this.state.hideFCColumns && <>
+      {fcMarketIds.length > 0 && !this.state.hideFCColumns && <>
         {/* The FC Diff cell, then a cell for each FC */}
         <td key='fcc-have' className='commodity-diff'  >
           <div className='bubble' style={{ backgroundColor: fcDiffCellColor }} >
-            {sumCargoFC > 0 ? diffCargoFC : `-${need}`}
+            {fcSumElement}
           </div>
         </td>
-        {fcCargoKeys.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' >
-          <span className='t'>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span>
+        {fcMarketIds.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' >
+          <span>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span>
         </td>)}
       </>}
 
