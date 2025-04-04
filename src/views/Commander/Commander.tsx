@@ -4,7 +4,7 @@ import { Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, Spinne
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
-import { mapCommodityNames, mapCommodityType, Project } from '../../types';
+import { mapCommodityNames, Project } from '../../types';
 import { store } from '../../local-storage';
 
 interface CmdrProps {
