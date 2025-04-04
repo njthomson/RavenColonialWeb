@@ -135,7 +135,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
     return <>
       <div className="create-project">
-        <h3>Or start a new build?</h3>
+        <h3>Or start a new project?</h3>
         <div>
           <Stack horizontal style={{ alignItems: 'flex-end' }}>
             <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />

@@ -1,6 +1,6 @@
 import './Commander.css';
 
-import { Icon, MessageBar, MessageBarType, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
+import { Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
@@ -80,7 +80,10 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       </TeachingBubble>}
       {!editingCmdr && <>
         <div className='contain-horiz'>
-          {this.renderCmdrProjects()}
+          <div className='half'>
+            <h3>Active projects and assignments:</h3>
+            {this.renderCmdrProjects()}
+          </div>
         </div>
       </>}
     </>;
@@ -89,6 +92,18 @@ export class Commander extends Component<CmdrProps, CmdrState> {
   renderCmdrProjects() {
     const cmdr = this.props.cmdr?.toLowerCase() ?? '';
     const { projects, loading } = this.state;
+
+    if (projects?.length === 0) {
+      return <>
+        <br />
+        <Label>No projects found ...</Label>
+        <br />
+        <PrimaryButton text='Find or start a project ...' onClick={() => {
+          window.location.assign("#find");
+          window.location.reload();
+        }} />
+      </>;
+    }
 
     const rows = [];
     let sumTotal = 0;
@@ -133,26 +148,23 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       .map(p => <li key={`cp${p.buildId}`}><ProjectLink proj={p} /></li>);
 
     return <>
-      <div className='half'>
-        <h3>Active projects and assignments:</h3>
-        {loading && <Spinner size={SpinnerSize.large} label={`Loading projects and assignments ...`} />}
-        {!loading && <>
-          <ul>
-            <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
-              <tbody>
-                {rows}
-              </tbody>
-            </table>
-          </ul>
-          <CargoRemaining sumTotal={sumTotal} />
-        </>}
+      {loading && <Spinner size={SpinnerSize.large} label={`Loading projects and assignments ...`} />}
+      {!loading && <>
+        <ul>
+          <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
+            <tbody>
+              {rows}
+            </tbody>
+          </table>
+        </ul>
+        {sumTotal > 0 && <CargoRemaining sumTotal={sumTotal} />}
+      </>}
 
-        {completedProjects.length > 0 && <>
-          <br />
-          <h3>Completed projects:</h3>
-          <ul className='completed'>{completedProjects}</ul>
-        </>}
-      </div>
+      {completedProjects.length > 0 && <>
+        <br />
+        <h3>Completed projects:</h3>
+        <ul className='completed'>{completedProjects}</ul>
+      </>}
     </>;
   }
 }

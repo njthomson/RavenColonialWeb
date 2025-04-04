@@ -77,6 +77,8 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
     return <div className='contain-horiz'>
       <div className='half'>
+        <h3>Find an existing project</h3>
+
         <div className="projects-query">
           <TextField
             autoFocus required
