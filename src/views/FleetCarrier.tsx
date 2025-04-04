@@ -148,8 +148,8 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
   onUpdateFields = async () => {
     this.setState({ loading: true });
-    try {
 
+    try {
       const fcUpdated = await api.fc.updateFields(this.state.fc!.marketId, {
         displayName: this.state.editDisplayName!
       });
@@ -191,10 +191,15 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   onUpdateCargo = async () => {
+    // also save the display name if it has changed
+    if (this.state.fc!.displayName !== this.state.editDisplayName) {
+      await this.onUpdateFields();
+    }
+
     this.setState({ loading: true });
 
     try {
-      // the API call is update, not patch delta. Make sure we have entries with zero for anything the user removed
+      // the API call is update, not patch/delta. Make sure we have entries with zero for anything the user removed
       const cargoEdit = { ...this.state.editCargo };
       for (const key in this.state.fc!.cargo) {
         if (!(key in cargoEdit)) {

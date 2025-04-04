@@ -486,7 +486,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <th key={`fcc-have`} className='commodity-need' title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
       ...Object.keys(this.state.fcCargo).map(k => {
         const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
-        return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} >{fc.name}</th>;
+        return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} ><a href={`#fc=${fc.marketId}`}>{fc.name}</a></th>;
       })
     ];
   }
@@ -607,7 +607,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const fcCargoKeys = Object.keys(this.state.fcCargo);
     const sumCargoFC = fcCargoKeys.reduce((sum, marketId) => sum += this.state.fcCargo[marketId][key] ?? 0, 0);
     let diffCargoFC = (sumCargoFC - need).toLocaleString();
-    if (!diffCargoFC.startsWith('-')) diffCargoFC = '+' + diffCargoFC;
+    if (!diffCargoFC.startsWith('-') && diffCargoFC !== '0') diffCargoFC = '+' + diffCargoFC;
+    if (diffCargoFC === '0') diffCargoFC = '✔️';
 
     if (need > 0) {
       menuItems.push({
@@ -657,7 +658,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {/* The FC Diff cell, then a cell for each FC */}
         <td key='fcc-have' className='commodity-diff'  >
           <div className='bubble' style={{ backgroundColor: fcDiffCellColor }} >
-            {sumCargoFC > 0 ? diffCargoFC : ''}
+            {sumCargoFC > 0 ? diffCargoFC : `-${need}`}
           </div>
         </td>
         {fcCargoKeys.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' >
@@ -752,6 +753,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div hidden={showAddCmdr}>
         <ActionButton
           text='Add a new Commander?'
+          title='Add a new Commander to this project'
           iconProps={{ iconName: 'AddFriend' }}
           onClick={this.onShowAddCmdr}
         />
@@ -781,7 +783,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const rows = proj.linkedFC.map(item => (<li key={`@${item.marketId}`}>
       <span className='removable'>
-        <a href={`#fc=${item.marketId}`}>{fcFullName(item.name, item.displayName)}</a>
+        <a href={`#fc=${item.marketId}`} title='Edit this fleet carrier'>{fcFullName(item.name, item.displayName)}</a>
         <Icon
           className='btn'
           iconName='Delete'
@@ -800,6 +802,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div hidden={showAddFC}>
         <ActionButton
           text='Link to a Fleet Carrier?'
+          title='Link a new Fleet Carrier to this project'
           iconProps={{ iconName: 'Airplane' }}
           onClick={() => {
             this.setState({

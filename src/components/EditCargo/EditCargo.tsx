@@ -1,6 +1,6 @@
 import './EditCargo.css';
 
-import { ActionButton, Dropdown, Icon, IDropdownOption, SelectableOptionMenuItemType, Stack } from '@fluentui/react';
+import { ActionButton, Dropdown, Icon, IDropdownOption, Label, SelectableOptionMenuItemType, Stack } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { CommodityIcon } from '..';
 import { store } from '../../local-storage';
@@ -149,6 +149,8 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
         {totalsRow && this.renderTotalsRow()}
       </table>}
+
+      {!hasCargoRows && <Label>No known cargo. Please add ...</Label>}
 
       {showAddNew && this.renderAddNew()}
 

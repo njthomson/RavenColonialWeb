@@ -79,10 +79,11 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       <div className='half'>
         <div className="projects-query">
           <TextField
-            autoFocus
+            autoFocus required
             name='systemName'
             label="System name:"
-            required description="Enter complete system name"
+            title='Enter a complete system name'
+            description="Enter complete system name"
             value={q}
             onChange={(_, v) => this.setState({ q: v })}
             disabled={loading}
@@ -99,14 +100,16 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         {this.renderRows()}
 
-        {completed && <>
+        {completed && completed.length > 0 && <>
           <ActionButton
             iconProps={{ iconName: showCompleted ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
             text={`${completed.length} Completed projects`}
             title={showCompleted ? 'Showing completed projects' : 'Hiding completed projects'}
             onClick={() => this.setState({ showCompleted: !showCompleted })}
           />
-          {showCompleted && completed.map(p => <li key={`pc${p.buildId}`}><ProjectLink proj={p} noSys={true} /></li>)}
+          <ul>
+            {showCompleted && completed.map(p => <li key={`pc${p.buildId}`}><ProjectLink proj={p} noSys={true} /></li>)}
+          </ul>
         </>}
       </div>
 
@@ -133,7 +136,9 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       const listItems = rows.map(r => <li key={r.buildId}><ProjectLink proj={r} noSys={true} /></li>)
       return <div className="projects-list">
         <h2>{rows?.length ?? '?'} Build projects in: <a href={`#find=${find}`}>{find}</a></h2>
-        {listItems}
+        <ul>
+          {listItems}
+        </ul>
       </div>
     }
   }

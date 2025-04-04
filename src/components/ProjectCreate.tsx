@@ -138,7 +138,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         <h3>Or start a new build?</h3>
         <div>
           <Stack horizontal style={{ alignItems: 'flex-end' }}>
-            <TextField id='create-systemName' name='systemName' label='System name:' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
+            <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
             <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking} />
           </Stack>
         </div>
@@ -149,6 +149,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
               id='manual-marketId'
               name='marketId'
               label='Market ID:'
+              title='Enter the marketId of the construction site from your journal file'
               value={marketId}
               required={true}
               onChange={(_, v) => this.setState({ marketId: v! })}
@@ -171,8 +172,8 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           </TeachingBubble>}
         </div>}
 
-        <TextField name='buildName' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
-        <ComboBox label='Build type:' selectedKey={buildType} options={buildTypes} styles={{ root: { maxWidth: 300 } }} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
+        <TextField name='buildName' title='Enter a descriptive name for this project' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
+        <ComboBox label='Build type:' title='Choose what is being built' selectedKey={buildType} options={buildTypes} styles={{ root: { maxWidth: 300 } }} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
         <div className='hint'><Icon iconName='Info' />&nbsp;<span>Exact cargo requirements are random and will require some adjustments.</span></div>
 
         {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
