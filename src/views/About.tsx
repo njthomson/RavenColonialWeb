@@ -15,13 +15,13 @@ export const About: React.FunctionComponent = () => {
 
       <h3>About SrvSurvey</h3>
       <br />
-      Learn more on the <a href='https://github.com/njthomson/SrvSurvey/wiki' target="_blank">SrvSurvey wiki</a>. Issues can be <a href='https://github.com/njthomson/SrvSurvey/issues' target='_blank'>reported here</a> and general discussion happens through <a href='https://discord.gg/nEWMqZNBdy' target='_blank'>Discord</a>.
+      Learn more on the <a href='https://github.com/njthomson/SrvSurvey/wiki' target="_blank" rel="noreferrer">SrvSurvey wiki</a>. Issues can be <a href='https://github.com/njthomson/SrvSurvey/issues' target='_blank' rel="noreferrer">reported here</a> and general discussion happens through <a href='https://discord.gg/nEWMqZNBdy' target='_blank' rel="noreferrer">Discord</a>.
       <br />
       <br />
       Latest builds can be found on <a href="https://github.com/njthomson/SrvSurvey/releases/">GitHub releases</a>.
       <br />
       <br />
-      SrvSurvey can also be installed via the <a href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' target='_blank'>Windows App Store</a>, but this does not yet contain colonization features.
+      SrvSurvey can also be installed via the <a href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' target='_blank' rel="noreferrer">Windows App Store</a>, but this does not yet contain colonization features.
     </div>
   </>;
 };
