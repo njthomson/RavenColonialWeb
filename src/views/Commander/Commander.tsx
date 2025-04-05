@@ -1,6 +1,6 @@
 import './Commander.css';
 
-import { Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
+import { ActionButton, Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
@@ -16,6 +16,7 @@ interface CmdrState {
   projects?: Project[],
   loading?: boolean;
   errorMsg?: string;
+  showCompleted?: boolean;
 }
 
 export class Commander extends Component<CmdrProps, CmdrState> {
@@ -91,7 +92,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
 
   renderCmdrProjects() {
     const cmdr = this.props.cmdr?.toLowerCase() ?? '';
-    const { projects, loading } = this.state;
+    const { projects, loading, showCompleted } = this.state;
 
     if (projects?.length === 0) {
       return <>
@@ -160,9 +161,15 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       </>}
 
       {completedProjects.length > 0 && <>
-        <br />
-        <h3>Completed projects:</h3>
-        <ul className='completed'>{completedProjects}</ul>
+        <ActionButton
+          iconProps={{ iconName: showCompleted ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
+          text={`${completedProjects.length} Completed projects`}
+          title={showCompleted ? 'Showing completed projects' : 'Hiding completed projects'}
+          onClick={() => this.setState({ showCompleted: !showCompleted })}
+        />
+        <ul>
+          {showCompleted && <ul className='completed'>{completedProjects}</ul>}
+        </ul>
       </>}
     </>;
   }
