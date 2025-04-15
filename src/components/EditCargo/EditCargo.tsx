@@ -25,6 +25,8 @@ interface EditCargoProps {
 
   /** Show the add button below the table, vs next to the sort order button */
   addButtonBelow?: boolean;
+  /** Show the add button above the table, vs next to the sort order button */
+  addButtonAbove?: boolean;
 
   onChange?: (cargo: Cargo) => void;
 }
@@ -98,13 +100,22 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
   render() {
     const { cargo, sort, canAddMore, newCargo } = this.state;
-    const { addButtonBelow, showTotalsRow: totalsRow } = this.props;
+    const { addButtonBelow, addButtonAbove, showTotalsRow: totalsRow } = this.props;
 
     const hasCargoRows = Object.values(cargo).length > 0;
 
     const showAddNew = newCargo !== undefined;
 
     return <div className='edit-cargo'>
+      {!showAddNew && canAddMore && addButtonAbove && <ActionButton
+        text='Add commodity?'
+        iconProps={{ iconName: 'Add' }}
+        onClick={() => {
+          this.setState({ newCargo: '' });
+          delayFocus('new-cargo');
+        }}
+      />}
+
       {hasCargoRows && <table cellSpacing={0}>
         <thead>
           <tr>
@@ -125,7 +136,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
                 />
 
                 {/* Add new items button */}
-                {canAddMore && !addButtonBelow && <ActionButton
+                {canAddMore && !addButtonBelow && !addButtonAbove && <ActionButton
                   className='icon-btn'
                   title='Add a new cargo item'
                   text='Add'

@@ -184,7 +184,7 @@ export const mapCommodityIcon: Record<string, string> = {
   Chemicals: 'TestBeaker',
   ConsumerItems: 'ShoppingCart',
   'Consumer Items': 'ShoppingCart',
-  LegalDrugs: 'ClassroomLogo',
+  'Legal Drugs': 'Wines',
   Foods: 'EatDrink',
   Industrial: 'CubeShape',
   'Industrial Materials': 'CubeShape',
@@ -197,39 +197,6 @@ export const mapCommodityIcon: Record<string, string> = {
   Technology: 'Robot',
   Waste: 'RecycleBin',
   Weapons: 'GripperTool', // IncidentTriangle
-}
-
-export const mapCommodityType: Record<string, string> = {
-  "aluminium": "Metals",
-  "bioreducinglichen": "Technology",
-  "buildingfabricators": "Machinery",
-  "ceramiccomposites": "Industrial",
-  "cmmcomposite": "Industrial",
-  "computercomponents": "Technology",
-  "copper": "Metals",
-  "emergencypowercells": "Machinery",
-  "evacuationshelter": "Chemicals",
-  "foodcartridges": "Foods",
-  "fruitandvegetables": "Foods",
-  "geologicalequipment": "Machinery",
-  "hazardousenvironmentsuits": "Technology",
-  "insulatingmembrane": "Industrial",
-  "liquidoxygen": "Chemicals",
-  "medicaldiagnosticequipment": "Medicines",
-  "muonimager": "Technology",
-  "nonlethalweapons": "Weapons",
-  "polymers": "Industrial",
-  "powergenerators": "Technology",
-  "robotics": "Technology",
-  "semiconductors": "Industrial",
-  "steel": "Metals",
-  "structuralregulators": "Technology",
-  "superconductors": "Industrial",
-  "surfacestabilisers": "Chemicals",
-  "survivalequipment": "Chemicals",
-  "titanium": "Metals",
-  "water": "Chemicals",
-  "waterpurifiers": "Technology",
 }
 
 /** A map of Colonization relevant cargo item names to display names */

@@ -12,7 +12,7 @@ export const callAPI = async <T>(uri: string, method: string = 'GET', body?: str
 
 export const callSvcAPI = async <T>(url: URL, method: string = 'GET', body?: string): Promise<T> => {
   // optionally log the call we are making
-  if (logApiCalls) { console.log(`calling: ${url}`); }
+  if (logApiCalls) { console.log(`calling: (${method}) ${url}`); }
 
   const response = !body
     ? await fetch(url, { method })

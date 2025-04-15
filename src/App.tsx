@@ -1,12 +1,13 @@
 import './App.css';
 
 import * as api from './api';
-import { CommandBar, DefaultButton, IContextualMenuItem, initializeIcons, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField, ThemeProvider } from '@fluentui/react';
+import { CommandBar, IContextualMenuItem, initializeIcons, Modal, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
 import { store } from './local-storage';
 import { appTheme } from './theme';
 import { TopPivot } from './types';
-import { About, Commander, FleetCarrier, Home, ProjectSearch, ProjectView } from './views';
+import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
+import { ModalCommander } from './components/ModalCommander';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -16,36 +17,26 @@ interface AppProps {
 
 interface AppState {
   pivot: TopPivot;
-  hashId?: string;
   bid?: string;
   find?: string;
 
   cmdr?: string;
-  cmdrEdit?: string;
-
-  cargoLargeMax: number;
-  cargoMediumMax: number;
+  cmdrEdit: boolean;
 }
 
 export class App extends Component<AppProps, AppState> {
-  largeMax: number;
-  medMax: number;
 
   constructor(props: AppProps) {
     super(props);
 
-    const cmdr = store.cmdr;
-    this.largeMax = cmdr?.largeMax ?? 784;
-    this.medMax = cmdr?.medMax ?? 400;
 
     this.state = {
       pivot: TopPivot.home,
-      cmdr: cmdr?.name,
-      cargoLargeMax: this.largeMax,
-      cargoMediumMax: this.medMax,
+      cmdr: store.cmdrName,
+      cmdrEdit: false,
     };
 
-    window.onhashchange = (ev: HashChangeEvent) => {
+    window.onhashchange = () => {
       // console.debug('onhashchange:', ev);
       this.setStateFromHash();
     };
@@ -88,10 +79,6 @@ export class App extends Component<AppProps, AppState> {
         // viewing a build project
         nextState.pivot = TopPivot.build;
         nextState.bid = params.get('build') ?? undefined;
-      } else if (params.has('fc')) {
-        // view details about a Fleet Carrier
-        nextState.pivot = TopPivot.fc;
-        nextState.hashId = params.get('fc') ?? undefined;
       } else if (params.has('cmdr')) {
         // Cmdr specific data
         nextState.pivot = TopPivot.cmdr;
@@ -115,9 +102,7 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
-
-    const editingCmdr = cmdrEdit !== undefined;
+    const { cmdrEdit } = this.state;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -144,35 +129,14 @@ export class App extends Component<AppProps, AppState> {
             id: 'current-cmdr', key: 'current-cmdr',
             iconProps: { iconName: store.cmdrName ? 'Contact' : 'UserWarning' },
             text: this.state.cmdr,
-            onClick: () => this.setState({ cmdrEdit: this.state.cmdr }),
+            onClick: () => this.setState({ cmdrEdit: !this.state.cmdrEdit }),
           }]}
         />
         {this.renderBody()}
 
-        <Modal isOpen={editingCmdr}>
-          <div className="edit-cmdr">
-            <h2>Who are you?</h2>
-            <TextField name='cmdr' value={cmdrEdit} onChange={(_, v) => this.setState({ cmdrEdit: v! })} onKeyDown={(ev) => {
-              if (ev.key === 'Enter') { this.saveCmdrName(); }
-              if (ev.key === 'Escape') { this.cancelCmdrName(); }
-            }} autoFocus />
-            <Label>Large ship max capacity:</Label>
-            <Stack horizontal>
-              <Slider showValue={false} min={0} max={794} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
-              <SpinButton className='spin-slide' value={cargoLargeMax.toString()} onChange={(_, v) => this.setState({ cargoLargeMax: parseInt(v!) })} />
-            </Stack>
-            <Label>Medium ship max capacity:</Label>
-            <Stack horizontal>
-              <Slider showValue={false} min={0} max={400} value={cargoMediumMax} onChange={v => this.setState({ cargoMediumMax: v })} />
-              <SpinButton className='spin-slide' value={cargoMediumMax.toString()} onChange={(_, v) => this.setState({ cargoMediumMax: parseInt(v!) })} />
-            </Stack>
-            <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
-              <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.saveCmdrName} />
-              <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.clearCmdrName} />
-              <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.cancelCmdrName} />
-            </Stack>
-          </div>
-        </Modal>
+        {cmdrEdit && <Modal isOpen>
+          <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} />
+        </Modal>}
         <br />
         <footer>
           <p>© 2025 - Raven Colonial Corporation - Under development</p>
@@ -181,55 +145,17 @@ export class App extends Component<AppProps, AppState> {
     );
   }
 
+
   renderBody() {
-    const { pivot, bid, find, cmdr, hashId } = this.state;
+    const { pivot, bid, find, cmdr } = this.state;
 
     switch (pivot) {
       case TopPivot.home: return <Home />;
       case TopPivot.find: return <ProjectSearch find={find} />;
       case TopPivot.build: return <ProjectView buildId={bid} cmdr={cmdr} />;
       case TopPivot.cmdr: return <Commander cmdr={cmdr} />;
-      case TopPivot.fc: return <FleetCarrier marketId={hashId} />;
       case TopPivot.about: return <About />;
     }
   }
 
-  clearCmdrName = () => {
-    const { pivot } = this.state;
-    store.clearCmdr();
-
-    this.setState({
-      cmdr: undefined,
-      cmdrEdit: undefined,
-    });
-
-    if (pivot === TopPivot.cmdr) {
-      window.document.title = `Cmdr: ?`;
-    }
-  }
-
-  saveCmdrName = () => {
-    const { cmdrEdit, cargoLargeMax, cargoMediumMax } = this.state;
-    if (!!cmdrEdit) {
-      store.cmdr = {
-        name: cmdrEdit,
-        largeMax: cargoLargeMax,
-        medMax: cargoMediumMax,
-      };
-
-      this.setState({
-        cmdr: cmdrEdit,
-        cmdrEdit: undefined,
-      });
-      window.location.reload();
-    }
-  }
-
-  cancelCmdrName = () => {
-    this.setState({
-      cmdrEdit: undefined,
-      cargoLargeMax: this.largeMax,
-      cargoMediumMax: this.medMax,
-    });
-  };
 }

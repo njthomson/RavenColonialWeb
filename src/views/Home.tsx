@@ -6,7 +6,7 @@ export const Home: React.FunctionComponent = () => {
 
   return <>
     <div className='contain-vert'>
-      <div className='half hint' style={{ textAlign: 'center' }}>
+      <div className='hint' style={{ textAlign: 'center', minWidth: 400, flexGrow: 1, margin: 8 }}>
         <br />
         From the earliest times in history, mankind has looked to expand.  We have sought to explore and thrive.
         <br />

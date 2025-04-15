@@ -9,6 +9,7 @@ enum Stored {
   hideCompleted = 'hideCompleted',
   hideFC = 'hideFC',
   primaryBuildId = 'primaryBuildId',
+  cmdrLinkedFCs = 'cmdrLinkedFCs',
 }
 
 interface CmdrData {
@@ -20,6 +21,9 @@ interface CmdrData {
 class LocalStorage {
   clearCmdr(): void {
     window.localStorage.removeItem(Stored.cmdr);
+    window.localStorage.removeItem(Stored.recentProjects);
+    window.localStorage.removeItem(Stored.deliverDestination);
+    window.localStorage.removeItem(Stored.cmdrLinkedFCs);
   }
 
   get cmdrName() {
@@ -151,6 +155,18 @@ class LocalStorage {
     return window.localStorage.getItem(Stored.primaryBuildId) ?? '';
   }
 
+  set cmdrLinkedFCs(marketIds: number[]) {
+    window.localStorage.setItem(Stored.cmdrLinkedFCs, JSON.stringify(marketIds));
+  }
+
+  /** Array of FC market IDs */
+  get cmdrLinkedFCs(): number[] {
+    const json = window.localStorage.getItem(Stored.cmdrLinkedFCs);
+    if (!json)
+      return [];
+    else
+      return JSON.parse(json) as number[];
+  }
 }
 
 export const store = new LocalStorage();

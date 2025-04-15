@@ -19,8 +19,9 @@
     "Consumer Technology",
     "Domestic Appliances",
     "Evacuation Shelter",
-    "Survival Equipment",
-    "Legal Drugs",
+    "Survival Equipment"
+  ],
+  "Legal Drugs": [
     "Beer",
     "Bootleg Liquor",
     "Liquor",

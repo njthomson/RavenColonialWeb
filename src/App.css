@@ -69,9 +69,7 @@ h3 {
 }
 
 .center {
-  min-width: 400px;
-  flex-grow: 1;
-  margin: 8px;
+  text-align: center;
 }
 
 .right {
@@ -82,8 +80,13 @@ h3 {
   margin-top: 10px;
 }
 
-.ms-Dialog-main {
-  text-align: center;
+.ms-Modal-scrollableContent {
+  margin: 20px;
+  max-height: fit-content;
+}
+
+.ms-Dialog-main.higher {
+  top: -15%;
 }
 
 .projects-query {
@@ -113,11 +116,6 @@ h3 {
   min-width: 350px;
 }
 
-.ms-Dialog-main {
-  padding: 20px;
-  top: -15%;
-}
-
 .ms-TextField,
 .ms-ComboBox-container {
   width: 300px;
@@ -127,10 +125,6 @@ h3 {
   position: absolute;
   top: 0;
   right: 0;
-}
-
-.edit-cmdr {
-  padding: 8px;
 }
 
 .edit-cmdr .ms-TextField {
@@ -184,6 +178,12 @@ h3 {
   button {
     margin: 0 8px 8px 0;
   }
+}
+
+.fake-link {
+  color: #0078d4;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 /* Icons as buttons (they're smaller) */

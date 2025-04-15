@@ -1,12 +1,16 @@
-import { DefaultButton, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, IconButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef } from 'react';
 import * as api from '../api';
 import { EditCargo, FindFC } from '../components';
 import { appTheme } from '../theme';
 import { KnownFC } from '../types';
+import { store } from '../local-storage';
+import { fcFullName } from '../util';
+import { CopyButton } from '../components/CopyButton';
 
 interface FleetCarrierProps {
-  marketId?: string;
+  marketId: string;
+  onClose: () => void;
 }
 
 interface FleetCarrierState {
@@ -18,6 +22,7 @@ interface FleetCarrierState {
   fc?: KnownFC;
   editCargo: Record<string, number>;
   editDisplayName?: string;
+  cmdrLinked: boolean;
 }
 
 export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState> {
@@ -27,10 +32,12 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   constructor(props: FleetCarrierProps) {
     super(props);
 
+    const numMarketId = parseInt(props.marketId ?? '0')
     this.state = {
       nextMarketId: this.props.marketId,
       loading: false,
       editCargo: {},
+      cmdrLinked: !!store.cmdrLinkedFCs.includes(numMarketId),
       // showBubble: !this.props.cmdr,
     };
   }
@@ -60,39 +67,13 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
-      <div className='half'>
-        <h3>Fleet Carrier:</h3>
-        {!this.props.marketId && this.renderFindFC()}
-        {this.props.marketId && this.renderFC()}
-      </div>
+      <IconButton className='right' title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onClose()} style={{ position: 'relative', top: -4 }} />
+      <h3 style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
+
+      {this.props.marketId && this.renderFC()}
     </>;
   }
 
-  renderFindFC() {
-    const { nextMarketId, errorMsg } = this.state;
-
-    return <>
-      <Label>Enter Fleet Carrier name:</Label>
-      <Stack horizontal>
-
-        <FindFC
-          match
-          errorMsg={errorMsg}
-          onMatch={(marketId) => this.setState({ nextMarketId: marketId })}
-        />
-
-        <PrimaryButton
-          disabled={!nextMarketId}
-          iconProps={{ iconName: 'Search' }}
-          onClick={() => {
-            this.setState({ errorMsg: !!errorMsg ? '' : 'oops' })
-            window.location.assign(`#fc=${nextMarketId}`);
-            window.location.reload();
-          }}
-        />
-      </Stack>
-    </>;
-  }
 
   renderFC() {
     const { loading, fc } = this.state;
@@ -100,21 +81,23 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
     return <>
       {loading && <Spinner size={SpinnerSize.large} label={`Loading  ...`} />}
-      <br />
       {this.renderFields()}
       {this.renderCargo(fc.marketId)}
     </>;
   }
 
   renderFields() {
-    const { fc, editDisplayName } = this.state;
+    const { fc, editDisplayName, cmdrLinked } = this.state;
     if (!fc) return;
 
     return <table>
       <tbody>
         <tr>
           <td>Raw name:</td>
-          <td className='grey'>{fc.name}</td>
+          <td className='grey'>
+            {fc.name}
+            &nbsp;<CopyButton text={fc.name} />
+          </td>
         </tr>
         <tr>
           <td>Carrier name:</td>
@@ -139,9 +122,36 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           </td>
         </tr>
         <tr>
-          <td>MarketId:</td>
-          <td className='grey'>{fc.marketId}</td>
+          <td>
+            MarketId:
+            {store.cmdrName && <IconButton
+              iconProps={{ iconName: cmdrLinked ? 'UserFollowed' : 'UserRemove' }}
+              title={cmdrLinked ? `${fcFullName(fc.name, fc.displayName)} is linked ${store.cmdrName}` : `${fcFullName(fc.name, fc.displayName)} is NOT linked to ${store.cmdrName}`}
+              onClick={async () => {
+                if (this.state.cmdrLinked) {
+                  // remove link
+                  await api.cmdr.unlinkFC(store.cmdrName, fc.marketId);
+
+                  const marketIds = store.cmdrLinkedFCs;
+                  marketIds.splice(marketIds.indexOf(fc.marketId), 1);
+                  store.cmdrLinkedFCs = marketIds;
+                  this.setState({ cmdrLinked: false });
+                } else {
+                  // add link
+                  await api.cmdr.linkFC(store.cmdrName, fc.marketId);
+
+                  const marketIds = store.cmdrLinkedFCs;
+                  marketIds.push(fc.marketId);
+                  store.cmdrLinkedFCs = marketIds;
+                  this.setState({ cmdrLinked: true });
+                }
+              }}
+            />}
+          </td>
+          <td className='grey'>{fc.marketId}&nbsp;<CopyButton text={fc.marketId.toString()} />
+          </td>
         </tr>
+
       </tbody>
     </table>;
   }
@@ -168,8 +178,14 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     const { editCargo } = this.state;
 
     return <div style={{ display: 'inline-block' }}>
+      <EditCargo
+        addButtonAbove
+        showTotalsRow
+        cargo={editCargo}
+        onChange={cargo => this.setState({ editCargo: cargo })}
+      />
       <br />
-
+      <br />
       <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
         <PrimaryButton
           text='Update cargo'
@@ -181,12 +197,10 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           iconProps={{ iconName: 'Cancel' }}
           onClick={() => {
             this.setState({ editCargo: this.state.fc!.cargo });
-            window.history.back();
+            this.props.onClose();
           }}
         />
       </Stack>
-      <br />
-      <EditCargo cargo={editCargo} onChange={cargo => this.setState({ editCargo: cargo })} addButtonBelow showTotalsRow />
     </div>;
   }
 
@@ -209,7 +223,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
       const cargoUpdated = await api.fc.updateCargo(this.state.fc!.marketId, cargoEdit);
       this.setState({ loading: false, editCargo: cargoUpdated });
-      window.history.back();
+      this.props.onClose();
     } catch (err: any) {
       this.setState({ loading: false, errorMsg: err.message });
     }

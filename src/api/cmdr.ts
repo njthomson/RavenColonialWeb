@@ -1,4 +1,4 @@
-import { CmdrSummary } from "../types";
+import { CmdrSummary, KnownFC } from "../types";
 import { callAPI } from "./api-util";
 
 /** Fleet Carrier APIs */
@@ -14,6 +14,18 @@ export const cmdr = {
 
   setPrimary: async (cmdr: string, buildId: string): Promise<void> => {
     await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary/${buildId}`, 'PUT');
+  },
+
+  getCmdrLinkedFCs: async (cmdr: string): Promise<KnownFC[]> => {
+    return await callAPI<KnownFC[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc`);
+  },
+
+  linkFC: async (cmdr: string, marketId: number): Promise<void> => {
+    return await callAPI<void>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/${encodeURIComponent(marketId)}`, 'PUT');
+  },
+
+  unlinkFC: async (cmdr: string, marketId: number): Promise<void> => {
+    return await callAPI<void>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/${encodeURIComponent(marketId)}`, 'DELETE');
   },
 
 };

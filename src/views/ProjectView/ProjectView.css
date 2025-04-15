@@ -103,14 +103,18 @@
 .removable .btn {
   display: none;
   margin: 0 0 0 4px;
-  padding: 0;
+  padding: 2px;
   position: relative;
   top: 2px;
   cursor: pointer;
 }
 
-.removable:hover {
+.removable .btn:hover {
   background-color: #e5e5e5;
+}
+
+.removable:hover {
+  background-color: lightcyan;
 }
 
 .removable:hover .btn {

@@ -10,6 +10,7 @@ import { appTheme } from '../../theme';
 import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
 import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
+import { FleetCarrier } from '../FleetCarrier';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -55,6 +56,7 @@ interface ProjectViewState {
   fcMatchError?: string;
 
   fcCargo: Record<string, Cargo>;
+  fcEditMarketId?: string;
 }
 
 enum Mode {
@@ -154,13 +156,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
 
       // if ALL commodities have a count of 10 - it means the project is brand new and we want people to edit them to real numbers
-      if (Object.values(newProj.commodities).every(v => v === 10)) {
+      if (Object.values(newProj.commodities).every(v => v === 10 || v === -1)) {
         this.setState({
           mode: Mode.editCommodities,
           editCommodities: { ...newProj.commodities },
-          sort: SortMode.alpha,
         });
-        store.commoditySort = SortMode.alpha;
         delayFocus('first-commodity-edit');
       }
 
@@ -293,53 +293,56 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div>
 
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
-        <h3>Are you sure you want to delete?</h3>
-        <p>This cannot be undone.</p>
-        <DefaultButton
-          text='Yes'
-          disabled={submitting}
-          iconProps={{ iconName: 'Warning' }}
-          style={{ backgroundColor: appTheme.palette.yellowLight }}
-          onClick={this.onProjectDelete}
-        />
-        &nbsp;
-        <DefaultButton
-          text='No'
-          id='delete-no'
-          iconProps={{ iconName: 'Cancel' }}
-          disabled={submitting}
-          onClick={() => this.setState({ confirmDelete: false })}
-        />
+        <div className='center'>
+          <p>
+            <h3>Are you sure you want to delete?</h3>
+            <br />
+            This cannot be undone.</p>
+          <DefaultButton
+            text='Yes'
+            disabled={submitting}
+            iconProps={{ iconName: 'Warning' }}
+            style={{ backgroundColor: appTheme.palette.yellowLight }}
+            onClick={this.onProjectDelete}
+          />
+          &nbsp;
+          <DefaultButton
+            text='No'
+            id='delete-no'
+            iconProps={{ iconName: 'Cancel' }}
+            disabled={submitting}
+            onClick={() => this.setState({ confirmDelete: false })}
+          />
+        </div>
       </Modal>
 
       <Modal isOpen={confirmComplete}>
-        <p>
-          Are you sure?
-          <br />
-          <br />
-          This project will no longer be findable once marked as complete.
-          <br />
-          It will remain visible for Commanders linked to it.
-        </p>
-        <PrimaryButton text='Yes' onClick={this.onProjectComplete} disabled={submitting} />
-        &nbsp;
-        <DefaultButton text='No' onClick={() => this.setState({ confirmComplete: false })} disabled={submitting} />
+        <div className='center'>
+          <p>
+            <h3>Confirm completion?</h3>
+            <br />
+            Completed projects can still be found but cannot be made active again.
+          </p>
+          <PrimaryButton text='Yes' iconProps={{ iconName: 'Accept' }} onClick={this.onProjectComplete} disabled={submitting} />
+          &nbsp;
+          <DefaultButton text='No' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ confirmComplete: false })} disabled={submitting} />
+        </div >
       </Modal>
 
       {mode === Mode.deliver && this.renderDeliver()}
     </>;
   }
 
-  getGroupedCommodities(): Record<string, string[]> {
+  getGroupedCommodities(forceAlphaSort: boolean): Record<string, string[]> {
     const { proj, sort, hideDoneRows } = this.state;
     if (!proj?.commodities) throw new Error("Why no commodities?");
 
     const sorted = Object.keys(proj.commodities)
-      .filter(k => !hideDoneRows || proj.commodities[k] > 0 || proj.complete);
+      .filter(k => !hideDoneRows || proj.commodities[k] !== 0 || proj.complete);
     sorted.sort();
 
     // just alpha sort
-    if (sort === SortMode.alpha) {
+    if (sort === SortMode.alpha || forceAlphaSort) {
       return { alpha: sorted };
     }
 
@@ -369,8 +372,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const rows = [];
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
 
+    const cargoIsDefault = Object.values(proj.commodities).every(v => v === 10 || v === -1);
+    const isDefaultCargo = cargoIsDefault && mode === Mode.editCommodities
+
     let flip = false;
-    const groupedCommodities = this.getGroupedCommodities();
+    const groupedCommodities = this.getGroupedCommodities(isDefaultCargo);
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
 
     let colSpan = 0;
@@ -394,7 +400,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
         // group row
-        if (sort !== SortMode.alpha) {
+        if (sort !== SortMode.alpha && !isDefaultCargo) {
           rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}>
             <td colSpan={2 + colSpan} className='hint'> {key}</td>
           </tr>)
@@ -416,7 +422,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     }
 
-    const isDefaultCargo = Object.values(proj.commodities).every(v => v === 10)
 
     return <>
       {mode === Mode.view && <h3>
@@ -489,7 +494,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <tbody>{rows}</tbody>
       </table>
 
-      {!editCommodities && <div className='cargo-remaining'>
+      {!editCommodities && !cargoIsDefault && <div className='cargo-remaining'>
         <CargoRemaining sumTotal={sumTotal} label='Remaining cargo' />
         {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
       </div>}
@@ -501,7 +506,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <th key={`fcc-have`} className='commodity-need' title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
       ...Object.keys(this.state.fcCargo).map(k => {
         const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
-        return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} ><a href={`#fc=${fc.marketId}`}>{fc.name}</a></th>;
+        return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} >
+          <span
+            className='fake-link'
+            onClick={() => this.setState({ fcEditMarketId: k })}
+          >
+            {fc.name}
+          </span>
+        </th>;
       })
     ];
   }
@@ -544,7 +556,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const displayName = mapCommodityNames[key];
     const need = proj.commodities![key];
-    const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
+    const className = `${need !== 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
     const inputId = first ? 'first-commodity-edit' : undefined;
     const isReady = this.state.editReady.has(key);
 
@@ -558,7 +570,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           id={inputId}
           className='commodity-num'
           type='number'
-          value={editCommodities[key]}
+          value={need === -1 ? '' : editCommodities[key]}
           min={0}
           onChange={(ev) => {
             const ec2 = this.state.editCommodities!;
@@ -595,7 +607,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
 
     const need = proj.commodities![key];
-    const className = `${need > 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
+    const className = `${need !== 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
 
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
 
@@ -675,7 +687,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </td>
 
       <td className='commodity-need' >
-        <span className='t'>{need.toLocaleString()}</span>
+        <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
       </td>
 
       {fcMarketIds.length > 0 && !this.state.hideFCColumns && <>
@@ -761,7 +773,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             className='btn'
             iconName='Delete'
             title={`Remove commander: ${key}`}
-            style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }}
+            style={{ color: appTheme.palette.themePrimary, }}
             onClick={() => { this.onClickCmdrRemove(key); }}
           />
         </span>
@@ -802,17 +814,28 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderLinkedFC() {
-    const { proj, showAddFC, fcMatchMarketId, fcMatchError } = this.state;
+    const { proj, showAddFC, fcMatchMarketId, fcMatchError, fcEditMarketId } = this.state;
     if (!proj) { return <div />; }
 
     const rows = proj.linkedFC.map(item => (<li key={`@${item.marketId}`}>
       <span className='removable'>
-        <a href={`#fc=${item.marketId}`} title='Edit this fleet carrier'>{fcFullName(item.name, item.displayName)}</a>
+        {fcFullName(item.name, item.displayName)}
+        &nbsp;
+        <Icon
+          className='btn'
+          iconName='Edit'
+          title={`Edit FC: ${item.displayName} (${item.name})`}
+          style={{ color: appTheme.palette.themePrimary }}
+          onClick={() => {
+            this.setState({ fcEditMarketId: item.marketId.toString() });
+          }}
+        />
+        &nbsp;
         <Icon
           className='btn'
           iconName='Delete'
           title={`Unlink FC: ${item.displayName} (${item.name})`}
-          style={{ color: appTheme.palette.themePrimary, paddingTop: 80 }}
+          style={{ color: appTheme.palette.themePrimary }}
           onClick={() => { this.onClickUnlinkFC(proj.buildId, item.marketId); }}
         />
       </span>
@@ -861,6 +884,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddFC: false, fcMatchError: undefined })} />
         </Stack>
       </div>}
+
+      {fcEditMarketId && <Modal
+        isOpen
+        allowTouchBodyScroll
+        dragOptions={{
+          moveMenuItemText: 'Move',
+          closeMenuItemText: 'Close',
+          menu: ContextualMenu,
+          keepInBounds: true,
+          dragHandleSelector: '.ms-Modal-scrollableContent > h3',
+        }}
+        onDismissed={() => this.setState({ fcEditMarketId: undefined })}
+      >
+        <FleetCarrier
+          onClose={() => this.setState({ fcEditMarketId: undefined })}
+          marketId={fcEditMarketId}
+        />
+      </Modal>}
     </>
   }
 
