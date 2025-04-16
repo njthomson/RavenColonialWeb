@@ -190,7 +190,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         </MessageBar>}
 
         <MessageBar messageBarType={MessageBarType.success}>
-          Creating projects through <LinkSrvSurvey /> is <strong>strongly recommended</strong>.
+          Creating projects through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' /> is <strong>strongly recommended</strong>.
         </MessageBar>
 
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}

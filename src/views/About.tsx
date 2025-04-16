@@ -50,7 +50,7 @@ export const About: React.FunctionComponent = () => {
       Go forth, and Multiply.
       <br />
       <ul>
-        <li>The Raven Colonial Coporation supports colonization efforts whether working solo in groups or using Fleet Carriers.</li>
+        <li>The Raven Colonial Corporation supports colonization efforts whether working solo in groups or using Fleet Carriers.</li>
         <li>Using SrvSurvey to monitor local journal file changes, progress will be tracked automatically as you conduct your affairs.</li>
         <li>Use the <Icon className="btn icon-inline" iconName='UserWarning' /> / <Icon className="btn icon-inline" iconName='Contact' /> button in the top right corner to set your Commander name and the cargo hold sizes for your commonly used ship. See below about linking Fleet Carriers.</li>
       </ul>
@@ -66,7 +66,7 @@ export const About: React.FunctionComponent = () => {
         <li>Latest builds can be found on <LinkSrvSurvey href="https://github.com/njthomson/SrvSurvey/releases/" text='GitHub releases' />.</li>
         <li>Use the big Colonize button on the main window enable Colonization features and to create new projects.</li>
         <li>Once enabled cargo tracking will happen automatically at construction sites and linked Fleet Carriers.</li>
-        <li>Use the Colonize {">"} Refresh button after changing links or assignmens on the web site. (Coming soon) use this button to set a periodic refresh.</li>
+        <li>Use the Colonize {">"} Refresh button after changing links or assignments on the web site. (Coming soon) use this button to set a periodic refresh.</li>
       </ul>
       SrvSurvey can also be installed via the <LinkSrvSurvey href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' text='Windows App Store' /> but this does not yet support colonization features.
       <IconBtnScrollTop />
@@ -141,7 +141,7 @@ export const About: React.FunctionComponent = () => {
       <ul>
         <li>Use the <Icon className="btn icon-inline" iconName='Airplane' /> button below linked Commanders to add a Fleet Carrier, searching for them by name. Names are queried from Spansh and it is common for display names not to be known. Use their 6 digit ID code if not found by their display name.</li>
         <li>You can edit cargo counts and the display name used by Raven Colonial by clicking the <Icon className="btn icon-inline" iconName='Edit' /> button, or unlink by <Icon className="btn icon-inline" iconName='Delete' /></li>
-        <li>SrvSurvey will automatically track items bought, sold or transfered to any linked Fleet Carrier. Currently this tracking is relative, meaning it will not initially know what items are present, but you can manually update cargo counts as needed.</li>
+        <li>SrvSurvey will automatically track items bought, sold or transferred to any linked Fleet Carrier. Currently this tracking is relative, meaning it will not initially know what items are present, but you can manually update cargo counts as needed.</li>
         <li>For those not running SrvSurvey, the "<Icon className="btn icon-inline" iconName='DeliveryTruck' /> Deliver" button can also be used to capture cargo delivered to a linked Fleet Carrier.</li>
         <li>Each linked Fleet Carriers will have their own column in the table of commodities, along with a column showing the difference between all carries and the amount needed. An <Icon className="btn icon-inline" iconName='AirplaneSolid' /> icon will be shown when there is enough cargo on Fleet Carriers</li>
         <li>Fleet Carriers can be linked directly to Commanders by 2 ways: toggle the <Icon className="btn icon-inline" iconName='UserFollowed' /> / <Icon className="btn icon-inline" iconName='UserRemove' /> button when editing a Fleet Carrier. Or: add/remove from the list when editing your own Commander via <Icon className="btn icon-inline" iconName='Contact' /> in the top right corner.</li>

@@ -16,6 +16,10 @@ export const cmdr = {
     await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary/${buildId}`, 'PUT');
   },
 
+  clearPrimary: async (cmdr: string): Promise<void> => {
+    await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary/`, 'DELETE');
+  },
+
   getCmdrLinkedFCs: async (cmdr: string): Promise<KnownFC[]> => {
     return await callAPI<KnownFC[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc`);
   },

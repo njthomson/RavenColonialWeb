@@ -34,6 +34,7 @@ export interface ProjectRef extends ProjectRefComplete {
 
   architectName?: string;
   factionName?: string;
+  discordLink?: string;
   complete: boolean;
   maxNeed: number;
   notes?: string;

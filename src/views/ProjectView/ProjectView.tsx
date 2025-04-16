@@ -199,6 +199,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .catch(err => this.setState({ refreshing: false, errorMsg: err.message }));
   }
 
+  async clearPrimary() {
+    // add a little artificial delay so UI doesn't flicker
+    this.setState({ refreshing: true })
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    api.cmdr.clearPrimary(store.cmdrName)
+      .then(() => {
+        store.primaryBuildId = '';
+        this.setState({ refreshing: false, primaryBuildId: '' });
+      })
+      .catch(err => this.setState({ refreshing: false, errorMsg: err.message }));
+  }
+
   render() {
     const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities } = this.state;
 
@@ -262,10 +275,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {
         key: 'btn-primary', text: 'Primary',
         iconProps: { iconName: proj.buildId === primaryBuildId ? 'SingleBookmarkSolid' : 'SingleBookmark' },
-        title: proj.buildId === primaryBuildId ? 'This is your current primary project' : 'Set this as your current primary project',
-        disabled: proj.buildId === primaryBuildId || refreshing,
+        title: proj.buildId === primaryBuildId ? 'This is your current primary project. Click to clear.' : 'Set this as your current primary project',
+        disabled: refreshing,
         onClick: () => {
-          this.setAsPrimary(proj.buildId);
+          if (proj.buildId === primaryBuildId)
+            this.clearPrimary();
+          else
+            this.setAsPrimary(proj.buildId);
         },
       }
     ];
@@ -729,6 +745,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {!editProject && <div className='detail'>{proj.factionName}&nbsp;</div>}
               {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
             </td></tr>
+            {false && <tr><td>Discord:</td><td>
+              {!editProject && <div className='detail'>
+                {proj.discordLink && <LinkSrvSurvey href={proj.discordLink} text='Open Discord Channel' />}
+                &nbsp;
+              </div>}
+              {editProject && <input type='text' value={editProject.discordLink} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} />}
+            </td></tr>}
             <tr><td>Notes:</td><td>
               {!editProject && <div className='detail notes'>{proj.notes}&nbsp;</div>}
               {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} />}
@@ -744,7 +767,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   updateProjData = (key: keyof (Project), value: string) => {
     const editProject = { ...this.state.editProject } as any;
 
-    if (editProject && typeof editProject[key] === 'string') {
+    if (editProject) { // && typeof editProject[key] === 'string') {
       editProject[key] = value;
       this.setState({ editProject });
     }
