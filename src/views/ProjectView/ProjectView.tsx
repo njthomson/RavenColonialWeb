@@ -423,8 +423,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const rows = [];
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
 
-    const isDefaultCargo = Object.values(proj.commodities).every(v => v === 10 || v === -1);
-
     let flip = false;
     const groupedCommodities = this.getGroupedCommodities();
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
