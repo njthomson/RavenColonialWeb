@@ -889,7 +889,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         onDismissed={() => this.setState({ fcEditMarketId: undefined })}
       >
         <FleetCarrier
-          onClose={() => this.setState({ fcEditMarketId: undefined })}
+          onClose={() => {
+            this.setState({ fcEditMarketId: undefined });
+            this.fetchCargoFC(this.state.proj!.buildId);
+          }}
           marketId={fcEditMarketId}
         />
       </Modal>}
