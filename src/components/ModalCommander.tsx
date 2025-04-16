@@ -170,9 +170,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   clearCmdrName = () => {
     store.clearCmdr();
 
-    this.setState({
-      cmdr: undefined,
-    });
+    window.location.reload();
   }
 
   saveCmdrName = async () => {

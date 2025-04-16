@@ -40,6 +40,7 @@ interface EditCargoState {
 
 export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   private cargoNames: string[];
+  private firstKey?: string;
 
   constructor(props: EditCargoProps) {
     super(props);
@@ -59,6 +60,12 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     return !props.noAdd && this.cargoNames.filter(k => !(k in cargo)).length > 0;
   }
 
+  componentDidMount(): void {
+    // force focus onto the first input field, if known
+    if (this.firstKey) {
+      delayFocus(this.firstKey);
+    }
+  }
 
   componentDidUpdate(prevProps: Readonly<EditCargoProps>, prevState: Readonly<EditCargoState>, snapshot?: any): void {
     // broadcast change if the total count has changed
@@ -223,6 +230,10 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     // different colour per row
     const rowStyle: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
 
+    if (!this.firstKey) {
+      this.firstKey = `edit-${key}`;
+    }
+
     return <tr key={`c-${key}`} style={rowStyle}>
       <td>
         <CommodityIcon name={key} /> {displayName} {isReady}
@@ -235,7 +246,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
           min={0}
           max={maxValue}
 
-          value={cargo[key]}
+          value={cargo[key] === -1 ? '' : cargo[key]}
           onChange={(ev) => {
             this.updateCargoState(uc => uc[key] = ev.target.valueAsNumber);
           }}
@@ -278,11 +289,13 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   renderTotalsRow() {
     const { cargo } = this.state;
 
-    const sumTotal = sumCargo(cargo).toLocaleString();
+    const sumTotal = sumCargo(cargo);
+    if (sumTotal < 0) return;
+
     return <tfoot>
       <tr className='hint'>
         <td className='total-txt'>Total:</td>
-        <td className='total-num'><input value={sumTotal} readOnly tabIndex={-1} /></td>
+        <td className='total-num'><input value={sumTotal.toLocaleString()} readOnly tabIndex={-1} /></td>
         <td></td>
       </tr>
     </tfoot>;

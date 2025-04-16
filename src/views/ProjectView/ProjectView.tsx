@@ -11,6 +11,7 @@ import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSumm
 import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
+import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -61,7 +62,6 @@ interface ProjectViewState {
 
 enum Mode {
   view,
-  editCommodities,
   editProject,
   deliver,
 }
@@ -158,7 +158,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // if ALL commodities have a count of 10 - it means the project is brand new and we want people to edit them to real numbers
       if (Object.values(newProj.commodities).every(v => v === 10 || v === -1)) {
         this.setState({
-          mode: Mode.editCommodities,
           editCommodities: { ...newProj.commodities },
         });
         delayFocus('first-commodity-edit');
@@ -201,7 +200,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -240,7 +239,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         iconProps: { iconName: 'AllAppsMirrored' },
         disabled: refreshing,
         onClick: () => {
-          this.setState({ mode: Mode.editCommodities, editCommodities: { ...this.state.proj!.commodities } });
+          this.setState({ editCommodities: { ...this.state.proj!.commodities } });
           delayFocus('first-commodity-edit');
         }
       },
@@ -283,9 +282,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div >
 
       <div className='contain-horiz'>
-        {(mode === Mode.editCommodities || (mode === Mode.view && !proj.complete)) && <div className='half'>
+        {!proj.complete && mode !== Mode.deliver && <div className='half'>
           {this.renderCommodities()}
         </div>}
+
+        {!!editCommodities && this.renderEditCommodities()}
 
         {(mode === Mode.view || mode === Mode.editProject) && this.renderProjectDetails(proj, editProject!)}
 
@@ -333,7 +334,57 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </>;
   }
 
-  getGroupedCommodities(forceAlphaSort: boolean): Record<string, string[]> {
+  renderEditCommodities() {
+    const { proj, editCommodities, sort, submitting } = this.state;
+    const isDefaultCargo = Object.values(proj!.commodities).every(v => v === 10 || v === -1);
+
+    return <Modal
+      isOpen
+    >
+      {isDefaultCargo && <MessageBar
+        messageBarType={MessageBarType.warning}
+        actions={<MessageBarButton onClick={this.setDefaultApproxCargoCounts}
+        >
+          Use approximate values
+        </MessageBarButton>}
+      >
+        <div>Please manually enter required cargo numbers:</div>
+        <div>Or dock at the construction site running<LinkSrvSurvey /></div>
+        <div>Or proceed using approximate default values.</div>
+      </MessageBar>}
+
+      <EditCargo
+        cargo={editCommodities!}
+        sort={sort}
+        noAdd noDelete showTotalsRow
+        onChange={cargo => this.setState({ editCommodities: cargo })}
+      />
+      <br />
+      <br />
+      {submitting && <Spinner
+        className='submitting'
+        label="Updating commodities ..."
+        labelPosition="right"
+      />}
+
+      {!submitting && <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
+        <PrimaryButton
+          text='Update cargo'
+          iconProps={{ iconName: 'Save' }}
+          onClick={this.onUpdateProjectCommodities}
+        />
+        <DefaultButton
+          text='Cancel'
+          iconProps={{ iconName: 'Cancel' }}
+          onClick={() => {
+            this.setState({ mode: Mode.view, editCommodities: undefined });
+          }}
+        />
+      </Stack>}
+    </Modal>;
+  }
+
+  getGroupedCommodities(): Record<string, string[]> {
     const { proj, sort, hideDoneRows } = this.state;
     if (!proj?.commodities) throw new Error("Why no commodities?");
 
@@ -342,7 +393,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     sorted.sort();
 
     // just alpha sort
-    if (sort === SortMode.alpha || forceAlphaSort) {
+    if (sort === SortMode.alpha) {
       return { alpha: sorted };
     }
 
@@ -361,7 +412,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!proj?.commodities) { return <div />; }
 
     // do not render list if nothing left to deliver
-    if (sumTotal === 0 && mode !== Mode.editCommodities) {
+    if (sumTotal === 0) {
       return <>
         <div>Congratulations!</div>
         <br />
@@ -372,11 +423,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const rows = [];
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
 
-    const cargoIsDefault = Object.values(proj.commodities).every(v => v === 10 || v === -1);
-    const isDefaultCargo = cargoIsDefault && mode === Mode.editCommodities
+    const isDefaultCargo = Object.values(proj.commodities).every(v => v === 10 || v === -1);
 
     let flip = false;
-    const groupedCommodities = this.getGroupedCommodities(isDefaultCargo);
+    const groupedCommodities = this.getGroupedCommodities();
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
 
     let colSpan = 0;
@@ -396,11 +446,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .filter(v => v < 0)
       .reduce((sum, v) => sum += -v, 0);
 
-    let first = true;
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
         // group row
-        if (sort !== SortMode.alpha && !isDefaultCargo) {
+        if (sort !== SortMode.alpha) {
           rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}>
             <td colSpan={2 + colSpan} className='hint'> {key}</td>
           </tr>)
@@ -408,13 +457,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         continue;
       }
 
-      // TODO: Entirely split commodity edit and view rendering
+      // TODO: Entirely split view rendering
       flip = !flip;
-      var row: JSX.Element = mode === Mode.editCommodities
-        ? this.getCommodityEditRow(proj, key, cmdrs, editCommodities!, flip, first)
-        : this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff);
+      var row = this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff);
       rows.push(row)
-      first = false;
 
       // show extra row to assign a commodity to a cmdr?
       if (assignCommodity === key && proj.commanders && !editCommodities) {
@@ -461,26 +507,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {editCommodities && !submitting && <div className='button-pair'>
         <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
-
-        {isDefaultCargo && <MessageBar
-          messageBarType={MessageBarType.warning}
-          actions={<MessageBarButton
-            onClick={this.setDefaultApproxCargoCounts}
-          >
-            Use approximate values
-          </MessageBarButton>}
-        >
-          <div>Please enter actual required cargo numbers.</div>
-          <div>This will help accurately track progress as you make deliveries.</div>
-          <div>You may proceed with approximate default values if you prefer.</div>
-        </MessageBar>}
       </div>}
-
-      {submitting && mode === Mode.editCommodities && <Spinner
-        className='submitting'
-        label="Updating commodities ..."
-        labelPosition="right"
-      />}
 
       <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0}>
         <thead>
@@ -494,7 +521,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <tbody>{rows}</tbody>
       </table>
 
-      {!editCommodities && !cargoIsDefault && <div className='cargo-remaining'>
+      {!editCommodities && sumTotal > 0 && <div className='cargo-remaining'>
         <CargoRemaining sumTotal={sumTotal} label='Remaining cargo' />
         {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
       </div>}
@@ -550,41 +577,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </tr>;
       return assignRow;
     }
-  }
-
-  getCommodityEditRow(proj: Project, key: string, cmdrs: string[], editCommodities: Cargo, flip: boolean, first: boolean): JSX.Element {
-
-    const displayName = mapCommodityNames[key];
-    const need = proj.commodities![key];
-    const className = `${need !== 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
-    const inputId = first ? 'first-commodity-edit' : undefined;
-    const isReady = this.state.editReady.has(key);
-
-    return <tr key={`cc-${key}`} className={className}>
-      <td className='commodity-name'>
-        <span><CommodityIcon name={key} /> {displayName} </span>
-        {isReady && <Icon className='icon-inline' iconName='SkypeCircleCheck' title={`${displayName} is ready`} />}
-      </td>
-      <td className='commodity-need'>
-        <input
-          id={inputId}
-          className='commodity-num'
-          type='number'
-          value={need === -1 ? '' : editCommodities[key]}
-          min={0}
-          onChange={(ev) => {
-            const ec2 = this.state.editCommodities!;
-            ec2[key] = ev.target.valueAsNumber;
-            this.setState({ editCommodities: ec2 });
-          }}
-          onFocus={(ev) => {
-            ev.target.type = 'text';
-            ev.target.setSelectionRange(0, 10);
-            ev.target.type = 'number';
-          }}
-        />
-      </td>
-    </tr>;
   }
 
   getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo): JSX.Element {
@@ -782,6 +774,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     return <>
+      <br />
       <h3>{Object.keys(proj.commanders).length ?? 0} Commanders:</h3>
       <ul>
         {rows}
@@ -1120,7 +1113,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       try {
         const savedProj = await api.project.update(proj.buildId, deltaProj);
@@ -1303,7 +1296,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <br />
         No tracked deliveries yet.
         <br />
-        Use <a href='https://github.com/njthomson/SrvSurvey/wiki'>SrvSurvey</a> to track deliveries automatically.
+        Use <LinkSrvSurvey /> to track deliveries automatically.
       </div>}
 
     </div>;

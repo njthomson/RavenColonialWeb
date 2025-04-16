@@ -125,7 +125,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
 
       // add rows with commodity assignments?
       if (p.commanders[cmdr]?.length > 0) {
-        let flip = true;
+        let flip = false;
         for (const commodity of p.commanders[cmdr]) {
           // if (!p.commodities![commodity]) continue;
 

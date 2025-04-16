@@ -101,7 +101,6 @@ export enum TopPivot {
   find = 'find',
   build = 'build',
   cmdr = 'cmdr',
-  fc = 'fc',
   about = 'about',
 }
 

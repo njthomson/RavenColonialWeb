@@ -1,8 +1,9 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, Icon, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
 import { CreateProject, StationEDSM } from '../types';
+import { LinkSrvSurvey } from './LinkSrvSurvey';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -143,10 +144,12 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       <div className="create-project">
         <h3>Or start a new project?</h3>
         <div>
-          <Stack horizontal style={{ alignItems: 'flex-end' }}>
-            <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} onChange={(_, v) => this.setState({ systemName: v! })} />
+          {/* <Stack horizontal style={{ alignItems: 'flex-end' }}>
+            <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} disabled onChange={(_, v) => this.setState({ systemName: v! })} />
             <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking} />
-          </Stack>
+          </Stack> */}
+          {<PrimaryButton text='Search sites ...' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking || !systemName} />}
+
         </div>
         {this.renderFoundStations()}
         {showMarketId && <div>
@@ -180,11 +183,18 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
         <TextField name='buildName' title='Enter a descriptive name for this project' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
         <ComboBox label='Build type:' title='Choose what is being built' selectedKey={buildType} options={buildTypes} styles={{ root: { maxWidth: 300 } }} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
-        <div className='hint'><Icon iconName='Info' />&nbsp;<span>Exact cargo requirements are random and will require some adjustments.</span></div>
+        <br />
 
-        {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
-        {!systemAddress && <PrimaryButton text='Search sites ...' onClick={this.onCheckSystem} disabled={checking} />}
+        {!!buildType && <MessageBar messageBarType={MessageBarType.severeWarning}>
+          Note: Cargo requirements will need to be manually entered.
+        </MessageBar>}
+
+        <MessageBar messageBarType={MessageBarType.success}>
+          Creating projects through <LinkSrvSurvey /> is <strong>strongly recommended</strong>.
+        </MessageBar>
+
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
+        {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
       </div>
     </>;
   }
@@ -311,6 +321,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       if (cmdr) {
         body.commanders = {};
         body.commanders[cmdr] = [];
+        body.architectName = cmdr;
       }
 
       // call the API

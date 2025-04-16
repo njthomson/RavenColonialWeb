@@ -1,4 +1,4 @@
-import { ActionButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize } from '@fluentui/react';
+import { ActionButton, IconButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
@@ -77,21 +77,22 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
     return <div className='contain-horiz'>
       <div className='half'>
-        <h3>Find an existing project</h3>
+        <h3>Find an existing project?</h3>
 
         <div className="projects-query">
-          <FindSystemName
-            text={q}
-            onMatch={(text) => {
-              this.setState({ q: text });
-              setTimeout(() => this.onFind(), 10);
-            }}
-          />
-          <br />
-          <PrimaryButton
-            text="find"
-            disabled={loading}
-            onClick={this.onFind} />
+          <Stack horizontal style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <FindSystemName
+              text={q}
+              onMatch={(text) => {
+                this.setState({ q: text });
+                setTimeout(() => this.onFind(), 10);
+              }}
+            />
+            <IconButton
+              iconProps={{ iconName: 'Search' }}
+              disabled={loading}
+              onClick={this.onFind} />
+          </Stack>
         </div>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         {this.renderRows()}
@@ -109,23 +110,23 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         </>}
       </div>
 
-      <div className='half right'>
+      {!!completed && <div className='half right'>
         <ProjectCreate systemName={q} knownMarketIds={knownMarketIds} />
-      </div>
+      </div>}
     </div>
   }
 
   renderRows() {
-    const { q, loading, rows, find } = this.state;
+    const { loading, rows, find } = this.state;
 
     if (loading) {
-      return <Spinner size={SpinnerSize.large} label={`Searching for projects in: ${q}`} />
+      return <Spinner size={SpinnerSize.large} label={`Searching for projects in: ${find}`} />
     }
 
     if (!rows) { return; }
 
     if (rows.length === 0) {
-      return <h2>No build projects in: <a href={`#find=${find}`}>{find}</a></h2>;
+      return <h2>No active projects in: <a href={`#find=${find}`}>{find}</a></h2>;
     }
 
     if (rows.length > 0) {
