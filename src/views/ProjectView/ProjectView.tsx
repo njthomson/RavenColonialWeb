@@ -261,7 +261,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         text: 'Refresh',
         iconProps: { iconName: 'Refresh' },
         disabled: refreshing,
-        onClick: () => this.fetchProject(proj.buildId, true),
+        onClick: () => {
+          this.fetchProject(proj.buildId, true);
+        }
       },
       {
         key: 'btn-delete', text: 'Delete',
@@ -283,6 +285,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           else
             this.setAsPrimary(proj.buildId);
         },
+      },
+      {
+        key: 'discord-link',
+        text: 'Discord',
+        title: this.state.proj?.discordLink ? `Open Discord link:\n${this.state.proj?.discordLink}` : 'Edit the project to set a Discord link',
+        disabled: !this.state.proj?.discordLink,
+        iconProps: { iconName: 'OfficeChat' },
+        onClick: () => {
+          if (this.state.proj?.discordLink) {
+            // TODO: experiment with "discord://-/..." protocol?
+            window.open(this.state.proj?.discordLink, '_blank');
+          }
+        }
       }
     ];
 
@@ -298,7 +313,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div >
 
       <div className='contain-horiz'>
-        {!proj.complete && mode !== Mode.deliver && <div className='half'>
+        {!proj.complete && mode === Mode.view && <div className='half'>
           {this.renderCommodities()}
         </div>}
 
@@ -719,7 +734,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div className={className}>
         {editProject && !this.state.submitting && <div className='button-pair'>
           <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
-          <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editProject: undefined, })} />
+          <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editProject: undefined, errorMsg: undefined })} />
         </div>}
         {this.state.submitting && <Spinner
           className='submitting'
@@ -745,17 +760,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {!editProject && <div className='detail'>{proj.factionName}&nbsp;</div>}
               {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
             </td></tr>
-            {false && <tr><td>Discord:</td><td>
-              {!editProject && <div className='detail'>
-                {proj.discordLink && <LinkSrvSurvey href={proj.discordLink} text='Open Discord Channel' />}
-                &nbsp;
-              </div>}
-              {editProject && <input type='text' value={editProject.discordLink} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} />}
-            </td></tr>}
             <tr><td>Notes:</td><td>
               {!editProject && <div className='detail notes'>{proj.notes}&nbsp;</div>}
               {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} />}
             </td></tr>
+            {editProject && <tr>
+              <td>
+                Discord link:
+                <IconButton
+                  className='btn icon-inline'
+                  title='Validate and paste a link'
+                  iconProps={{ iconName: 'Paste' }}
+                  onClick={async () => {
+                    this.setState({ errorMsg: undefined });
+                    var link = await navigator.clipboard.readText();
+                    this.updateProjData('discordLink', link);
+                  }}
+                />
+              </td>
+              <td><input type='text' value={editProject.discordLink} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} /></td>
+            </tr>}
           </tbody>
         </table>
         {!editProject && this.renderCommanders()}
@@ -1185,6 +1209,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   onUpdateProjectDetails = async () => {
     const { proj, editProject } = this.state;
 
+    if (editProject?.discordLink) {
+      try {
+        var url = new URL(editProject?.discordLink);
+        if (url.origin !== 'https://discord.com' && url.origin !== 'https://discord.gg') throw new Error();
+      } catch {
+        console.error(`Invalid discord link: "${editProject?.discordLink}"`);
+        this.setState({ errorMsg: `Invalid discord link: "${editProject?.discordLink}"` });
+        return;
+      }
+    }
+
     if (proj?.buildId && editProject) {
       const deltaProj: Record<string, string> = {
         buildId: proj.buildId,
@@ -1198,7 +1233,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
 
       // add a little artificial delay so the spinner doesn't flicker in and out
-      this.setState({ submitting: true });
+      this.setState({ submitting: true, errorMsg: undefined });
       await new Promise(resolve => setTimeout(resolve, 500));
 
       try {

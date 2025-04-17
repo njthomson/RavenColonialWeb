@@ -20,6 +20,8 @@ interface CmdrState {
 }
 
 export class Commander extends Component<CmdrProps, CmdrState> {
+  private unmounted: boolean = false;
+
   constructor(props: CmdrProps) {
     super(props);
 
@@ -33,6 +35,10 @@ export class Commander extends Component<CmdrProps, CmdrState> {
     if (this.props.cmdr) {
       this.fetchCmdrProjects(this.props.cmdr);
     }
+  }
+
+  componentWillUnmount(): void {
+    this.unmounted = true;
   }
 
   componentDidUpdate(prevProps: Readonly<CmdrProps>, prevState: Readonly<CmdrState>, snapshot?: any): void {
@@ -52,6 +58,8 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       });
 
       const cmdrSummary = await api.cmdr.getSummary(cmdr);
+
+      if (this.unmounted) return;
 
       this.setState({
         loading: false,
