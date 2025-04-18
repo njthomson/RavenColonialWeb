@@ -248,7 +248,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
           value={cargo[key] === -1 ? '' : cargo[key]}
           onChange={(ev) => {
-            this.updateCargoState(uc => uc[key] = ev.target.valueAsNumber);
+            this.updateCargoState(uc => uc[key] = ev.target.valueAsNumber || 0);
           }}
           onFocus={(ev) => {
             ev.target.type = 'text';
