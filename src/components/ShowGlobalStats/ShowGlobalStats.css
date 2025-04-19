@@ -1,0 +1,22 @@
+.global-stats .home-box {
+  margin: 10px 20px 10px 0px;
+  padding: 4px 10px 10px 10px;
+  font-size: 14px;
+}
+
+.global-stats table {
+  width: 100%;
+}
+
+.ms-Callout-main {
+  padding: 10px;
+}
+
+.global-stats tr {
+  text-align: right;
+}
+
+.global-stats td {
+  padding-top: 2px;
+  padding-right: 8px;
+}

@@ -53,22 +53,22 @@ export const About: React.FunctionComponent = () => {
         <li>The Raven Colonial Corporation supports colonization efforts whether working solo in groups or using Fleet Carriers.</li>
         <li>Using SrvSurvey to monitor local journal file changes, progress will be tracked automatically as you conduct your affairs.</li>
         <li>Use the <Icon className="btn icon-inline" iconName='UserWarning' /> / <Icon className="btn icon-inline" iconName='Contact' /> button in the top right corner to set your Commander name and the cargo hold sizes for your commonly used ship. See below about linking Fleet Carriers.</li>
+        <IconBtnScrollTop />
       </ul>
-      <IconBtnScrollTop />
     </div>}
 
 
     {(!helpId || helpId === 'srvsurvey') && <div className='home-box'>
       <h3>About SrvSurvey</h3>
-      Issues can be <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='reported here' /> and general discussion happens through <LinkSrvSurvey href='ttps://discord.gg/nEWMqZNBdy' text="Discord" />.
+      Issues can be <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='reported here' title='Submit suggestions and bug reports' /> and general discussion happens through <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss SrvSurvey' />.
       <ul>
-        <li>See more detailed guidance on the <LinkSrvSurvey text="SrvSurvey colonization wiki" />.</li>
-        <li>Latest builds can be found on <LinkSrvSurvey href="https://github.com/njthomson/SrvSurvey/releases/" text='GitHub releases' />.</li>
+        <li>See more detailed guidance on the <LinkSrvSurvey text='SrvSurvey colonization wiki' />.</li>
+        <li>Latest builds can be found on <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/releases/' text='GitHub releases' title='GitHub releases - frequently updated' />.</li>
         <li>Use the big Colonize button on the main window enable Colonization features and to create new projects.</li>
         <li>Once enabled cargo tracking will happen automatically at construction sites and linked Fleet Carriers.</li>
         <li>Use the Colonize {">"} Refresh button after changing links or assignments on the web site. (Coming soon) use this button to set a periodic refresh.</li>
       </ul>
-      SrvSurvey can also be installed via the <LinkSrvSurvey href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' text='Windows App Store' /> but this does not yet support colonization features.
+      SrvSurvey can also be installed via the <LinkSrvSurvey href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' text='Windows App Store' title='Windows App Store - infrequently updated' /> but this does not yet support colonization features.
       <IconBtnScrollTop />
     </div>}
 

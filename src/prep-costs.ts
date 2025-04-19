@@ -47,7 +47,7 @@ const mapCargo1: Record<string, string> = {
   "Fish": "fish",
   "Tea": "tea",
   "Coffee": "coffee",
-  "Land Enrichment Systems": "landenrichmentsystems",
+  "Land Enrichment Systems": "terrainenrichmentsystems",
   "Surface Stabilisers": "surfacestabilisers",
   "Building Fabricators": "buildingfabricators",
   "Structural Regulators": "structuralregulators",
@@ -164,7 +164,7 @@ export const prepTwo = (): IComboBoxOption[] => {
 export const prepIconLookup = () => {
   const mapCargo2: Record<string, string> = {};
   // reverse mapping
-  for(var key in mapCargo1) {
+  for (var key in mapCargo1) {
     var value = mapCargo1[key];
     mapCargo2[value] = key;
   }

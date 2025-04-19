@@ -81,6 +81,20 @@ export interface CmdrSummary {
   projects: Project[];
 }
 
+export interface GlobalStats {
+  timeStamp: string;
+  activeProjects: number;
+  completeProjects: number;
+  commanders: number;
+  fleetCarriers: number;
+  countDeliveriesEver: number;
+  totalDeliveredEver: number;
+  countDeliveries7d: number;
+  totalDelivered7d: number;
+  topContributors7d: Record<string, number>;
+  topHelpers7d: Record<string, number>;
+}
+
 export interface QueryProject {
   systemName: string
 };
@@ -247,6 +261,7 @@ export const mapCommodityNames: Record<string, string> = {
   "tea": "Tea",
   "coffee": "Coffee",
   "landenrichmentsystems": "Land Enrichment Systems",
+  "terrainenrichmentsystems": "Land Enrichment Systems",
   "surfacestabilisers": "Surface Stabilisers",
   "buildingfabricators": "Building Fabricators",
   "structuralregulators": "Structural Regulators",

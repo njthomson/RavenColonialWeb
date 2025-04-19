@@ -43,7 +43,7 @@ footer p {
 }
 
 h3 {
-  border-bottom: #e5e5e5 1px solid;
+  border-bottom: #d5d5d5 1px solid;
   margin: 0 10px 4px 0;
 }
 
@@ -70,6 +70,10 @@ h3 {
 
 .center {
   text-align: center;
+}
+
+.t-right {
+  text-align: right;
 }
 
 .right {
@@ -179,6 +183,10 @@ h3 {
 
 .hint {
   font-size: 14px;
+}
+
+.small {
+  font-size: 10px;
 }
 
 .button-pair {

@@ -1,4 +1,4 @@
-import { Project, ProjectRefLite, SortMode } from "./types";
+import { GlobalStats, Project, ProjectRefLite, SortMode } from "./types";
 
 enum Stored {
   cmdr = 'cmdr',
@@ -10,6 +10,7 @@ enum Stored {
   hideFC = 'hideFC',
   primaryBuildId = 'primaryBuildId',
   cmdrLinkedFCs = 'cmdrLinkedFCs',
+  globalStats = 'globalStats',
 }
 
 interface CmdrData {
@@ -166,6 +167,18 @@ class LocalStorage {
       return [];
     else
       return JSON.parse(json) as number[];
+  }
+
+  set globalStats(stats: GlobalStats | undefined) {
+    window.localStorage.setItem(Stored.globalStats, JSON.stringify(stats));
+  }
+
+  get globalStats(): GlobalStats | undefined {
+    const json = window.localStorage.getItem(Stored.globalStats);
+    if (!json)
+      return undefined;
+    else
+      return JSON.parse(json) as GlobalStats;
   }
 }
 

@@ -1,7 +1,7 @@
 import './App.css';
 
 import * as api from './api';
-import { CommandBar, IContextualMenuItem, initializeIcons, Modal, ThemeProvider } from '@fluentui/react';
+import { CommandBar, Dialog, DialogFooter, Icon, IContextualMenuItem, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
 import { store } from './local-storage';
 import { appTheme } from './theme';
@@ -23,6 +23,7 @@ interface AppState {
 
   cmdr?: string;
   cmdrEdit: boolean;
+  showDonate?: boolean;
 }
 
 export class App extends Component<AppProps, AppState> {
@@ -104,7 +105,7 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { cmdrEdit, pivot } = this.state;
+    const { cmdrEdit, pivot, showDonate } = this.state;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -162,8 +163,25 @@ export class App extends Component<AppProps, AppState> {
         </Modal>}
         <br />
         <footer>
-          <p>© 2025 - Raven Colonial Corporation - Under development - <LinkSrvSurvey text='Learn about SrvSurvey' /></p>
+          <p>© 2025  Raven Colonial Corporation | <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> | <LinkSrvSurvey text='About SrvSurvey' /></p>
         </footer>
+
+        <Dialog
+          hidden={!showDonate}
+          dialogContentProps={{ title: 'Support Raven Colonial' }}
+        >
+          Do you like this site? Fantastic!
+          <br />
+          <br />
+          If you would like to help with server costs or buying fresh coffee, donations may be made through <Link href='https://paypal.me/SrvSurvey' target='_blank'>PayPal</Link>.
+          <br />
+          <br />
+          Thank you 😎
+          <DialogFooter>
+            <PrimaryButton text="Close" onClick={() => this.setState({ showDonate: false })} />
+          </DialogFooter>
+        </Dialog>
+
       </ThemeProvider>
     );
   }

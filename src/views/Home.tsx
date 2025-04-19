@@ -3,35 +3,52 @@ import { RecentProjects } from '../components';
 import { store } from '../local-storage';
 import { Commander } from './Commander/Commander';
 import { learnAbout } from './About';
+import { ShowGlobalStats } from '../components/ShowGlobalStats/ShowGlobalStats';
+import { Component } from 'react';
 
-export const Home: React.FunctionComponent = () => {
-  window.document.title = `Raven Colonial Corporation`;
+interface HomeProps { }
 
-  if (!store.cmdrName) {
-    // NOT signed-in
-    return <>
-      <div className='contain-vert'>
-        {renderQuote()}
+interface HomeState { }
 
-        <div className='home-box'>
-          <DefaultButton text='Sign-in' onClick={() => document.getElementById('current-cmdr')?.click()} /> to see your projects and assignments
-        </div>
-
-        {learnAbout()}
-      </div>
-    </>;
-  } else {
-    // signed-in
-    return <>
-      <div className=''>
-        <Commander cmdr={store.cmdrName} />
-        <RecentProjects />
-
-        {learnAbout()}
-      </div>
-    </>;
+export class Home extends Component<HomeProps, HomeState> {
+  constructor(props: HomeProps) {
+    super(props);
+    this.state = {};
   }
-};
+
+  render() {
+    window.document.title = `Raven Colonial Corporation`;
+
+    if (!store.cmdrName) {
+      // NOT signed-in
+      return <>
+        <div className='contain-vert'>
+          {renderQuote()}
+
+          <div className='home-box'>
+            <DefaultButton text='Sign-in' onClick={() => document.getElementById('current-cmdr')?.click()} /> to see your projects and assignments
+          </div>
+
+          <ShowGlobalStats />
+
+          {learnAbout()}
+        </div>
+      </>;
+    } else {
+      // signed-in
+      return <>
+        <div className=''>
+          <Commander cmdr={store.cmdrName} />
+          <RecentProjects />
+
+          <ShowGlobalStats />
+
+          {learnAbout()}
+        </div>
+      </>;
+    }
+  }
+}
 
 
 const renderQuote = () => {

@@ -984,7 +984,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
     try {
       const { newCmdr } = this.state;
-      await api.project.linkCmdr(this.state.proj.buildId, newCmdr);
+      await api.project.linkCmdr(this.state.proj.buildId, newCmdr.trim());
 
       // success - add to in-memory data
       const { proj } = this.state;

@@ -1,4 +1,4 @@
-import { Cargo, CreateProject, Project, ProjectFC, ProjectRef, ProjectRefComplete, SupplyStatsSummary } from "../types";
+import { Cargo, CreateProject, GlobalStats, Project, ProjectFC, ProjectRef, ProjectRefComplete, SupplyStatsSummary } from "../types";
 import { callAPI } from "./api-util";
 
 /** Project APIs */
@@ -100,4 +100,7 @@ export const project = {
     return await callAPI<ProjectFC[]>(`/api/project/${encodeURIComponent(buildId)}/fc/${encodeURIComponent(marketId)}`, 'DELETE');
   },
 
+  globalStats: async (): Promise<GlobalStats> => {
+    return await callAPI<GlobalStats>(`/api/stats/`);
+  },
 };

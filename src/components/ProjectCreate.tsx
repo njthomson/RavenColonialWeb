@@ -48,6 +48,20 @@ export const buildTypes: IComboBoxOption[] = [
   { key: "hephaestus", text: "Industrial Settlement (Hephaestus, Opis, Ponos, Tethys, Bia, Mefitis)" },
   { key: "necessitas", text: "Scientific Settlement (Necessitas, Ananke, Fauna, Providentia, Antevorta, Porrima)" },
 
+  { key: 'l8', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't1ss-s', text: 'Small Surface Settlements - Small', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "consus", text: "Agricultural Settlement (Consus)" },
+  { key: "ourea", text: "Extraction Settlement (Ourea)" },
+  { key: "fontus", text: "Industrial Settlement (Fontus)" },
+  { key: "ioke", text: "Military Settlement (Ioke)" },
+
+  { key: 'l9', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't1ss-m', text: 'Tier 1: Surface Settlements - Medium', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "picumnus", text: "Agricultural Settlement (Picumnus, Annona)" },
+  { key: "mantus", text: "Extraction Settlement (Mantus, Orcus)" },
+  { key: "meteope", text: "Industrial Settlement (Meteope, Palici, Minthe)" },
+  { key: "bellona", text: "Military Settlement (Bellona, Enyo, Polemos)" },
+
   { key: 'l3', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: 't2so', text: 'Tier 2: Space Stations', itemType: SelectableOptionMenuItemType.Header },
   { key: "coriolis", text: "Coriolis Starport (No Truss, Dual Truss, Quad Truss)" },
@@ -64,34 +78,29 @@ export const buildTypes: IComboBoxOption[] = [
   { key: "dionysus", text: "Space Bar (Dionysus, Bacchus)" },
 
   { key: 'l5', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-  { key: 't2ss', text: 'Tier 2: Surface', itemType: SelectableOptionMenuItemType.Header, },
-  { key: "consus", text: "Agricultural Settlement (Consus)" },
-  { key: "picumnus", text: "Agricultural Settlement (Picumnus, Annona)" },
-  { key: "ceres", text: "Agricultural Settlement (Ceres, Fornax)" },
-  { key: "ourea", text: "Extraction Settlement (Ourea)" },
-  { key: "mantus", text: "Extraction Settlement (Mantus, Orcus)" },
-  { key: "erebus", text: "Extraction Settlement (Erebus, Aerecura)" },
-  { key: "fontus", text: "Industrial Settlement (Fontus)" },
-  { key: "meteope", text: "Industrial Settlement (Meteope, Palici, Minthe)" },
-  { key: "gaea", text: "Industrial Settlement (Gaea)" },
-  { key: "ioke", text: "Military Settlement (Ioke)" },
-  { key: "bellona", text: "Military Settlement (Bellona, Enyo, Polemos)" },
-  { key: "minerva", text: "Military Settlement (Minerva)" },
-  { key: "pheobe", text: "Hightech Settlement (Pheobe)" },
-  { key: "asteria", text: "Hightech Settlement (Asteria, Caerus)" },
-  { key: "chronos", text: "Hightech Settlement (Chronos)" },
-  { key: "aergia", text: "Tourism Settlement (Aergia)" },
-  { key: "comos", text: "Tourism Settlement (Comos, Gelos)" },
-  { key: "fufluns", text: "Tourism Settlement (Fufluns)" },
-  { key: "tartarus", text: "Extraction Surface Outpost (Tartarus)" },
-  { key: "aegle", text: "Civilian Surface Outpost (Aegle)" },
-  { key: "tellus", text: "Exploration Surface Outpost (Tellus)" },
-  { key: "io", text: "Outpost Surface Outpost (Io)" },
-  { key: "athena", text: "Scientific Surface Outpost (Athena, Caelus)" },
-  { key: "alala", text: "Military Surface Outpost (Alala, Ares)" },
-  { key: "silenus", text: "Refinery Surface Outpost (Silenus)" },
-  { key: "janus", text: "High Tech Surface Outpost (Janus)" },
-  { key: "molae", text: "Industrial Surface Outpost (Molae, Tellus, Eunostus)" },
+  { key: 't2sss', text: 'Tier 2: Surface Settlements', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "ceres", text: "Agricultural Settlement - Large (Ceres, Fornax)" },
+  { key: "erebus", text: "Extraction Settlement - Large (Erebus, Aerecura)" },
+  { key: "gaea", text: "Industrial Settlement - Large (Gaea)" },
+  { key: "minerva", text: "Military Settlement - Large (Minerva)" },
+  { key: "pheobe", text: "Hightech Settlement - Small (Pheobe)" },
+  { key: "asteria", text: "Hightech Settlement - Small (Asteria, Caerus)" },
+  { key: "chronos", text: "Hightech Settlement - Large (Chronos)" },
+  { key: "aergia", text: "Tourism Settlement - Small (Aergia)" },
+  { key: "comos", text: "Tourism Settlement - Medium (Comos, Gelos)" },
+  { key: "fufluns", text: "Tourism Settlement - Large (Fufluns)" },
+
+  { key: 'l9', text: '-', itemType: SelectableOptionMenuItemType.Divider },
+  { key: 't2ss-h', text: 'Tier 2: Surface Hubs', itemType: SelectableOptionMenuItemType.Header, },
+  { key: "tartarus", text: "Extraction Hub (Tartarus)" },
+  { key: "aegle", text: "Civilian Hub (Aegle)" },
+  { key: "tellus", text: "Exploration Hub (Tellus)" },
+  { key: "io", text: "Outpost Hub (Io)" },
+  { key: "athena", text: "Scientific Hub (Athena, Caelus)" },
+  { key: "alala", text: "Military Hub (Alala, Ares)" },
+  { key: "silenus", text: "Refinery Hub (Silenus)" },
+  { key: "janus", text: "High Tech Hub (Janus)" },
+  { key: "molae", text: "Industrial Hub (Molae, Tellus, Eunostus)" },
 
   { key: 'l6', text: '-', itemType: SelectableOptionMenuItemType.Divider },
   { key: 't3so', text: 'Tier 3: Space', itemType: SelectableOptionMenuItemType.Header, },
@@ -190,7 +199,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         </MessageBar>}
 
         <MessageBar messageBarType={MessageBarType.success}>
-          Creating projects through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' /> is <strong>strongly recommended</strong>.
+          Creating projects through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' /> is <strong>strongly recommended</strong>.
         </MessageBar>
 
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
