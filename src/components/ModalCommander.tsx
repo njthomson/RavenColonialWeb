@@ -3,7 +3,7 @@ import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
 import { KnownFC } from '../types';
-import { appTheme } from '../theme';
+import { appTheme, cn } from '../theme';
 import { fcFullName } from '../util';
 import { FindFC } from './FindFC';
 import { FleetCarrier } from '../views';
@@ -64,7 +64,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         {fcFullName(item.name, item.displayName)}
         &nbsp;
         <Icon
-          className='btn'
+          className={`btn ${cn.btn}`}
           iconName='Edit'
           title={`Edit FC: ${item.displayName} (${item.name})`}
           style={{ color: appTheme.palette.themePrimary }}
@@ -74,7 +74,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         />
         &nbsp;
         <Icon
-          className='btn'
+          className={`btn ${cn.btn}`}
           iconName='Delete'
           title={`Unlink FC: ${item.displayName} (${item.name})`}
           style={{ color: appTheme.palette.themePrimary }}

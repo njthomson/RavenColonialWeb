@@ -1,9 +1,4 @@
 body {
-  /* TODO: figure out a proper dark theme
-  background-color: black;
-  background-image: url('assets/back.png');
-  background-repeat: repeat;
-  color:#f88d01; */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 16pt;
 }
@@ -13,29 +8,26 @@ body {
   font-size: 16px;
   padding: 0px;
   padding-bottom: 30px;
-  /* min-width: 400px; */
   min-width: fit-content;
-  /* width: fit-content; */
   width: 100%;
 }
 
 .top-bar {
-  border-bottom: 1px solid #e5e5e5;
+  /* border-bottom: 1px solid #e5e5e5;
   border-top: 1px solid #e5e5e5;
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);*/
   min-height: fit-content;
 }
 
 footer {
   position: fixed;
-  background-color: white;
   bottom: 0;
   width: 100%;
   white-space: nowrap;
   line-height: 10px;
-  border-top: 1px solid #e5e5e5;
+  /* border-top: 1px solid #e5e5e5;
   color: rgba(33, 37, 41, 0.75);
-  box-shadow: 0 -1rem 4rem 0px rgba(0, 0, 0, .05);
+  box-shadow: 0 -1rem 4rem 0px rgba(0, 0, 0, .05);*/
 }
 
 footer p {
@@ -43,7 +35,7 @@ footer p {
 }
 
 h3 {
-  border-bottom: #d5d5d5 1px solid;
+  /* border-bottom: #d5d5d5 1px solid; */
   margin: 0 10px 4px 0;
 }
 
@@ -106,16 +98,7 @@ h3 {
   margin: 2px 0 2px 10px;
 }
 
-.projects-list .odd {
-  background-color: rgb(238, 238, 238);
-}
-
-.projects-list .even {
-  background-color: rgb(219, 219, 219);
-}
-
 .create-project {
-  /* background-color: palegreen; */
   width: 100%;
   min-width: 350px;
 }
@@ -145,14 +128,6 @@ h3 {
   width: 88px;
 }
 
-.yellow {
-  background-color: yellow;
-}
-
-.cyan {
-  background-color: cyan;
-}
-
 .create-project .hint {
   margin: 8px 0 8px 0;
   display: flex;
@@ -161,7 +136,7 @@ h3 {
 
 .home-box {
   font-size: 14px;
-  background-color: rgb(238, 238, 238);
+  /* background-color: rgb(238, 238, 238); */
   padding: 10px;
   margin: 10px;
 }
@@ -173,12 +148,8 @@ h3 {
 }
 
 .grey {
-  background-color: rgb(238, 238, 238);
+  /* background-color: rgb(238, 238, 238); */
   padding: 0 4px 0 4px;
-}
-
-.navy {
-  background-color: navy;
 }
 
 .hint {
@@ -195,26 +166,20 @@ h3 {
   }
 }
 
-.fake-link {
-  color: #0078d4;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
 /* Icons as buttons (they're smaller) */
 .icon-btn {
   padding: 2px;
   height: unset;
 }
 
-.icon-btn:hover {
+/* .icon-btn:hover {
   background-color: #e5e5e5;
 }
 
 .icon-btn:active {
   background-color: #cdcdcd;
   color: white;
-}
+} */
 
 i {
   cursor: pointer;

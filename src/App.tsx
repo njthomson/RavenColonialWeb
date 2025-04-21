@@ -1,10 +1,10 @@
 import './App.css';
 
 import * as api from './api';
-import { CommandBar, Dialog, DialogFooter, Icon, IContextualMenuItem, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
+import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, IContextualMenuItem, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
 import { store } from './local-storage';
-import { appTheme } from './theme';
+import { appTheme, cn } from './theme';
 import { TopPivot } from './types';
 import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
@@ -18,12 +18,11 @@ interface AppProps {
 
 interface AppState {
   pivot: TopPivot;
-  bid?: string;
-  find?: string;
 
   cmdr?: string;
   cmdrEdit: boolean;
   showDonate?: boolean;
+  showThemes?: boolean;
 }
 
 export class App extends Component<AppProps, AppState> {
@@ -33,7 +32,7 @@ export class App extends Component<AppProps, AppState> {
 
 
     this.state = {
-      pivot: TopPivot.home,
+      pivot: this.getStateFromHash(),
       cmdr: store.cmdrName,
       cmdrEdit: false,
     };
@@ -75,11 +74,9 @@ export class App extends Component<AppProps, AppState> {
     if (params.has('find')) {
       // searching for build projects
       nextState.pivot = TopPivot.find;
-      nextState.find = params.get('find') ?? undefined;
     } else if (params.has('build')) {
       // viewing a build project
       nextState.pivot = TopPivot.build;
-      nextState.bid = params.get('build') ?? undefined;
     } else if (params.has('about')) {
       // viewing help content
       nextState.pivot = TopPivot.about;
@@ -104,13 +101,29 @@ export class App extends Component<AppProps, AppState> {
     this.setState(nextState);
   }
 
+  getStateFromHash() {
+    const params = new URLSearchParams(window.location.hash?.substring(1));
+    if (params.has('find')) {
+      // searching for build projects
+      return TopPivot.find;
+    } else if (params.has('build')) {
+      return TopPivot.build;
+    } else if (params.has('about')) {
+      return TopPivot.about;
+    } else if (params.has('cmdr')) {
+      return TopPivot.cmdr;
+    } else {
+      return TopPivot.home;
+    }
+  }
+
   render() {
-    const { cmdrEdit, pivot, showDonate } = this.state;
+    const { cmdrEdit, pivot, showDonate, showThemes } = this.state;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
         <CommandBar
-          className='top-bar'
+          className={`top-bar ${cn.topBar}`}
           items={[
             {
               key: 'home', text: 'Home',
@@ -142,19 +155,39 @@ export class App extends Component<AppProps, AppState> {
               checked: pivot === 'about',
               onClick: (_, i) => this.clickNearItem(i),
             },
-            // {
-            //   key: 'help', iconOnly: true,
-            //   iconProps: { iconName: 'Help' },
-            //   title: 'Help',
-            //   onClick: (_, i) => this.clickNearItem(i),
-            // }
+
           ]}
-          farItems={[{
-            id: 'current-cmdr', key: 'current-cmdr',
-            iconProps: { iconName: store.cmdrName ? 'Contact' : 'UserWarning' },
-            text: this.state.cmdr,
-            onClick: () => this.setState({ cmdrEdit: !this.state.cmdrEdit }),
-          }]}
+          farItems={[
+            {
+              id: 'set-theme', key: 'theme',
+              iconProps: { iconName: 'Contrast' },
+              iconOnly: true,
+              title: 'Choose a theme',
+              onClick: () => this.setState({ showThemes: !this.state.showThemes }),
+            },
+            {
+              id: 'current-cmdr', key: 'current-cmdr',
+              iconProps: { iconName: store.cmdrName ? 'Contact' : 'UserWarning' },
+              text: this.state.cmdr,
+              onClick: () => this.setState({ cmdrEdit: !this.state.cmdrEdit }),
+            }
+          ]}
+        />
+        <ContextualMenu
+          target={`#set-theme`}
+          hidden={!showThemes}
+          onDismiss={() => this.setState({ showThemes: false })}
+          items={[
+            { key: 'choose', text: 'Choose a theme:', disabled: true },
+            { key: 'wite/blue', text: 'Blue (light)', },
+            { key: 'dark/blue', text: 'Blue (dark)', },
+            { key: 'dark/orange', text: 'Orange (dark)', },
+            { key: 'white/green', text: 'Green (light)', },
+          ]}
+          onItemClick={(e, i) => {
+            store.theme = i?.key.toString() ?? '';
+            window.location.reload();
+          }}
         />
         {this.renderBody()}
 
@@ -162,7 +195,7 @@ export class App extends Component<AppProps, AppState> {
           <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} />
         </Modal>}
         <br />
-        <footer>
+        <footer className={cn.footer}>
           <p>© 2025  Raven Colonial Corporation | <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> | <LinkSrvSurvey text='About SrvSurvey' /></p>
         </footer>
 
@@ -188,13 +221,13 @@ export class App extends Component<AppProps, AppState> {
 
 
   renderBody() {
-    const { pivot, bid, find, cmdr } = this.state;
+    const { pivot } = this.state;
 
     switch (pivot) {
       case TopPivot.home: return <Home />;
-      case TopPivot.find: return <ProjectSearch find={find} />;
-      case TopPivot.build: return <ProjectView buildId={bid} cmdr={cmdr} />;
-      case TopPivot.cmdr: return <Commander cmdr={cmdr} />;
+      case TopPivot.find: return <ProjectSearch />;
+      case TopPivot.build: return <ProjectView />;
+      case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
     }
   }

@@ -45,6 +45,7 @@ export interface CreateProject extends ProjectRef {
 }
 
 export interface Project extends ProjectRef {
+  timestamp: string;
   sumNeed: number;
   commanders: Record<string, string[]>;
   commodities: Record<string, number>;

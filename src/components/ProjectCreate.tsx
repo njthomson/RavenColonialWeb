@@ -4,6 +4,7 @@ import * as api from '../api';
 import { store } from '../local-storage';
 import { CreateProject, StationEDSM } from '../types';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
+import { cn } from '../theme';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -151,7 +152,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
     return <>
       <div className="create-project">
-        <h3>Or start a new project?</h3>
+        <h3 className={cn.h3}>Or start a new project?</h3>
         <div>
           {/* <Stack horizontal style={{ alignItems: 'flex-end' }}>
             <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} disabled onChange={(_, v) => this.setState({ systemName: v! })} />
@@ -180,12 +181,12 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
             hasCloseButton={true}
             onDismiss={() => { this.setState({ showMarketIdHelp: false }) }}
           >
-            <div>The <code className='navy'>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
+            <div>The <code className={cn.navy}>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
             <ul>
-              <li>Open folder: <code className='navy'>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
-              <li>Find the file named with today's date. Something like: <code className='navy'>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
-              <li>Scroll to the bottom and look for the line with <code className='navy'>"event":"Docked"</code></li>
-              <li>On that line, copy the value of <code className='navy'>MarketID</code></li>
+              <li>Open folder: <code className={cn.navy}>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
+              <li>Find the file named with today's date. Something like: <code className={cn.navy}>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
+              <li>Scroll to the bottom and look for the line with <code className={cn.navy}>"event":"Docked"</code></li>
+              <li>On that line, copy the value of <code className={cn.navy}>MarketID</code></li>
             </ul>
           </TeachingBubble>}
         </div>}

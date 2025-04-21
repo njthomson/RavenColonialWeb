@@ -11,6 +11,7 @@ enum Stored {
   primaryBuildId = 'primaryBuildId',
   cmdrLinkedFCs = 'cmdrLinkedFCs',
   globalStats = 'globalStats',
+  theme = 'theme',
 }
 
 interface CmdrData {
@@ -180,6 +181,15 @@ class LocalStorage {
     else
       return JSON.parse(json) as GlobalStats;
   }
+
+  get theme(): string {
+    return window.localStorage.getItem(Stored.theme) ?? '';
+  }
+
+  set theme(newTheme: string) {
+    window.localStorage.setItem(Stored.theme, newTheme);
+  }
+
 }
 
 export const store = new LocalStorage();

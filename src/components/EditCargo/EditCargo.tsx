@@ -245,8 +245,12 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
           type='number'
           min={0}
           max={maxValue}
-
           value={cargo[key] === -1 ? '' : cargo[key]}
+          style={{
+            backgroundColor: appTheme.palette.themeLighterAlt,
+            color: appTheme.palette.black,
+            border: '1px solid ' + appTheme.palette.accent
+          }}
           onChange={(ev) => {
             this.updateCargoState(uc => uc[key] = ev.target.valueAsNumber || 0);
           }}
@@ -295,7 +299,14 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     return <tfoot>
       <tr className='hint'>
         <td className='total-txt'>Total:</td>
-        <td className='total-num'><input value={sumTotal.toLocaleString()} readOnly tabIndex={-1} /></td>
+        <td className='total-num'>
+          <input
+            readOnly
+            value={sumTotal.toLocaleString()}
+            tabIndex={-1}
+            style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: 0 }}
+          />
+        </td>
         <td></td>
       </tr>
     </tfoot>;

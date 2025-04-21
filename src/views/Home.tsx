@@ -38,7 +38,7 @@ export class Home extends Component<HomeProps, HomeState> {
       // signed-in
       return <>
         <div className=''>
-          <Commander cmdr={store.cmdrName} />
+          <Commander />
           <RecentProjects />
 
           <ShowGlobalStats />

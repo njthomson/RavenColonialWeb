@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { App } from './App';
 import reportWebVitals from './reportWebVitals';
+import { appTheme } from './theme';
 
 // Inject some global styles
 mergeStyles({
@@ -10,6 +11,8 @@ mergeStyles({
     margin: 0,
     padding: 0,
     height: '100vh',
+    color: appTheme.palette.black,
+    backgroundColor: appTheme.palette.white,
   },
 });
 

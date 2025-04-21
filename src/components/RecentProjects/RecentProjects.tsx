@@ -2,6 +2,7 @@ import './RecentProjects.css';
 
 import { ProjectLink } from '..';
 import { store } from "../../local-storage";
+import { cn } from '../../theme';
 
 export const RecentProjects: React.FunctionComponent = () => {
 
@@ -12,7 +13,7 @@ export const RecentProjects: React.FunctionComponent = () => {
   } else {
     return <>
       <div className='half'>
-        <h3>{listItems.length} Recent projects:</h3>
+        <h3 className={cn.h3}>{listItems.length} Recent projects:</h3>
         <ul>
           {listItems}
         </ul>

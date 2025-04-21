@@ -2,7 +2,7 @@ import { DefaultButton, IconButton, MessageBar, MessageBarType, PrimaryButton, S
 import { Component, createRef } from 'react';
 import * as api from '../api';
 import { EditCargo, FindFC } from '../components';
-import { appTheme } from '../theme';
+import { appTheme, cn } from '../theme';
 import { KnownFC } from '../types';
 import { store } from '../local-storage';
 import { fcFullName } from '../util';
@@ -68,7 +68,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
       <IconButton className='right' title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onClose()} style={{ position: 'relative', top: -4 }} />
-      <h3 style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
+      <h3 className={cn.h3} style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
 
       {this.props.marketId && this.renderFC()}
     </>;
@@ -94,7 +94,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
       <tbody>
         <tr>
           <td>Raw name:</td>
-          <td className='grey'>
+          <td className={cn.grey}>
             {fc.name}
             &nbsp;<CopyButton text={fc.name} />
           </td>
@@ -107,6 +107,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
                 type='text'
                 value={editDisplayName}
                 onChange={(ev) => this.setState({ editDisplayName: ev.target.value })}
+                style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
               />
 
               {/* Toggle sort order button */}
@@ -148,7 +149,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
               }}
             />}
           </td>
-          <td className='grey'>{fc.marketId}&nbsp;<CopyButton text={fc.marketId.toString()} />
+          <td className={cn.grey}>{fc.marketId}&nbsp;<CopyButton text={fc.marketId.toString()} />
           </td>
         </tr>
 

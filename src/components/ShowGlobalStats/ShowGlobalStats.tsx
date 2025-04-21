@@ -4,6 +4,7 @@ import { Component, FunctionComponent, useState } from "react";
 import { store } from '../../local-storage';
 import { Callout, Icon, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { GlobalStats } from '../../types';
+import { cn } from '../../theme';
 
 
 interface ShowGlobalStatsProps { }
@@ -44,7 +45,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
     const { stats } = this.state;
 
     return <div className='global-stats half'>
-      <h3>Raven Colonial Statistics:</h3>
+      <h3 className={cn.h3}>Raven Colonial Statistics:</h3>
       {!stats && <div style={{ display: 'inline-block' }}>
         <Spinner
           size={SpinnerSize.medium}
@@ -104,9 +105,9 @@ const StatsBox: FunctionComponent<{ label: string, title?: string, small?: strin
 
   const id = `k${Math.random().toString().substring(2)}`;
 
-  return <div className='home-box' title={props.title}>
+  return <div className={`home-box ${cn.greyer}`} title={props.title}>
     <div className='small t-right'>{props.small}</div>
-    <h3 id={`${id}`} >
+    <h3 className={cn.h3} id={`${id}`} >
       {props.label}:
       &nbsp;
       {!!props.title && <>

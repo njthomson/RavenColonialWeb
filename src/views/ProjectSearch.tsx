@@ -1,12 +1,11 @@
-import { ActionButton, IconButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ActionButton, IconButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
 import { ProjectRef, ProjectRefComplete } from '../types';
+import { cn } from '../theme';
 
-interface ProjectProps {
-  find: string | undefined | null;
-}
+interface ProjectProps { }
 
 interface ProjectState {
   q?: string;
@@ -20,11 +19,17 @@ interface ProjectState {
 }
 
 export class ProjectSearch extends Component<ProjectProps, ProjectState> {
+  find?: string;
+
   constructor(props: ProjectProps) {
     super(props);
+
+    const params = new URLSearchParams(window.location.hash?.substring(1));
+    this.find = params.get('find') ?? undefined;
+
     this.state = {
-      q: props.find ?? '',
-      find: props.find ?? '',
+      q: this.find ?? '',
+      find: this.find ?? '',
       loading: false,
     };
   }
@@ -37,7 +42,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
   componentDidMount() {
     window.document.title = `Find: ?`;
-    this.findProjects(this.props.find ?? '');
+    this.findProjects(this.find ?? '');
   }
 
   onFind = () => {
@@ -77,7 +82,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
     return <div className='contain-horiz'>
       <div className='half'>
-        <h3>Find an existing project?</h3>
+        <h3 className={cn.h3}>Find an existing project?</h3>
 
         <div className="projects-query">
           <Stack horizontal style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
@@ -126,13 +131,13 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     if (!rows) { return; }
 
     if (rows.length === 0) {
-      return <h2>No active projects in: <a href={`#find=${find}`}>{find}</a></h2>;
+      return <h2>No active projects in: <Link href={`#find=${find}`}>{find}</Link></h2>;
     }
 
     if (rows.length > 0) {
       const listItems = rows.map(r => <li key={r.buildId}><ProjectLink proj={r} noSys={true} /></li>)
       return <div className="projects-list">
-        <h2>{rows?.length ?? '?'} Build projects in: <a href={`#find=${find}`}>{find}</a></h2>
+        <h2>{rows?.length ?? '?'} Build projects in: <Link href={`#find=${find}`}>{find}</Link></h2>
         <ul>
           {listItems}
         </ul>

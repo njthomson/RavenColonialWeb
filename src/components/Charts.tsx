@@ -46,7 +46,7 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
     });
   }
 
-  return <div style={{width: '400px'}}>
+  return <div style={{ width: '400px' }}>
     <VerticalStackedBarChart
       chartTitle='Cargo deliveries by Commander over time'
       legendProps={{ allowFocusOnLegends: false }}

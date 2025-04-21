@@ -6,10 +6,9 @@ import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
 import { mapCommodityNames, Project } from '../../types';
 import { store } from '../../local-storage';
+import { cn } from '../../theme';
 
-interface CmdrProps {
-  cmdr?: string | undefined;
-}
+interface CmdrProps { }
 
 interface CmdrState {
   showBubble: boolean;
@@ -20,20 +19,25 @@ interface CmdrState {
 }
 
 export class Commander extends Component<CmdrProps, CmdrState> {
+  cmdr?: string;
+
   private unmounted: boolean = false;
 
   constructor(props: CmdrProps) {
     super(props);
 
+    const params = new URLSearchParams(window.location.hash?.substring(1));
+    this.cmdr = params.get('cmdr') ?? store.cmdrName;
+
     this.state = {
-      showBubble: !this.props.cmdr,
+      showBubble: !this.cmdr,
     };
   }
 
   componentDidMount(): void {
-    window.document.title = `Cmdr: ${this.props?.cmdr ?? '?'}`;
-    if (this.props.cmdr) {
-      this.fetchCmdrProjects(this.props.cmdr);
+    window.document.title = `Cmdr: ${this.cmdr ?? '?'}`;
+    if (this.cmdr) {
+      this.fetchCmdrProjects(this.cmdr);
     }
   }
 
@@ -41,11 +45,11 @@ export class Commander extends Component<CmdrProps, CmdrState> {
     this.unmounted = true;
   }
 
-  componentDidUpdate(prevProps: Readonly<CmdrProps>, prevState: Readonly<CmdrState>, snapshot?: any): void {
-    if (prevProps.cmdr !== this.props.cmdr) {
-      this.fetchCmdrProjects(this.props.cmdr);
-    }
-  }
+  // componentDidUpdate(prevProps: Readonly<CmdrProps>, prevState: Readonly<CmdrState>, snapshot?: any): void {
+  //   if (prevProps.cmdr !== this.cmdr) {
+  //     this.fetchCmdrProjects(this.cmdr);
+  //   }
+  // }
 
   async fetchCmdrProjects(cmdr: string | undefined): Promise<void> {
     this.setState({ loading: true, projects: undefined });
@@ -90,7 +94,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       {!editingCmdr && <>
         <div className='contain-horiz'>
           <div className='half'>
-            <h3>Active projects and assignments:</h3>
+            <h3 className={cn.h3}>Active projects and assignments:</h3>
             {this.renderCmdrProjects()}
           </div>
         </div>
@@ -99,7 +103,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
   }
 
   renderCmdrProjects() {
-    const cmdr = this.props.cmdr?.toLowerCase() ?? '';
+    const cmdr = this.cmdr?.toLowerCase() ?? '';
     const { projects, loading, showCompleted } = this.state;
 
     if (projects?.length === 0) {
@@ -138,7 +142,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
           // if (!p.commodities![commodity]) continue;
 
           flip = !flip;
-          const className = 'assignment' + (flip ? '' : ' odd');
+          const className = 'assignment ' + (flip ? '' : cn.odd);
           const rowC = <tr className={className} key={`cp${p.buildId}-${commodity}`}>
             <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
             <td className='icon d'><CommodityIcon name={commodity} /></td>

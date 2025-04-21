@@ -1,25 +1,27 @@
 import './ProjectView.css';
 
-import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { HorizontalBarChart } from '@fluentui/react-charting';
 import { Component, CSSProperties } from 'react';
 import * as api from '../../api';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, CommodityIcon, EditCargo, FindFC, ProjectCreate, ProjectQuery } from '../../components';
 import { store } from '../../local-storage';
-import { appTheme } from '../../theme';
+import { appTheme, cn } from '../../theme';
 import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
 import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 
-interface ProjectViewProps {
-  buildId?: string;
-  cmdr?: string;
-}
+const autoUpdateFrequency = 30 * 1000; // 30 seconds
+const autoUpdateStopDuration = 60 * 60 * 1000; // 60 minutes
+
+interface ProjectViewProps { }
 
 interface ProjectViewState {
   proj?: Project;
+  lastTimestamp?: string;
+  autoUpdateUntil: number;
   mode: Mode;
   sort: SortMode;
   loading: boolean;
@@ -67,13 +69,19 @@ enum Mode {
 }
 
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
+  private buildId?: string;
+  private timer?: NodeJS.Timeout;
 
   constructor(props: ProjectViewProps) {
     super(props);
 
+    const params = new URLSearchParams(window.location.hash?.substring(1));
+    this.buildId = params.get('build') ?? undefined;
+
     const sortMode = store.commoditySort;
     this.state = {
       loading: true,
+      autoUpdateUntil: 0,
       primaryBuildId: store.primaryBuildId,
       mode: Mode.view,
       sort: sortMode as SortMode ?? SortMode.group,
@@ -85,7 +93,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       editReady: new Set<string>(),
       hideDoneRows: store.commodityHideCompleted,
       hideFCColumns: store.commodityHideFCColumns,
-      showBubble: !props.cmdr,
+      showBubble: !store.cmdr,
       nextDelivery: store.deliver,
       deliverMarketId: store.deliverDestination,
       submitting: false,
@@ -96,16 +104,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   componentDidMount() {
-    this.fetchProject(this.props.buildId);
+    // fetch initial data, then start auto-updating
+    this.fetchProject(this.buildId).then(() => {
+      this.toggleAutoRefresh();
+    })
   }
 
-  componentDidUpdate(prevProps: Readonly<ProjectViewProps>, prevState: Readonly<ProjectViewState>, snapshot?: any): void {
-    if (this.props.buildId && prevState.proj?.buildId && prevProps.buildId !== this.props.buildId) {
-      this.fetchProject(this.props.buildId);
-    }
-
-    if (!prevProps.cmdr && !!this.props.cmdr) {
-      this.setState({ showBubble: !!this.props.cmdr });
+  componentWillUnmount(): void {
+    if (this.timer) {
+      clearTimeout(this.timer);
     }
   }
 
@@ -146,6 +153,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       this.setState({
         proj: newProj,
+        lastTimestamp: newProj.timestamp,
         editReady: new Set(newProj.ready),
         sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
         hasAssignments: Object.keys(newProj.commanders).reduce((s, c) => s += newProj.commanders[c].length, 0) > 0,
@@ -186,6 +194,35 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .catch(err => this.setState({ errorMsg: err.message }));
   }
 
+  async pollTimestamp() {
+    // call server to see if anything changed
+    const buildId = this.state.proj?.buildId!;
+    let timestamp = await api.project.last(buildId)
+      .catch(err => console.error(err.message));
+
+    // use current state if no .last added yet
+    if (timestamp === '0001-01-01T00:00:00+00:00') { timestamp = this.state.lastTimestamp; }
+
+    console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp})`);
+
+    if (timestamp !== this.state.lastTimestamp) {
+      // something has changed
+      this.fetchProject(buildId, true);
+    }
+
+    // schedule next poll?
+    if (this.state.autoUpdateUntil > 0) {
+      if (Date.now() < this.state.autoUpdateUntil) {
+        this.timer = setTimeout(() => {
+          this.pollTimestamp();
+        }, autoUpdateFrequency);
+      } else {
+        console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+        this.setState({ autoUpdateUntil: 0 });
+      }
+    }
+  }
+
   async setAsPrimary(buildId: string) {
     // add a little artificial delay so UI doesn't flicker
     this.setState({ refreshing: true })
@@ -213,7 +250,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -259,10 +296,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {
         key: 'btn-refresh',
         text: 'Refresh',
-        iconProps: { iconName: 'Refresh' },
+        title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
+        iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
         disabled: refreshing,
         onClick: () => {
-          this.fetchProject(proj.buildId, true);
+          this.toggleAutoRefresh();
         }
       },
       {
@@ -305,11 +343,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
-          <a href={`#find=${proj.systemName}`}>{proj.systemName}</a>: {proj.buildName} {proj.complete && <span> (completed)</span>}
+          <Link href={`#find=${proj.systemName}`}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
           <span style={{ fontSize: 16 }}><CopyButton text={proj.buildName} /></span>
         </h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
-        {mode === Mode.view && <CommandBar className='top-bar' items={commands} />}
+        {mode === Mode.view && <CommandBar className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`} items={commands} />}
       </div >
 
       <div className='contain-horiz'>
@@ -327,7 +365,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
         <div className='center'>
           <p>
-            <h3>Are you sure you want to delete?</h3>
+            <h3 className={cn.h3}>Are you sure you want to delete?</h3>
             <br />
             This cannot be undone.</p>
           <DefaultButton
@@ -351,7 +389,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <Modal isOpen={confirmComplete}>
         <div className='center'>
           <p>
-            <h3>Confirm completion?</h3>
+            <h3 className={cn.h3}>Confirm completion?</h3>
             <br />
             Completed projects can still be found but cannot be made active again.
           </p>
@@ -479,7 +517,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (key in groupedCommodities) {
         // group row
         if (sort !== SortMode.alpha) {
-          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeDark, color: appTheme.palette.themeLighter }}>
+          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeSecondary, color: appTheme.palette.neutralLight }}>
             <td colSpan={2 + colSpan} className='hint'> {key}</td>
           </tr>)
         }
@@ -499,7 +537,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
 
     return <>
-      {mode === Mode.view && <h3>
+      {mode === Mode.view && <h3 className={cn.h3}>
         Commodities:&nbsp;
         <ActionButton
           id='menu-sort'
@@ -541,10 +579,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
-            <th className='commodity-name'>Commodity</th>
-            <th className='commodity-need' title='Total needed for this commodity'>Need</th>
+            <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
+            <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>
             {!editCommodities && !hideFCColumns && colSpan > 0 && this.getCargoFCHeaders()}
-            {!editCommodities && hasAssignments && <th className='commodity-assigned'>Assigned</th>}
+            {!editCommodities && hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>}
           </tr>
         </thead>
         <tbody>{rows}</tbody>
@@ -559,10 +597,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   getCargoFCHeaders() {
     return [
-      <th key={`fcc-have`} className='commodity-need' title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
+      <th key={`fcc-have`} className={`commodity-need ${cn.bb} ${cn.br}`} title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
       ...Object.keys(this.state.fcCargo).map(k => {
         const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
-        return fc && <th key={`fcc${k}`} className='commodity-need' title={`${fc.displayName} (${fc.name})`} >
+        return fc && <th key={`fcc${k}`} className={`commodity-need ${cn.bb} ${cn.br}`} title={`${fc.displayName} (${fc.name})`} >
           <span
             className='fake-link'
             onClick={() => this.setState({ fcEditMarketId: k })}
@@ -615,10 +653,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const assigned = cmdrs
       .filter(k => cmdrs.some(() => proj!.commanders && proj!.commanders[k].includes(key)))
       .map(k => {
-        return <span className='removable bubble' key={`$${key}-${k}`} style={{ backgroundColor: k === currentCmdr ? 'lightcyan' : undefined }}>
+        return <span className={`removable bubble ${cn.removable}`} key={`$${key}-${k}`} style={{ backgroundColor: k === currentCmdr ? appTheme.palette.themeLight : undefined }}>
           <span className={`glue ${k === currentCmdr ? 'active-cmdr' : ''}`} >📌{k}</span>
           <Icon
-            className='btn'
+            className={`btn ${cn.btn}`}
             iconName='Delete'
             title={`Remove assignment of ${displayName} from ${k}`}
             style={{ color: appTheme.palette.themePrimary }}
@@ -628,9 +666,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
 
     const need = proj.commodities![key];
-    const className = `${need !== 0 ? '' : 'done'} ${flip ? '' : ' odd'}`;
 
-    const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
 
     const isContextTarget = this.state.cargoContext === key;
     const isReady = this.state.editReady.has(key);
@@ -682,8 +718,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const fcMarketIds = Object.keys(this.state.fcCargo);
 
+    const className = `${need !== 0 ? '' : 'done '} ${flip ? '' : cn.odd}`;
+    const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
     return <tr key={`cc-${key}`} className={className} style={style}>
-      <td className='commodity-name' id={`cargo-${key}`}>
+      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
         <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
         &nbsp;
         {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
@@ -697,7 +735,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />}
 
         <Icon
-          className='btn'
+          className={`btn ${cn.btn}`}
           iconName='ContextMenu'
           title={`Commands for: ${key}`}
           style={{ color: appTheme.palette.themePrimary }}
@@ -707,21 +745,22 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />
       </td>
 
-      <td className='commodity-need' >
+      <td className={`commodity-need ${cn.br}`} >
         <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
       </td>
 
       {fcMarketIds.length > 0 && !this.state.hideFCColumns && <>
         {/* The FC Diff cell, then a cell for each FC */}
-        <td key='fcc-have' className='commodity-diff'  >
-          <div className='bubble' style={{ backgroundColor: fcDiffCellColor }} >
+        <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
+          <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: appTheme.palette.teal }} >
             {fcSumElement}
           </div>
         </td>
-        {fcMarketIds.map(marketId => <td key={`fcc${marketId}`} className='commodity-need' >
+        {fcMarketIds.map(marketId => <td key={`fcc${marketId}`} className={`commodity-need ${cn.br}`} >
           <span>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span>
         </td>)}
-      </>}
+      </>
+      }
 
       {this.state.hasAssignments && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
     </tr>;
@@ -743,32 +782,36 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />}
 
 
-        {!editProject && <h3>Build:</h3>}
+        {!editProject && <h3 className={cn.h3}>Build:</h3>}
         <table>
           <tbody>
             <tr><td>Build name:</td><td>
-              {!editProject && <div className='detail'>{proj.buildName}</div>}
-              {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus />}
+              {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.buildName}</div>}
+              {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+              />}
             </td></tr>
-            <tr><td>Build type:</td><td><div className='detail'><BuildTypeDisplay buildType={proj.buildType} /></div></td></tr>
-            <tr><td>System name:</td><td><div className='detail'>{proj.systemName}</div></td></tr>
+            <tr><td>Build type:</td><td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}><BuildTypeDisplay buildType={proj.buildType} /></div></td></tr>
+            <tr><td>System name:</td><td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td></tr>
             <tr><td>Architect:</td><td>
-              {!editProject && <div className='detail'>{proj.architectName}&nbsp;</div>}
-              {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} />}
+              {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.architectName}&nbsp;</div>}
+              {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+              />}
             </td></tr>
             <tr><td>Faction:</td><td>
-              {!editProject && <div className='detail'>{proj.factionName}&nbsp;</div>}
-              {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} />}
+              {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.factionName}&nbsp;</div>}
+              {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+              />}
             </td></tr>
             <tr><td>Notes:</td><td>
-              {!editProject && <div className='detail notes'>{proj.notes}&nbsp;</div>}
-              {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} />}
+              {!editProject && <div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.notes}&nbsp;</div>}
+              {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+              />}
             </td></tr>
             {editProject && <tr>
               <td>
                 Discord link:
                 <IconButton
-                  className='btn icon-inline'
+                  className={`btn icon-inline ${cn.btn}`}
                   title='Validate and paste a link'
                   iconProps={{ iconName: 'Paste' }}
                   onClick={async () => {
@@ -778,7 +821,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
                   }}
                 />
               </td>
-              <td><input type='text' value={editProject.discordLink} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} /></td>
+              <td><input type='text' value={editProject.discordLink} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+              /></td>
             </tr>}
           </tbody>
         </table>
@@ -804,10 +848,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const rows = [];
     for (const key in proj.commanders) {
       var row = <li key={`@${key}`}>
-        <span className='removable'>
+        <span className={`removable ${cn.removable}`}>
           {key}
           <Icon
-            className='btn'
+            className={`btn ${cn.btn}`}
             iconName='Delete'
             title={`Remove commander: ${key}`}
             style={{ color: appTheme.palette.themePrimary, }}
@@ -820,7 +864,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <>
       <br />
-      <h3>{Object.keys(proj.commanders).length ?? 0} Commanders:</h3>
+      <h3 className={cn.h3}>{Object.keys(proj.commanders).length ?? 0} Commanders:</h3>
       <ul>
         {rows}
       </ul>
@@ -856,11 +900,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!proj) { return <div />; }
 
     const rows = proj.linkedFC.map(item => (<li key={`@${item.marketId}`}>
-      <span className='removable'>
+      <span className={`removable ${cn.removable}`}>
         {fcFullName(item.name, item.displayName)}
         &nbsp;
         <Icon
-          className='btn'
+          className={`btn ${cn.btn}`}
           iconName='Edit'
           title={`Edit FC: ${item.displayName} (${item.name})`}
           style={{ color: appTheme.palette.themePrimary }}
@@ -870,7 +914,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />
         &nbsp;
         <Icon
-          className='btn'
+          className={`btn ${cn.btn}`}
           iconName='Delete'
           title={`Unlink FC: ${item.displayName} (${item.name})`}
           style={{ color: appTheme.palette.themePrimary }}
@@ -880,7 +924,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </li>));
 
     return <>
-      <h3>{proj.linkedFC.length ?? 0} Linked Fleet Carriers:</h3>
+      <h3 className={cn.h3}>{proj.linkedFC.length ?? 0} Linked Fleet Carriers:</h3>
       <ul>
         {rows}
       </ul>
@@ -1039,6 +1083,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     };
     this.setState({
       proj: updatedProj,
+      lastTimestamp: updatedProj.timestamp,
       showAddFC: false,
       deliverMarketId: linkedFCs.find(fc => fc.marketId.toString() === this.state.deliverMarketId)?.marketId.toString() ?? 'site',
       fcMatchError: undefined,
@@ -1161,7 +1206,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
         const savedProj = await api.project.update(proj.buildId, deltaProj);
@@ -1169,6 +1214,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         // success - apply new commodity count
         this.setState({
           proj: savedProj,
+          lastTimestamp: savedProj.timestamp,
           editReady: new Set(savedProj.ready),
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
@@ -1193,6 +1239,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // success - apply new commodity count
       this.setState({
         proj: savedProj,
+        lastTimestamp: savedProj.timestamp,
         editReady: new Set(savedProj.ready),
         sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
         hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
@@ -1243,6 +1290,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const cmdrName = store.cmdrName;
         this.setState({
           proj: savedProj,
+          lastTimestamp: savedProj.timestamp,
           editReady: new Set(savedProj.ready),
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
           hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
@@ -1270,13 +1318,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </MessageBar>
       <Modal isOpen={fixMarketId !== undefined}>
         <div style={{ textAlign: 'left' }}>
-          <h3>Set corrected Market ID</h3>
-          <div>The <code className='grey'>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
+          <h3 className={cn.h3}>Set corrected Market ID</h3>
+          <div>The <code className={cn.navy}>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
           <ul>
-            <li>Open folder: <code className='grey'>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
-            <li>Find the file named with today's date. Something like: <code className='grey'>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
-            <li>Scroll to the bottom and look for the line with <code className='grey'>"event":"Docked"</code></li>
-            <li>On that line, copy the value of <code className='grey'>MarketID</code> and paste it here</li>
+            <li>Open folder: <code className={cn.navy}>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
+            <li>Find the file named with today's date. Something like: <code className={cn.navy}>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
+            <li>Scroll to the bottom and look for the line with <code className={cn.navy}>"event":"Docked"</code></li>
+            <li>On that line, copy the value of <code className={cn.navy}>MarketID</code> and paste it here</li>
           </ul>
 
           <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
@@ -1310,6 +1358,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.log('saveNewMarketId: savedProj:', savedProj);
       this.setState({
         proj: savedProj,
+        lastTimestamp: savedProj.timestamp,
         editReady: new Set(savedProj.ready),
         sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
         hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
@@ -1330,9 +1379,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
     return <div className='half'>
-      <h3>Progress:</h3>
+      <h3 className={cn.h3}>Progress:</h3>
       {!!summary.totalDeliveries && <div className='stats-header'>
-        Total cargo delivered: <span className='grey'>{summary.totalCargo.toLocaleString()}</span> from <span className='grey'>{summary.totalDeliveries.toLocaleString()}</span> deliveries
+        Total cargo delivered: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalCargo.toLocaleString()}</span> from <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span> deliveries
       </div>}
 
       {approxProgress > 0 && <HorizontalBarChart
@@ -1420,16 +1469,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         onChange={cargo => this.setState({ nextDelivery: cargo })}
       />
 
-      {
-        showBubble && <TeachingBubble
-          target={'#current-cmdr'}
-          headline='Who are you?'
-          hasCloseButton={true}
-          onDismiss={() => { this.setState({ showBubble: false }) }}
-        >
-          Enter your cmdr's name to get credit for this delivery.
-        </TeachingBubble>
-      }
+      {showBubble && <TeachingBubble
+        target={'#current-cmdr'}
+        headline='Who are you?'
+        hasCloseButton={true}
+        onDismiss={() => { this.setState({ showBubble: false }) }}
+      >
+        Enter your cmdr's name to get credit for this delivery.
+      </TeachingBubble>}
 
     </div>;
   }
@@ -1499,5 +1546,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   };
 
+  toggleAutoRefresh = () => {
+    if (this.state.autoUpdateUntil > 0) {
+      console.log(`Stopping timer at: ${new Date().toISOString()}`);
+      clearTimeout(this.timer);
+      this.setState({ autoUpdateUntil: 0 });
+    } else {
+      console.log(`Starting timer at: ${new Date().toISOString()}`);
+      this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
+      this.pollTimestamp();
+    }
+  };
 }
 

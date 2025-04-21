@@ -1,5 +1,6 @@
 import { DefaultButton, Icon, IconButton, Link, Stack } from "@fluentui/react";
 import { LinkSrvSurvey } from "../components/LinkSrvSurvey";
+import { cn } from "../theme";
 
 export const learnAbout = (currentHelpId?: string) => {
 
@@ -21,8 +22,8 @@ export const learnAbout = (currentHelpId?: string) => {
     srvsurvey: 'SrvSurvey',
   }
 
-  return <div className='home-box'>
-    <h3>Learn more about:</h3>
+  return <div className={`home-box ${cn.greyer}`}>
+    <h3 className={cn.h3}>Learn more about:</h3>
     <Stack horizontal wrap tokens={{ childrenGap: 10, padding: 10, }}>
       {Object.entries(topics).map(([key, text]) => <DefaultButton key={key} text={text} onClick={() => showHelp(key)} primary={currentHelpId === key} />)}
     </Stack>
@@ -39,8 +40,8 @@ export const About: React.FunctionComponent = () => {
     {learnAbout(helpId)}
 
 
-    {(!helpId || helpId === 'raven') && <div className='home-box'>
-      <h3>The Raven Colonial Corporation</h3>
+    {(!helpId || helpId === 'raven') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>The Raven Colonial Corporation</h3>
       From the earliest times in history, mankind has looked to expand. We have sought to explore and thrive.  From the old earth Abrahamic religions, we were told to "go forth, and multiply."  This was the task given to Noah in the days after the dove returned with signs of land. Go forth, and Multiply.
       <br />
       But it wasn't a dove, over the years the translation was lost, in the original story it was a raven.
@@ -58,8 +59,8 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'srvsurvey') && <div className='home-box'>
-      <h3>About SrvSurvey</h3>
+    {(!helpId || helpId === 'srvsurvey') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>About SrvSurvey</h3>
       Issues can be <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='reported here' title='Submit suggestions and bug reports' /> and general discussion happens through <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss SrvSurvey' />.
       <ul>
         <li>See more detailed guidance on the <LinkSrvSurvey text='SrvSurvey colonization wiki' />.</li>
@@ -73,8 +74,8 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'find') && <div className='home-box'>
-      <h3>Finding a project</h3>
+    {(!helpId || helpId === 'find') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Finding a project</h3>
       <ul>
         <li>The home page will show any project your Commander is linked to, active or completed, as well as the last 5 projects you have viewed.</li>
         <li>Projects can be found by the system name on <Link href='#find'>#find</Link> page.</li>
@@ -84,8 +85,8 @@ export const About: React.FunctionComponent = () => {
     </div >}
 
 
-    {(!helpId || helpId === 'create') && <div className='home-box'>
-      <h3>Creating a project</h3>
+    {(!helpId || helpId === 'create') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Creating a project</h3>
       <ul>
         <li>Creating projects is best done through <LinkSrvSurvey /> as it can pre-populate required cargo as well as other details pulled from journal files.</li>
         <li>It is also possible to create projects through this site, though it requires some manual data entry.</li>
@@ -99,8 +100,8 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'build') && <div className='home-box'>
-      <h3>Building project</h3>
+    {(!helpId || helpId === 'build') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Building project</h3>
       Building a project is where the real work is. Running <LinkSrvSurvey /> automates the process, sending updates to Raven Colonial as you progress. Most operations can be performed through the site for those not running SrvSurvey.
       <ul>
         <li>Clicking cargo rows will reveal a menu button <Icon className="btn icon-inline" iconName='ContextMenu' /> with more options.</li>
@@ -120,8 +121,8 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'groups') && <div className='home-box'>
-      <h3>Working in groups</h3>
+    {(!helpId || helpId === 'groups') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Working in groups</h3>
       Some colonization projects are huge and best done by groups of Commanders. SrvSurvey and RavenColonial will support groups working together on a single project.
       <ul>
         <li>Below project fields and notes is a list of Commanders working on a project. The project will automatically show for all linked Commanders.</li>
@@ -135,8 +136,8 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'fc') && <div className='home-box'>
-      <h3>Working with Fleet Carriers</h3>
+    {(!helpId || helpId === 'fc') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Working with Fleet Carriers</h3>
       Small or large, using a Fleet Carrier is an essential way to speed up building colonies. SrvSurvey and Raven Colonial support this by linking Fleet Carries to specific projects or Commanders.
       <ul>
         <li>Use the <Icon className="btn icon-inline" iconName='Airplane' /> button below linked Commanders to add a Fleet Carrier, searching for them by name. Names are queried from Spansh and it is common for display names not to be known. Use their 6 digit ID code if not found by their display name.</li>

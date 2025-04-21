@@ -17,7 +17,7 @@
 .commodities th {
   text-align: left;
   padding: 0 10px 0 5px;
-  border-bottom: #e5e5e5 1px solid;
+  /* border-bottom: #e5e5e5 1px solid; */
 }
 
 .commodities tr {
@@ -44,17 +44,17 @@
   visibility: visible;
 }
 
-.commodities tr .btn:hover {
+/* .commodities tr .btn:hover {
   background-color: #e5e5e5;
-}
+} */
 
-.commodities tr .btn:active {
+/* .commodities tr .btn:active {
   background-color: #cdcdcd;
-}
+} */
 
 .commodities .commodity-name {
   min-width: 240px;
-  border-right: #e5e5e5 1px solid;
+  /* border-right: #e5e5e5 1px solid; */
 }
 
 .commodities tbody .commodity-name {
@@ -81,13 +81,13 @@
 .commodities .commodity-need {
   text-align: right;
   padding: 0 10px 0 10px;
-  border-right: #e5e5e5 1px solid;
+  /* border-right: #e5e5e5 1px solid; */
 }
 
 .commodities .commodity-diff {
   text-align: right;
   padding: 0 5px 0 5px;
-  border-right: #e5e5e5 1px solid;
+  /* border-right: #e5e5e5 1px solid; */
 }
 
 .commodity-num {
@@ -109,13 +109,13 @@
   cursor: pointer;
 }
 
-.removable .btn:hover {
+/* .removable .btn:hover {
   background-color: #e5e5e5;
 }
 
 .removable:hover {
   background-color: lightcyan;
-}
+} */
 
 .removable:hover .btn {
   display: inline;
@@ -132,7 +132,7 @@
 }
 
 .detail {
-  background-color: rgb(238, 238, 238);
+  /* background-color: rgb(238, 238, 238); */
   padding: 2px;
   white-space: pre-line;
 }
@@ -170,7 +170,7 @@
 }
 
 .delivery tfoot td {
-  border-top: #e5e5e5 1px solid;
+  /* border-top: #e5e5e5 1px solid; */
   text-align: center;
   margin: 0;
   padding: 0;

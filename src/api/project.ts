@@ -45,6 +45,10 @@ export const project = {
     return await callAPI<Project>(`/api/project/${encodeURIComponent(buildId)}/cargo/default`, 'POST');
   },
 
+  last: async (buildId: string): Promise<string> => {
+    return await callAPI<string>(`/api/project/${encodeURIComponent(buildId)}/last`);
+  },
+
   complete: async (buildId: string): Promise<Project> => {
     return await callAPI<Project>(`/api/project/${encodeURIComponent(buildId)}/complete`, 'POST');
   },
