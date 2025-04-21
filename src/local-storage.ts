@@ -12,6 +12,7 @@ enum Stored {
   cmdrLinkedFCs = 'cmdrLinkedFCs',
   globalStats = 'globalStats',
   theme = 'theme',
+  hideShipTrips = 'hideShipTrips',
 }
 
 interface CmdrData {
@@ -32,10 +33,10 @@ class LocalStorage {
     return this.cmdr?.name ?? '';
   }
 
-  set cmdrName(cmdrName: string) {
+  set cmdrName(newValue: string) {
     const data = {
       ...this.cmdr ?? {},
-      name: cmdrName
+      name: newValue
     } as CmdrData;
     this.cmdr = data;
   }
@@ -49,8 +50,8 @@ class LocalStorage {
     }
   }
 
-  set cmdr(cmdr: CmdrData | undefined) {
-    window.localStorage.setItem(Stored.cmdr, JSON.stringify(cmdr));
+  set cmdr(newValue: CmdrData | undefined) {
+    window.localStorage.setItem(Stored.cmdr, JSON.stringify(newValue));
   }
 
   get recentProjects(): ProjectRefLite[] {
@@ -95,8 +96,8 @@ class LocalStorage {
     window.localStorage.setItem(Stored.recentProjects, json)
   }
 
-  set deliver(deliver: Record<string, number>) {
-    window.localStorage.setItem(Stored.deliver, JSON.stringify(deliver));
+  set deliver(newValue: Record<string, number>) {
+    window.localStorage.setItem(Stored.deliver, JSON.stringify(newValue));
   }
 
   get deliver(): Record<string, number> {
@@ -109,24 +110,24 @@ class LocalStorage {
     }
   }
 
-  set commoditySort(sortMode: SortMode) {
-    window.localStorage.setItem(Stored.sortMode, sortMode);
+  set commoditySort(newValue: SortMode) {
+    window.localStorage.setItem(Stored.sortMode, newValue);
   }
 
   get commoditySort(): SortMode {
     return window.localStorage.getItem(Stored.sortMode) as SortMode ?? SortMode.group;
   }
 
-  set deliverDestination(sortMode: string) {
-    window.localStorage.setItem(Stored.deliverDestination, sortMode);
+  set deliverDestination(newValue: string) {
+    window.localStorage.setItem(Stored.deliverDestination, newValue);
   }
 
   get deliverDestination(): string {
     return window.localStorage.getItem(Stored.deliverDestination) ?? 'site';
   }
 
-  set commodityHideCompleted(hideCompleted: boolean) {
-    window.localStorage.setItem(Stored.hideCompleted, JSON.stringify(hideCompleted));
+  set commodityHideCompleted(newValue: boolean) {
+    window.localStorage.setItem(Stored.hideCompleted, JSON.stringify(newValue));
   }
 
   get commodityHideCompleted(): boolean {
@@ -137,8 +138,8 @@ class LocalStorage {
       return JSON.parse(json) as boolean;
   };
 
-  set commodityHideFCColumns(hideFC: boolean) {
-    window.localStorage.setItem(Stored.hideFC, JSON.stringify(hideFC));
+  set commodityHideFCColumns(newValue: boolean) {
+    window.localStorage.setItem(Stored.hideFC, JSON.stringify(newValue));
   }
 
   get commodityHideFCColumns(): boolean {
@@ -149,16 +150,16 @@ class LocalStorage {
       return JSON.parse(json) as boolean;
   };
 
-  set primaryBuildId(primaryBuildId: string) {
-    window.localStorage.setItem(Stored.primaryBuildId, primaryBuildId);
+  set primaryBuildId(newValue: string) {
+    window.localStorage.setItem(Stored.primaryBuildId, newValue);
   }
 
   get primaryBuildId(): string {
     return window.localStorage.getItem(Stored.primaryBuildId) ?? '';
   }
 
-  set cmdrLinkedFCs(marketIds: number[]) {
-    window.localStorage.setItem(Stored.cmdrLinkedFCs, JSON.stringify(marketIds));
+  set cmdrLinkedFCs(newValue: number[]) {
+    window.localStorage.setItem(Stored.cmdrLinkedFCs, JSON.stringify(newValue));
   }
 
   /** Array of FC market IDs */
@@ -170,8 +171,8 @@ class LocalStorage {
       return JSON.parse(json) as number[];
   }
 
-  set globalStats(stats: GlobalStats | undefined) {
-    window.localStorage.setItem(Stored.globalStats, JSON.stringify(stats));
+  set globalStats(newValue: GlobalStats | undefined) {
+    window.localStorage.setItem(Stored.globalStats, JSON.stringify(newValue));
   }
 
   get globalStats(): GlobalStats | undefined {
@@ -190,6 +191,17 @@ class LocalStorage {
     window.localStorage.setItem(Stored.theme, newTheme);
   }
 
+  set hideShipTrips(newValue: boolean) {
+    window.localStorage.setItem(Stored.hideShipTrips, JSON.stringify(newValue));
+  }
+
+  get hideShipTrips(): boolean {
+    const json = window.localStorage.getItem(Stored.hideShipTrips);
+    if (!json)
+      return false;
+    else
+      return JSON.parse(json) as boolean;
+  };
 }
 
 export const store = new LocalStorage();

@@ -1,10 +1,10 @@
-import { ActionButton, DefaultButton, Icon, IconButton, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
 import { KnownFC } from '../types';
 import { appTheme, cn } from '../theme';
-import { fcFullName } from '../util';
+import { delayFocus, fcFullName } from '../util';
 import { FindFC } from './FindFC';
 import { FleetCarrier } from '../views';
 
@@ -25,6 +25,8 @@ interface ModalCommanderState {
   fcMatchError?: string;
 
   fcEditMarketId?: string;
+
+  hideShipTrips: boolean
 }
 
 
@@ -43,12 +45,13 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       cmdr: cmdr?.name,
       cargoLargeMax: this.largeMax,
       cargoMediumMax: this.medMax,
+      hideShipTrips: store.hideShipTrips,
     };
   }
 
 
   render() {
-    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrLinkedFCs, cmdrEditLinkedFCs, fcMatchError, fcMatchMarketId, fcEditMarketId } = this.state;
+    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrLinkedFCs, cmdrEditLinkedFCs, fcMatchError, fcMatchMarketId, fcEditMarketId, hideShipTrips } = this.state;
 
     if (cmdrLinkedFCs === undefined || cmdrLinkedFCs.length !== store.cmdrLinkedFCs.length || !store.cmdrLinkedFCs.every(fc => cmdrLinkedFCs?.find(lfc => lfc.marketId === fc))) {
       api.cmdr.getCmdrLinkedFCs(store.cmdrName)
@@ -93,8 +96,8 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             value={cmdr}
             onChange={(_, v) => this.setState({ cmdr: v! })}
             onKeyDown={(ev) => {
-              if (ev.key === 'Enter') { this.saveCmdrName(); }
-              if (ev.key === 'Escape') { this.cancelCmdrName(); }
+              if (ev.key === 'Enter') { this.onSave(); }
+              if (ev.key === 'Escape') { this.onCancal(); }
             }}
           />
 
@@ -103,11 +106,20 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             <Slider showValue={false} min={0} max={794} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
             <SpinButton className='spin-slide' value={cargoLargeMax.toString()} onChange={(_, v) => this.setState({ cargoLargeMax: parseInt(v!) })} />
           </Stack>
+
           <Label>Medium ship max capacity:</Label>
           <Stack horizontal>
             <Slider showValue={false} min={0} max={400} value={cargoMediumMax} onChange={v => this.setState({ cargoMediumMax: v })} />
             <SpinButton className='spin-slide' value={cargoMediumMax.toString()} onChange={(_, v) => this.setState({ cargoMediumMax: parseInt(v!) })} />
           </Stack>
+
+          <Checkbox
+            checked={hideShipTrips}
+            label='Hide remaining ship trips'
+            title='Being reminded that so many trips are needed can be demoralizing. Check this to hide them.'
+            onChange={(_ev, checked) => this.setState({ hideShipTrips: !!checked })}
+          />
+          <br />
 
           <Label>Linked FCs:</Label>
           <ul>
@@ -122,7 +134,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 this.setState({
                   showAddFC: true
                 });
-                // delayFocus('add-fc-combo-input');
+                delayFocus('add-fc-combo-input');
               }}
             />
           </div>
@@ -153,9 +165,9 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         </div>
 
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
-          <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.saveCmdrName} />
-          <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.clearCmdrName} />
-          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.cancelCmdrName} />
+          <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} />
+          <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.onClear} />
+          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancal} />
         </Stack>
       </div>
       {fcEditMarketId && <Modal isOpen>
@@ -167,13 +179,13 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     </>
   }
 
-  clearCmdrName = () => {
+  onClear = () => {
     store.clearCmdr();
 
     window.location.reload();
   }
 
-  saveCmdrName = async () => {
+  onSave = async () => {
     const { cmdr, cargoLargeMax, cargoMediumMax } = this.state;
     if (!!cmdr) {
       store.cmdr = {
@@ -184,21 +196,17 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
       // update linked FCs?
       const fcsToAdd = this.state.cmdrEditLinkedFCs?.filter(fc => !this.state.cmdrLinkedFCs?.find(lfc => lfc.marketId === fc.marketId)) ?? [];
-      // console.warn(fcsToAdd);
-
       const fcsToRemove = this.state.cmdrLinkedFCs?.filter(fc => !this.state.cmdrEditLinkedFCs?.find(lfc => lfc.marketId === fc.marketId)) ?? [];
-      // console.warn(fcsToRemove);
-
       for (const fc of fcsToAdd) {
         await api.cmdr.linkFC(store.cmdrName, fc.marketId);
       }
-
       for (const fc of fcsToRemove) {
         await api.cmdr.unlinkFC(store.cmdrName, fc.marketId);
       }
 
       // and update local storage
       store.cmdrLinkedFCs = this.state.cmdrEditLinkedFCs?.map(fc => fc.marketId) ?? [];
+      store.hideShipTrips = this.state.hideShipTrips;
 
       this.setState({
         cmdr: cmdr,
@@ -207,7 +215,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     }
   }
 
-  cancelCmdrName = () => {
+  onCancal = () => {
     this.props.onComplete();
   };
 

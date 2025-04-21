@@ -1,10 +1,9 @@
 import './ProjectView.css';
 
 import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
-import { HorizontalBarChart } from '@fluentui/react-charting';
 import { Component, CSSProperties } from 'react';
 import * as api from '../../api';
-import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, CommodityIcon, EditCargo, FindFC, ProjectCreate, ProjectQuery } from '../../components';
+import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC, ProjectCreate, ProjectQuery } from '../../components';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
@@ -71,6 +70,8 @@ enum Mode {
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   private buildId?: string;
   private timer?: NodeJS.Timeout;
+  /** The count of needed cargo already loaded on Fleet Carriers */
+  private countReadyOnFCs: number = 0;
 
   constructor(props: ProjectViewProps) {
     super(props);
@@ -508,6 +509,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
       return map;
     }, {} as Cargo);
+
+    // as we have the FC cargo diff's known here, calculate how much they have ready for the total progress chart. Meaning: count the needs where FCs have a surplus
+    this.countReadyOnFCs = Object.keys(mapCommodityNames).reduce((count, key) => {
+      const need = proj.commodities[key];
+      const onFCs = mapSumCargoDiff[key];
+      if (need > 0 && onFCs > 0) {
+        count += need;
+      }
+      return count;
+    }, 0);
+
     // calculate sum of diffs that are negative
     const fcSumCargoDeficit = Object.values(mapSumCargoDiff)
       .filter(v => v < 0)
@@ -1376,22 +1388,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // roughly calculate progress by the curremt sum from the highest value known
     const approxProgress = proj.maxNeed - sumTotal;
+    const percent = 100 / proj.maxNeed * approxProgress;
 
     const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
     return <div className='half'>
-      <h3 className={cn.h3}>Progress:</h3>
+      <h3 className={cn.h3}>Progress: {percent.toFixed(0)}%</h3>
       {!!summary.totalDeliveries && <div className='stats-header'>
         Total cargo delivered: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalCargo.toLocaleString()}</span> from <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span> deliveries
       </div>}
 
-      {approxProgress > 0 && <HorizontalBarChart
-        className="chart"
-        data={[{
-          chartTitle: 'Total progress:',
-          chartData: [{ horizontalBarChartdata: { x: approxProgress, y: proj.maxNeed } },],
-        }]}
-        chartDataMode={'percentage'} enableGradient
-      />}
+      {approxProgress > 0 && <ChartGeneralProgress progress={approxProgress} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
 
       <ChartByCmdrs summary={summary} cmdrColors={cmdrColors} />
 

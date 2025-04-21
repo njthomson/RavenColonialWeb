@@ -1,6 +1,6 @@
 export { BuildTypeDisplay } from "./BuildTypeDisplay";
 export { CargoRemaining } from "./CargoRemaining/CargoRemaining";
-export { ChartByCmdrs, ChartByCmdrsOverTime } from "./Charts";
+export { ChartGeneralProgress, ChartByCmdrs, ChartByCmdrsOverTime } from "./Charts";
 export { CommodityIcon } from "./CommodityIcon/CommodityIcon";
 export { EditCargo } from "./EditCargo/EditCargo";
 export { FindFC } from "./FindFC";
