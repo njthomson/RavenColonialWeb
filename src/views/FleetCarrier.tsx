@@ -114,7 +114,6 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
                 title='Update display name'
                 iconProps={{ iconName: 'Save' }}
                 disabled={fc.displayName === editDisplayName}
-                style={{ color: appTheme.palette.themePrimary }}
                 onClick={this.onUpdateFields}
               />
             </Stack>
@@ -124,6 +123,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           <td>
             MarketId:
             {store.cmdrName && <IconButton
+              className='icon-btn'
               iconProps={{ iconName: cmdrLinked ? 'UserFollowed' : 'UserRemove' }}
               title={cmdrLinked ? `Click to unlink this FC from ${store.cmdrName}` : `Click to link this FC to ${store.cmdrName}`}
               onClick={async () => {

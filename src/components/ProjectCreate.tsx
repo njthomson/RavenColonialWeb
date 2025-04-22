@@ -158,7 +158,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
             <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} disabled onChange={(_, v) => this.setState({ systemName: v! })} />
             <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking} />
           </Stack> */}
-          {<PrimaryButton text='Search sites ...' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking || !systemName} />}
+          {<PrimaryButton text='Search sites ...' iconProps={{ iconName: 'Search' }} onClick={this.onCheckSystem} disabled={checking || !systemName} />}
 
         </div>
         {this.renderFoundStations()}

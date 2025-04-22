@@ -14,12 +14,12 @@ export const learnAbout = (currentHelpId?: string) => {
 
   const topics: Record<string, string> = {
     raven: 'Raven Colonial',
-    find: 'Find a project',
+    srvsurvey: 'SrvSurvey',
+    find: 'Finding a project',
     create: 'Creating a project',
     build: 'Building a project',
     groups: 'Working in groups',
     fc: 'Linking Fleet Carriers',
-    srvsurvey: 'SrvSurvey',
   }
 
   return <div className={`home-box ${cn.greyer}`}>
@@ -77,9 +77,11 @@ export const About: React.FunctionComponent = () => {
     {(!helpId || helpId === 'find') && <div className={`home-box ${cn.greyer}`}>
       <h3 className={cn.h3}>Finding a project</h3>
       <ul>
-        <li>The home page will show any project your Commander is linked to, active or completed, as well as the last 5 projects you have viewed.</li>
+        <li>The home page will show any projects linked to your Commander, active or completed, as well as the last 5 projects you have viewed.</li>
         <li>Projects can be found by the system name on <Link href='#find'>#find</Link> page.</li>
         <li>(coming soon) It will also be possible to find Projects near a given system.</li>
+        <li>You do not need to be linked to a Project project to view details and contribute to it.</li>
+        <li>When available, use the "<Icon className="btn icon-inline" iconName='OfficeChatSolid' /> Discord" button to check with others working this project.</li>
         <IconBtnScrollTop />
       </ul>
     </div >}
@@ -90,8 +92,8 @@ export const About: React.FunctionComponent = () => {
       <ul>
         <li>Creating projects is best done through <LinkSrvSurvey /> as it can pre-populate required cargo as well as other details pulled from journal files.</li>
         <li>It is also possible to create projects through this site, though it requires some manual data entry.</li>
-        <li>Start entering the system name on the <Link href='#find'>#find</Link> page.</li>
-        <li>Assuming no match is found, click `Search sites` to pull any construction sites. (This information comes from EDSM)</li>
+        <li>Start by entering the system name on the <Link href='#find'>#find</Link> page.</li>
+        <li>Assuming no match is found, click "<Icon className="btn icon-inline" iconName='Search' /> Search sites" to pull any construction sites. (This information comes from EDSM)</li>
         <li>Choose or if the desired construction site is not known, you will have to manually find the marketID value in journal files. Click the <Icon className="icon-inline" iconName="Info" /> button for instructions.</li>
         <li>Enter a name and choose the project type. Eg: Vulcan, Coriolis, Chronos, etc. You can find this information when docked at the construction site.</li>
         <li>After creating the site, you will need to manually enter cargo amounts. Or visit the site with SrvSurvey running and these numbers will be populated automatically.</li>
@@ -105,14 +107,14 @@ export const About: React.FunctionComponent = () => {
       Building a project is where the real work is. Running <LinkSrvSurvey /> automates the process, sending updates to Raven Colonial as you progress. Most operations can be performed through the site for those not running SrvSurvey.
       <ul>
         <li>Clicking cargo rows will reveal a menu button <Icon className="btn icon-inline" iconName='ContextMenu' /> with more options.</li>
-        <li>"Mark Ready" has no specific meaning, it can be toggled on or off as you see fit. Items marked ready will show <Icon className="btn icon-inline" iconName='SkypeCircleCheck' /></li>
-        <li>"Set to zero" is a convenience to reduce the count to zero with a single click.</li>
-        <li>See below for details on "Assign to a commander ..."</li>
-        <li>Cargo items can be sorted by clicking <Icon className="btn icon-inline" iconName='Sort' /> and completed entries removed by <Icon className="btn icon-inline" iconName='AllAppsMirrored' /></li>
-        <li>For those not running SrvSurvey, use the <Icon className="btn icon-inline" iconName='DeliveryTruck' /> deliver button when delivering supplies to a construction site.</li>
+        <li>"<Icon className="btn icon-inline" iconName='StatusCircleCheckmark' /> Mark Ready" has no specific meaning, it can be toggled on or off as you see fit. Items marked ready will show <Icon className="btn icon-inline" iconName='SkypeCircleCheck' /></li>
+        <li>"<Icon className="btn icon-inline" iconName='Download' />Set to zero" is a convenience to reduce the count to zero with a single click.</li>
+        <li>See below for details on "<Icon className="btn icon-inline" iconName='PeopleAdd' /> Assign to a commander ..."</li>
+        <li>Cargo items can be sorted by clicking <Icon className="btn icon-inline" iconName='Sort' /> and completed entries removed by <Icon className="btn icon-inline" iconName='AllAppsMirrored' /> / <Icon className="btn icon-inline" iconName='ThumbnailViewMirrored' /></li>
+        <li>For those not running SrvSurvey, use the "<Icon className="btn icon-inline" iconName='DeliveryTruck' /> Deliver" button when delivering supplies to a construction site.</li>
         <li>Use the <Icon className="btn icon-inline" iconName='Edit' /> edit buttons to manually change commodity values or project details.</li>
-        <li>Use the <Icon className="btn icon-inline" iconName='Refresh' /> to reload all project related data. (Coming soon) use this button to set a periodic refresh.</li>
-        <li>If you have multiple projects on the go, the SrvSurvey overlay will show the sum of all cargo items needed across all your projects. Use the <Icon className="btn icon-inline" iconName='SingleBookmarkSolid' /> button to mark one as primary, then SrvSurvey will show cargo items needed for just that project. Be sure to click Colonize {">"} Refresh in SrvSurvey after changing this.</li>
+        <li>Data will auto-update every 30 seconds until 1 hour passes without changes. Click "<Icon className="btn icon-inline" iconName='Refresh' /> Refresh" to reload data and start auto-updating again. The <Icon className="btn icon-inline" iconName='PlaybackRate1x' /> icon means auto-updating is active.</li>
+        <li>If you have multiple projects on the go, the SrvSurvey overlay will show the sum of all cargo items needed across all your projects. Use the "<Icon className="btn icon-inline" iconName='SingleBookmarkSolid' /> Primary" button to set or clear your primary project. SrvSurvey will then show cargo items needed for the primary or all projects. Be sure to click Colonize {">"} Refresh in SrvSurvey after changing this.</li>
         <li>Projects may only be deleted by the system architect.</li>
         <li>The notes field may be used to store any free form text.</li>
         <li>As you make progress, charts will update showing progress with the volume of cargo delivered each hour.</li>
@@ -125,27 +127,30 @@ export const About: React.FunctionComponent = () => {
       <h3 className={cn.h3}>Working in groups</h3>
       Some colonization projects are huge and best done by groups of Commanders. SrvSurvey and RavenColonial will support groups working together on a single project.
       <ul>
-        <li>Below project fields and notes is a list of Commanders working on a project. The project will automatically show for all linked Commanders.</li>
+        <li>Below project fields and notes is a list of Commanders working on a project. Linking a Commander means this project will be shown on their home page and SrvSurvey will know to track progress them.</li>
         <li>Use the <Icon className="btn icon-inline" iconName='AddFriend' /> button to add any Commander by name. They do not need to be using SrvSurvey or RavenColonial.</li>
-        <li>"Assign to a commander ..." can be used to assign a given commodity to a particular commander. This helps divvy up who is going to collect what. Your Commander will be highlighted in light blue.</li>
+        <li>In the list of commodities use "Assign to a commander ..." to tag a given commodity to a particular commander. This helps divvy up who is going to collect what.</li>
         <li>Assigned commodities will also surface in the SrvSurvey overlay, look for the 📌 icon.</li>
-        <li>Hover over an assignment or a Commander's name and use the <Icon className="btn icon-inline" iconName='Delete' /> button to remove an assignment, or a Commander from this project. This will also remove any commodity assignments they may have.</li>
+        <li>Tap or hover over an assignment or a Commander's name and use the <Icon className="btn icon-inline" iconName='Delete' /> button to remove an assignment or a Commander from a project.</li>
         <li>Deliveries will naturally be tracked by commander, showing names on the charts with hourly progress.</li>
+        <li>If you have a relevant Discord channel or thread, use "<Icon className="btn icon-inline" iconName='Edit' /> Edit Project" to store that link and the "<Icon className="btn icon-inline" iconName='OfficeChatSolid' /> Discord" will jump you right to it. </li>
         <IconBtnScrollTop />
+        <li>If the Discord app is installed on this device, enable the setting "Use native Discord links" to open it directly. Click <Icon className="btn icon-inline" iconName='Contact' /> button in the top right corner to see your settings. </li>
       </ul>
     </div>}
 
 
     {(!helpId || helpId === 'fc') && <div className={`home-box ${cn.greyer}`}>
       <h3 className={cn.h3}>Working with Fleet Carriers</h3>
-      Small or large, using a Fleet Carrier is an essential way to speed up building colonies. SrvSurvey and Raven Colonial support this by linking Fleet Carries to specific projects or Commanders.
+      Small or large, using a Fleet Carrier is an essential way to speed up building colonies. SrvSurvey and Raven Colonial support this by linking Fleet Carriers to specific projects or Commanders.
       <ul>
-        <li>Use the <Icon className="btn icon-inline" iconName='Airplane' /> button below linked Commanders to add a Fleet Carrier, searching for them by name. Names are queried from Spansh and it is common for display names not to be known. Use their 6 digit ID code if not found by their display name.</li>
-        <li>You can edit cargo counts and the display name used by Raven Colonial by clicking the <Icon className="btn icon-inline" iconName='Edit' /> button, or unlink by <Icon className="btn icon-inline" iconName='Delete' /></li>
-        <li>SrvSurvey will automatically track items bought, sold or transferred to any linked Fleet Carrier. Currently this tracking is relative, meaning it will not initially know what items are present, but you can manually update cargo counts as needed.</li>
+        <li>Fleet Carriers can be added using the "<Icon className="btn icon-inline" iconName='Add' /> Add" button next to "Fleet Carriers". Searching is by by name queried from Spansh, though it is common for display names not to be known. Use their 6 digit ID code, eg: <code>N3M-T4R</code>, if not found by name.</li>
+        <li>You can edit cargo amounts and the display name used by Raven Colonial by clicking the <Icon className="btn icon-inline" iconName='Edit' /> button, or unlink from a project by <Icon className="btn icon-inline" iconName='Delete' /></li>
+        <li>SrvSurvey will automatically track items bought, sold or transferred to any linked Fleet Carrier. When docked it will update with amounts of items for sale in the market place. You can also update cargo counts manually as needed via the <Icon className="btn icon-inline" iconName='Edit' /> button.</li>
         <li>For those not running SrvSurvey, the "<Icon className="btn icon-inline" iconName='DeliveryTruck' /> Deliver" button can also be used to capture cargo delivered to a linked Fleet Carrier.</li>
-        <li>Each linked Fleet Carriers will have their own column in the table of commodities, along with a column showing the difference between all carries and the amount needed. An <Icon className="btn icon-inline" iconName='AirplaneSolid' /> icon will be shown when there is enough cargo on Fleet Carriers</li>
-        <li>Fleet Carriers can be linked directly to Commanders by 2 ways: toggle the <Icon className="btn icon-inline" iconName='UserFollowed' /> / <Icon className="btn icon-inline" iconName='UserRemove' /> button when editing a Fleet Carrier. Or: add/remove from the list when editing your own Commander via <Icon className="btn icon-inline" iconName='Contact' /> in the top right corner.</li>
+        <li>Each linked Fleet Carrier has their own column in the table of commodities, along with a column showing the sum difference between all carriers and the amount needed. An <Icon className="btn icon-inline" iconName='AirplaneSolid' /> icon will be shown when there is enough cargo on Fleet Carriers.</li>
+        <li>Fleet Carriers can be linked directly to Commanders by 2 ways: toggle the <Icon className="btn icon-inline" iconName='UserFollowed' /> / <Icon className="btn icon-inline" iconName='UserRemove' /> button when editing a Fleet Carrier. Or add/remove from the list in your settings, see <Icon className="btn icon-inline" iconName='Contact' /> in the top right corner.</li>
+        <li>Linking Fleet Carriers to your Commander helps as they will be added to the dropdown when when picking Fleet Carriers on future Projects.</li>
         <IconBtnScrollTop />
       </ul>
     </div>}

@@ -358,6 +358,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
             this.updateCargoState(uc => uc[k] = 0);
             delayFocus(`edit-${k}`);
           }}
+          styles={{ callout: { border: '1px solid ' + appTheme.palette.themePrimary } }}
         />
       </Stack>
     </>;

@@ -342,12 +342,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     ];
 
+    // prepare rich copy link
+    var copyLink = new ClipboardItem({
+      'text/plain': `https://ravencolonial.com/#build=${proj.buildId}`,
+      'text/html': new Blob([`<a href='${`https://ravencolonial.com/#build=${proj.buildId}`}'>${proj.buildName}</a>`], { type: 'text/html' }),
+    });
+
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
           <Link href={`#find=${proj.systemName}`}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
-          <span style={{ fontSize: 16 }}><CopyButton text={proj.buildName} /></span>
+          <span style={{ fontSize: 16 }}><CopyButton text={copyLink} title='Copy a link to this page' /></span>
         </h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
         {mode === Mode.view && <CommandBar className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`} items={commands} />}
@@ -655,6 +661,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               selectedKey={this.state.assignCmdr}
               onChange={(_, o) => this.onClickAssign(`${o?.key}`)}
               onDismiss={() => this.setState({ assignCommodity: undefined })}
+              styles={{ callout: { border: '1px solid ' + appTheme.palette.themePrimary } }}
             />
             <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ assignCommodity: undefined })} />
           </Stack>
@@ -693,6 +700,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {
         key: 'assign-cmdr',
         text: 'Assign to a commander ...',
+        iconProps: { iconName: 'PeopleAdd' },
         onClick: () => {
           this.setState({ assignCommodity: key });
           delayFocus('assign-cmdr');
@@ -703,6 +711,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'toggle-ready',
         text: isReady ? 'Clear ready' : 'Mark ready',
         onClick: () => this.onToggleReady(this.state.proj!.buildId, key, isReady),
+        iconProps: { iconName: 'StatusCircleCheckmark' },
       }
     ];
 
@@ -711,6 +720,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'set-to-zero',
         text: 'Set to zero',
         onClick: () => this.deliverToZero(key, need),
+        iconProps: { iconName: 'Download' },
       });
     }
 
@@ -750,6 +760,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           target={`#cn-${key}`}
           onDismiss={() => this.setState({ cargoContext: undefined })}
           items={menuItems}
+          styles={{
+            container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
+          }}
         />}
 
         <Icon
@@ -882,20 +895,20 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <>
       <br />
-      <h3 className={cn.h3}>{Object.keys(proj.commanders).length ?? 0} Commanders:</h3>
-      <ul>
-        {rows}
-      </ul>
-      <div hidden={showAddCmdr}>
-        <ActionButton
-          text='Add a new Commander?'
+      <h3 className={cn.h3}>
+        {Object.keys(proj.commanders).length ?? 0} Commanders:
+        &nbsp;
+        {!showAddCmdr && <ActionButton
+          iconProps={{ iconName: 'Add' }}
+          text='Add'
           title='Add a new Commander to this project'
-          iconProps={{ iconName: 'AddFriend' }}
+          style={{ marginLeft: 10, padding: 0, height: 22, }}
           onClick={this.onShowAddCmdr}
-        />
-      </div>
+        />}
+      </h3>
+
       {showAddCmdr && <div className='add-cmdr'>
-        <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
+        <Stack horizontal tokens={{ childrenGap: 4, padding: 4, }}>
           <TextField
             id='new-cmdr-edit'
             name='cmdr'
@@ -910,6 +923,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddCmdr: false })} />
         </Stack>
       </div>}
+
+      <ul>
+        {rows}
+      </ul>
     </>
   }
 
@@ -953,25 +970,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     return <>
-      <h3 className={cn.h3}>{proj.linkedFC.length ?? 0} Linked Fleet Carriers:</h3>
-      <ul>
-        {rows}
-      </ul>
-      <div hidden={showAddFC}>
-        <ActionButton
-          text='Link to a Fleet Carrier?'
+      <h3 className={cn.h3}>
+        {proj.linkedFC.length ?? 0} Linked Fleet Carriers:
+        &nbsp;
+        {!showAddFC && <ActionButton
+          iconProps={{ iconName: 'Add' }}
+          text='Add'
           title='Link a new Fleet Carrier to this project'
-          iconProps={{ iconName: 'Airplane' }}
+          style={{ marginLeft: 10, padding: 0, height: 22, }}
           onClick={() => {
             this.setState({
               showAddFC: true,
+              showAddCmdr: false,
               fcMatchError: undefined
             });
             delayFocus('add-fc-combo-input');
           }}
-        />
-      </div>
-
+        />}
+      </h3>
       {showAddFC && <div>
         <Label>Enter Fleet Carrier name:</Label>
         <Stack className='add-fc' horizontal tokens={{ childrenGap: 10, padding: 10, }}>
@@ -996,6 +1012,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddFC: false, fcMatchError: undefined })} />
         </Stack>
       </div>}
+
+      <ul>
+        {rows}
+      </ul>
 
       {fcEditMarketId && <Modal
         isOpen
@@ -1044,7 +1064,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!cmdrKnown) {
       this.setState({ newCmdr: cmdrName })
     }
-    this.setState({ showAddCmdr: true })
+    this.setState({ showAddCmdr: true, showAddFC: false, })
     delayFocus('new-cmdr-edit');
   }
 
@@ -1456,6 +1476,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       dropdownWidth='auto'
       selectedKey={deliverMarketId}
       onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() })}
+      styles={{ callout: { border: '1px solid ' + appTheme.palette.themePrimary } }}
     />;
 
     // valid cargo names that can be included on a delivery

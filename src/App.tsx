@@ -186,8 +186,14 @@ export class App extends Component<AppProps, AppState> {
             { key: 'white/green', text: 'Green (light)', },
           ]}
           onItemClick={(e, i) => {
-            store.theme = i?.key.toString() ?? '';
-            window.location.reload();
+            const newTheme = i?.key.toString() ?? '';
+            if (newTheme !== store.theme) {
+              store.theme = newTheme;
+              window.location.reload();
+            }
+          }}
+          styles={{
+            container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
           }}
         />
         {this.renderBody()}

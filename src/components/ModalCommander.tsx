@@ -149,27 +149,30 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
               &nbsp;
               <CalloutMsg id='useNativeDiscord' msg='Requires Discord app to be installed on this device.' />
             </Stack>
-
           </Stack>
 
-          <Label>Linked FCs:</Label>
-          <ul>
-            {rows}
-          </ul>
-          <div hidden={showAddFC}>
-            <ActionButton
-              text='Link to a Fleet Carrier?'
-              title='Link a new Fleet Carrier to this project'
-              iconProps={{ iconName: 'Airplane' }}
+          <br />
+
+          <Stack horizontal verticalAlign='center'>
+            <Label>Linked FCs:</Label>
+            {!showAddFC && <ActionButton
+              iconProps={{ iconName: 'Add' }}
+              text='Add'
+              title='Link a new Fleet Carrier to your Commander'
+              style={{
+                marginLeft: 10,
+                padding: 0,
+                height: 22,
+                backgroundColor: appTheme.palette.themeLighter,
+              }}
               onClick={() => {
                 this.setState({
                   showAddFC: true
                 });
                 delayFocus('add-fc-combo-input');
               }}
-            />
-          </div>
-
+            />}
+          </Stack>
 
           {showAddFC && <div>
             <Label>Enter Fleet Carrier name:</Label>
@@ -193,6 +196,10 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
               <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddFC: false, fcMatchError: undefined })} />
             </Stack>
           </div>}
+
+          <ul>
+            {rows}
+          </ul>
         </div>
 
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
@@ -201,6 +208,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} />
         </Stack>
       </div>
+
       {fcEditMarketId && <Modal isOpen>
         <FleetCarrier
           onClose={() => this.setState({ fcEditMarketId: undefined })}
