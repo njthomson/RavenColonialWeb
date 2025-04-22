@@ -1,4 +1,6 @@
+import * as api from './api';
 import { GlobalStats, Project, ProjectRefLite, SortMode } from "./types";
+import { fcFullName } from './util';
 
 enum Stored {
   cmdr = 'cmdr',
@@ -13,6 +15,7 @@ enum Stored {
   globalStats = 'globalStats',
   theme = 'theme',
   hideShipTrips = 'hideShipTrips',
+  useNativeDiscord = 'useNativeDiscord',
 }
 
 interface CmdrData {
@@ -21,12 +24,49 @@ interface CmdrData {
   medMax: number;
 }
 
+const writeValue = (key: Stored, newValue: unknown) => {
+  window.localStorage.setItem(key, typeof newValue === 'string' ? newValue : JSON.stringify(newValue));
+};
+
+const readString = (key: Stored): string => window.localStorage.getItem(key) ?? '';
+
+const readValue = <T>(key: Stored): T | undefined => {
+  const json = window.localStorage.getItem(key);
+  if (!json)
+    return undefined;
+  else
+    return JSON.parse(json) as T;
+}
+
+const readBoolean = (key: Stored): boolean => !!readValue(key);
+
 class LocalStorage {
   clearCmdr(): void {
     window.localStorage.removeItem(Stored.cmdr);
     window.localStorage.removeItem(Stored.recentProjects);
     window.localStorage.removeItem(Stored.deliverDestination);
     window.localStorage.removeItem(Stored.cmdrLinkedFCs);
+    window.localStorage.removeItem(Stored.hideShipTrips);
+    window.localStorage.removeItem(Stored.useNativeDiscord);
+  }
+
+  async migrateLinkedFCs(): Promise<void> {
+    // exit early if nothing to do..
+    var json = localStorage.getItem(Stored.cmdrLinkedFCs);
+    if (!json?.startsWith('[')) return;
+
+    const marketIds = JSON.parse(json) as number[];
+    const allFCs = await Promise.all(marketIds.map(marketId => api.fc.get(marketId.toString())));
+
+    // reduce to < marketId: name >
+    const mapFCs = allFCs.reduce((map, fc) => {
+      map[fc.marketId.toString()] = fcFullName(fc.name, fc.displayName);
+      return map;
+    }, {} as Record<string, string>);
+
+    // store migrated data
+    localStorage.setItem(Stored.cmdrLinkedFCs, JSON.stringify(mapFCs));
+    console.log(`migrateLinkedFCs:`, mapFCs);
   }
 
   get cmdrName() {
@@ -41,28 +81,10 @@ class LocalStorage {
     this.cmdr = data;
   }
 
-  get cmdr(): CmdrData | undefined {
-    const json = window.localStorage.getItem(Stored.cmdr);
-    if (json) {
-      return JSON.parse(json);
-    } else {
-      return undefined;
-    }
-  }
+  get cmdr(): CmdrData | undefined { return readValue(Stored.cmdr); }
+  set cmdr(newValue: CmdrData | undefined) { writeValue(Stored.cmdr, newValue); }
 
-  set cmdr(newValue: CmdrData | undefined) {
-    window.localStorage.setItem(Stored.cmdr, JSON.stringify(newValue));
-  }
-
-  get recentProjects(): ProjectRefLite[] {
-    const json = window.localStorage.getItem(Stored.recentProjects);
-    if (json) {
-      const data = JSON.parse(json) as ProjectRefLite[];
-      return data;
-    } else {
-      return [];
-    }
-  }
+  get recentProjects(): ProjectRefLite[] { return readValue(Stored.recentProjects) ?? []; }
 
   addRecentProject(proj: Project): void {
     // read recent projects and remove entry for this project
@@ -83,8 +105,7 @@ class LocalStorage {
       recentProjects.pop();
     }
 
-    const json = JSON.stringify(recentProjects);
-    window.localStorage.setItem(Stored.recentProjects, json)
+    writeValue(Stored.recentProjects, recentProjects)
   }
 
   removeRecentProject(buildId: string): void {
@@ -92,116 +113,42 @@ class LocalStorage {
     const recentProjects = this.recentProjects
       .filter(rp => rp.buildId !== buildId);
 
-    const json = JSON.stringify(recentProjects);
-    window.localStorage.setItem(Stored.recentProjects, json)
+    writeValue(Stored.recentProjects, recentProjects)
   }
 
-  set deliver(newValue: Record<string, number>) {
-    window.localStorage.setItem(Stored.deliver, JSON.stringify(newValue));
-  }
+  get deliver(): Record<string, number> { return readValue(Stored.deliver) ?? {}; }
+  set deliver(newValue: Record<string, number>) { writeValue(Stored.deliver, newValue); }
 
-  get deliver(): Record<string, number> {
-    const json = window.localStorage.getItem(Stored.deliver);
-    if (json) {
-      const data = JSON.parse(json) as Record<string, number>;
-      return data;
-    } else {
-      return {};
-    }
-  }
+  get commoditySort(): SortMode { return readString(Stored.sortMode) as SortMode ?? SortMode.group; }
+  set commoditySort(newValue: SortMode) { writeValue(Stored.sortMode, newValue); }
 
-  set commoditySort(newValue: SortMode) {
-    window.localStorage.setItem(Stored.sortMode, newValue);
-  }
+  get deliverDestination(): string { return readString(Stored.deliverDestination) || 'site'; }
+  set deliverDestination(newValue: string) { writeValue(Stored.deliverDestination, newValue); }
 
-  get commoditySort(): SortMode {
-    return window.localStorage.getItem(Stored.sortMode) as SortMode ?? SortMode.group;
-  }
+  get commodityHideCompleted(): boolean { return readBoolean(Stored.hideCompleted); }
+  set commodityHideCompleted(newValue: boolean) { writeValue(Stored.hideCompleted, newValue); }
 
-  set deliverDestination(newValue: string) {
-    window.localStorage.setItem(Stored.deliverDestination, newValue);
-  }
+  get commodityHideFCColumns(): boolean { return readBoolean(Stored.hideFC); }
+  set commodityHideFCColumns(newValue: boolean) { writeValue(Stored.hideFC, newValue); }
 
-  get deliverDestination(): string {
-    return window.localStorage.getItem(Stored.deliverDestination) ?? 'site';
-  }
-
-  set commodityHideCompleted(newValue: boolean) {
-    window.localStorage.setItem(Stored.hideCompleted, JSON.stringify(newValue));
-  }
-
-  get commodityHideCompleted(): boolean {
-    const json = window.localStorage.getItem(Stored.hideCompleted);
-    if (!json)
-      return false;
-    else
-      return JSON.parse(json) as boolean;
-  };
-
-  set commodityHideFCColumns(newValue: boolean) {
-    window.localStorage.setItem(Stored.hideFC, JSON.stringify(newValue));
-  }
-
-  get commodityHideFCColumns(): boolean {
-    const json = window.localStorage.getItem(Stored.hideFC);
-    if (!json)
-      return false;
-    else
-      return JSON.parse(json) as boolean;
-  };
-
-  set primaryBuildId(newValue: string) {
-    window.localStorage.setItem(Stored.primaryBuildId, newValue);
-  }
-
-  get primaryBuildId(): string {
-    return window.localStorage.getItem(Stored.primaryBuildId) ?? '';
-  }
-
-  set cmdrLinkedFCs(newValue: number[]) {
-    window.localStorage.setItem(Stored.cmdrLinkedFCs, JSON.stringify(newValue));
-  }
+  get primaryBuildId(): string { return readString(Stored.primaryBuildId); }
+  set primaryBuildId(newValue: string) { writeValue(Stored.primaryBuildId, newValue); }
 
   /** Array of FC market IDs */
-  get cmdrLinkedFCs(): number[] {
-    const json = window.localStorage.getItem(Stored.cmdrLinkedFCs);
-    if (!json)
-      return [];
-    else
-      return JSON.parse(json) as number[];
-  }
+  get cmdrLinkedFCs(): Record<string, string> { return readValue(Stored.cmdrLinkedFCs) ?? {}; }
+  set cmdrLinkedFCs(newValue: Record<string, string>) { writeValue(Stored.cmdrLinkedFCs, newValue); }
 
-  set globalStats(newValue: GlobalStats | undefined) {
-    window.localStorage.setItem(Stored.globalStats, JSON.stringify(newValue));
-  }
+  get globalStats(): GlobalStats | undefined { return readValue(Stored.globalStats); }
+  set globalStats(newValue: GlobalStats | undefined) { writeValue(Stored.globalStats, newValue); }
 
-  get globalStats(): GlobalStats | undefined {
-    const json = window.localStorage.getItem(Stored.globalStats);
-    if (!json)
-      return undefined;
-    else
-      return JSON.parse(json) as GlobalStats;
-  }
+  get theme(): string { return readString(Stored.theme); }
+  set theme(newTheme: string) { writeValue(Stored.theme, newTheme); }
 
-  get theme(): string {
-    return window.localStorage.getItem(Stored.theme) ?? '';
-  }
+  get hideShipTrips(): boolean { return readBoolean(Stored.hideShipTrips); }
+  set hideShipTrips(newValue: boolean) { writeValue(Stored.hideShipTrips, newValue); }
 
-  set theme(newTheme: string) {
-    window.localStorage.setItem(Stored.theme, newTheme);
-  }
-
-  set hideShipTrips(newValue: boolean) {
-    window.localStorage.setItem(Stored.hideShipTrips, JSON.stringify(newValue));
-  }
-
-  get hideShipTrips(): boolean {
-    const json = window.localStorage.getItem(Stored.hideShipTrips);
-    if (!json)
-      return false;
-    else
-      return JSON.parse(json) as boolean;
-  };
+  get useNativeDiscord(): boolean { return readBoolean(Stored.useNativeDiscord); }
+  set useNativeDiscord(newValue: boolean) { writeValue(Stored.useNativeDiscord, newValue); }
 }
 
 export const store = new LocalStorage();

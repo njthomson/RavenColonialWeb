@@ -24,11 +24,11 @@ export const cmdr = {
     return await callAPI<KnownFC[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc`);
   },
 
-  linkFC: async (cmdr: string, marketId: number): Promise<void> => {
+  linkFC: async (cmdr: string, marketId: string): Promise<void> => {
     return await callAPI<void>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/${encodeURIComponent(marketId)}`, 'PUT');
   },
 
-  unlinkFC: async (cmdr: string, marketId: number): Promise<void> => {
+  unlinkFC: async (cmdr: string, marketId: string): Promise<void> => {
     return await callAPI<void>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/${encodeURIComponent(marketId)}`, 'DELETE');
   },
 

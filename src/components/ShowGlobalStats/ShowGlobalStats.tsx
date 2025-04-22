@@ -1,10 +1,11 @@
 import './ShowGlobalStats.css';
 import * as api from '../../api';
-import { Component, FunctionComponent, useState } from "react";
+import { Component, FunctionComponent } from "react";
 import { store } from '../../local-storage';
-import { Callout, Icon, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { GlobalStats } from '../../types';
 import { cn } from '../../theme';
+import { CalloutMsg } from '../CalloutMsg';
 
 
 interface ShowGlobalStatsProps { }
@@ -97,7 +98,6 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
 
 
 const StatsBox: FunctionComponent<{ label: string, title?: string, small?: string, data: Record<string, number> }> = (props) => {
-  const [showBubble, setShowBubble] = useState(false);
   var rows = Object.entries(props.data).map(([k, v]) => <tr key={k}>
     <td className='l'>{k}:</td>
     <td className='r'>{v.toLocaleString()}</td>
@@ -110,16 +110,7 @@ const StatsBox: FunctionComponent<{ label: string, title?: string, small?: strin
     <h3 className={cn.h3} id={`${id}`} >
       {props.label}:
       &nbsp;
-      {!!props.title && <>
-        <Icon className='small' iconName='Info' onClick={() => setShowBubble(true)} />
-        {showBubble && <Callout
-          onDismiss={() => setShowBubble(false)}
-          target={`#${id}`}
-        >
-          {props.title}
-        </Callout>}
-      </>}
-
+      {!!props.title && <CalloutMsg id={`${id}`} msg={props.title} />}
     </h3>
     <table className='t-right' cellPadding={0} cellSpacing={0}>
       <tbody>

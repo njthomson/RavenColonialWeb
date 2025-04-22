@@ -266,6 +266,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     // prep CommandBar buttons
+    const hasDiscordLink = !!this.state.proj?.discordLink;
+    let discordTitle = 'Edit the project to set a Discord link';
+    if (hasDiscordLink)
+      discordTitle = store.useNativeDiscord
+        ? `Open link in Discord app:\n${this.state.proj?.discordLink}`
+        : `Open Discord link in a tab:\n${this.state.proj?.discordLink}`;
+
     const commands: ICommandBarItemProps[] = [
       {
         key: 'deliver-cargo',
@@ -328,15 +335,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {
         key: 'discord-link',
         text: 'Discord',
-        title: this.state.proj?.discordLink ? `Open Discord link:\n${this.state.proj?.discordLink}` : 'Edit the project to set a Discord link',
-        disabled: !this.state.proj?.discordLink,
-        iconProps: { iconName: 'OfficeChat' },
-        onClick: () => {
-          if (this.state.proj?.discordLink) {
-            // TODO: experiment with "discord://-/..." protocol?
-            window.open(this.state.proj?.discordLink, '_blank');
-          }
-        }
+        title: discordTitle,
+        disabled: !hasDiscordLink,
+        iconProps: { iconName: 'OfficeChatSolid' },
+        onClick: () => this.openDiscordLink(this.state.proj?.discordLink)
       }
     ];
 
@@ -510,12 +512,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return map;
     }, {} as Cargo);
 
-    // as we have the FC cargo diff's known here, calculate how much they have ready for the total progress chart. Meaning: count the needs where FCs have a surplus
+    // as we have the FC cargo diff's known here, calculate how much they have ready for the total progress chart. Meaning: count the needs where FCs have a surplus, otherwise count what is on the FC
     this.countReadyOnFCs = Object.keys(mapCommodityNames).reduce((count, key) => {
       const need = proj.commodities[key];
-      const onFCs = mapSumCargoDiff[key];
-      if (need > 0 && onFCs > 0) {
-        count += need;
+      const onFCs = mapSumCargoDiff[key] + need;
+      if (need > 0) {
+        if (onFCs > need) {
+          count += need;
+        } else if (onFCs) {
+          count += onFCs;
+        }
       }
       return count;
     }, 0);
@@ -613,12 +619,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       ...Object.keys(this.state.fcCargo).map(k => {
         const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
         return fc && <th key={`fcc${k}`} className={`commodity-need ${cn.bb} ${cn.br}`} title={`${fc.displayName} (${fc.name})`} >
-          <span
+          <Link
             className='fake-link'
             onClick={() => this.setState({ fcEditMarketId: k })}
           >
             {fc.name}
-          </span>
+          </Link>
         </th>;
       })
     ];
@@ -730,7 +736,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const fcMarketIds = Object.keys(this.state.fcCargo);
 
-    const className = `${need !== 0 ? '' : 'done '} ${flip ? '' : cn.odd}`;
+    const className = need !== 0 ? '' : 'done ';
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
     return <tr key={`cc-${key}`} className={className} style={style}>
       <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
@@ -935,6 +941,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </span>
     </li>));
 
+    let preMatches: Record<string, string> | undefined = undefined;
+    if (showAddFC) {
+      const cmdrLinkedFCs = store.cmdrLinkedFCs;
+      preMatches = Object.keys(store.cmdrLinkedFCs)
+        .filter(marketId => proj.linkedFC.every(fc => fc.marketId.toString() !== marketId))
+        .reduce((map, marketId) => {
+          map[marketId] = cmdrLinkedFCs[marketId];
+          return map;
+        }, {} as Record<string, string>);
+    }
+
     return <>
       <h3 className={cn.h3}>{proj.linkedFC.length ?? 0} Linked Fleet Carriers:</h3>
       <ul>
@@ -959,6 +976,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <Label>Enter Fleet Carrier name:</Label>
         <Stack className='add-fc' horizontal tokens={{ childrenGap: 10, padding: 10, }}>
           <FindFC
+            preMatches={preMatches}
             errorMsg={fcMatchError}
             onMatch={(marketId) => {
 
@@ -1562,6 +1580,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
       this.pollTimestamp();
     }
+  };
+
+  openDiscordLink = (link: string | undefined) => {
+    if (!link) return;
+
+    // try using native Discord protocol to open the app ...
+    if (store.useNativeDiscord && link.startsWith('https://discord.com/channels/')) {
+      var parts = /channels\/(\d+)\/(\d+)/.exec(link);
+      if (parts?.length === 3) {
+        const newLink = `discord://-/channels/${parts[1]}/${parts[2]}`
+        window.open(newLink, '_blank');
+        return;
+      }
+    }
+
+    // ... still here - open Discord in another browser tab
+    window.open(this.state.proj?.discordLink, '_blank');
   };
 }
 

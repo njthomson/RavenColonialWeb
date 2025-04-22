@@ -2,11 +2,11 @@ import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, Modal, 
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
-import { KnownFC } from '../types';
 import { appTheme, cn } from '../theme';
 import { delayFocus, fcFullName } from '../util';
 import { FindFC } from './FindFC';
 import { FleetCarrier } from '../views';
+import { CalloutMsg } from './CalloutMsg';
 
 interface ModalCommanderProps {
   onComplete: () => void;
@@ -18,8 +18,8 @@ interface ModalCommanderState {
   cargoLargeMax: number;
   cargoMediumMax: number;
 
-  cmdrLinkedFCs?: KnownFC[];
-  cmdrEditLinkedFCs?: KnownFC[];
+  cmdrLinkedFCs: Record<string, string>;
+  cmdrEditLinkedFCs: Record<string, string>;
   showAddFC?: boolean;
   fcMatchMarketId?: string;
   fcMatchError?: string;
@@ -27,10 +27,12 @@ interface ModalCommanderState {
   fcEditMarketId?: string;
 
   hideShipTrips: boolean
+  useNativeDiscord: boolean;
 }
 
 
 export class ModalCommander extends Component<ModalCommanderProps, ModalCommanderState> {
+  private static first = true;
   largeMax: number;
   medMax: number;
 
@@ -45,49 +47,65 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       cmdr: cmdr?.name,
       cargoLargeMax: this.largeMax,
       cargoMediumMax: this.medMax,
+      cmdrLinkedFCs: { ...store.cmdrLinkedFCs },
+      cmdrEditLinkedFCs: { ...store.cmdrLinkedFCs },
       hideShipTrips: store.hideShipTrips,
+      useNativeDiscord: store.useNativeDiscord,
     };
   }
 
+  componentDidMount(): void {
+    if (ModalCommander.first) {
+      // fetch FCs from server, if the first time here
+      ModalCommander.first = false;
 
-  render() {
-    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrLinkedFCs, cmdrEditLinkedFCs, fcMatchError, fcMatchMarketId, fcEditMarketId, hideShipTrips } = this.state;
-
-    if (cmdrLinkedFCs === undefined || cmdrLinkedFCs.length !== store.cmdrLinkedFCs.length || !store.cmdrLinkedFCs.every(fc => cmdrLinkedFCs?.find(lfc => lfc.marketId === fc))) {
       api.cmdr.getCmdrLinkedFCs(store.cmdrName)
         .then(cmdrLinkedFCs => {
-          this.setState({ cmdrLinkedFCs: [...cmdrLinkedFCs], cmdrEditLinkedFCs: [...cmdrLinkedFCs] });
-          store.cmdrLinkedFCs = this.state.cmdrEditLinkedFCs?.map(fc => fc.marketId) ?? [];
+          const linkedFCs = cmdrLinkedFCs.reduce((map, fc) => {
+            map[fc.marketId.toString()] = fcFullName(fc.name, fc.displayName);
+            return map;
+          }, {} as Record<string, string>);
+
+          this.setState({
+            cmdrLinkedFCs: { ...linkedFCs },
+            cmdrEditLinkedFCs: { ...linkedFCs }
+          });
+          // and push into local storage
+          store.cmdrLinkedFCs = linkedFCs;
         })
         .catch(err => console.error(err.message));
     }
+  }
 
-    const rows = cmdrEditLinkedFCs?.map(item => (<li key={`@${item.marketId}`}>
+  render() {
+    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcMatchError, fcMatchMarketId, fcEditMarketId, hideShipTrips, useNativeDiscord } = this.state;
+
+    const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
       <span className='removable'>
-        {fcFullName(item.name, item.displayName)}
+        {fullName}
         &nbsp;
         <Icon
           className={`btn ${cn.btn}`}
           iconName='Edit'
-          title={`Edit FC: ${item.displayName} (${item.name})`}
+          title={`Edit FC: ${fullName}`}
           style={{ color: appTheme.palette.themePrimary }}
           onClick={() => {
-            this.setState({ fcEditMarketId: item.marketId.toString() });
+            this.setState({ fcEditMarketId: marketId });
           }}
         />
         &nbsp;
         <Icon
           className={`btn ${cn.btn}`}
           iconName='Delete'
-          title={`Unlink FC: ${item.displayName} (${item.name})`}
+          title={`Unlink FC: ${fullName}`}
           style={{ color: appTheme.palette.themePrimary }}
-          onClick={() => { this.onClickUnlinkFC(item.marketId); }}
+          onClick={() => { this.onClickUnlinkFC(marketId); }}
         />
       </span>
     </li>));
 
     return <>
-      <div className="edit-cmdr">
+      <div className="edit-cmdr half">
         <div style={{ textAlign: 'left' }}>
           <TextField
             autoFocus
@@ -97,7 +115,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             onChange={(_, v) => this.setState({ cmdr: v! })}
             onKeyDown={(ev) => {
               if (ev.key === 'Enter') { this.onSave(); }
-              if (ev.key === 'Escape') { this.onCancal(); }
+              if (ev.key === 'Escape') { this.onCancel(); }
             }}
           />
 
@@ -113,13 +131,26 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             <SpinButton className='spin-slide' value={cargoMediumMax.toString()} onChange={(_, v) => this.setState({ cargoMediumMax: parseInt(v!) })} />
           </Stack>
 
-          <Checkbox
-            checked={hideShipTrips}
-            label='Hide remaining ship trips'
-            title='Being reminded that so many trips are needed can be demoralizing. Check this to hide them.'
-            onChange={(_ev, checked) => this.setState({ hideShipTrips: !!checked })}
-          />
-          <br />
+          <Stack tokens={{ childrenGap: 2 }}>
+            <Checkbox
+              checked={hideShipTrips}
+              label='Hide remaining ship trips'
+              title='Being reminded that so many trips are needed can be demoralizing. Check this to hide them.'
+              onChange={(_ev, checked) => this.setState({ hideShipTrips: !!checked })}
+            />
+            <Stack horizontal verticalAlign='center'>
+              <Checkbox
+                id='useNativeDiscord'
+                checked={useNativeDiscord}
+                label='Use native Discord links'
+                title='Use Discord protocols to open the App, rather than opening Discord inside a web page. Uncheck if this device does not have Discord installed.'
+                onChange={(_ev, checked) => this.setState({ useNativeDiscord: !!checked })}
+              />
+              &nbsp;
+              <CalloutMsg id='useNativeDiscord' msg='Requires Discord app to be installed on this device.' />
+            </Stack>
+
+          </Stack>
 
           <Label>Linked FCs:</Label>
           <ul>
@@ -147,7 +178,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 errorMsg={fcMatchError}
                 onMatch={(marketId) => {
                   if (marketId) {
-                    if (this.state.cmdrLinkedFCs?.find(fc => fc.marketId.toString() === marketId)) {
+                    if (marketId in this.state.cmdrEditLinkedFCs) {
                       this.setState({ fcMatchMarketId: undefined, fcMatchError: `FC already linked` });
                     } else {
                       this.setState({ fcMatchMarketId: marketId, fcMatchError: undefined });
@@ -167,7 +198,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
           <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} />
           <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.onClear} />
-          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancal} />
+          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} />
         </Stack>
       </div>
       {fcEditMarketId && <Modal isOpen>
@@ -181,7 +212,6 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
   onClear = () => {
     store.clearCmdr();
-
     window.location.reload();
   }
 
@@ -195,52 +225,47 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       };
 
       // update linked FCs?
-      const fcsToAdd = this.state.cmdrEditLinkedFCs?.filter(fc => !this.state.cmdrLinkedFCs?.find(lfc => lfc.marketId === fc.marketId)) ?? [];
-      const fcsToRemove = this.state.cmdrLinkedFCs?.filter(fc => !this.state.cmdrEditLinkedFCs?.find(lfc => lfc.marketId === fc.marketId)) ?? [];
-      for (const fc of fcsToAdd) {
-        await api.cmdr.linkFC(store.cmdrName, fc.marketId);
+      const fcsToAdd = Object.keys(this.state.cmdrEditLinkedFCs)?.filter(marketId => !(marketId in this.state.cmdrLinkedFCs));
+      const fcsToRemove = Object.keys(this.state.cmdrLinkedFCs)?.filter(marketId => !(marketId in this.state.cmdrEditLinkedFCs));
+      for (const marketId of fcsToAdd) {
+        await api.cmdr.linkFC(store.cmdrName, marketId);
       }
-      for (const fc of fcsToRemove) {
-        await api.cmdr.unlinkFC(store.cmdrName, fc.marketId);
+      for (const marketId of fcsToRemove) {
+        await api.cmdr.unlinkFC(store.cmdrName, marketId);
       }
 
-      // and update local storage
-      store.cmdrLinkedFCs = this.state.cmdrEditLinkedFCs?.map(fc => fc.marketId) ?? [];
+      // and update local storage and reload whole page
+      store.cmdrLinkedFCs = { ...this.state.cmdrEditLinkedFCs };
       store.hideShipTrips = this.state.hideShipTrips;
-
-      this.setState({
-        cmdr: cmdr,
-      });
+      store.useNativeDiscord = this.state.useNativeDiscord;
       window.location.reload();
     }
   }
 
-  onCancal = () => {
+  onCancel = () => {
     this.props.onComplete();
   };
 
   onClickLinkFC = async () => {
-    // const buildId = this.state.proj?.buildId;
     const marketId = this.state.fcMatchMarketId;
     if (!marketId) return;
     const fc = await api.fc.get(marketId!)
 
     // add to array
     const { cmdrEditLinkedFCs } = this.state;
-    cmdrEditLinkedFCs?.push(fc);
+    cmdrEditLinkedFCs[marketId] = fcFullName(fc.name, fc.displayName);
     this.setState({ cmdrEditLinkedFCs, fcMatchMarketId: undefined, showAddFC: false, fcMatchError: undefined });
   }
 
-  onClickUnlinkFC = async (marketId: number) => {
-    const match = this.state.cmdrEditLinkedFCs?.find(fc => fc.marketId === marketId);
-    if (!match) {
+  onClickUnlinkFC = async (marketId: string) => {
+    const { cmdrEditLinkedFCs } = this.state;
+    if (!(marketId in cmdrEditLinkedFCs)) {
       console.error(`Fleet Carrier ${marketId} not found?`);
       return;
     }
 
     // remove entry from array
-    const { cmdrEditLinkedFCs } = this.state;
-    cmdrEditLinkedFCs!.splice(cmdrEditLinkedFCs!.indexOf(match), 1);
+    delete cmdrEditLinkedFCs[marketId];
     this.setState({ cmdrEditLinkedFCs });
   }
 

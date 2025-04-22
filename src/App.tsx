@@ -1,5 +1,4 @@
 import './App.css';
-
 import * as api from './api';
 import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, IContextualMenuItem, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
 import { Component, } from 'react';
@@ -56,6 +55,10 @@ export class App extends Component<AppProps, AppState> {
   componentDidMount(): void {
     this.setStateFromHash();
     this.fetchPrimaryBuildId();
+
+    // migrate local-storage items?
+    store.migrateLinkedFCs()
+      .catch(err => console.error(err));
   }
 
   fetchPrimaryBuildId() {
@@ -89,10 +92,8 @@ export class App extends Component<AppProps, AppState> {
         console.log(`Chanding cmdr: ${store.cmdrName} => ${hashCmdr}`);
         store.cmdrName = hashCmdr;
         nextState.cmdr = hashCmdr;
-        window.location.hash = `#cmdr`;
-        this.fetchPrimaryBuildId();
-      } else {
-        nextState.cmdr = store.cmdrName;
+        window.location.hash = `#home`;
+        window.location.reload();
       }
     } else {
       nextState.pivot = TopPivot.home;
@@ -218,7 +219,6 @@ export class App extends Component<AppProps, AppState> {
       </ThemeProvider>
     );
   }
-
 
   renderBody() {
     const { pivot } = this.state;

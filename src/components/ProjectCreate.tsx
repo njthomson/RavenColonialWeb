@@ -4,7 +4,7 @@ import * as api from '../api';
 import { store } from '../local-storage';
 import { CreateProject, StationEDSM } from '../types';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
-import { cn } from '../theme';
+import { appTheme, cn } from '../theme';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -192,7 +192,20 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         </div>}
 
         <TextField name='buildName' title='Enter a descriptive name for this project' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
-        <ComboBox label='Build type:' title='Choose what is being built' selectedKey={buildType} options={buildTypes} styles={{ root: { maxWidth: 300 } }} required={true} onChange={(_, o) => this.setState({ buildType: `${o?.key}` })} />
+        <ComboBox
+          label='Build type:'
+          title='Choose what is being built'
+          selectedKey={buildType}
+          options={buildTypes}
+          styles={{
+            root: { maxWidth: 300 },
+            callout: {
+              border: '1px solid ' + appTheme.palette.themePrimary,
+            },
+          }}
+          required={true}
+          onChange={(_, o) => this.setState({ buildType: `${o?.key}` })}
+        />
         <br />
 
         {!!buildType && <MessageBar messageBarType={MessageBarType.severeWarning}>

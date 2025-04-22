@@ -1,12 +1,11 @@
+import * as api from '../../api';
 import './Commander.css';
-
 import { ActionButton, Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
-import * as api from '../../api';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
 import { mapCommodityNames, Project } from '../../types';
 import { store } from '../../local-storage';
-import { cn } from '../../theme';
+import { appTheme, cn } from '../../theme';
 
 interface CmdrProps { }
 
@@ -139,11 +138,8 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       if (p.commanders[cmdr]?.length > 0) {
         let flip = false;
         for (const commodity of p.commanders[cmdr]) {
-          // if (!p.commodities![commodity]) continue;
-
           flip = !flip;
-          const className = 'assignment ' + (flip ? '' : cn.odd);
-          const rowC = <tr className={className} key={`cp${p.buildId}-${commodity}`}>
+          const rowC = <tr className='assignment' key={`cp${p.buildId}-${commodity}`} style={{ backgroundColor: flip ? undefined : appTheme.palette.themeLighter }}>
             <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
             <td className='icon d'><CommodityIcon name={commodity} /></td>
             <td className='need d'>{p.commodities![commodity].toLocaleString()}</td>

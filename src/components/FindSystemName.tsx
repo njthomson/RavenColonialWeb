@@ -1,6 +1,7 @@
 import { ComboBox, IComboBox, IComboBoxOption, Label } from '@fluentui/react';
 import { Component, createRef } from 'react';
 import * as api from '../api';
+import { appTheme } from '../theme';
 
 interface FindSystemNameProps {
   onMatch: (marketId: string | undefined) => void;
@@ -53,7 +54,13 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
         componentRef={this.comboFindFC}
         openOnKeyboardFocus
         errorMessage={errorMsg}
-        styles={{ root: { maxWidth: 300 } }}
+        styles={{
+          root: { maxWidth: 300 },
+          callout: {
+            border: '1px solid ' + appTheme.palette.themePrimary,
+            display: errorMsg ? 'none' : 'flex',
+          },
+        }}
         allowFreeform
         autoComplete='off'
         options={matches}
@@ -110,7 +117,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
     const matches = await api.edsm.findSystems(txt);
 
     this.setState({
-      errorMsg: matches.length === 0 ? 'No matches found. Try Carrier ID?' : undefined,
+      errorMsg: matches.length === 0 ? 'No matches found.' : undefined,
       text: undefined,
       matches: matches.map(m => ({
         key: m.value,

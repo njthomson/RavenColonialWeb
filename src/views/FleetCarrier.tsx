@@ -1,7 +1,7 @@
 import { DefaultButton, IconButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
-import { Component, createRef } from 'react';
+import { Component } from 'react';
 import * as api from '../api';
-import { EditCargo, FindFC } from '../components';
+import { EditCargo } from '../components';
 import { appTheme, cn } from '../theme';
 import { KnownFC } from '../types';
 import { store } from '../local-storage';
@@ -26,7 +26,6 @@ interface FleetCarrierState {
 }
 
 export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState> {
-  private findFC = createRef<FindFC>();
   firstCargo: Record<string, number> = {};
 
   constructor(props: FleetCarrierProps) {
@@ -37,8 +36,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
       nextMarketId: this.props.marketId,
       loading: false,
       editCargo: {},
-      cmdrLinked: !!store.cmdrLinkedFCs.includes(numMarketId),
-      // showBubble: !this.props.cmdr,
+      cmdrLinked: numMarketId.toString() in store.cmdrLinkedFCs,
     };
   }
 
@@ -64,14 +62,14 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   render() {
     const { errorMsg } = this.state;
 
-    return <>
+    return <div className='half'>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
       <IconButton className='right' title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onClose()} style={{ position: 'relative', top: -4 }} />
       <h3 className={cn.h3} style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
 
       {this.props.marketId && this.renderFC()}
-    </>;
+    </div>;
   }
 
 
@@ -127,23 +125,25 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
             MarketId:
             {store.cmdrName && <IconButton
               iconProps={{ iconName: cmdrLinked ? 'UserFollowed' : 'UserRemove' }}
-              title={cmdrLinked ? `${fcFullName(fc.name, fc.displayName)} is linked ${store.cmdrName}` : `${fcFullName(fc.name, fc.displayName)} is NOT linked to ${store.cmdrName}`}
+              title={cmdrLinked ? `Click to unlink this FC from ${store.cmdrName}` : `Click to link this FC to ${store.cmdrName}`}
               onClick={async () => {
                 if (this.state.cmdrLinked) {
                   // remove link
-                  await api.cmdr.unlinkFC(store.cmdrName, fc.marketId);
+                  await api.cmdr.unlinkFC(store.cmdrName, fc.marketId.toString());
 
-                  const marketIds = store.cmdrLinkedFCs;
-                  marketIds.splice(marketIds.indexOf(fc.marketId), 1);
-                  store.cmdrLinkedFCs = marketIds;
+                  const cmdrLinkedFCs = store.cmdrLinkedFCs;
+                  delete cmdrLinkedFCs[fc.marketId.toString()];
+                  store.cmdrLinkedFCs = cmdrLinkedFCs;
+
                   this.setState({ cmdrLinked: false });
                 } else {
                   // add link
-                  await api.cmdr.linkFC(store.cmdrName, fc.marketId);
+                  await api.cmdr.linkFC(store.cmdrName, fc.marketId.toString());
 
-                  const marketIds = store.cmdrLinkedFCs;
-                  marketIds.push(fc.marketId);
-                  store.cmdrLinkedFCs = marketIds;
+                  const cmdrLinkedFCs = store.cmdrLinkedFCs;
+                  cmdrLinkedFCs[fc.marketId] = fcFullName(fc.name, fc.displayName);
+                  store.cmdrLinkedFCs = cmdrLinkedFCs;
+
                   this.setState({ cmdrLinked: true });
                 }
               }}

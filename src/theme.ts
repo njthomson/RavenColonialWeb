@@ -19,6 +19,7 @@ const readTheme = (): Theme => {
       });
 
     case 'dark/blue': return createTheme({
+      isInverted: true,
       palette: {
         themePrimary: '#3f87d4',
         themeLighterAlt: '#030508',
@@ -50,10 +51,14 @@ const readTheme = (): Theme => {
         purple: 'rgb(0, 96, 150, 0.5)', // fade
         purpleLight: '#00324d', // greyer
         purpleDark: '#195494', // grey + lines
+
+        blackTranslucent40: 'rgb(255, 255, 255, 0.2)',
+        whiteTranslucent40: 'rgb(0, 0, 0, 0.2)',
       }
     });
 
     case 'dark/orange': return createTheme({
+      isInverted: true,
       palette: {
         themePrimary: '#d36f00',
         themeLighterAlt: '#080500',
@@ -85,6 +90,9 @@ const readTheme = (): Theme => {
         purple: 'rgb(224, 146, 0, 0.5)', // fade
         purpleLight: '#4d3200', // greyer
         purpleDark: '#824500', // grey + lines
+
+        blackTranslucent40: 'rgb(255, 255, 255, 0.2)',
+        whiteTranslucent40: 'rgb(0, 0, 0, 0.2)',
       }
     });
 
@@ -154,7 +162,6 @@ export const cn = mergeStyleSets({
     backgroundColor: appTheme.palette.white,
   },
   topBar: {
-    borderTop: appTheme.palette.purpleDark + ' 1px solid',
     borderBottom: appTheme.palette.purpleDark + ' 1px solid',
     boxShadow: '0 .25rem .75rem ' + appTheme.palette.purple,
   },
@@ -163,9 +170,6 @@ export const cn = mergeStyleSets({
   },
   greyer: {
     backgroundColor: appTheme.palette.purpleLight,
-  },
-  odd: {
-    backgroundColor: appTheme.palette.neutralSecondary,
   },
   surplus: {
     color: appTheme.palette.white,
