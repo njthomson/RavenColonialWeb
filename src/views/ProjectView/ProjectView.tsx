@@ -195,7 +195,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .catch(err => this.setState({ errorMsg: err.message }));
   }
 
-  async pollTimestamp() {
+  async pollTimestamp(force: boolean = false) {
     // call server to see if anything changed
     const buildId = this.state.proj?.buildId!;
     let timestamp = await api.project.last(buildId)
@@ -204,9 +204,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     // use current state if no .last added yet
     if (timestamp === '0001-01-01T00:00:00+00:00') { timestamp = this.state.lastTimestamp; }
 
-    console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp})`);
+    console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp || force}  (${timestamp} vs ${this.state.lastTimestamp})`);
 
-    if (timestamp !== this.state.lastTimestamp) {
+    if (timestamp !== this.state.lastTimestamp || force) {
       // something has changed
       this.fetchProject(buildId, true);
     }
@@ -1575,10 +1575,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.log(`Stopping timer at: ${new Date().toISOString()}`);
       clearTimeout(this.timer);
       this.setState({ autoUpdateUntil: 0 });
+      this.fetchProject(this.state.proj!.buildId, true);
     } else {
       console.log(`Starting timer at: ${new Date().toISOString()}`);
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
-      this.pollTimestamp();
+      this.pollTimestamp(true);
     }
   };
 
