@@ -3,7 +3,7 @@ import './Commander.css';
 import { ActionButton, Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
-import { mapCommodityNames, Project } from '../../types';
+import { mapCommodityNames, ProjectRef } from '../../types';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 
@@ -11,7 +11,8 @@ interface CmdrProps { }
 
 interface CmdrState {
   showBubble: boolean;
-  projects?: Project[],
+  projectRefs?: ProjectRef[],
+  assignments: Record<string, Record<string, number>>
   loading?: boolean;
   errorMsg?: string;
   showCompleted?: boolean;
@@ -30,6 +31,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
 
     this.state = {
       showBubble: !this.cmdr,
+      assignments: {},
     };
   }
 
@@ -44,29 +46,27 @@ export class Commander extends Component<CmdrProps, CmdrState> {
     this.unmounted = true;
   }
 
-  // componentDidUpdate(prevProps: Readonly<CmdrProps>, prevState: Readonly<CmdrState>, snapshot?: any): void {
-  //   if (prevProps.cmdr !== this.cmdr) {
-  //     this.fetchCmdrProjects(this.cmdr);
-  //   }
-  // }
-
   async fetchCmdrProjects(cmdr: string | undefined): Promise<void> {
-    this.setState({ loading: true, projects: undefined });
+    this.setState({ loading: true, projectRefs: undefined });
     try {
       if (!cmdr) { return; }
 
       this.setState({
         loading: true,
-        projects: undefined
+        projectRefs: undefined
       });
 
-      const cmdrSummary = await api.cmdr.getSummary(cmdr);
+      const [assigned, refs] = await Promise.all([
+        api.cmdr.getActiveAssignments(cmdr),
+        api.cmdr.getProjectRefs(cmdr)
+      ]);
 
       if (this.unmounted) return;
 
       this.setState({
         loading: false,
-        projects: cmdrSummary.projects
+        projectRefs: refs ?? [],
+        assignments: assigned ?? {},
       });
 
     } catch (err: any) {
@@ -102,10 +102,9 @@ export class Commander extends Component<CmdrProps, CmdrState> {
   }
 
   renderCmdrProjects() {
-    const cmdr = this.cmdr?.toLowerCase() ?? '';
-    const { projects, loading, showCompleted } = this.state;
+    const { projectRefs, loading, showCompleted, assignments } = this.state;
 
-    if (projects?.length === 0) {
+    if (projectRefs?.length === 0) {
       return <>
         <br />
         <Label>No projects found ...</Label>
@@ -120,7 +119,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
     const rows = [];
     let sumTotal = 0;
 
-    for (const p of projects ?? []) {
+    for (const p of projectRefs ?? []) {
       if (p.complete) continue;
 
       // a row the the project link
@@ -135,23 +134,23 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       rows.push(rowP);
 
       // add rows with commodity assignments?
-      if (p.commanders[cmdr]?.length > 0) {
+      if (assignments[p.buildId]) {
         let flip = false;
-        for (const commodity of p.commanders[cmdr]) {
+        for (const commodity in assignments[p.buildId]) {
           flip = !flip;
           const rowC = <tr className='assignment' key={`cp${p.buildId}-${commodity}`} style={{ backgroundColor: flip ? undefined : appTheme.palette.themeLighter }}>
             <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
             <td className='icon d'><CommodityIcon name={commodity} /></td>
-            <td className='need d'>{p.commodities![commodity].toLocaleString()}</td>
+            <td className='need d'>{assignments[p.buildId][commodity].toLocaleString()}</td>
             <td className='filler'></td>
           </tr>;
           rows.push(rowC);
-          sumTotal += p.commodities![commodity];
+          sumTotal += assignments[p.buildId][commodity];
         }
       }
     }
 
-    const completedProjects = !projects ? [] : projects
+    const completedProjects = !projectRefs ? [] : projectRefs
       .filter(p => p.complete)
       .map(p => <li key={`cp${p.buildId}`}><ProjectLink proj={p} /></li>);
 
