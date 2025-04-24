@@ -11,6 +11,7 @@ import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sum
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
+import { TimeRemaining } from '../../components/TimeRemaining';
 
 const autoUpdateFrequency = 30 * 1000; // 30 seconds
 const autoUpdateStopDuration = 60 * 60 * 1000; // 60 minutes
@@ -125,7 +126,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return '?';
   }
 
-  async fetchProject(buildId: string | undefined, refreshing: boolean = false) {
+  async fetchProject(buildId: string | undefined, refreshing: boolean = false, polling: boolean = false) {
     if (!buildId) {
       this.setState({ loading: false });
       return;
@@ -176,7 +177,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (newProj.complete) window.document.title += ' (completed)';
 
     } catch (err: any) {
-      this.setState({ loading: false, refreshing: false, errorMsg: err.message, });
+      if (polling) {
+        console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
+        this.setState({ loading: false, refreshing: false, autoUpdateUntil: 0 });
+      } else {
+        this.setState({ loading: false, refreshing: false, errorMsg: err.message, });
+      }
     }
   }
 
@@ -195,32 +201,36 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .catch(err => this.setState({ errorMsg: err.message }));
   }
 
-  async pollTimestamp(force: boolean = false) {
-    // call server to see if anything changed
-    const buildId = this.state.proj?.buildId!;
-    let timestamp = await api.project.last(buildId)
-      .catch(err => console.error(err.message));
+  async pollLastTimestamp(force: boolean = false) {
+    try {
+      // call server to see if anything changed
+      const buildId = this.state.proj?.buildId!;
+      let timestamp = await api.project.last(buildId);
 
-    // use current state if no .last added yet
-    if (timestamp === '0001-01-01T00:00:00+00:00') { timestamp = this.state.lastTimestamp; }
+      // use current state if no .last added yet
+      if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
 
-    console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp || force}  (${timestamp} vs ${this.state.lastTimestamp})`);
+      console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp || force}  (${timestamp} vs ${this.state.lastTimestamp})`);
 
-    if (timestamp !== this.state.lastTimestamp || force) {
-      // something has changed
-      this.fetchProject(buildId, true);
-    }
-
-    // schedule next poll?
-    if (this.state.autoUpdateUntil > 0) {
-      if (Date.now() < this.state.autoUpdateUntil) {
-        this.timer = setTimeout(() => {
-          this.pollTimestamp();
-        }, autoUpdateFrequency);
-      } else {
-        console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
-        this.setState({ autoUpdateUntil: 0 });
+      if (timestamp !== this.state.lastTimestamp || force) {
+        // something has changed
+        this.fetchProject(buildId, true, true);
       }
+
+      // schedule next poll?
+      if (this.state.autoUpdateUntil > 0) {
+        if (Date.now() < this.state.autoUpdateUntil) {
+          this.timer = setTimeout(() => {
+            this.pollLastTimestamp();
+          }, autoUpdateFrequency);
+        } else {
+          console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+          this.setState({ autoUpdateUntil: 0 });
+        }
+      }
+    } catch (err: any) {
+      console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
+      this.setState({ autoUpdateUntil: 0 });
     }
   }
 
@@ -818,25 +828,32 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <tbody>
             <tr><td>Build name:</td><td>
               {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.buildName}</div>}
-              {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
-              />}
+              {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
             </td></tr>
             <tr><td>Build type:</td><td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}><BuildTypeDisplay buildType={proj.buildType} /></div></td></tr>
             <tr><td>System name:</td><td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td></tr>
             <tr><td>Architect:</td><td>
               {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.architectName}&nbsp;</div>}
-              {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
-              />}
+              {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
             </td></tr>
             <tr><td>Faction:</td><td>
               {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.factionName}&nbsp;</div>}
-              {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
-              />}
+              {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
             </td></tr>
+
+            {(proj.timeDue || editProject) && <tr>
+              <td>Time remaining:</td>
+              <td>
+                <div id='due-time' className='grey'>
+                  {!editProject && proj.timeDue !== undefined && <TimeRemaining timeDue={proj.timeDue} />}
+                  {editProject && this.renderEditTimeRemaining(editProject)}
+                </div>
+              </td>
+            </tr>}
+
             <tr><td>Notes:</td><td>
               {!editProject && <div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.notes}&nbsp;</div>}
-              {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
-              />}
+              {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
             </td></tr>
             {editProject && <tr>
               <td>
@@ -852,8 +869,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
                   }}
                 />
               </td>
-              <td><input type='text' value={editProject.discordLink} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
-              /></td>
+              <td><input type='text' value={editProject.discordLink ?? ''} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} /></td>
             </tr>}
           </tbody>
         </table>
@@ -862,6 +878,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div>
     </div>;
   };
+
+  renderEditTimeRemaining(editProject: Partial<Project>) {
+    if (editProject.timeDue) {
+      return <div className='small'>
+        <TimeRemaining timeDue={editProject.timeDue} onChange={(dt) => this.updateProjData('timeDue', dt)} />
+      </div>;
+    } else {
+      return <ActionButton
+        iconProps={{ iconName: 'Timer' }}
+        text='Add time remaining?'
+        onClick={() => this.updateProjData('timeDue', new Date(1000 + Date.now() + 1000 * 60 * 60 * 24).toISOString())}
+        style={{ height: 22 }}
+      />;
+    }
+  }
 
   updateProjData = (key: keyof (Project), value: string) => {
     const editProject = { ...this.state.editProject } as any;
@@ -1600,7 +1631,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     } else {
       console.log(`Starting timer at: ${new Date().toISOString()}`);
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
-      this.pollTimestamp(true);
+      this.pollLastTimestamp(true);
     }
   };
 

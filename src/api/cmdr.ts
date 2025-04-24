@@ -1,16 +1,16 @@
-import { CmdrSummary, KnownFC, ProjectRef } from "../types";
+import { CmdrPatch, CmdrSummary, CmdrView, KnownFC, ProjectRef } from "../types";
 import { callAPI } from "./api-util";
 
 /** Fleet Carrier APIs */
 export const cmdr = {
 
-  // getSummary: async (cmdr: string): Promise<CmdrSummary> => {
-  //   return await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/summary`);
-  // },
+  getCmdr: async (cmdr: string): Promise<CmdrView> => {
+    return await callAPI<CmdrView>(`/api/cmdr/${encodeURIComponent(cmdr)}`);
+  },
 
-  // getProjects: async (cmdr: string): Promise<CmdrSummary> => {
-  //   return await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/`);
-  // },
+  updateCmdr: async (cmdr: string, newData: CmdrPatch): Promise<CmdrView> => {
+    return await callAPI<CmdrView>(`/api/cmdr/${encodeURIComponent(cmdr)}`, 'PATCH', JSON.stringify(newData));
+  },
 
   getProjectRefs: async (cmdr: string): Promise<ProjectRef[]> => {
     return await callAPI<ProjectRef[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/refs`);

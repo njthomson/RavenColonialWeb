@@ -226,6 +226,12 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   onSave = async () => {
     const { cmdr, cargoLargeMax, cargoMediumMax } = this.state;
     if (!!cmdr) {
+
+      // update server if cmdr name changed by casing ONLY
+      if (cmdr.toLowerCase() === store.cmdrName.toLowerCase() && cmdr !== store.cmdrName) {
+        await api.cmdr.updateCmdr(cmdr.toLowerCase(), { displayName: cmdr });
+      }
+
       store.cmdr = {
         name: cmdr,
         largeMax: cargoLargeMax,

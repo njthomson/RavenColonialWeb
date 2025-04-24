@@ -35,6 +35,7 @@ export interface ProjectRef extends ProjectRefComplete {
   architectName?: string;
   factionName?: string;
   discordLink?: string;
+  timeDue?: string;
   complete: boolean;
   maxNeed: number;
   notes?: string;
@@ -75,6 +76,14 @@ export interface SupplyStats {
   countCargo: number;
   countDeliveries: number;
   cmdrs: Record<string, number>;
+}
+
+export interface CmdrView {
+  displayName: string;
+}
+
+export interface CmdrPatch {
+  displayName: string;
 }
 
 export interface CmdrSummary {
