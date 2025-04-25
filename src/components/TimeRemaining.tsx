@@ -1,6 +1,6 @@
 import { FunctionComponent, useState } from 'react';
 import { Icon, Stack } from '@fluentui/react';
-import { cn } from '../theme';
+import { appTheme, cn } from '../theme';
 
 const getTimeRemaining = (timeDue: string): [weeks: number, days: number, hours: number, mins: number] => {
 
@@ -41,39 +41,92 @@ export const TimeRemaining: FunctionComponent<{ timeDue: string, onChange?: ((ne
     return <Stack horizontal verticalAlign='baseline'>
 
       Weeks:&nbsp;
-      <input min={0} max={4} type='number' value={weeks} style={{ width: 44, textAlign: 'right' }} onChange={(ev) => {
-        let w = ev.target.valueAsNumber || 0;
-        props.onChange!(calcNewTimeDue(w, days, hours, mins));
-        setWeeks(w);
-      }} />
+      <input
+        min={-1} max={4}
+        type='number'
+        value={weeks}
+        style={{ width: 44, textAlign: 'right', backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+        onChange={(ev) => {
+          let ww = ev.target.valueAsNumber || 0;
+          if (ww === 4) { ww = 0; }
+          if (ww === -1) { ww = 3; }
+          props.onChange!(calcNewTimeDue(ww, days, hours, mins));
+          setWeeks(ww);
+        }}
+        onFocus={(ev) => {
+          ev.target.type = 'text';
+          ev.target.setSelectionRange(0, 10);
+          ev.target.type = 'number';
+        }}
+      />
 
       &nbsp;Days:&nbsp;
-      <input min={0} max={24} type='number' value={days} style={{ width: 44, textAlign: 'right' }} onChange={(ev) => {
-        let d = ev.target.valueAsNumber || 0;
-        props.onChange!(calcNewTimeDue(weeks, d, hours, mins));
-        setDays(d);
-      }} />
+      <input
+        min={-1} max={7}
+        type='number'
+        value={days}
+        style={{ width: 44, textAlign: 'right', backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+        onChange={(ev) => {
+          let dd = ev.target.valueAsNumber || 0;
+          if (dd === 7) { dd = 0; }
+          if (dd === -1) { dd = 6; }
+          props.onChange!(calcNewTimeDue(weeks, dd, hours, mins));
+          setDays(dd);
+        }}
+        onFocus={(ev) => {
+          ev.target.type = 'text';
+          ev.target.setSelectionRange(0, 10);
+          ev.target.type = 'number';
+        }}
+      />
 
       &nbsp;Hours:&nbsp;
-      <input min={0} max={60} type='number' value={hours} style={{ width: 44, textAlign: 'right' }} onChange={(ev) => {
-        let h = ev.target.valueAsNumber || 0;
-        props.onChange!(calcNewTimeDue(weeks, days, h, mins));
-        setHours(h);
-      }} />
+      <input
+        min={-1} max={24}
+        type='number'
+        value={hours}
+        style={{ width: 44, textAlign: 'right', backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+        onChange={(ev) => {
+          let hh = ev.target.valueAsNumber || 0;
+          if (hh === 24) { hh = 0; }
+          if (hh === -1) { hh = 23; }
+          props.onChange!(calcNewTimeDue(weeks, days, hh, mins));
+          setHours(hh);
+        }}
+        onFocus={(ev) => {
+          ev.target.type = 'text';
+          ev.target.setSelectionRange(0, 10);
+          ev.target.type = 'number';
+        }}
+      />
 
       &nbsp;Mins:&nbsp;
-      <input min={0} max={60} type='number' value={mins} style={{ width: 44, textAlign: 'right' }} onChange={(ev) => {
-        let m = ev.target.valueAsNumber || 0;
-        props.onChange!(calcNewTimeDue(weeks, days, hours, m));
-        setMins(m);
-      }} />
+      <input
+        min={-1} max={60}
+        type='number'
+        value={mins}
+        style={{ width: 44, textAlign: 'right', backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }}
+        onChange={(ev) => {
+          let mm = ev.target.valueAsNumber || 0;
+          if (mm === 60) { mm = 0; }
+          if (mm === -1) { mm = 59; }
+          props.onChange!(calcNewTimeDue(weeks, days, hours, mm));
+          setMins(mm);
+        }}
+        onFocus={(ev) => {
+          ev.target.type = 'text';
+          ev.target.setSelectionRange(0, 10);
+          ev.target.type = 'number';
+        }}
+      />
 
+      &nbsp;
       &nbsp;
       <Icon
         className={`icon-btn ${cn.btn}`}
         iconName='Clear'
         title='Remove time remaining'
-        onClick={() => props.onChange!(undefined!)}
+        onClick={() => props.onChange!('')}
       />
 
     </Stack>;

@@ -214,7 +214,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       if (timestamp !== this.state.lastTimestamp || force) {
         // something has changed
-        this.fetchProject(buildId, true, true);
+        await this.fetchProject(buildId, true, true);
       }
 
       // schedule next poll?
@@ -346,7 +346,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'discord-link',
         text: 'Discord',
         title: discordTitle,
-        disabled: !hasDiscordLink,
+        disabled: !hasDiscordLink || refreshing,
         iconProps: { iconName: 'OfficeChatSolid' },
         onClick: () => this.openDiscordLink(this.state.proj?.discordLink)
       }
@@ -844,7 +844,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             {(proj.timeDue || editProject) && <tr>
               <td>Time remaining:</td>
               <td>
-                <div id='due-time' className='grey'>
+                <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
                   {!editProject && proj.timeDue !== undefined && <TimeRemaining timeDue={proj.timeDue} />}
                   {editProject && this.renderEditTimeRemaining(editProject)}
                 </div>
@@ -885,10 +885,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <TimeRemaining timeDue={editProject.timeDue} onChange={(dt) => this.updateProjData('timeDue', dt)} />
       </div>;
     } else {
+      const defaultTimeRemaining = (28 * 24 * 60 * 60 * 1000) - 300_000; // ~28 days time, less 5 hours
       return <ActionButton
         iconProps={{ iconName: 'Timer' }}
-        text='Add time remaining?'
-        onClick={() => this.updateProjData('timeDue', new Date(1000 + Date.now() + 1000 * 60 * 60 * 24).toISOString())}
+        text='Add time remaining'
+        onClick={() => this.updateProjData('timeDue', new Date(Date.now() + defaultTimeRemaining).toISOString())}
         style={{ height: 22 }}
       />;
     }
@@ -1624,11 +1625,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   toggleAutoRefresh = () => {
     if (this.state.autoUpdateUntil > 0) {
+      // stop auto-refresh poll and don't refresh at this time.
       console.log(`Stopping timer at: ${new Date().toISOString()}`);
       clearTimeout(this.timer);
       this.setState({ autoUpdateUntil: 0 });
-      this.fetchProject(this.state.proj!.buildId, true);
     } else {
+      // start polling (which causes an immediate refresh)
       console.log(`Starting timer at: ${new Date().toISOString()}`);
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
       this.pollLastTimestamp(true);
