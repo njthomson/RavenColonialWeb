@@ -259,6 +259,7 @@ export const mapCommodityNames: Record<string, string> = {
   "resonatingseparators": "Resonating Separators",
   "bioreducinglichen": "Bioreducing Lichen",
   "geologicalequipment": "Geological Equipment",
+  "muonimager": "Muon Imager",
   "mutomimager": "Muon Imager",
   "basicmedicines": "Basic Medicines",
   "combatstabilizers": "Combat Stabilizers",
@@ -280,5 +281,6 @@ export const mapCommodityNames: Record<string, string> = {
   "survivalequipment": "Survival Equipment",
   "thermalcoolingunits": "Thermal Cooling Units",
   "heliostaticfurnaces": "Microbial Furnaces",
+  "microbialfurnaces": "Microbial Furnaces",
   "mineralextractors": "Mineral Extractors"
 };
