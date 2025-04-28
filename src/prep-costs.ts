@@ -37,7 +37,7 @@ const mapCargo1: Record<string, string> = {
   "Resonating Separators": "resonatingseparators",
   "Bioreducing Lichen": "bioreducinglichen",
   "Geological Equipment": "geologicalequipment",
-  "Muon Imager": "muonimager",
+  "Muon Imager": "mutomimager",
   "Basic Medicines": "basicmedicines",
   "Combat Stabilizers": "combatstabilizers",
   "Military Grade Fabrics": "militarygradefabrics",
