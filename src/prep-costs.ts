@@ -55,7 +55,7 @@ const mapCargo1: Record<string, string> = {
   "Emergency Power Cells": "emergencypowercells",
   "Survival Equipment": "survivalequipment",
   "Thermal Cooling Units": "thermalcoolingunits",
-  "Microbial Furnaces": "microbialfurnaces",
+  "Microbial Furnaces": "heliostaticfurnaces",
   "Mineral Extractors": "mineralextractors"
 };
 

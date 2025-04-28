@@ -279,6 +279,6 @@ export const mapCommodityNames: Record<string, string> = {
   "emergencypowercells": "Emergency Power Cells",
   "survivalequipment": "Survival Equipment",
   "thermalcoolingunits": "Thermal Cooling Units",
-  "microbialfurnaces": "Microbial Furnaces",
+  "heliostaticfurnaces": "Microbial Furnaces",
   "mineralextractors": "Mineral Extractors"
 };
