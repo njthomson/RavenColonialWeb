@@ -2,12 +2,11 @@ import './ProjectView/ProjectView.css';
 import { CommandBar, Icon, MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
-import { ProjectLink } from '../components';
+import { CargoGrid, ProjectLink } from '../components';
 import { cn } from '../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../types';
 import { store } from '../local-storage';
 import { mergeCargo } from '../util';
-import { CargoGrid } from '../components/CargoGrid';
 
 interface ViewAllProps {
 }

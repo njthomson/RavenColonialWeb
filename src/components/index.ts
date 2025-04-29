@@ -9,3 +9,4 @@ export { buildTypes, ProjectCreate } from "./ProjectCreate";
 export { ProjectLink } from "./ProjectLink/ProjectLink";
 export { ProjectQuery } from "./ProjectQuery";
 export { RecentProjects } from "./RecentProjects/RecentProjects";
+export { CargoGrid } from "./CargoGrid";
