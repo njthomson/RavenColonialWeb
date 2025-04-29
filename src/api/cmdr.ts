@@ -1,4 +1,4 @@
-import { CmdrPatch, CmdrSummary, CmdrView, KnownFC, ProjectRef } from "../types";
+import { CmdrPatch, CmdrSummary, CmdrView, KnownFC, Project, ProjectRef } from "../types";
 import { callAPI } from "./api-util";
 
 /** Fleet Carrier APIs */
@@ -14,6 +14,10 @@ export const cmdr = {
 
   getProjectRefs: async (cmdr: string): Promise<ProjectRef[]> => {
     return await callAPI<ProjectRef[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/refs`);
+  },
+
+  getActiveProjects: async (cmdr: string): Promise<Project[]> => {
+    return await callAPI<Project[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/active`);
   },
 
   getActiveAssignments: async (cmdr: string): Promise<Record<string, Record<string, number>>> => {

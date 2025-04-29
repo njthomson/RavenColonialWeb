@@ -6,15 +6,12 @@ import * as api from '../../api';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC, ProjectCreate, ProjectQuery } from '../../components';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
-import { Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
 import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 import { TimeRemaining } from '../../components/TimeRemaining';
-
-const autoUpdateFrequency = 30 * 1000; // 30 seconds
-const autoUpdateStopDuration = 60 * 60 * 1000; // 60 minutes
 
 interface ProjectViewProps { }
 

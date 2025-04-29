@@ -8,6 +8,7 @@ import { TopPivot } from './types';
 import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
+import { ViewAll } from './views/ViewAll';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -79,7 +80,7 @@ export class App extends Component<AppProps, AppState> {
       nextState.pivot = TopPivot.find;
     } else if (params.has('build')) {
       // viewing a build project
-      nextState.pivot = TopPivot.build;
+      nextState.pivot = window.location.hash === '#build' ? TopPivot.buildAll : TopPivot.build;
     } else if (params.has('about')) {
       // viewing help content
       nextState.pivot = TopPivot.about;
@@ -108,7 +109,7 @@ export class App extends Component<AppProps, AppState> {
       // searching for build projects
       return TopPivot.find;
     } else if (params.has('build')) {
-      return TopPivot.build;
+      return window.location.hash === '#build' ? TopPivot.buildAll : TopPivot.build;
     } else if (params.has('about')) {
       return TopPivot.about;
     } else if (params.has('cmdr')) {
@@ -196,6 +197,7 @@ export class App extends Component<AppProps, AppState> {
             container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
           }}
         />
+
         {this.renderBody()}
 
         {cmdrEdit && <Modal isOpen>
@@ -233,6 +235,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.home: return <Home />;
       case TopPivot.find: return <ProjectSearch />;
       case TopPivot.build: return <ProjectView />;
+      case TopPivot.buildAll: return <ViewAll />;
       case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
     }

@@ -10,7 +10,7 @@ import { CopyButton } from '../components/CopyButton';
 
 interface FleetCarrierProps {
   marketId: string;
-  onClose: () => void;
+  onClose: (changed: boolean) => void;
 }
 
 interface FleetCarrierState {
@@ -65,7 +65,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     return <div className='half'>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
-      <IconButton className='right' title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onClose()} style={{ position: 'relative', top: -4 }} />
+      <IconButton className='right' title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onClose(false)} style={{ position: 'relative', top: -4 }} />
       <h3 className={cn.h3} style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
 
       {this.props.marketId && this.renderFC()}
@@ -198,7 +198,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           iconProps={{ iconName: 'Cancel' }}
           onClick={() => {
             this.setState({ editCargo: this.state.fc!.cargo });
-            this.props.onClose();
+            this.props.onClose(false);
           }}
         />
       </Stack>
@@ -224,7 +224,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
       const cargoUpdated = await api.fc.updateCargo(this.state.fc!.marketId, cargoEdit);
       this.setState({ loading: false, editCargo: cargoUpdated });
-      this.props.onClose();
+      this.props.onClose(true);
     } catch (err: any) {
       this.setState({ loading: false, errorMsg: err.message });
     }

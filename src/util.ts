@@ -1,5 +1,5 @@
 import cargoTypes from './assets/cargo-types.json';
-import { mapCommodityNames, SortMode } from "./types";
+import { Cargo, mapCommodityNames, SortMode } from "./types";
 
 export const getColorTable = (tokens: string[]): Record<string, string> => {
   const colors: Record<string, string> = {};
@@ -69,4 +69,16 @@ export const sumCargo = (cargo: Record<string, number>): number => {
     .filter(k => k in mapCommodityNames)
     .reduce((s, k) => s += cargo[k], 0);
   return sum;
+}
+
+export const mergeCargo = (cargos: Cargo[]): Cargo => {
+
+  let names = Array.from(new Set<string>(cargos.flatMap(c => Object.keys(c))));
+
+  const merged = names.reduce((map, name) => {
+    map[name] = cargos.reduce((sum, cargo) => sum += cargo[name] ?? 0, 0);
+    return map;
+
+  }, {} as Cargo);
+  return merged;
 }

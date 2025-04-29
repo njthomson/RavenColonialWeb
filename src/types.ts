@@ -1,4 +1,7 @@
 
+export const autoUpdateFrequency = 30 * 1000; // 30 seconds
+export const autoUpdateStopDuration = 60 * 60 * 1000; // 60 minutes
+
 export class RequestError extends Error {
   constructor(
     public statusCode: number,
@@ -125,6 +128,7 @@ export enum TopPivot {
   home = 'home',
   find = 'find',
   build = 'build',
+  buildAll = 'buildAll',
   cmdr = 'cmdr',
   about = 'about',
 }
