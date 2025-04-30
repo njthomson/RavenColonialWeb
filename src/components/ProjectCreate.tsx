@@ -1,10 +1,11 @@
-import { ChoiceGroup, ComboBox, IChoiceGroupOption, IComboBoxOption, IconButton, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ChoiceGroup, IChoiceGroupOption, IComboBoxOption, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
 import { CreateProject, StationEDSM } from '../types';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
-import { appTheme, cn } from '../theme';
+import { cn } from '../theme';
+import { BuildType } from './BuildType';
 // import { prepIconLookup } from './prep-costs';
 // prepIconLookup();
 
@@ -133,6 +134,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       maxNeed: 0,
       complete: false,
       notes: '',
+      commodities: {},
     };
   }
 
@@ -192,19 +194,11 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         </div>}
 
         <TextField name='buildName' title='Enter a descriptive name for this project' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
-        <ComboBox
-          label='Build type:'
-          title='Choose what is being built'
-          selectedKey={buildType}
-          options={buildTypes}
-          styles={{
-            root: { maxWidth: 300 },
-            callout: {
-              border: '1px solid ' + appTheme.palette.themePrimary,
-            },
-          }}
-          required={true}
-          onChange={(_, o) => this.setState({ buildType: `${o?.key}` })}
+
+        <Label required>Build type:</Label>
+        <BuildType
+          buildType={buildType}
+          onChange={(t) => this.setState({ buildType: t })}
         />
         <br />
 
@@ -251,7 +245,8 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
                 showMarketId: false,
               });
               if (!this.state.buildName) {
-                this.setState({ buildName: name, });
+                let newName = name.split(':')[1]?.trim() || name;
+                this.setState({ buildName: newName, });
               }
             }
           }} />

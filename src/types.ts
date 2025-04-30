@@ -45,6 +45,7 @@ export interface ProjectRef extends ProjectRefComplete {
 }
 
 export interface CreateProject extends ProjectRef {
+  commodities: Record<string, number>;
   commanders?: Record<string, string[]>;
 }
 
@@ -171,6 +172,28 @@ export interface ResponseEdsmSystem {
     y: number;
     z: number;
   }
+}
+
+export interface ResponseEdsmSystemBodies {
+  id: number;
+  id64: number;
+  name: string;
+  url: string;
+  bodyCount: number;
+  bodies: ResponseEdsmSystemBody[];
+}
+
+export interface ResponseEdsmSystemBody {
+  id: number;
+  id64: number;
+  bodyId: number;
+  name: string;
+  type?: string;
+  subType?: string;
+  distanceToArrival: number;
+  isLandable: boolean;
+
+  // TODO: add more fields?
 }
 
 export interface ResponseEdsmTypeAhead {

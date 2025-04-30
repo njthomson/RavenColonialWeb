@@ -121,7 +121,8 @@
   display: inline;
 }
 
-.project-edit input {
+.project-edit input,
+.project-edit select {
   display: block;
   width: 400px;
 }

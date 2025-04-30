@@ -12,6 +12,8 @@ import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 import { TimeRemaining } from '../../components/TimeRemaining';
+import { BuildType } from '../../components/BuildType';
+import { ChooseBody } from '../../components/ChooseBody';
 
 interface ProjectViewProps { }
 
@@ -827,12 +829,40 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.buildName}</div>}
               {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
             </td></tr>
-            <tr><td>Build type:</td><td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}><BuildTypeDisplay buildType={proj.buildType} /></div></td></tr>
-            <tr><td>System name:</td><td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td></tr>
+            <tr>
+              <td>Build type:</td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
+                {!editProject && <BuildTypeDisplay buildType={proj.buildType} />}
+                {editProject && <BuildType buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />}
+              </div>
+              </td>
+            </tr>
+
+            <tr><td>System name:</td><td><div className={`grey ${!!editProject ? 'hint' : ''}`} style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td></tr>
+
+            {(!!proj.bodyName || editProject) && <tr>
+              <td>Body name:</td>
+              <td>
+                {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.bodyName}&nbsp;</div>}
+
+                {editProject && <div style={{ backgroundColor: appTheme.palette.purpleLight }}>
+                  <ChooseBody systemName={proj.systemName} bodyName={proj.bodyName} onChange={(newName, newId) => {
+                    const editProject = { ...this.state.editProject };
+                    if (editProject) {
+                      editProject.bodyName = newName;
+                      editProject.bodyNum = newId;
+                      this.setState({ editProject });
+                    }
+                  }} />
+                </div>}
+              </td>
+            </tr>}
+
             <tr><td>Architect:</td><td>
               {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.architectName}&nbsp;</div>}
               {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
             </td></tr>
+
             <tr><td>Faction:</td><td>
               {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.factionName}&nbsp;</div>}
               {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
@@ -892,7 +922,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  updateProjData = (key: keyof (Project), value: string) => {
+  updateProjData = (key: keyof (Project), value: any) => {
     const editProject = { ...this.state.editProject } as any;
 
     if (editProject) { // && typeof editProject[key] === 'string') {
