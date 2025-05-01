@@ -1,4 +1,4 @@
-import { DefaultButton, IconButton, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, IconButton, MessageBar, MessageBarType, Panel, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { EditCargo } from '../components';
@@ -10,7 +10,7 @@ import { CopyButton } from '../components/CopyButton';
 
 interface FleetCarrierProps {
   marketId: string;
-  onClose: (changed: boolean) => void;
+  onClose: (cargoUpdated?: Record<string, number>) => void;
 }
 
 interface FleetCarrierState {
@@ -41,8 +41,6 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   componentDidMount(): void {
-    window.document.title = `FC: ${this.props?.marketId ?? '?'}`;
-
     if (this.props.marketId) {
       this.setState({ loading: true })
       // fetch FC data...
@@ -62,45 +60,52 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   render() {
     const { errorMsg } = this.state;
 
-    return <div className='half'>
+    return <Panel
+      isOpen
+      allowTouchBodyScroll
+      onDismiss={() => {
+        this.props.onClose();
+      }}
+      styles={{
+        main: { maxWidth: 400 }
+      }}
+    >
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
-      <IconButton className='right' title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onClose(false)} style={{ position: 'relative', top: -4 }} />
       <h3 className={cn.h3} style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
 
       {this.props.marketId && this.renderFC()}
-    </div>;
+    </Panel>;
   }
-
 
   renderFC() {
     const { loading, fc } = this.state;
-    if (!fc) return;
 
     return <>
-      {loading && <Spinner size={SpinnerSize.large} label={`Loading  ...`} />}
       {this.renderFields()}
-      {this.renderCargo(fc.marketId)}
+      {loading && <Spinner size={SpinnerSize.large} labelPosition='right' label={`Loading  ...`} />}
+      {!!fc && this.renderCargo(fc.marketId)}
     </>;
   }
 
   renderFields() {
     const { fc, editDisplayName, cmdrLinked } = this.state;
-    if (!fc) return;
 
-    return <table>
+    return <table cellPadding={0} cellSpacing={2}>
       <tbody>
         <tr>
           <td>Raw name:</td>
           <td className={cn.grey}>
-            {fc.name}
-            &nbsp;<CopyButton text={fc.name} />
+            {!!fc && <>
+              {fc.name}
+              &nbsp;<CopyButton text={fc.name} />
+            </>}
           </td>
         </tr>
         <tr>
           <td>Carrier name:</td>
           <td>
-            <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
+            {!!fc && <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
               <input
                 type='text'
                 value={editDisplayName}
@@ -116,40 +121,44 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
                 disabled={fc.displayName === editDisplayName}
                 onClick={this.onUpdateFields}
               />
-            </Stack>
+            </Stack>}
           </td>
         </tr>
         <tr>
           <td>
-            MarketId:
-            {store.cmdrName && <IconButton
-              className='icon-btn'
-              iconProps={{ iconName: cmdrLinked ? 'UserFollowed' : 'UserRemove' }}
-              title={cmdrLinked ? `Click to unlink this FC from ${store.cmdrName}` : `Click to link this FC to ${store.cmdrName}`}
-              onClick={async () => {
-                if (this.state.cmdrLinked) {
-                  // remove link
-                  await api.cmdr.unlinkFC(store.cmdrName, fc.marketId.toString());
+            <div style={{ width: 100, padding: 0, margin: 0 }}>
+              MarketId:
+              {store.cmdrName && <IconButton
+                className='icon-btn'
+                iconProps={{ iconName: cmdrLinked ? 'UserFollowed' : 'UserRemove' }}
+                title={cmdrLinked ? `Click to unlink this FC from ${store.cmdrName}` : `Click to link this FC to ${store.cmdrName}`}
+                onClick={async () => {
+                  if (!fc) return;
+                  if (this.state.cmdrLinked) {
+                    // remove link
+                    await api.cmdr.unlinkFC(store.cmdrName, fc.marketId.toString());
 
-                  const cmdrLinkedFCs = store.cmdrLinkedFCs;
-                  delete cmdrLinkedFCs[fc.marketId.toString()];
-                  store.cmdrLinkedFCs = cmdrLinkedFCs;
+                    const cmdrLinkedFCs = store.cmdrLinkedFCs;
+                    delete cmdrLinkedFCs[fc.marketId.toString()];
+                    store.cmdrLinkedFCs = cmdrLinkedFCs;
 
-                  this.setState({ cmdrLinked: false });
-                } else {
-                  // add link
-                  await api.cmdr.linkFC(store.cmdrName, fc.marketId.toString());
+                    this.setState({ cmdrLinked: false });
+                  } else {
+                    // add link
+                    await api.cmdr.linkFC(store.cmdrName, fc.marketId.toString());
 
-                  const cmdrLinkedFCs = store.cmdrLinkedFCs;
-                  cmdrLinkedFCs[fc.marketId] = fcFullName(fc.name, fc.displayName);
-                  store.cmdrLinkedFCs = cmdrLinkedFCs;
+                    const cmdrLinkedFCs = store.cmdrLinkedFCs;
+                    cmdrLinkedFCs[fc.marketId] = fcFullName(fc.name, fc.displayName);
+                    store.cmdrLinkedFCs = cmdrLinkedFCs;
 
-                  this.setState({ cmdrLinked: true });
-                }
-              }}
-            />}
+                    this.setState({ cmdrLinked: true });
+                  }
+                }}
+              />}
+            </div>
           </td>
-          <td className={cn.grey}>{fc.marketId}&nbsp;<CopyButton text={fc.marketId.toString()} />
+          <td className={cn.grey}>
+            {!!fc && <>{fc.marketId}&nbsp;<CopyButton text={fc.marketId.toString()} /></>}
           </td>
         </tr>
 
@@ -176,7 +185,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   renderCargo(marketId: number) {
-    const { editCargo } = this.state;
+    const { editCargo, loading } = this.state;
 
     return <div style={{ display: 'inline-block' }}>
       <EditCargo
@@ -191,14 +200,16 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         <PrimaryButton
           text='Update cargo'
           iconProps={{ iconName: 'Save' }}
+          disabled={loading}
           onClick={this.onUpdateCargo}
         />
         <DefaultButton
           text='Cancel'
           iconProps={{ iconName: 'Cancel' }}
+          disabled={loading}
           onClick={() => {
             this.setState({ editCargo: this.state.fc!.cargo });
-            this.props.onClose(false);
+            this.props.onClose();
           }}
         />
       </Stack>
@@ -224,7 +235,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
       const cargoUpdated = await api.fc.updateCargo(this.state.fc!.marketId, cargoEdit);
       this.setState({ loading: false, editCargo: cargoUpdated });
-      this.props.onClose(true);
+      this.props.onClose(cargoUpdated);
     } catch (err: any) {
       this.setState({ loading: false, errorMsg: err.message });
     }

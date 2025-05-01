@@ -2,6 +2,10 @@
   margin: 10px;
 }
 
+h3 .ms-Button--action {
+  height: 25px;
+}
+
 .add-fc {
   align-items: flex-start;
 }

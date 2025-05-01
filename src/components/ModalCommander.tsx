@@ -1,4 +1,4 @@
-import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, Modal, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
@@ -209,12 +209,10 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         </Stack>
       </div>
 
-      {fcEditMarketId && <Modal isOpen>
-        <FleetCarrier
-          onClose={() => this.setState({ fcEditMarketId: undefined })}
-          marketId={fcEditMarketId}
-        />
-      </Modal>}
+      {fcEditMarketId && <FleetCarrier
+        onClose={() => this.setState({ fcEditMarketId: undefined })}
+        marketId={fcEditMarketId}
+      />}
     </>
   }
 

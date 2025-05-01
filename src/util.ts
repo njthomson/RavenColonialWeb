@@ -1,4 +1,5 @@
 import cargoTypes from './assets/cargo-types.json';
+import { store } from './local-storage';
 import { Cargo, mapCommodityNames, SortMode } from "./types";
 
 export const getColorTable = (tokens: string[]): Record<string, string> => {
@@ -82,3 +83,20 @@ export const mergeCargo = (cargos: Cargo[]): Cargo => {
   }, {} as Cargo);
   return merged;
 }
+
+export const openDiscordLink = (link: string | undefined) => {
+  if (!link) return;
+
+  // try using native Discord protocol to open the app ...
+  if (store.useNativeDiscord && link.startsWith('https://discord.com/channels/')) {
+    var parts = /channels\/(\d+)\/(\d+)/.exec(link);
+    if (parts?.length === 3) {
+      const newLink = `discord://-/channels/${parts[1]}/${parts[2]}`
+      window.open(newLink, '_blank');
+      return;
+    }
+  }
+
+  // ... still here - open Discord in another browser tab
+  window.open(link, '_blank');
+};

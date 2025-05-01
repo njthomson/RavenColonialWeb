@@ -47,7 +47,7 @@ export class App extends Component<AppProps, AppState> {
     if (!item) { return; }
 
     const newHash = `#${item.key}`;
-    if (!window.location.hash.startsWith(newHash)) {
+    if (!window.location.hash.startsWith(newHash) || newHash !== '#find') {
       window.location.assign(newHash);
     }
     return true;

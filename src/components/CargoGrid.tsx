@@ -1,4 +1,4 @@
-import { ActionButton, ContextualMenu, Icon, Link, Modal } from '@fluentui/react';
+import { ActionButton, Icon, Link } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
@@ -106,29 +106,23 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         <tbody>{this.getTableRows()}</tbody>
       </table>
 
-      {fcEditMarketId && <Modal
-        isOpen
-        allowTouchBodyScroll
-        dragOptions={{
-          moveMenuItemText: 'Move',
-          closeMenuItemText: 'Close',
-          menu: ContextualMenu,
-          keepInBounds: true,
-          dragHandleSelector: '.ms-Modal-scrollableContent > h3',
+      {fcEditMarketId && <FleetCarrier
+        marketId={fcEditMarketId}
+        onClose={cargoUpdated => {
+          // use updated cargo
+          const { linkedFC } = this.state;
+          if (cargoUpdated) {
+            const fc = linkedFC.find(fc => fc.marketId.toString() === fcEditMarketId);
+            if (fc) { fc.cargo = cargoUpdated; }
+          }
+
+          this.setState({
+            fcEditMarketId: undefined,
+            linkedFC: linkedFC,
+            fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
+          });
         }}
-        onDismissed={() => this.setState({ fcEditMarketId: undefined })}
-      >
-        <FleetCarrier
-          onClose={(changed) => {
-            this.setState({ fcEditMarketId: undefined });
-            if (changed) {
-              window.location.reload();
-            }
-            // this.fetchCargoFC(this.state.proj!.buildId);
-          }}
-          marketId={fcEditMarketId}
-        />
-      </Modal>}
+      />}
 
     </>;
   }

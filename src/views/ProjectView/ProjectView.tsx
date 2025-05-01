@@ -7,7 +7,7 @@ import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, C
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, sumCargo } from '../../util';
+import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
@@ -347,7 +347,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         title: discordTitle,
         disabled: !hasDiscordLink || refreshing,
         iconProps: { iconName: 'OfficeChatSolid' },
-        onClick: () => this.openDiscordLink(this.state.proj?.discordLink)
+        onClick: () => openDiscordLink(this.state.proj?.discordLink)
       }
     ];
 
@@ -361,6 +361,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
+          <span style={{ fontSize: 16 }}><CopyButton text={proj.systemName} /></span>
           <Link href={`#find=${proj.systemName}`}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
           <span style={{ fontSize: 16 }}><CopyButton text={copyLink} title='Copy a link to this page' /></span>
         </h2>
@@ -1076,26 +1077,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {rows}
       </ul>
 
-      {fcEditMarketId && <Modal
-        isOpen
-        allowTouchBodyScroll
-        dragOptions={{
-          moveMenuItemText: 'Move',
-          closeMenuItemText: 'Close',
-          menu: ContextualMenu,
-          keepInBounds: true,
-          dragHandleSelector: '.ms-Modal-scrollableContent > h3',
+      {fcEditMarketId && <FleetCarrier
+        marketId={fcEditMarketId}
+        onClose={() => {
+          this.setState({ fcEditMarketId: undefined });
+          this.fetchCargoFC(this.state.proj!.buildId);
         }}
-        onDismissed={() => this.setState({ fcEditMarketId: undefined })}
-      >
-        <FleetCarrier
-          onClose={() => {
-            this.setState({ fcEditMarketId: undefined });
-            this.fetchCargoFC(this.state.proj!.buildId);
-          }}
-          marketId={fcEditMarketId}
-        />
-      </Modal>}
+      />}
     </>
   }
 
@@ -1662,23 +1650,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
       this.pollLastTimestamp(true);
     }
-  };
-
-  openDiscordLink = (link: string | undefined) => {
-    if (!link) return;
-
-    // try using native Discord protocol to open the app ...
-    if (store.useNativeDiscord && link.startsWith('https://discord.com/channels/')) {
-      var parts = /channels\/(\d+)\/(\d+)/.exec(link);
-      if (parts?.length === 3) {
-        const newLink = `discord://-/channels/${parts[1]}/${parts[2]}`
-        window.open(newLink, '_blank');
-        return;
-      }
-    }
-
-    // ... still here - open Discord in another browser tab
-    window.open(this.state.proj?.discordLink, '_blank');
   };
 }
 
