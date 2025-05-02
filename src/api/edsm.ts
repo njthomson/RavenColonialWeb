@@ -1,4 +1,4 @@
-import { ResponseEdsmStations, ResponseEdsmSystem, ResponseEdsmSystemBodies, ResponseEdsmTypeAhead } from "../types";
+import { ResponseEdsmStations, ResponseEdsmSystem, ResponseEdsmSystemBodies, ResponseEdsmSystemFactions, ResponseEdsmTypeAhead } from "../types";
 import { callSvcAPI } from "./api-util";
 
 /** Project APIs */
@@ -18,6 +18,10 @@ export const edsm = {
 
   findSystems: async (systemName: string): Promise<ResponseEdsmTypeAhead[]> => {
     return await callSvcAPI<ResponseEdsmTypeAhead[]>(new URL('https://www.edsm.net/typeahead/systems/query/' + encodeURIComponent(systemName)));
+  },
+
+  findSystemFactions: async (systemName: string): Promise<ResponseEdsmSystemFactions> => {
+    return await callSvcAPI<ResponseEdsmSystemFactions>(new URL('https://www.edsm.net/api-system-v1/factions?systemName=' + encodeURIComponent(systemName)));
   },
 
 };

@@ -1,8 +1,8 @@
 import * as api from '../api';
 import { Component, ReactNode } from "react";
 import { appTheme, cn } from "../theme";
-import { ResponseEdsmSystemBodies } from '../types';
-import { Icon, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ResponseEdsmSystemBodies, ResponseEdsmSystemBody } from '../types';
+import { ComboBox, IComboBoxOption, Icon, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 
 interface ChooseBodyProps {
   systemName: string;
@@ -13,7 +13,7 @@ interface ChooseBodyProps {
 interface ChooseBodyState {
   bodyName: string | undefined
   loading: boolean;
-  validBodies: Record<string, number>;
+  allBodies: Record<string, ResponseEdsmSystemBody>;
 }
 
 export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
@@ -25,7 +25,7 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
     this.state = {
       bodyName: props.bodyName ?? '',
       loading: false,
-      validBodies: {},
+      allBodies: {},
     }
   }
 
@@ -40,7 +40,6 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
 
       this.fetchSystemBodies(this.props.systemName)
         .catch(err => console.error(err));
-
     }
 
     if (prevProps.bodyName !== this.props.bodyName) {
@@ -64,35 +63,54 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
     // extract the names
     const newBodies = system.bodies
       .reduce((map, b) => {
-        map[b.name] = b.bodyId;
+        map[b.name] = b;
         return map;
-      }, {} as Record<string, number>);
+      }, {} as Record<string, ResponseEdsmSystemBody>);
 
-    this.setState({ validBodies: newBodies });
+    this.setState({ allBodies: newBodies });
   }
 
   render(): ReactNode {
-    const { loading, bodyName, validBodies } = this.state;
+    const { loading, bodyName, allBodies: validBodies } = this.state;
 
     const rows = Object.keys(validBodies).map((name, i) => {
-      return <option key={i} value={name}>{name}</option>;
+      return <option key={i} value={name}>{name} ({validBodies[name].subType})</option>;
     });
     rows.push(<option key={-1} value=''></option>);
 
+    const options: IComboBoxOption[] = Object.keys(validBodies).map((name, i) => {
+      return {
+        key: i,
+        text: name,
+        data: validBodies[name],
+      };
+    });
+
     return <>
       <Stack horizontal verticalAlign='center' style={{ margin: 0 }}>
-        <select
 
-          style={{ display: 'inline', backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent, width: 200 }}
-          value={bodyName}
-          onChange={(e) => {
-            let bodyId = this.state.validBodies[e.target.value];
-            this.props.onChange(e.target.value, bodyId);
-            this.setState({ bodyName: e.target.value });
+        <ComboBox
+          text={bodyName}
+          openOnKeyboardFocus
+          styles={{
+            root: { maxHeight: 20 },
+            callout: { border: '1px solid ' + appTheme.palette.themePrimary, },
           }}
-        >
-          {rows}
-        </select>
+          options={options}
+          onChange={(_, o) => {
+            let body = this.state.allBodies[o?.text ?? ''];
+            this.props.onChange(body.name, body.bodyId);
+            this.setState({ bodyName: body.name });
+          }}
+          onRenderOption={item => {
+            const body = item?.data as ResponseEdsmSystemBody;
+            return <span>
+              <span style={{ fontWeight: 'bold' }}>{body.name}</span>
+              <br />
+              {body.subType} ~{body.distanceToArrival.toLocaleString()}ls
+            </span>;
+          }}
+        />
 
         &nbsp;
         <Icon

@@ -1,4 +1,4 @@
-import { ChoiceGroup, IChoiceGroupOption, IComboBoxOption, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ChoiceGroup, DefaultButton, IChoiceGroupOption, IComboBoxOption, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Spinner, SpinnerSize, Stack, TeachingBubble, TextField, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
@@ -6,12 +6,11 @@ import { CreateProject, StationEDSM } from '../types';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
 import { cn } from '../theme';
 import { BuildType } from './BuildType';
-// import { prepIconLookup } from './prep-costs';
-// prepIconLookup();
 
 interface ProjectCreateProps {
   systemName?: string;
   knownMarketIds: string[];
+  onCancel: () => void;
 }
 
 // TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
@@ -134,8 +133,14 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       maxNeed: 0,
       complete: false,
       notes: '',
+      isPrimaryPort: false,
       commodities: {},
     };
+  }
+
+  componentDidMount(): void {
+    this.onCheckSystem()
+      .catch(err => this.setState({ msgError: err.message, msgClass: MessageBarType.error }));
   }
 
   readyToCreate(): boolean {
@@ -150,20 +155,20 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   }
 
   render() {
-    const { systemName, systemAddress, buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking } = this.state;
+    const { buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking, isPrimaryPort } = this.state;
 
     return <>
       <div className="create-project">
-        <h3 className={cn.h3}>Or start a new project?</h3>
-        <div>
-          {/* <Stack horizontal style={{ alignItems: 'flex-end' }}>
-            <TextField id='create-systemName' name='systemName' label='System name:' title='Enter a complete system name' value={systemName} required={true} disabled onChange={(_, v) => this.setState({ systemName: v! })} />
-            <IconButton title='Search system for construction sites' iconProps={{ iconName: 'Refresh' }} onClick={this.onCheckSystem} disabled={checking} />
-          </Stack> */}
-          {<PrimaryButton text='Search sites ...' iconProps={{ iconName: 'Search' }} onClick={this.onCheckSystem} disabled={checking || !systemName} />}
+        <h3 className={cn.h3}>Start a new project:</h3>
 
-        </div>
+        <MessageBar messageBarType={MessageBarType.success}>
+          Creating projects through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' /> is <strong>strongly recommended</strong>.
+        </MessageBar>
+
+        {checking && <Spinner label='Searching for known construction sites...' labelPosition='right' style={{ maxWidth: 'fit-content' }} />}
+
         {this.renderFoundStations()}
+
         {showMarketId && <div>
           <Stack horizontal style={{ alignItems: 'flex-end' }}>
             <TextField
@@ -195,6 +200,14 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
         <TextField name='buildName' title='Enter a descriptive name for this project' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
 
+        <Label required>Primary port:</Label>
+        <Toggle
+          onText='Yes' offText='No'
+          defaultChecked={isPrimaryPort}
+          styles={{ root: { height: 25, margin: 0, marginLeft: 8 } }}
+          onChange={(_, checked) => this.setState({ isPrimaryPort: !!checked })}
+        />
+
         <Label required>Build type:</Label>
         <BuildType
           buildType={buildType}
@@ -206,12 +219,15 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           Note: Cargo requirements will need to be manually entered.
         </MessageBar>}
 
-        <MessageBar messageBarType={MessageBarType.success}>
-          Creating projects through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' /> is <strong>strongly recommended</strong>.
-        </MessageBar>
 
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
-        {!!systemAddress && <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />}
+
+        <Stack horizontal tokens={{ childrenGap: 4 }} style={{ marginTop: 8 }}>
+          <PrimaryButton text='Create ...' disabled={!this.readyToCreate()} onClick={this.onCreateBuild} />
+
+          <DefaultButton iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onCancel()} text='Cancel' />
+        </Stack>
+
       </div>
     </>;
   }
@@ -264,9 +280,10 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     });
     try {
 
+      // add a little artificial delay so the spinner doesn't flicker in and out
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const data = await api.edsm.findStationsInSystem(this.state.systemName);
-      //console.log('ProjectCreate.onCheckSystem:', data);
 
       if (!data?.id64) {
         // system not known

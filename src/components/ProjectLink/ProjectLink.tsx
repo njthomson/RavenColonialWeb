@@ -7,6 +7,7 @@ interface ProjectLinkProps {
   proj: ProjectRefLite;
   noSys?: boolean;
   noBold?: boolean;
+  iconName?: string;
 }
 
 export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
@@ -17,8 +18,11 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
       href={`#build=${props.proj.buildId}`}
       style={{ fontWeight: props.noBold ? 'normal' : 'bold' }}
     >
-      <Icon iconName='Manufacturing' /> {props.proj.buildName}
+      <Icon iconName={props.iconName || 'Manufacturing'} /> {props.proj.buildName}
     </Link>
+
     &nbsp;- <BuildTypeDisplay buildType={props.proj.buildType} />
+
+    {props.proj.isPrimaryPort && <span title='System primary port' style={{ marginLeft: 8, cursor: 'default' }}>⚑</span>}
   </span>;
 };

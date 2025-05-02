@@ -44,6 +44,7 @@ export class Home extends Component<HomeProps, HomeState> {
           <ShowGlobalStats />
 
           {learnAbout()}
+          <br />
         </div>
       </>;
     }

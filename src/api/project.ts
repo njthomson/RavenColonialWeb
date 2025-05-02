@@ -12,6 +12,10 @@ export const project = {
     return await callAPI<ProjectRefComplete[]>(`/api/system/${encodeURIComponent(systemName)}/complete`);
   },
 
+  findAllBySystem: async (systemName: string): Promise<ProjectRef[]> => {
+    return await callAPI<ProjectRef[]>(`/api/system/${encodeURIComponent(systemName)}/all`);
+  },
+
   create: async (project: CreateProject): Promise<Project> => {
     return await callAPI<Project>(
       `/api/project/`,
@@ -31,7 +35,7 @@ export const project = {
   update: async (buildId: string, deltaProj: Partial<Project>): Promise<Project> => {
     return await callAPI<Project>(
       `/api/project/${encodeURIComponent(buildId)}`,
-      'POST', // TODO: use PATCH?
+      'PATCH',
       JSON.stringify(deltaProj)
     );
   },

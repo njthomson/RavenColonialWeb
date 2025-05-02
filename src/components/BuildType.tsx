@@ -58,6 +58,8 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
   }
 
   getEnviron(selection: string) {
+    if (!selection) { return 'orbital'; }
+
     for (let tier of buildTypeMap.orbital) {
       for (let line of tier) {
         let [, , types] = line.toLowerCase().split('/');
@@ -187,6 +189,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
       {showList && <Panel
         isOpen={true}
+        styles={{ main: { maxWidth: 400 } }}
         onDismiss={() => this.setState({ showList: false })}
       >
         <Pivot

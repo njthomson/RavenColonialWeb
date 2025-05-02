@@ -30,8 +30,8 @@ footer {
   box-shadow: 0 -1rem 4rem 0px rgba(0, 0, 0, .05);*/
 }
 
-footer p {
-  padding-left: 60px;
+footer div {
+  padding: 8px 0 8px 40px;
 }
 
 h3 {
@@ -196,13 +196,9 @@ i.icon-inline {
   margin: 1px;
 }
 
-@media (max-width: 400px) {
-  footer {
-    font-size: 12px;
-    line-height: 6px;
-  }
-
-  footer p {
-    padding-left: 20px;
+@media (max-width: 490px) {
+  footer div {
+    padding: 4px;
+    font-size: small;
   }
 }

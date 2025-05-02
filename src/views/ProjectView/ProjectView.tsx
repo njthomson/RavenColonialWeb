@@ -1,9 +1,8 @@
 import './ProjectView.css';
-
+import * as api from '../../api';
 import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
-import * as api from '../../api';
-import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC, ProjectCreate, ProjectQuery } from '../../components';
+import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
@@ -12,12 +11,14 @@ import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 import { TimeRemaining } from '../../components/TimeRemaining';
-import { BuildType } from '../../components/BuildType';
-import { ChooseBody } from '../../components/ChooseBody';
+import { EditProject } from '../../components/EditProject/EditProject';
 
-interface ProjectViewProps { }
+interface ProjectViewProps {
+  buildId?: string;
+}
 
 interface ProjectViewState {
+  buildId?: string;
   proj?: Project;
   lastTimestamp?: string;
   autoUpdateUntil: number;
@@ -38,7 +39,7 @@ interface ProjectViewState {
 
   editCommodities?: Cargo;
   editReady: Set<string>;
-  editProject?: Partial<Project>;
+  editProject: boolean;
   disableDelete?: boolean;
   fixMarketId?: string;
   summary?: SupplyStatsSummary;
@@ -63,12 +64,10 @@ interface ProjectViewState {
 
 enum Mode {
   view,
-  editProject,
   deliver,
 }
 
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
-  private buildId?: string;
   private timer?: NodeJS.Timeout;
   /** The count of needed cargo already loaded on Fleet Carriers */
   private countReadyOnFCs: number = 0;
@@ -76,17 +75,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   constructor(props: ProjectViewProps) {
     super(props);
 
-    const params = new URLSearchParams(window.location.hash?.substring(1));
-    this.buildId = params.get('build') ?? undefined;
-
     const sortMode = store.commoditySort;
     this.state = {
       loading: true,
       autoUpdateUntil: 0,
       primaryBuildId: store.primaryBuildId,
       mode: Mode.view,
-      sort: sortMode as SortMode ?? SortMode.group,
+      sort: sortMode ?? SortMode.group,
       newCmdr: '',
+      editProject: false,
       showAddCmdr: false,
       disableDelete: true,
       sumTotal: 0,
@@ -106,14 +103,51 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   componentDidMount() {
     // fetch initial data, then start auto-updating
-    this.fetchProject(this.buildId).then(() => {
+    this.fetchProject(this.props.buildId).then(() => {
       this.toggleAutoRefresh();
     })
   }
 
   componentWillUnmount(): void {
-    if (this.timer) {
-      clearTimeout(this.timer);
+    if (this.timer) { clearTimeout(this.timer); }
+  }
+
+  componentDidUpdate(prevProps: Readonly<ProjectViewProps>, prevState: Readonly<ProjectViewState>, snapshot?: any): void {
+    // buildId changed from external
+    if (prevProps.buildId !== this.props.buildId && this.props.buildId) {
+      if (this.timer) { clearTimeout(this.timer); }
+
+      // set new buildId and reset the rest of state
+      this.setState({
+        buildId: this.props.buildId,
+        proj: undefined,
+        loading: true,
+        autoUpdateUntil: 0,
+        primaryBuildId: store.primaryBuildId,
+        mode: Mode.view,
+        newCmdr: '',
+        editProject: false,
+        showAddCmdr: false,
+        disableDelete: true,
+        sumTotal: 0,
+
+        editReady: new Set<string>(),
+        hideDoneRows: store.commodityHideCompleted,
+        hideFCColumns: store.commodityHideFCColumns,
+        showBubble: !store.cmdr,
+        nextDelivery: store.deliver,
+        deliverMarketId: store.deliverDestination,
+        submitting: false,
+
+        showAddFC: false,
+        fcCargo: {},
+      });
+    }
+
+    // buildId changed from above
+    if (prevState.buildId !== this.state.buildId && this.state.buildId) {
+      if (this.timer) { clearTimeout(this.timer); }
+      this.pollLastTimestamp(this.state.buildId, true);
     }
   }
 
@@ -154,6 +188,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       this.setState({
         proj: newProj,
+        editProject: window.location.hash.startsWith('#edit'),
         lastTimestamp: newProj.timestamp,
         editReady: new Set(newProj.ready),
         sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
@@ -200,19 +235,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .catch(err => this.setState({ errorMsg: err.message }));
   }
 
-  async pollLastTimestamp(force: boolean = false) {
+  async pollLastTimestamp(buildId: string, force: boolean = false) {
     try {
-      // call server to see if anything changed
-      const buildId = this.state.proj?.buildId!;
-      let timestamp = await api.project.last(buildId);
+      if (!force) {
+        // call server to see if anything changed
+        let timestamp = await api.project.last(buildId);
 
-      // use current state if no .last added yet
-      if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
+        // use current state if no .last added yet
+        if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
 
-      console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp || force}  (${timestamp} vs ${this.state.lastTimestamp})`);
+        console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp || force}  (${timestamp} vs ${this.state.lastTimestamp})`);
 
-      if (timestamp !== this.state.lastTimestamp || force) {
-        // something has changed
+        if (timestamp !== this.state.lastTimestamp || force) {
+          // something has changed
+          await this.fetchProject(buildId, true, true);
+        }
+      } else {
+        // forcing...
         await this.fetchProject(buildId, true, true);
       }
 
@@ -220,7 +259,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       if (this.state.autoUpdateUntil > 0) {
         if (Date.now() < this.state.autoUpdateUntil) {
           this.timer = setTimeout(() => {
-            this.pollLastTimestamp();
+            this.pollLastTimestamp(buildId);
           }, autoUpdateFrequency);
         } else {
           console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
@@ -266,13 +305,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
     }
 
-    if (!proj) {
-      return <div className='contain-horiz'>
-        {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
-        <div className='half'><ProjectQuery /></div>
-        <div className='half right'><ProjectCreate knownMarketIds={[]} /></div>
-      </div>;
-    }
+    if (!proj) { return null; }
 
     // prep CommandBar buttons
     const hasDiscordLink = !!this.state.proj?.discordLink;
@@ -288,6 +321,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         text: 'Deliver',
         iconProps: { iconName: 'DeliveryTruck' },
         disabled: proj.complete || refreshing,
+        style: { color: proj.complete || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
           this.setState({ mode: Mode.deliver });
           delayFocus('deliver-commodity');
@@ -298,13 +332,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         text: 'Edit project',
         iconProps: { iconName: 'Edit' },
         disabled: refreshing,
-        onClick: () => this.setState({ mode: Mode.editProject, editProject: { ...this.state.proj } }),
+        style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
+        onClick: () => this.setState({ editProject: true }),
       },
       {
         key: 'edit-commodities',
         text: 'Edit commodities',
         iconProps: { iconName: 'AllAppsMirrored' },
-        disabled: refreshing,
+        disabled: proj.complete || refreshing,
+        style: { color: proj.complete || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
           this.setState({ editCommodities: { ...this.state.proj!.commodities } });
           delayFocus('first-commodity-edit');
@@ -316,6 +352,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
         iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
         disabled: refreshing,
+        style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
           this.toggleAutoRefresh();
         }
@@ -324,6 +361,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'btn-delete', text: 'Delete',
         iconProps: { iconName: 'Delete' },
         disabled: disableDelete || refreshing,
+        style: { color: disableDelete || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
           this.setState({ confirmDelete: true });
           delayFocus('delete-no');
@@ -333,7 +371,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         key: 'btn-primary', text: 'Primary',
         iconProps: { iconName: proj.buildId === primaryBuildId ? 'SingleBookmarkSolid' : 'SingleBookmark' },
         title: proj.buildId === primaryBuildId ? 'This is your current primary project. Click to clear.' : 'Set this as your current primary project',
-        disabled: refreshing,
+        disabled: proj.complete || refreshing,
+        style: { color: proj.complete || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
           if (proj.buildId === primaryBuildId)
             this.clearPrimary();
@@ -346,6 +385,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         text: 'Discord',
         title: discordTitle,
         disabled: !hasDiscordLink || refreshing,
+        style: { color: !hasDiscordLink || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         iconProps: { iconName: 'OfficeChatSolid' },
         onClick: () => openDiscordLink(this.state.proj?.discordLink)
       }
@@ -376,9 +416,35 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
         {!!editCommodities && this.renderEditCommodities()}
 
-        {(mode === Mode.view || mode === Mode.editProject) && this.renderProjectDetails(proj, editProject!)}
+        {mode === Mode.view && this.renderProjectDetails(proj)}
 
-        {mode === Mode.view && this.renderStats()}
+        {editProject && <EditProject proj={proj}
+          onChange={savedProj => {
+            if (window.location.hash.startsWith('#edit')) {
+              window.location.hash = `#build=${proj.buildId}`;
+            }
+
+            if (!savedProj) {
+              this.setState({ mode: Mode.view, editProject: false, });
+              return;
+            }
+
+            const cmdrName = store.cmdrName;
+            this.setState({
+              proj: savedProj,
+              editProject: false,
+              lastTimestamp: savedProj.timestamp,
+              editReady: new Set(savedProj.ready),
+              sumTotal: sumCargo(savedProj.commodities),
+              hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
+              disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
+              mode: Mode.view,
+              submitting: false,
+            });
+          }}
+        />}
+
+        {mode === Mode.view && !!proj.maxNeed && this.renderStats()}
       </div>
 
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
@@ -564,11 +630,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       rows.push(row)
 
       // show extra row to assign a commodity to a cmdr?
-      if (assignCommodity === key && proj.commanders && !editCommodities) {
+      if (assignCommodity === key && proj.commanders) {
         rows.push(this.getCommodityAssignmentRow(key, proj, cmdrs));
       }
     }
-
 
     return <>
       {mode === Mode.view && <h3 className={cn.h3}>
@@ -605,24 +670,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         />}
       </h3>}
 
-      {editCommodities && !submitting && <div className='button-pair'>
-        <PrimaryButton text='Save commodities' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectCommodities} />
-        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editCommodities: undefined, })} />
-      </div>}
-
       <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
             <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>
-            {!editCommodities && !hideFCColumns && colSpan > 0 && this.getCargoFCHeaders()}
-            {!editCommodities && hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>}
+            {!hideFCColumns && colSpan > 0 && this.getCargoFCHeaders()}
+            {hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>}
           </tr>
         </thead>
         <tbody>{rows}</tbody>
       </table>
 
-      {!editCommodities && sumTotal > 0 && <div className='cargo-remaining'>
+      {sumTotal > 0 && <div className='cargo-remaining'>
         <CargoRemaining sumTotal={sumTotal} label='Remaining cargo' />
         {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
       </div>}
@@ -807,130 +867,70 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </tr>;
   }
 
-  renderProjectDetails(proj: Project, editProject: Partial<Project>) {
-    const className = !!editProject ? 'project-edit' : 'project';
+  renderProjectDetails(proj: Project) {
 
     return <div className='half'>
-      <div className={className}>
-        {editProject && !this.state.submitting && <div className='button-pair'>
-          <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onUpdateProjectDetails} />
-          <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ mode: Mode.view, editProject: undefined, errorMsg: undefined })} />
-        </div>}
-        {this.state.submitting && <Spinner
-          className='submitting'
-          label="Updating project ..."
-          labelPosition="right"
-        />}
-
-
-        {!editProject && <h3 className={cn.h3}>Build:</h3>}
+      <div className='project'>
+        <h3 className={cn.h3}>Build:</h3>
         <table>
           <tbody>
-            <tr><td>Build name:</td><td>
-              {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.buildName}</div>}
-              {editProject && <input type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
-            </td></tr>
             <tr>
-              <td>Build type:</td>
-              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
-                {!editProject && <BuildTypeDisplay buildType={proj.buildType} />}
-                {editProject && <BuildType buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />}
-              </div>
+              <td>Build name:</td>
+              <td>
+                <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
+                  {proj.buildName}
+                  {proj.isPrimaryPort && <span title='System primary port' style={{ marginLeft: 8, cursor: 'default' }}>⚑</span>}
+                </div>
               </td>
             </tr>
 
-            <tr><td>System name:</td><td><div className={`grey ${!!editProject ? 'hint' : ''}`} style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td></tr>
-
-            {(!!proj.bodyName || editProject) && <tr>
-              <td>Body name:</td>
-              <td>
-                {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.bodyName}&nbsp;</div>}
-
-                {editProject && <div style={{ backgroundColor: appTheme.palette.purpleLight }}>
-                  <ChooseBody systemName={proj.systemName} bodyName={proj.bodyName} onChange={(newName, newId) => {
-                    const editProject = { ...this.state.editProject };
-                    if (editProject) {
-                      editProject.bodyName = newName;
-                      editProject.bodyNum = newId;
-                      this.setState({ editProject });
-                    }
-                  }} />
-                </div>}
+            <tr>
+              <td>Build type:</td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}><BuildTypeDisplay buildType={proj.buildType} /></div>
               </td>
+            </tr>
+
+            <tr>
+              <td>System name:</td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td>
+            </tr>
+
+            {!!proj.bodyName && <tr>
+              <td>Body name:</td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.bodyName}&nbsp;</div></td>
             </tr>}
 
-            <tr><td>Architect:</td><td>
-              {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.architectName}&nbsp;</div>}
-              {editProject && <input type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
-            </td></tr>
+            <tr>
+              <td>Architect:</td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.architectName}&nbsp;</div></td>
+            </tr>
 
-            <tr><td>Faction:</td><td>
-              {!editProject && <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.factionName}&nbsp;</div>}
-              {editProject && <input type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
-            </td></tr>
+            <tr>
+              <td>Faction:</td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.factionName}&nbsp;</div></td>
+            </tr>
 
-            {(proj.timeDue || editProject) && <tr>
+            {proj.timeDue && <tr>
               <td>Time remaining:</td>
               <td>
                 <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
-                  {!editProject && proj.timeDue !== undefined && <TimeRemaining timeDue={proj.timeDue} />}
-                  {editProject && this.renderEditTimeRemaining(editProject)}
+                  proj.timeDue !== undefined && <TimeRemaining timeDue={proj.timeDue} />
                 </div>
               </td>
             </tr>}
 
-            <tr><td>Notes:</td><td>
-              {!editProject && <div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.notes}&nbsp;</div>}
-              {editProject && <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />}
-            </td></tr>
-            {editProject && <tr>
-              <td>
-                Discord link:
-                <IconButton
-                  className={`btn icon-inline ${cn.btn}`}
-                  title='Validate and paste a link'
-                  iconProps={{ iconName: 'Paste' }}
-                  onClick={async () => {
-                    this.setState({ errorMsg: undefined });
-                    var link = await navigator.clipboard.readText();
-                    this.updateProjData('discordLink', link);
-                  }}
-                />
-              </td>
-              <td><input type='text' value={editProject.discordLink ?? ''} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} /></td>
-            </tr>}
+            <tr>
+              <td>Notes:</td>
+              <td><div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.notes}&nbsp;</div></td>
+            </tr>
+
           </tbody>
         </table>
-        {!editProject && this.renderCommanders()}
-        {!editProject && this.renderLinkedFC()}
+        {this.renderCommanders()}
+        {this.renderLinkedFC()}
       </div>
     </div>;
   };
-
-  renderEditTimeRemaining(editProject: Partial<Project>) {
-    if (editProject.timeDue) {
-      return <div className='small'>
-        <TimeRemaining timeDue={editProject.timeDue} onChange={(dt) => this.updateProjData('timeDue', dt)} />
-      </div>;
-    } else {
-      const defaultTimeRemaining = (28 * 24 * 60 * 60 * 1000) - 300_000; // ~28 days time, less 5 hours
-      return <ActionButton
-        iconProps={{ iconName: 'Timer' }}
-        text='Add time remaining'
-        onClick={() => this.updateProjData('timeDue', new Date(Date.now() + defaultTimeRemaining).toISOString())}
-        style={{ height: 22 }}
-      />;
-    }
-  }
-
-  updateProjData = (key: keyof (Project), value: any) => {
-    const editProject = { ...this.state.editProject } as any;
-
-    if (editProject) { // && typeof editProject[key] === 'string') {
-      editProject[key] = value;
-      this.setState({ editProject });
-    }
-  }
 
   renderCommanders() {
     const { proj, showAddCmdr, newCmdr } = this.state;
@@ -1294,11 +1294,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         buildId: proj.buildId,
         commodities: {} as Cargo
       };
+
       // only send deltas
       for (const key in editCommodities) {
         if (proj.commodities[key] !== editCommodities[key]) {
           deltaProj.commodities[key] = editCommodities[key];
         }
+      }
+
+      // stop here if nothing changed
+      if (Object.keys(deltaProj.commodities).length === 0) {
+        this.setState({
+          mode: Mode.view,
+          editCommodities: undefined,
+        });
+        return;
       }
 
       // add a little artificial delay so the spinner doesn't flicker in and out
@@ -1349,59 +1359,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({ errorMsg: err.message });
     }
   }
-
-  onUpdateProjectDetails = async () => {
-    const { proj, editProject } = this.state;
-
-    if (editProject?.discordLink) {
-      try {
-        var url = new URL(editProject?.discordLink);
-        if (url.origin !== 'https://discord.com' && url.origin !== 'https://discord.gg') throw new Error();
-      } catch {
-        console.error(`Invalid discord link: "${editProject?.discordLink}"`);
-        this.setState({ errorMsg: `Invalid discord link: "${editProject?.discordLink}"` });
-        return;
-      }
-    }
-
-    if (proj?.buildId && editProject) {
-      const deltaProj: Record<string, string> = {
-        buildId: proj.buildId,
-      };
-      // only send deltas
-      for (const key in editProject) {
-        const kk = key as keyof (Project);
-        if (proj[kk] !== editProject[kk]) {
-          deltaProj[kk] = editProject[kk]?.toString()!;
-        }
-      }
-
-      // add a little artificial delay so the spinner doesn't flicker in and out
-      this.setState({ submitting: true, errorMsg: undefined });
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      try {
-        const savedProj = await api.project.update(proj.buildId, deltaProj);
-
-        // success
-        const cmdrName = store.cmdrName;
-        this.setState({
-          proj: savedProj,
-          lastTimestamp: savedProj.timestamp,
-          editReady: new Set(savedProj.ready),
-          sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
-          hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
-          editProject: undefined,
-          disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
-          mode: Mode.view,
-          submitting: false,
-        });
-
-      } catch (err: any) {
-        this.setState({ errorMsg: err.message });
-      }
-    }
-  };
 
   renderMissingMarketId() {
     const { fixMarketId } = this.state;
@@ -1482,7 +1439,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         Total cargo delivered: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalCargo.toLocaleString()}</span> from <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span> deliveries
       </div>}
 
-      {approxProgress > 0 && <ChartGeneralProgress progress={approxProgress} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
+      {(approxProgress > 0 || this.countReadyOnFCs > 0) && <ChartGeneralProgress progress={approxProgress} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
 
       <ChartByCmdrs summary={summary} cmdrColors={cmdrColors} />
 
@@ -1644,11 +1601,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.log(`Stopping timer at: ${new Date().toISOString()}`);
       clearTimeout(this.timer);
       this.setState({ autoUpdateUntil: 0 });
-    } else {
+    } else if (this.state.proj?.buildId) {
       // start polling (which causes an immediate refresh)
       console.log(`Starting timer at: ${new Date().toISOString()}`);
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
-      this.pollLastTimestamp(true);
+      this.pollLastTimestamp(this.state.proj?.buildId, true);
     }
   };
 }

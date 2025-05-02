@@ -63,12 +63,8 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     return <Panel
       isOpen
       allowTouchBodyScroll
-      onDismiss={() => {
-        this.props.onClose();
-      }}
-      styles={{
-        main: { maxWidth: 400 }
-      }}
+      styles={{ main: { maxWidth: 400 } }}
+      onDismiss={() => this.props.onClose()}
     >
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 

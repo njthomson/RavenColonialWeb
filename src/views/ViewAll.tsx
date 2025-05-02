@@ -2,11 +2,11 @@ import './ProjectView/ProjectView.css';
 import { CommandBar, Icon, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
-import { CargoGrid, ProjectLink } from '../components';
+import { CargoGrid, CargoRemaining, ProjectLink } from '../components';
 import { appTheme, cn } from '../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../types';
 import { store } from '../local-storage';
-import { fcFullName, mergeCargo, openDiscordLink } from '../util';
+import { fcFullName, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../util';
 import { FleetCarrier } from './FleetCarrier';
 import { CopyButton } from '../components/CopyButton';
 
@@ -114,7 +114,10 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }*/
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, linkedFC } = this.state;
+
+    const cargoRemaining = sumCargos(sumCargo);
+    const fcRemaining = cargoRemaining - sumCargos(mergeCargo(linkedFC.map(fc => fc.cargo)));
 
     return <div>
       <div>
@@ -150,6 +153,10 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             cargo={this.state.sumCargo}
             linkedFC={this.state.linkedFC}
           />
+          <br />
+          <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo:' />
+          <CargoRemaining sumTotal={fcRemaining} label='Fleet Carrier deficit:' />
+          <br />
         </div>
 
         <div className='half'>

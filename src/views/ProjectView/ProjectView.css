@@ -125,7 +125,7 @@ h3 .ms-Button--action {
   display: inline;
 }
 
-.project-edit input,
+.project-edit .tinput,
 .project-edit select {
   display: block;
   width: 400px;
@@ -218,7 +218,7 @@ h3 .ms-Button--action {
     white-space: unset;
   }
 
-  .project-edit input {
+  .project-edit .tinput {
     width: 200px;
     display: block;
   }

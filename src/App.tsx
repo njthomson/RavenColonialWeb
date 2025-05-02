@@ -18,6 +18,7 @@ interface AppProps {
 
 interface AppState {
   pivot: TopPivot;
+  pivotArg?: string;
 
   cmdr?: string;
   cmdrEdit: boolean;
@@ -30,16 +31,19 @@ export class App extends Component<AppProps, AppState> {
   constructor(props: AppProps) {
     super(props);
 
+    const [pivot, pivotArg] = this.getPivotFromHash();
 
     this.state = {
-      pivot: this.getStateFromHash(),
+      pivot: pivot,
+      pivotArg: pivotArg,
       cmdr: store.cmdrName,
       cmdrEdit: false,
     };
 
     window.onhashchange = () => {
       // console.debug('onhashchange:', ev);
-      this.setStateFromHash();
+      let [newPivot, pivotArg] = this.getPivotFromHash();
+      this.setState({ pivot: newPivot, pivotArg: pivotArg });
     };
   }
 
@@ -78,7 +82,7 @@ export class App extends Component<AppProps, AppState> {
     if (params.has('find')) {
       // searching for build projects
       nextState.pivot = TopPivot.find;
-    } else if (params.has('build')) {
+    } else if (params.has('build') || params.has('edit')) {
       // viewing a build project
       nextState.pivot = window.location.hash === '#build' ? TopPivot.buildAll : TopPivot.build;
     } else if (params.has('about')) {
@@ -103,19 +107,21 @@ export class App extends Component<AppProps, AppState> {
     this.setState(nextState);
   }
 
-  getStateFromHash() {
+  getPivotFromHash(): [TopPivot, string | undefined] {
     const params = new URLSearchParams(window.location.hash?.substring(1));
+    const pivotArg = params.values().next().value;
+
     if (params.has('find')) {
       // searching for build projects
-      return TopPivot.find;
+      return [TopPivot.find, pivotArg];
     } else if (params.has('build')) {
-      return window.location.hash === '#build' ? TopPivot.buildAll : TopPivot.build;
+      return window.location.hash === '#build' ? [TopPivot.buildAll, pivotArg] : [TopPivot.build, pivotArg];
     } else if (params.has('about')) {
-      return TopPivot.about;
+      return [TopPivot.about, pivotArg];
     } else if (params.has('cmdr')) {
-      return TopPivot.cmdr;
+      return [TopPivot.cmdr, pivotArg];
     } else {
-      return TopPivot.home;
+      return [TopPivot.home, pivotArg];
     }
   }
 
@@ -205,7 +211,7 @@ export class App extends Component<AppProps, AppState> {
         </Modal>}
         <br />
         <footer className={cn.footer}>
-          <p>© 2025  Raven Colonial Corporation | <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> | <LinkSrvSurvey text='About SrvSurvey' /></p>
+          <div>© 2025  Raven Colonial Corporation | <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> | <LinkSrvSurvey text='About SrvSurvey' /></div>
         </footer>
 
         <Dialog
@@ -229,12 +235,12 @@ export class App extends Component<AppProps, AppState> {
   }
 
   renderBody() {
-    const { pivot } = this.state;
+    const { pivot, pivotArg } = this.state;
 
     switch (pivot) {
       case TopPivot.home: return <Home />;
-      case TopPivot.find: return <ProjectSearch />;
-      case TopPivot.build: return <ProjectView />;
+      case TopPivot.find: return <ProjectSearch systemName={pivotArg} />;
+      case TopPivot.build: return <ProjectView buildId={pivotArg} />;
       case TopPivot.buildAll: return <ViewAll />;
       case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;

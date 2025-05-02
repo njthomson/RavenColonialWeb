@@ -93,7 +93,16 @@ export class Commander extends Component<CmdrProps, CmdrState> {
       {!editingCmdr && <>
         <div className='contain-horiz'>
           <div className='half'>
-            <h3 className={cn.h3}>Active projects and assignments:</h3>
+            <h3 className={cn.h3}>
+              Active projects and assignments:
+              &nbsp;
+              <ActionButton
+                iconProps={{ iconName: 'Manufacturing' }}
+                text='View combined ...'
+                title='View a combined data for all your active projects'
+                href='#build'
+              />
+            </h3>
             {this.renderCmdrProjects()}
           </div>
         </div>

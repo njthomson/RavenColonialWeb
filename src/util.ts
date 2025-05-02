@@ -100,3 +100,15 @@ export const openDiscordLink = (link: string | undefined) => {
   // ... still here - open Discord in another browser tab
   window.open(link, '_blank');
 };
+
+export const isSurfaceSite = (buildType: string): boolean => {
+  const orbitalBuildTypes = [
+    "plutus", "vulcan", "dysnomia", "vesta", "prometheus", "nemesis",
+    "hermes", "angelia", "eirene", "pistis", "soter", "aletheia", "demeter", "apate",
+    "laverna", "euthenia", "phorcys", "enodia", "ichnaea", "coriolis",
+    "asteroid", "vacuna", "alastor", "dicaeosyne", "poena", "eunomia", "nomos",
+    "harmonia", "asclepius", "eupraxia", "astraeus", "coeus,dodona,dione",
+    "hedone", "opora", "pasithea", "dionysus", "bacchus", "ocellus", "apollo", "artemis",
+  ];
+  return !orbitalBuildTypes.includes(buildType);
+}

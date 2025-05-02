@@ -2,6 +2,15 @@
 export const autoUpdateFrequency = 30 * 1000; // 30 seconds
 export const autoUpdateStopDuration = 60 * 60 * 1000; // 60 minutes
 
+export enum TopPivot {
+  home = 'home',
+  find = 'find',
+  build = 'build',
+  buildAll = 'buildAll',
+  cmdr = 'cmdr',
+  about = 'about',
+}
+
 export class RequestError extends Error {
   constructor(
     public statusCode: number,
@@ -22,6 +31,7 @@ export interface ProjectRefLite {
   buildName: string;
   buildType: string
   systemName: string;
+  isPrimaryPort: boolean;
 }
 
 export interface ProjectRefComplete extends ProjectRefLite {
@@ -125,15 +135,6 @@ export interface AppProps {
   setTS: React.Dispatch<React.SetStateAction<TopState>>;
 }
 
-export enum TopPivot {
-  home = 'home',
-  find = 'find',
-  build = 'build',
-  buildAll = 'buildAll',
-  cmdr = 'cmdr',
-  about = 'about',
-}
-
 export interface ResponseEdsmStations {
   id: number;
   id64: number;
@@ -207,6 +208,15 @@ export interface ResponseEdsmTypeAhead {
     z: number;
   },
   haveDuplicate: boolean;
+}
+
+export interface ResponseEdsmSystemFactions {
+  id: number;
+  id64: number;
+  name: string;
+  url: string;
+
+  // TODO: factions[] ..?
 }
 
 export enum SortMode {

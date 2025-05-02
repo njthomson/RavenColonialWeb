@@ -96,6 +96,7 @@ class LocalStorage {
       systemName: proj.systemName!,
       buildName: proj.buildName,
       buildType: proj.buildType,
+      isPrimaryPort: proj.isPrimaryPort
     };
 
     // add to the array, trim if getting too long
