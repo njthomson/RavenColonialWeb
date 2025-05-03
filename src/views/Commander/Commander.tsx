@@ -1,6 +1,6 @@
 import * as api from '../../api';
 import './Commander.css';
-import { ActionButton, Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, TeachingBubble } from '@fluentui/react';
+import { ActionButton, Icon, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
 import { mapCommodityNames, ProjectRef } from '../../types';
@@ -75,10 +75,11 @@ export class Commander extends Component<CmdrProps, CmdrState> {
   }
 
   render() {
-    const { errorMsg, showBubble } = this.state;
+    const { errorMsg, showBubble, projectRefs } = this.state;
 
     // const comboBoxStyles: Partial<IComboBoxStyles> = { root: { maxWidth: 300 } };
     const editingCmdr = false
+    const hasActiveProjects = projectRefs?.some(p => !p.complete);
 
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
@@ -96,12 +97,12 @@ export class Commander extends Component<CmdrProps, CmdrState> {
             <h3 className={cn.h3}>
               Active projects and assignments:
               &nbsp;
-              <ActionButton
+              {hasActiveProjects && <ActionButton
                 iconProps={{ iconName: 'Manufacturing' }}
                 text='View combined ...'
                 title='View merged data for all your active projects'
                 href='#build'
-              />
+              />}
             </h3>
             {this.renderCmdrProjects()}
           </div>
@@ -113,23 +114,12 @@ export class Commander extends Component<CmdrProps, CmdrState> {
   renderCmdrProjects() {
     const { projectRefs, loading, showCompleted, assignments } = this.state;
 
-    if (projectRefs?.length === 0) {
-      return <>
-        <br />
-        <Label>No projects found ...</Label>
-        <br />
-        <PrimaryButton text='Find or start a project ...' onClick={() => {
-          window.location.assign("#find");
-          window.location.reload();
-        }} />
-      </>;
-    }
+    const activeProjects = projectRefs?.filter(p => !p.complete) ?? [];
 
     const rows = [];
     let sumTotal = 0;
 
-    for (const p of projectRefs ?? []) {
-      if (p.complete) continue;
+    for (const p of activeProjects) {
 
       // a row the the project link
       const rowP = <tr key={`cp${p.buildId}`}>
@@ -166,26 +156,32 @@ export class Commander extends Component<CmdrProps, CmdrState> {
     return <>
       {loading && <Spinner size={SpinnerSize.large} label={`Loading projects and assignments ...`} />}
       {!loading && <>
-        <ul>
-          <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
-            <tbody>
-              {rows}
-            </tbody>
-          </table>
-        </ul>
-        {sumTotal > 0 && <div className='cargo-remaining'><CargoRemaining sumTotal={sumTotal} label='Remaining cargo to deliver' /></div>}
-      </>}
 
-      {completedProjects.length > 0 && <>
-        <ActionButton
-          iconProps={{ iconName: showCompleted ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
-          text={`${completedProjects.length} Completed projects`}
-          title={showCompleted ? 'Showing completed projects' : 'Hiding completed projects'}
-          onClick={() => this.setState({ showCompleted: !showCompleted })}
-        />
-        <ul>
+        {!rows.length && <Stack horizontal tokens={{ childrenGap: 8 }} style={{ margin: '20px 0 10px 0' }}>
+          <Label>No active projects.</Label>
+          <PrimaryButton text='Find or start a project ...' onClick={() => {
+            window.location.assign("#find");
+            window.location.reload();
+          }} />
+        </Stack>}
+
+        {!!rows.length && <ul>
+          <table className='cmdr-projects' cellSpacing={0} cellPadding={0}>
+            <tbody>{rows}</tbody>
+          </table>
+          {sumTotal > 0 && <div className='cargo-remaining'><CargoRemaining sumTotal={sumTotal} label='Remaining cargo to deliver' /></div>}
+        </ul>}
+
+        {completedProjects.length > 0 && <>
+          <ActionButton
+            iconProps={{ iconName: showCompleted ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
+            text={`${completedProjects.length} Completed projects`}
+            title={showCompleted ? 'Showing completed projects' : 'Hiding completed projects'}
+            onClick={() => this.setState({ showCompleted: !showCompleted })}
+          />
           {showCompleted && <ul className='completed'>{completedProjects}</ul>}
-        </ul>
+        </>}
+
       </>}
     </>;
   }

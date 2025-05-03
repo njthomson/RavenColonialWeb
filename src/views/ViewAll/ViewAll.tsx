@@ -1,14 +1,16 @@
-import './ProjectView/ProjectView.css';
-import { CommandBar, Icon, Label, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import './ViewAll.css';
+import '../ProjectView/ProjectView.css';
+import { ActionButton, CommandBar, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
-import * as api from '../api';
-import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../components';
-import { appTheme, cn } from '../theme';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../types';
-import { store } from '../local-storage';
-import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../util';
-import { FleetCarrier } from './FleetCarrier';
-import { CopyButton } from '../components/CopyButton';
+import * as api from '../../api';
+import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
+import { appTheme, cn } from '../../theme';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../../types';
+import { store } from '../../local-storage';
+import { delayFocus, fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../../util';
+import { FleetCarrier } from '../FleetCarrier';
+import { CopyButton } from '../../components/CopyButton';
+import { ModalCommander } from '../../components/ModalCommander';
 
 interface ViewAllProps {
 }
@@ -18,12 +20,15 @@ interface ViewAllState {
   loading?: boolean;
   projects: Project[],
   linkedFC: KnownFC[],
+
   /** Merged cargo needs from all projects */
   sumCargo: Cargo,
   /** Merged cargo from all Fleet Carriers */
   fcCargo: Cargo,
+
   autoUpdateUntil: number;
   fcEditMarketId?: string;
+  cmdrEdit?: boolean;
 }
 
 export class ViewAll extends Component<ViewAllProps, ViewAllState> {
@@ -68,7 +73,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         }),
 
         // get the FCs
-        api.cmdr.getCmdrLinkedFCs(store.cmdrName).then(linkedFC => {
+        api.cmdr.getAllLinkedFCs(store.cmdrName).then(linkedFC => {
           const fcCargo = mergeCargo(linkedFC.map(fc => fc.cargo));
           this.setState({ linkedFC, fcCargo });
         }),
@@ -100,14 +105,70 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     }
   }
 
+  toggleAutoRefresh = () => {
+    if (this.state.autoUpdateUntil > 0) {
+      // stop auto-refresh poll and don't refresh at this time.
+      console.log(`Stopping timer at: ${new Date().toISOString()}`);
+      clearTimeout(this.timer);
+      this.setState({ autoUpdateUntil: 0 });
+    } else {
+      // start polling (which causes an immediate refresh)
+      console.log(`Starting timer at: ${new Date().toISOString()}`);
+      this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
+      this.pollLastTimestamp(true);
+    }
+  };
+
+  async pollLastTimestamp(force: boolean = false) {
+    try {
+      this.setState({ loading: true });
+
+      const lasts = this.state.projects.reduce((map, p) => {
+        map[p.buildId] = p.timestamp;
+        return map;
+      }, {} as Record<string, string>);
+
+      // call server to see if anything changed
+      const buildIds = this.state.projects.map(p => p.buildId);
+      const newLasts = await Promise.all(buildIds.map(buildId => api.project.last(buildId)));
+
+      const changedBuildIds = buildIds.filter((buildId, i) => lasts[buildId] !== newLasts[i]);
+      console.debug(`pollTimestamp: changedBuildIds: [${changedBuildIds}], force: ${force}`);
+
+      if (changedBuildIds.length === 1) {
+        await this.fetchProject(changedBuildIds[0]);
+      } else if (changedBuildIds.length > 1) {
+        // something changed
+        await this.fetchAll();
+      }
+
+      // schedule next poll?
+      if (this.state.autoUpdateUntil > 0) {
+        if (Date.now() < this.state.autoUpdateUntil) {
+          this.timer = setTimeout(() => {
+            this.pollLastTimestamp();
+          }, autoUpdateFrequency);
+        } else {
+          console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+          this.setState({ autoUpdateUntil: 0 });
+        }
+      }
+    } catch (err: any) {
+      console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
+      this.setState({ autoUpdateUntil: 0 });
+    } finally {
+      this.setState({ loading: false });
+    }
+  }
+
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
     const fcRemaining = cargoRemaining - cargoOnHand;
 
-    return <div>
+    return <div className='view-all'>
       <div>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
@@ -171,6 +232,10 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         }}
       />}
 
+      {cmdrEdit && <Modal isOpen>
+        <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} preAddFC />
+      </Modal>}
+
     </div>;
   }
 
@@ -222,21 +287,17 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       systemRows.push(rowP);
     }
 
-    const fcRows = linkedFC.map(item => (<li key={`@${item.marketId}`}>
-      <span className={`removable ${cn.removable}`}>
-        {fcFullName(item.name, item.displayName)}
-        &nbsp;
-        <Icon
-          className={`btn ${cn.btn}`}
-          iconName='Edit'
-          title={`Edit FC: ${item.displayName} (${item.name})`}
-          style={{ color: appTheme.palette.themePrimary }}
-          onClick={() => {
-            this.setState({ fcEditMarketId: item.marketId.toString() });
-          }}
-        />
-      </span>
-    </li>));
+    const cmdrLinkedFC: KnownFC[] = [];
+    const projectLinkedFC: KnownFC[] = [];
+
+    for (let fc of linkedFC) {
+      let projLinked = projects.some(p => p.linkedFC.map(_ => _.marketId).includes(fc.marketId));
+      if (projLinked) {
+        projectLinkedFC.push(fc);
+      } else {
+        cmdrLinkedFC.push(fc);
+      }
+    }
 
     return <>
       <h3 className={cn.h3}>
@@ -246,70 +307,61 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         {systemRows}
       </ul>
 
-      <h3 className={cn.h3}>
-        {linkedFC.length} Fleet Carriers:
-      </h3>
-      <ul>
-        {fcRows}
-      </ul>
-
+      <div className='linked-fc'>
+        <h3 className={cn.h3}>
+          {linkedFC.length} Fleet Carriers:
+        </h3>
+        <h4 style={{ color: appTheme.palette.themePrimary }}>Project linked:</h4>
+        <div className='hint small'>These Fleet Carriers may also be linked to your commander</div>
+        <ul>
+          {this.getLinkedFCRows(projectLinkedFC)}
+        </ul>
+        <h4 style={{ color: appTheme.palette.themePrimary }}>
+          <Stack horizontal>
+            <span>Commander linked only:</span>
+            <ActionButton
+              iconProps={{ iconName: 'Add' }}
+              text='Add'
+              title='Link a new Fleet Carrier to your Commander'
+              style={{
+                marginLeft: 10,
+                padding: 0,
+                height: 22,
+                backgroundColor: appTheme.palette.themeLighter,
+              }}
+              onClick={() => {
+                this.setState({ cmdrEdit: true });
+              }}
+            />
+          </Stack>
+        </h4>
+        <ul>
+          {this.getLinkedFCRows(cmdrLinkedFC)}
+        </ul>
+      </div>
     </>;
   }
 
-  toggleAutoRefresh = () => {
-    if (this.state.autoUpdateUntil > 0) {
-      // stop auto-refresh poll and don't refresh at this time.
-      console.log(`Stopping timer at: ${new Date().toISOString()}`);
-      clearTimeout(this.timer);
-      this.setState({ autoUpdateUntil: 0 });
-    } else {
-      // start polling (which causes an immediate refresh)
-      console.log(`Starting timer at: ${new Date().toISOString()}`);
-      this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
-      this.pollLastTimestamp(true);
+  getLinkedFCRows(fcs: KnownFC[]) {
+    if (fcs.length === 0) {
+      return <span className='hint' style={{ color: appTheme.palette.neutralTertiaryAlt }} >None</span>;
     }
-  };
 
-  async pollLastTimestamp(force: boolean = false) {
-    try {
-      this.setState({ loading: true });
-
-      const lasts = this.state.projects.reduce((map, p) => {
-        map[p.buildId] = p.timestamp;
-        return map;
-      }, {} as Record<string, string>);
-
-      // call server to see if anything changed
-      const buildIds = this.state.projects.map(p => p.buildId);
-      const newLasts = await Promise.all(buildIds.map(buildId => api.project.last(buildId)));
-
-      const changedBuildIds = buildIds.filter((buildId, i) => lasts[buildId] !== newLasts[i]);
-      console.debug(`pollTimestamp: changedBuildIds: [${changedBuildIds}], force: ${force}`);
-
-      if (changedBuildIds.length === 1) {
-        await this.fetchProject(changedBuildIds[0]);
-      } else if (changedBuildIds.length > 1) {
-        // something changed
-        await this.fetchAll();
-      }
-
-      // schedule next poll?
-      if (this.state.autoUpdateUntil > 0) {
-        if (Date.now() < this.state.autoUpdateUntil) {
-          this.timer = setTimeout(() => {
-            this.pollLastTimestamp();
-          }, autoUpdateFrequency);
-        } else {
-          console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
-          this.setState({ autoUpdateUntil: 0 });
-        }
-      }
-    } catch (err: any) {
-      console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
-      this.setState({ autoUpdateUntil: 0 });
-    } finally {
-      this.setState({ loading: false });
-    }
+    return fcs.map(fc => <li key={`@${fc.marketId}`}>
+      <span className={`removable ${cn.removable}`}>
+        {fcFullName(fc.name, fc.displayName)}
+        &nbsp;
+        <Icon
+          className={`btn ${cn.btn}`}
+          iconName='Edit'
+          title={`Edit FC: ${fc.displayName} (${fc.name})`}
+          style={{ color: appTheme.palette.themePrimary }}
+          onClick={() => {
+            this.setState({ fcEditMarketId: fc.marketId.toString() });
+          }}
+        />
+      </span>
+    </li>);
   }
 
 }

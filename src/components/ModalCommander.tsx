@@ -10,6 +10,7 @@ import { CalloutMsg } from './CalloutMsg';
 
 interface ModalCommanderProps {
   onComplete: () => void;
+  preAddFC?: boolean
 }
 
 interface ModalCommanderState {
@@ -44,6 +45,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     this.medMax = cmdr?.medMax ?? 400;
 
     this.state = {
+      showAddFC: props.preAddFC,
       cmdr: cmdr?.name,
       cargoLargeMax: this.largeMax,
       cargoMediumMax: this.medMax,
@@ -52,6 +54,10 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       hideShipTrips: store.hideShipTrips,
       useNativeDiscord: store.useNativeDiscord,
     };
+
+    if (props.preAddFC) {
+      delayFocus('add-fc-combo-input');
+    }
   }
 
   componentDidMount(): void {
@@ -154,7 +160,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           <br />
 
           <Stack horizontal verticalAlign='center'>
-            <Label>Linked FCs:</Label>
+            <Label>Commander Linked FCs:</Label>
             {!showAddFC && <ActionButton
               iconProps={{ iconName: 'Add' }}
               text='Add'

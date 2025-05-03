@@ -5,7 +5,7 @@ import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
 import { Cargo, Project, ProjectRef } from '../types';
 import { appTheme, cn } from '../theme';
 import { EditProject } from '../components/EditProject/EditProject';
-import { isSurfaceSite } from '../util';
+import { delayFocus, isSurfaceSite } from '../util';
 
 interface ProjectProps {
   systemName?: string;
@@ -38,6 +38,8 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     window.document.title = `Find: ?`;
     if (this.props.systemName) {
       this.findProjects(this.props.systemName);
+    } else {
+      delayFocus('find-system-input');
     }
   }
 

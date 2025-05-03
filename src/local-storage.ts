@@ -135,7 +135,7 @@ class LocalStorage {
   get primaryBuildId(): string { return readString(Stored.primaryBuildId); }
   set primaryBuildId(newValue: string) { writeValue(Stored.primaryBuildId, newValue); }
 
-  /** Array of FC market IDs */
+  /** Map of FC market IDs */
   get cmdrLinkedFCs(): Record<string, string> { return readValue(Stored.cmdrLinkedFCs) ?? {}; }
   set cmdrLinkedFCs(newValue: Record<string, string>) { writeValue(Stored.cmdrLinkedFCs, newValue); }
 

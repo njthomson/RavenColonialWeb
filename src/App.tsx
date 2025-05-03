@@ -8,7 +8,7 @@ import { TopPivot } from './types';
 import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
-import { ViewAll } from './views/ViewAll';
+import { ViewAll } from './views/ViewAll/ViewAll';
 
 // Initialize icons in case this example uses them
 initializeIcons();
