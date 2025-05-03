@@ -99,7 +99,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
               <ActionButton
                 iconProps={{ iconName: 'Manufacturing' }}
                 text='View combined ...'
-                title='View a combined data for all your active projects'
+                title='View merged data for all your active projects'
                 href='#build'
               />
             </h3>
