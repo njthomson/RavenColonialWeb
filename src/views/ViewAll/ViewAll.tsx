@@ -7,7 +7,7 @@ import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '..
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../../types';
 import { store } from '../../local-storage';
-import { delayFocus, fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../../util';
+import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
 import { CopyButton } from '../../components/CopyButton';
 import { ModalCommander } from '../../components/ModalCommander';
