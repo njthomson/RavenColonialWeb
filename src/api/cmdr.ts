@@ -40,6 +40,10 @@ export const cmdr = {
     return await callAPI<KnownFC[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc`);
   },
 
+  getAllLinkedFCs: async (cmdr: string): Promise<KnownFC[]> => {
+    return await callAPI<KnownFC[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/all`);
+  },
+
   linkFC: async (cmdr: string, marketId: string): Promise<void> => {
     return await callAPI<void>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/${encodeURIComponent(marketId)}`, 'PUT');
   },

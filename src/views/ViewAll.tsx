@@ -104,7 +104,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
-    const fcRemaining = cargoRemaining - sumCargos(fcCargo);
+    const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
+    const fcRemaining = cargoRemaining - cargoOnHand;
 
     return <div>
       <div>
