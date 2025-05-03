@@ -84,6 +84,26 @@ export const mergeCargo = (cargos: Cargo[]): Cargo => {
   return merged;
 }
 
+export const getCargoCountOnHand = (cargoNeed: Cargo, cargoHave: Cargo) => {
+  // Count the needs where we have a surplus, otherwise count what we have
+  const countOnHand = Object.keys(mapCommodityNames)
+    .reduce((count, key) => {
+      const need = cargoNeed[key] ?? 0;
+      const have = cargoHave[key] ?? 0;
+
+      if (need > 0) {
+        if (have >= need) {
+          count += need;
+        } else if (have) {
+          count += have;
+        }
+      }
+      return count;
+    }, 0);
+
+  return countOnHand;
+};
+
 export const openDiscordLink = (link: string | undefined) => {
   if (!link) return;
 

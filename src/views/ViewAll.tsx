@@ -1,12 +1,12 @@
 import './ProjectView/ProjectView.css';
-import { CommandBar, Icon, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { CommandBar, Icon, Label, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
-import { CargoGrid, CargoRemaining, ProjectLink } from '../components';
+import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../components';
 import { appTheme, cn } from '../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../types';
 import { store } from '../local-storage';
-import { fcFullName, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../util';
+import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../util';
 import { FleetCarrier } from './FleetCarrier';
 import { CopyButton } from '../components/CopyButton';
 
@@ -18,7 +18,10 @@ interface ViewAllState {
   loading?: boolean;
   projects: Project[],
   linkedFC: KnownFC[],
+  /** Merged cargo needs from all projects */
   sumCargo: Cargo,
+  /** Merged cargo from all Fleet Carriers */
+  fcCargo: Cargo,
   autoUpdateUntil: number;
   fcEditMarketId?: string;
 }
@@ -33,6 +36,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       projects: [],
       linkedFC: [],
       sumCargo: {},
+      fcCargo: {},
       autoUpdateUntil: 0,
     };
   }
@@ -65,7 +69,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
 
         // get the FCs
         api.cmdr.getCmdrLinkedFCs(store.cmdrName).then(linkedFC => {
-          this.setState({ linkedFC });
+          const fcCargo = mergeCargo(linkedFC.map(fc => fc.cargo));
+          this.setState({ linkedFC, fcCargo });
         }),
       ]);
 
@@ -95,29 +100,11 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     }
   }
 
-  /*async fetchFC(marketId: string) {
-    this.setState({ loading: true });
-
-    try {
-      // get one FC
-      const newFC = await api.fc.get(marketId);
-      const newLinkedFC = this.state.linkedFC.map(fc => fc.marketId.toString() === marketId ? newFC : fc);
-
-      this.setState({
-        loading: false,
-        linkedFC: newLinkedFC
-      });
-    } catch (err: any) {
-      console.error(`Error loading data: ${err.message}`);
-      this.setState({ loading: false, errorMsg: err.message });
-    }
-  }*/
-
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, linkedFC } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
-    const fcRemaining = cargoRemaining - sumCargos(mergeCargo(linkedFC.map(fc => fc.cargo)));
+    const fcRemaining = cargoRemaining - sumCargos(fcCargo);
 
     return <div>
       <div>
@@ -154,8 +141,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             linkedFC={this.state.linkedFC}
           />
           <br />
-          <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo:' />
-          <CargoRemaining sumTotal={fcRemaining} label='Fleet Carrier deficit:' />
+          <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo' />
+          <CargoRemaining sumTotal={fcRemaining} label='Fleet Carrier deficit' />
           <br />
         </div>
 
@@ -178,6 +165,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
           this.setState({
             fcEditMarketId: undefined,
             linkedFC: linkedFC,
+            fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
           });
         }}
       />}
@@ -186,7 +174,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   renderActiveProjectsAndFCs() {
-    const { projects, linkedFC } = this.state;
+    const { projects, linkedFC, fcCargo } = this.state;
 
     const mapBySystem = projects.reduce((map, p) => {
       if (!map[p.systemName]) { map[p.systemName] = []; }
@@ -197,22 +185,37 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     const systemRows = [];
     for (const systemName in mapBySystem) {
       const rowP = <li key={systemName} style={{ marginBottom: 8 }}>
-        <Stack horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' style={{ fontWeight: 'bold' }}>
+        <Stack horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' style={{ fontWeight: 'bold', marginBottom: 8 }} >
           <Link href={`#find=${systemName}`} >{systemName}</Link>
           <CopyButton text={systemName} />
-          <span>3 projects</span>
+          <span>{mapBySystem[systemName].length} projects</span>
         </Stack>
+
         {mapBySystem[systemName].map(p => {
-          return <Stack key={p.buildId} horizontal tokens={{ childrenGap: 4 }} verticalAlign='end' className='project-link'>
-            <ProjectLink proj={p} noSys noBold />
-            {p.discordLink && <Icon
-              className='icon-btn'
-              iconName='OfficeChatSolid'
-              title='Open Discord link'
-              onClick={() => openDiscordLink(p.discordLink)}
-            />}
-            {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
-          </Stack>;
+          const sumNeed = sumCargos(p.commodities);
+          const approxProgress = p.maxNeed - sumNeed;
+          const percent = 100 / p.maxNeed * approxProgress;
+
+          const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
+
+          return <div key={p.buildId} >
+            <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' >
+              <ProjectLink proj={p} noSys />
+              {p.discordLink && <Icon
+                className='icon-btn'
+                iconName='OfficeChatSolid'
+                title='Open Discord link'
+                onClick={() => openDiscordLink(p.discordLink)}
+              />}
+              {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
+            </Stack>
+
+            <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='end' >
+              <ChartGeneralProgress maxNeed={p.maxNeed} progress={approxProgress} readyOnFC={countReadyOnFCs} minimal />
+              <Label style={{ marginBottom: 2 }}>&nbsp;&nbsp;{percent.toFixed(0)}%</Label>
+            </Stack>
+
+          </div>;
         })}
       </li>;
       systemRows.push(rowP);

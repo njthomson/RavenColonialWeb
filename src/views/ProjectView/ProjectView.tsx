@@ -6,7 +6,7 @@ import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, C
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delayFocus, fcFullName, flattenObj, getColorTable, getTypeForCargo, openDiscordLink, sumCargo } from '../../util';
+import { delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getTypeForCargo, mergeCargo, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
@@ -562,7 +562,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, editCommodities, sumTotal, submitting, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo } = this.state;
+    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     // do not render list if nothing left to deliver
@@ -589,24 +589,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     // calculate sum cargo diff for all FCs per commodity name
     const fcMarketIds = Object.keys(fcCargo);
     const mapSumCargoDiff = Object.keys(mapCommodityNames).reduce((map, key) => {
-      const need = proj.commodities[key];
+      const need = proj.commodities[key] ?? 0;
       if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
       return map;
     }, {} as Cargo);
 
     // as we have the FC cargo diff's known here, calculate how much they have ready for the total progress chart. Meaning: count the needs where FCs have a surplus, otherwise count what is on the FC
-    this.countReadyOnFCs = Object.keys(mapCommodityNames).reduce((count, key) => {
-      const need = proj.commodities[key];
-      const onFCs = mapSumCargoDiff[key] + need;
-      if (need > 0) {
-        if (onFCs > need) {
-          count += need;
-        } else if (onFCs) {
-          count += onFCs;
-        }
-      }
-      return count;
-    }, 0);
+    const fcMergedCargo = mergeCargo(Object.values(fcCargo))
+    this.countReadyOnFCs = getCargoCountOnHand(proj.commodities, fcMergedCargo);
 
     // calculate sum of diffs that are negative
     const fcSumCargoDeficit = Object.values(mapSumCargoDiff)
@@ -1414,7 +1404,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         proj: savedProj,
         lastTimestamp: savedProj.timestamp,
         editReady: new Set(savedProj.ready),
-        sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
+        sumTotal: sumCargo(savedProj.commodities),
         hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
         fixMarketId: undefined,
       });

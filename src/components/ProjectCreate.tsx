@@ -1,4 +1,4 @@
-import { ChoiceGroup, DefaultButton, IChoiceGroupOption, IComboBoxOption, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Spinner, SpinnerSize, Stack, TeachingBubble, TextField, Toggle } from '@fluentui/react';
+import { ChoiceGroup, DefaultButton, IChoiceGroupOption, IComboBoxOption, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, SelectableOptionMenuItemType, Spinner, Stack, TeachingBubble, TextField, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
