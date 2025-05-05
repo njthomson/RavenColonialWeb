@@ -56,6 +56,7 @@ export const About: React.FunctionComponent = () => {
         <li>Use the <Icon className="btn icon-inline" iconName='UserWarning' /> / <Icon className="btn icon-inline" iconName='Contact' /> button in the top right corner to set your Commander name and the cargo hold sizes for your commonly used ship. See more below working with Fleet Carriers.</li>
         <IconBtnScrollTop />
       </ul>
+      RavenColonial and SrvSurvey are not official tools for "Elite Dangerous" and are not affiliated with Frontier Developments. All trademarks and copyright are acknowledged as the property of their respective owners.
     </div>}
 
 

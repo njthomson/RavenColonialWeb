@@ -261,15 +261,15 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     if (!deltaTxt.startsWith('-') && deltaTxt !== '0') deltaTxt = '+' + deltaTxt;
 
     // prepare an element for the FC diff cell
-    // const fcSumTitle = delta > 0
-    //   ? `FCs have a surplus of: ${delta} ${displayName}`
-    //   : `FCs are short by: ${-delta} ${displayName}`;
-    // let fcSumElement = <></>;
-    // if (need > 0 && delta === 0) {
-    //   fcSumElement = <Icon className='icon-inline' iconName='CheckMark' title={`FCs have enough ${displayName}`} style={{ cursor: 'Default', textAlign: 'center', width: '100%' }} />;
-    // } else if (need > 0 || delta > 0) {
-    //   fcSumElement = <span title={fcSumTitle}>{deltaTxt}</span>;
-    // }
+    const fcSumTitle = delta > 0
+      ? `FCs have a surplus of: ${delta} ${displayName}`
+      : `FCs are short by: ${-delta} ${displayName}`;
+    let fcSumElement = <></>;
+    if (need > 0 && delta === 0) {
+      fcSumElement = <Icon className='icon-inline' iconName='CheckMark' title={`FCs have enough ${displayName}`} style={{ cursor: 'Default', textAlign: 'center', width: '100%' }} />;
+    } else if (need > 0 || delta > 0) {
+      fcSumElement = <span title={fcSumTitle}>{deltaTxt}</span>;
+    }
 
     // prepare bubble colour for FC diff cell
     let fcDiffCellColor = '';
@@ -319,7 +319,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         {/* The FC Diff cell */}
         <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
           <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: appTheme.palette.teal }} >
-            <span className='t'>{deltaTxt}</span>
+            {fcSumElement}
           </div>
         </td>
 
