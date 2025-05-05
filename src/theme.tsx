@@ -205,15 +205,13 @@ export const getThemedIconFC = (outer: string, inner?: string, fill: string = 'n
     width={16} height={16}
     viewBox="0 0 7 7"
     xmlns="http://www.w3.org/2000/svg">
-    <g
-      transform="translate(-54.499,-114.25)"
-    >
+    <g transform="translate(-54.499,-114.25)" >
       <g>
         <path
-          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.5 }}
           d="m 58.159721,114.43229 h -0.396449 l -2.414998,4.58976 1.517275,1.50463 0.997723,-0.75863 h 0.396449" />
         <path
-          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.5 }}
           d="m 58.129721,114.43229 h 0.396449 l 2.414998,4.58976 -1.517275,1.50463 -0.997723,-0.75863 h -0.396449" />
       </g>
       <ellipse
@@ -223,7 +221,7 @@ export const getThemedIconFC = (outer: string, inner?: string, fill: string = 'n
       <rect
         style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.4 }}
         width="0.9" height="0.009065479"
-        x="57.66" y="117.8506"
+        x="57.68" y="117.8506"
       />
     </g>
   </svg>;
@@ -234,25 +232,23 @@ export const getThemedIconSolidFC = (outer: string, inner?: string, fill: string
     width={16} height={16}
     viewBox="0 0 7 7"
     xmlns="http://www.w3.org/2000/svg">
-    <g
-      transform="translate(-54.7,-114.25)"
-    >
+    <g transform="translate(-54.7,-114.25)" >
       <g>
         <path
-          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.5 }}
           d="m 58.159721,114.43229 h -0.396449 l -2.414998,4.58976 1.517275,1.50463 0.997723,-0.75863 h 0.396449" />
         <path
-          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.5 }}
           d="m 58.129721,114.43229 h 0.396449 l 2.414998,4.58976 -1.517275,1.50463 -0.997723,-0.75863 h -0.396449" />
       </g>
       <ellipse
         style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.5 }}
-        cx="58.139721" cy="117.85513" rx="1.1" ry="1.1"
+        cx="58.139721" cy="117.85513" rx="1.2" ry="1.2"
       />
       <rect
         style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.5 }}
         width="0.7" height="0.009065479"
-        x="57.76" y="117.8506"
+        x="57.80" y="117.8506"
       />
     </g>
   </svg>;

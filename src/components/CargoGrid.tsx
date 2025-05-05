@@ -82,7 +82,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           }}
         />
         {linkedFC.length > 0 && <ActionButton
-          iconProps={{ iconName: hideFCColumns ? 'fleetCarrierSolid' : 'fleetCarrier' }}
+          iconProps={{ iconName: hideFCColumns ? 'fleetCarrier' : 'fleetCarrierSolid' }}
           title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}
           onClick={() => {
             this.setState({ hideFCColumns: !hideFCColumns });
