@@ -904,7 +904,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               <td>Time remaining:</td>
               <td>
                 <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
-                  proj.timeDue !== undefined && <TimeRemaining timeDue={proj.timeDue} />
+                  <TimeRemaining timeDue={proj.timeDue} />
                 </div>
               </td>
             </tr>}

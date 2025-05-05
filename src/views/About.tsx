@@ -45,15 +45,15 @@ export const About: React.FunctionComponent = () => {
       From the earliest times in history, mankind has looked to expand. We have sought to explore and thrive.  From the old earth Abrahamic religions, we were told to "go forth, and multiply."  This was the task given to Noah in the days after the dove returned with signs of land. Go forth, and Multiply.
       <br />
       But it wasn't a dove, over the years the translation was lost, in the original story it was a raven.
-      <br />
+      <br /><br />
       Now, thousands of years later, the Raven Colonial Corporation wishes to continue that millenias old command.
       <br /><br />
       Go forth, and Multiply.
       <br />
       <ul>
-        <li>The Raven Colonial Corporation supports colonization efforts whether working solo in groups or using Fleet Carriers.</li>
+        <li>The Raven Colonial Corporation supports colonization efforts whether working solo or in groups, with or without Fleet Carriers.</li>
         <li>Using SrvSurvey to monitor local journal file changes, progress will be tracked automatically as you conduct your affairs.</li>
-        <li>Use the <Icon className="btn icon-inline" iconName='UserWarning' /> / <Icon className="btn icon-inline" iconName='Contact' /> button in the top right corner to set your Commander name and the cargo hold sizes for your commonly used ship. See below about linking Fleet Carriers.</li>
+        <li>Use the <Icon className="btn icon-inline" iconName='UserWarning' /> / <Icon className="btn icon-inline" iconName='Contact' /> button in the top right corner to set your Commander name and the cargo hold sizes for your commonly used ship. See more below working with Fleet Carriers.</li>
         <IconBtnScrollTop />
       </ul>
     </div>}
@@ -64,12 +64,11 @@ export const About: React.FunctionComponent = () => {
       Issues can be <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='reported here' title='Submit suggestions and bug reports' /> and general discussion happens through <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss SrvSurvey' />.
       <ul>
         <li>See more detailed guidance on the <LinkSrvSurvey text='SrvSurvey colonization wiki' />.</li>
-        <li>Latest builds can be found on <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/releases/' text='GitHub releases' title='GitHub releases - frequently updated' />.</li>
         <li>Use the big Colonize button on the main window enable Colonization features and to create new projects.</li>
         <li>Once enabled cargo tracking will happen automatically at construction sites and linked Fleet Carriers.</li>
         <li>Use the Colonize {">"} Refresh button after changing links or assignments on the web site. (Coming soon) use this button to set a periodic refresh.</li>
       </ul>
-      SrvSurvey can also be installed via the <LinkSrvSurvey href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' text='Windows App Store' title='Windows App Store - infrequently updated' /> but this does not yet support colonization features.
+      SrvSurvey can be installed through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/releases/' text='GitHub' title='Latest pre-releases, frequently updated' /> or via the <span style={{ fontWeight: 'bold' }}><LinkSrvSurvey href='https://www.microsoft.com/store/productId/9NGT6RRH6B7N' text='Windows App Store' title='Windows App Store - less frequently updated' /></span> which now supports colonization features.
       <IconBtnScrollTop />
     </div>}
 
@@ -79,7 +78,6 @@ export const About: React.FunctionComponent = () => {
       <ul>
         <li>The home page will show any projects linked to your Commander, active or completed, as well as the last 5 projects you have viewed.</li>
         <li>Projects can be found by the system name on <Link href='#find'>#find</Link> page.</li>
-        <li>(coming soon) It will also be possible to find Projects near a given system.</li>
         <li>You do not need to be linked to a Project project to view details and contribute to it.</li>
         <li>When available, use the "<Icon className="btn icon-inline" iconName='OfficeChatSolid' /> Discord" button to check with others working this project.</li>
         <IconBtnScrollTop />
@@ -91,10 +89,10 @@ export const About: React.FunctionComponent = () => {
       <h3 className={cn.h3}>Creating a project</h3>
       <ul>
         <li>Creating projects is best done through <LinkSrvSurvey /> as it can pre-populate required cargo as well as other details pulled from journal files.</li>
-        <li>It is also possible to create projects through this site, though it requires some manual data entry.</li>
-        <li>Start by entering the system name on the <Link href='#find'>#find</Link> page.</li>
-        <li>Assuming no match is found, click "<Icon className="btn icon-inline" iconName='Search' /> Search sites" to pull any construction sites. (This information comes from EDSM)</li>
-        <li>Choose or if the desired construction site is not known, you will have to manually find the marketID value in journal files. Click the <Icon className="icon-inline" iconName="Info" /> button for instructions.</li>
+        <li>It is also possible to create projects through this site, though will require some manual data entry.</li>
+        <li>Start by entering the system name on the <Link href='#find'>#find</Link> page and enter the relevant system name.</li>
+        <li>Assuming no match is found, click "<Icon className="btn icon-inline" iconName='Manufacturing' /> Start a new Project?" to find any known construction sites. (This information comes from EDSM)</li>
+        <li>Choose the site, or if is not known, you will have to manually find the marketID value in journal files. Click the <Icon className="icon-inline" iconName="Info" /> button for instructions.</li>
         <li>Enter a name and choose the project type. Eg: Vulcan, Coriolis, Chronos, etc. You can find this information when docked at the construction site.</li>
         <li>After creating the site, you will need to manually enter cargo amounts. Or visit the site with SrvSurvey running and these numbers will be populated automatically.</li>
         <IconBtnScrollTop />
@@ -113,8 +111,9 @@ export const About: React.FunctionComponent = () => {
         <li>Cargo items can be sorted by clicking <Icon className="btn icon-inline" iconName='Sort' /> and completed entries removed by <Icon className="btn icon-inline" iconName='AllAppsMirrored' /> / <Icon className="btn icon-inline" iconName='ThumbnailViewMirrored' /></li>
         <li>For those not running SrvSurvey, use the "<Icon className="btn icon-inline" iconName='DeliveryTruck' /> Deliver" button when delivering supplies to a construction site.</li>
         <li>Use the <Icon className="btn icon-inline" iconName='Edit' /> edit buttons to manually change commodity values or project details.</li>
-        <li>Data will auto-update every 30 seconds until 1 hour passes without changes. Click "<Icon className="btn icon-inline" iconName='Refresh' /> Refresh" to reload data and start auto-updating again. The <Icon className="btn icon-inline" iconName='PlaybackRate1x' /> icon means auto-updating is active.</li>
-        <li>If you have multiple projects on the go, the SrvSurvey overlay will show the sum of all cargo items needed across all your projects. Use the "<Icon className="btn icon-inline" iconName='SingleBookmarkSolid' /> Primary" button to set or clear your primary project. SrvSurvey will then show cargo items needed for the primary or all projects. Be sure to click Colonize {">"} Refresh in SrvSurvey after changing this.</li>
+        <li>The page will auto-update every 30 seconds, until 1 hour passes without changes. Click "<Icon className="btn icon-inline" iconName='Refresh' /> Refresh" to reload data and start auto-updating again. The <Icon className="btn icon-inline" iconName='PlaybackRate1x' /> icon means auto-updating is active.</li>
+        <li>If you have multiple projects on the go, click the top "<Icon className="btn icon-inline" iconName='Manufacturing' /> Build" to see an aggregated view of all your active projects.</li>
+        <li>The SrvSurvey overlay will show the same aggregated view of cargo needed across all your projects. Use the "<Icon className="btn icon-inline" iconName='SingleBookmarkSolid' /> Primary" button to set or clear your primary project. SrvSurvey will then show cargo items needed only for the primary or all projects. Be sure to click Colonize {">"} Refresh in SrvSurvey after changing this.</li>
         <li>Projects may only be deleted by the system architect.</li>
         <li>The notes field may be used to store any free form text.</li>
         <li>As you make progress, charts will update showing progress with the volume of cargo delivered each hour.</li>
@@ -128,7 +127,7 @@ export const About: React.FunctionComponent = () => {
       Some colonization projects are huge and best done by groups of Commanders. SrvSurvey and RavenColonial will support groups working together on a single project.
       <ul>
         <li>Below project fields and notes is a list of Commanders working on a project. Linking a Commander means this project will be shown on their home page and SrvSurvey will know to track progress them.</li>
-        <li>Use the <Icon className="btn icon-inline" iconName='AddFriend' /> button to add any Commander by name. They do not need to be using SrvSurvey or RavenColonial.</li>
+        <li>Use the "<Icon className="btn icon-inline" iconName='Add' /> Add" button to add any Commander by name. They do not need to be using SrvSurvey or RavenColonial.</li>
         <li>In the list of commodities use "Assign to a commander ..." to tag a given commodity to a particular commander. This helps divvy up who is going to collect what.</li>
         <li>Assigned commodities will also surface in the SrvSurvey overlay, look for the 📌 icon.</li>
         <li>Tap or hover over an assignment or a Commander's name and use the <Icon className="btn icon-inline" iconName='Delete' /> button to remove an assignment or a Commander from a project.</li>
