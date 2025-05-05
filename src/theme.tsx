@@ -1,4 +1,4 @@
-import { createTheme, mergeStyleSets, Theme } from "@fluentui/react";
+import { createTheme, mergeStyleSets, registerIcons, Theme } from "@fluentui/react";
 import { store } from "./local-storage";
 
 // https://fluentuipr.z22.web.core.windows.net/heads/master/theming-designer/index.html
@@ -194,4 +194,76 @@ export const cn = mergeStyleSets({
       backgroundColor: appTheme.palette.themeSecondary,
     }
   },
+  ffcc: {
+    // background: getThemedIconFC('#fff', '#fff')
+  }
+});
+
+
+export const getThemedIconFC = (outer: string, inner?: string, fill: string = 'none') => {
+  return <svg
+    width={16} height={16}
+    viewBox="0 0 7 7"
+    xmlns="http://www.w3.org/2000/svg">
+    <g
+      transform="translate(-54.499,-114.25)"
+    >
+      <g>
+        <path
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          d="m 58.159721,114.43229 h -0.396449 l -2.414998,4.58976 1.517275,1.50463 0.997723,-0.75863 h 0.396449" />
+        <path
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          d="m 58.129721,114.43229 h 0.396449 l 2.414998,4.58976 -1.517275,1.50463 -0.997723,-0.75863 h -0.396449" />
+      </g>
+      <ellipse
+        style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.4 }}
+        cx="58.139721" cy="117.85513" rx="1.1" ry="1.1"
+      />
+      <rect
+        style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.4 }}
+        width="0.9" height="0.009065479"
+        x="57.66" y="117.8506"
+      />
+    </g>
+  </svg>;
+}
+
+export const getThemedIconSolidFC = (outer: string, inner?: string, fill: string = 'none') => {
+  return <svg
+    width={16} height={16}
+    viewBox="0 0 7 7"
+    xmlns="http://www.w3.org/2000/svg">
+    <g
+      transform="translate(-54.7,-114.25)"
+    >
+      <g>
+        <path
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          d="m 58.159721,114.43229 h -0.396449 l -2.414998,4.58976 1.517275,1.50463 0.997723,-0.75863 h 0.396449" />
+        <path
+          style={{ fill: fill, stroke: outer, strokeWidth: 0.4 }}
+          d="m 58.129721,114.43229 h 0.396449 l 2.414998,4.58976 -1.517275,1.50463 -0.997723,-0.75863 h -0.396449" />
+      </g>
+      <ellipse
+        style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.5 }}
+        cx="58.139721" cy="117.85513" rx="1.1" ry="1.1"
+      />
+      <rect
+        style={{ fill: 'none', stroke: inner ?? outer, strokeWidth: 0.5 }}
+        width="0.7" height="0.009065479"
+        x="57.76" y="117.8506"
+      />
+    </g>
+  </svg>;
+}
+
+
+registerIcons({
+  icons: {
+    'fleetCarrier': getThemedIconFC(appTheme.palette.themeDarkAlt),
+    'fleetCarrierBlack': getThemedIconFC(appTheme.palette.black),
+    'fleetCarrierSolid': getThemedIconSolidFC(appTheme.palette.themeDarkAlt, appTheme.palette.white, appTheme.palette.themeDarkAlt),
+    'fleetCarrierBlackSolid': getThemedIconSolidFC(appTheme.palette.black, appTheme.palette.white, appTheme.palette.black),
+  }
 });

@@ -15,6 +15,10 @@ export const fc = {
     return await callAPI<KnownFC>(`/api/fc/${encodeURIComponent(marketId)}`);
   },
 
+  check: async (marketId: string): Promise<KnownFC> => {
+    return await callAPI<KnownFC>(`/api/fc/${encodeURIComponent(marketId)}/spansh`, 'POST');
+  },
+
   updateFields: async (marketId: number, fields: { displayName: string }): Promise<KnownFC> => {
     return await callAPI<KnownFC>(
       `/api/fc/${encodeURIComponent(marketId)}`,

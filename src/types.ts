@@ -260,6 +260,17 @@ export const mapCommodityIcon: Record<string, string> = {
   Weapons: 'GripperTool', // IncidentTriangle
 }
 
+/** Prior mistakes and corrections in the cargo names:
+ * 
+ *  From > To
+ * 
+ *  microbialfurnaces > heliostaticfurnaces
+ *  landenrichmentsystems > terrainenrichmentsystems
+ *  muonimager > mutomimager
+ *  combatstabilizers > combatstabilisers
+ * 
+ **/
+
 /** A map of Colonization relevant cargo item names to display names */
 export const mapCommodityNames: Record<string, string> = {
   "liquidoxygen": "Liquid Oxygen",

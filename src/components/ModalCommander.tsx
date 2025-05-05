@@ -1,4 +1,4 @@
-import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, DefaultButton, Icon, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
@@ -22,8 +22,6 @@ interface ModalCommanderState {
   cmdrLinkedFCs: Record<string, string>;
   cmdrEditLinkedFCs: Record<string, string>;
   showAddFC?: boolean;
-  fcMatchMarketId?: string;
-  fcMatchError?: string;
 
   fcEditMarketId?: string;
 
@@ -84,7 +82,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   render() {
-    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcMatchError, fcMatchMarketId, fcEditMarketId, hideShipTrips, useNativeDiscord } = this.state;
+    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord } = this.state;
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
       <span className='removable'>
@@ -182,25 +180,16 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
           {showAddFC && <div>
             <Label>Enter Fleet Carrier name:</Label>
-            <Stack className='add-fc' horizontal tokens={{ childrenGap: 10, padding: 10, }}>
-              <FindFC
-                errorMsg={fcMatchError}
-                onMatch={(marketId) => {
-                  if (marketId) {
-                    if (marketId in this.state.cmdrEditLinkedFCs) {
-                      this.setState({ fcMatchMarketId: undefined, fcMatchError: `FC already linked` });
-                    } else {
-                      this.setState({ fcMatchMarketId: marketId, fcMatchError: undefined });
-                    }
-                  } else {
-                    this.setState({ fcMatchMarketId: undefined, fcMatchError: undefined });
-                  }
-                }}
-              />
-
-              <PrimaryButton text='Link' onClick={this.onClickLinkFC} iconProps={{ iconName: 'Airplane' }} disabled={!fcMatchMarketId || !!fcMatchError} />
-              <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddFC: false, fcMatchError: undefined })} />
-            </Stack>
+            <FindFC
+              notThese={Object.keys(cmdrEditLinkedFCs)}
+              onChange={(marketId) => {
+                if (marketId) {
+                  this.onClickLinkFC(marketId);
+                } else {
+                  this.setState({ showAddFC: false });
+                }
+              }}
+            />
           </div>}
 
           <ul>
@@ -264,15 +253,14 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     this.props.onComplete();
   };
 
-  onClickLinkFC = async () => {
-    const marketId = this.state.fcMatchMarketId;
+  onClickLinkFC = async (marketId: string) => {
     if (!marketId) return;
     const fc = await api.fc.get(marketId!)
 
     // add to array
     const { cmdrEditLinkedFCs } = this.state;
     cmdrEditLinkedFCs[marketId] = fcFullName(fc.name, fc.displayName);
-    this.setState({ cmdrEditLinkedFCs, fcMatchMarketId: undefined, showAddFC: false, fcMatchError: undefined });
+    this.setState({ cmdrEditLinkedFCs, showAddFC: false });
   }
 
   onClickUnlinkFC = async (marketId: string) => {

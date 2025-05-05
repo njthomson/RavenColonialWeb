@@ -25,5 +25,5 @@ export const CommodityIcon: FunctionComponent<{ name: string; }> = (props) => {
     iconName = 'ChromeClose';
   }
 
-  return <Icon className="commodity-icon icon-inline" iconName={iconName} title={commodityClass} />;
+  return <Icon className="commodity-icon" iconName={iconName} title={commodityClass} />;
 };

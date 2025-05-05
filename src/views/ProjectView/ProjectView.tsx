@@ -55,8 +55,6 @@ interface ProjectViewState {
   cargoContext?: string;
 
   showAddFC: boolean;
-  fcMatchMarketId?: string;
-  fcMatchError?: string;
 
   fcCargo: Record<string, Cargo>;
   fcEditMarketId?: string;
@@ -187,6 +185,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
 
       this.setState({
+        buildId: newProj.buildId,
         proj: newProj,
         editProject: window.location.hash.startsWith('#edit'),
         lastTimestamp: newProj.timestamp,
@@ -629,7 +628,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {mode === Mode.view && <h3 className={cn.h3}>
         Commodities:&nbsp;
         <ActionButton
-          id='menu-sort'
           iconProps={{ iconName: 'Sort' }}
           onClick={() => {
             const newSort = sort === SortMode.alpha ? SortMode.group : SortMode.alpha;
@@ -640,7 +638,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           {sort}
         </ActionButton>
         <ActionButton
-          id='menu-sort'
           iconProps={{ iconName: hideDoneRows ? 'ThumbnailViewMirrored' : 'AllAppsMirrored' }}
           title={hideDoneRows ? 'Hiding completed commodies' : 'Showing all commodities'}
           text={hideDoneRows ? 'Active' : 'All'}
@@ -650,8 +647,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           }}
         />
         {fcCount > 0 && <ActionButton
-          id='menu-sort'
-          iconProps={{ iconName: hideFCColumns ? 'AirplaneSolid' : 'Airplane' }}
+          iconProps={{ iconName: hideFCColumns ? 'fleetCarrier' : 'fleetCarrierSolid' }}
           title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}
           onClick={() => {
             this.setState({ hideFCColumns: !hideFCColumns });
@@ -810,30 +806,32 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
     return <tr key={`cc-${key}`} className={className} style={style}>
       <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
-        <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
-        &nbsp;
-        {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
-        &nbsp;
-        {sumCargoDiff >= 0 && need > 0 && <Icon className='icon-inline' iconName='AirplaneSolid' title={fcSumTitle} />}
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
+          <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
+          &nbsp;
+          {isReady && <Icon iconName='CompletedSolid' title={`${displayName} is ready`} />}
+          &nbsp;
+          {sumCargoDiff >= 0 && need > 0 && <Icon className='icon-inline' iconName='fleetCarrierBlack' title={fcSumTitle} />}
 
-        {isContextTarget && <ContextualMenu
-          target={`#cn-${key}`}
-          onDismiss={() => this.setState({ cargoContext: undefined })}
-          items={menuItems}
-          styles={{
-            container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
-          }}
-        />}
+          {isContextTarget && <ContextualMenu
+            target={`#cn-${key}`}
+            onDismiss={() => this.setState({ cargoContext: undefined })}
+            items={menuItems}
+            styles={{
+              container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
+            }}
+          />}
 
-        <Icon
-          className={`btn ${cn.btn}`}
-          iconName='ContextMenu'
-          title={`Commands for: ${key}`}
-          style={{ color: appTheme.palette.themePrimary }}
-          onClick={() => {
-            this.setState({ cargoContext: key });
-          }}
-        />
+          <Icon
+            className={`btn ${cn.btn}`}
+            iconName='ContextMenu'
+            title={`Commands for: ${key}`}
+            style={{ color: appTheme.palette.themePrimary }}
+            onClick={() => {
+              this.setState({ cargoContext: key });
+            }}
+          />
+        </Stack>
       </td>
 
       <td className={`commodity-need ${cn.br}`} >
@@ -981,7 +979,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderLinkedFC() {
-    const { proj, showAddFC, fcMatchMarketId, fcMatchError, fcEditMarketId } = this.state;
+    const { proj, showAddFC, fcEditMarketId } = this.state;
     if (!proj) { return <div />; }
 
     const rows = proj.linkedFC.map(item => (<li key={`@${item.marketId}`}>
@@ -1019,6 +1017,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         }, {} as Record<string, string>);
     }
 
+    const linkedMarketIds = this.state.proj?.linkedFC.map(fc => fc.marketId.toString()) ?? [];
     return <>
       <h3 className={cn.h3}>
         {proj.linkedFC.length ?? 0} Linked Fleet Carriers:
@@ -1032,7 +1031,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             this.setState({
               showAddFC: true,
               showAddCmdr: false,
-              fcMatchError: undefined
             });
             delayFocus('add-fc-combo-input');
           }}
@@ -1040,27 +1038,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </h3>
       {showAddFC && <div>
         <Label>Enter Fleet Carrier name:</Label>
-        <Stack className='add-fc' horizontal tokens={{ childrenGap: 10, padding: 10, }}>
-          <FindFC
-            preMatches={preMatches}
-            errorMsg={fcMatchError}
-            onMatch={(marketId) => {
+        <FindFC
+          preMatches={preMatches}
+          notThese={linkedMarketIds}
+          onChange={(marketId) => {
 
-              if (marketId) {
-                if (this.state.proj?.linkedFC.find(fc => fc.marketId.toString() === marketId)) {
-                  this.setState({ fcMatchMarketId: undefined, fcMatchError: `FC already linked` });
-                } else {
-                  this.setState({ fcMatchMarketId: marketId, fcMatchError: undefined });
-                }
-              } else {
-                this.setState({ fcMatchMarketId: undefined, fcMatchError: undefined });
-              }
-            }}
-          />
+            if (marketId) {
+              this.onClickLinkFC(marketId)
+            } else {
+              this.setState({ showAddFC: false });
+            }
+          }}
+        />
 
-          <PrimaryButton text='Link' onClick={this.onClickLinkFC} iconProps={{ iconName: 'Airplane' }} disabled={!fcMatchMarketId || !!fcMatchError} />
-          <IconButton title='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showAddFC: false, fcMatchError: undefined })} />
-        </Stack>
       </div>}
 
       <ul>
@@ -1132,15 +1122,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  onClickLinkFC = async () => {
-    const buildId = this.state.proj?.buildId;
-    const marketId = this.state.fcMatchMarketId;
-    if (buildId && marketId) {
+  onClickLinkFC = async (marketId: string) => {
+    if (this.state.buildId && marketId) {
       try {
-        const linkedFCs = await api.project.linkFC(buildId, marketId);
-
-        this.updateLinkedFC(buildId, linkedFCs);
-
+        const linkedFCs = await api.project.linkFC(this.state.buildId, marketId);
+        this.updateLinkedFC(this.state.buildId, linkedFCs);
       } catch (err: any) {
         this.setState({ errorMsg: err.message });
       }
@@ -1173,7 +1159,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       lastTimestamp: updatedProj.timestamp,
       showAddFC: false,
       deliverMarketId: linkedFCs.find(fc => fc.marketId.toString() === this.state.deliverMarketId)?.marketId.toString() ?? 'site',
-      fcMatchError: undefined,
       errorMsg: undefined,
     });
     this.fetchCargoFC(buildId);
@@ -1466,7 +1451,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       placeholder='Choose a destination...'
       style={{ width: 200 }}
       options={destinationOptions}
-      onRenderOption={(o) => { return <><Icon className='icon-inline' iconName={o?.data?.icon ?? 'Airplane'} />&nbsp;{o?.text}</>; }}
+      onRenderOption={(o) => {
+        return <>
+          <Icon className='icon-inline' iconName={o?.key === 'site' ? 'Manufacturing' : 'fleetCarrierBlack'} />
+          &nbsp;{o?.text}
+        </>;
+      }}
       dropdownWidth='auto'
       selectedKey={deliverMarketId}
       onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() })}

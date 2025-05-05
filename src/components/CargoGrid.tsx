@@ -1,4 +1,4 @@
-import { ActionButton, Icon, Link } from '@fluentui/react';
+import { ActionButton, Icon, Link, Stack } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
@@ -63,7 +63,6 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       <h3 className={cn.h3}>
         Commodities:&nbsp;
         <ActionButton
-          id='menu-sort'
           iconProps={{ iconName: 'Sort' }}
           onClick={() => {
             const newSort = sort === SortMode.alpha ? SortMode.group : SortMode.alpha;
@@ -74,7 +73,6 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           {sort}
         </ActionButton>
         <ActionButton
-          id='menu-sort'
           iconProps={{ iconName: hideDoneRows ? 'ThumbnailViewMirrored' : 'AllAppsMirrored' }}
           title={hideDoneRows ? 'Hiding completed commodies' : 'Showing all commodities'}
           text={hideDoneRows ? 'Active' : 'All'}
@@ -84,8 +82,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           }}
         />
         {linkedFC.length > 0 && <ActionButton
-          id='menu-sort'
-          iconProps={{ iconName: hideFCColumns ? 'AirplaneSolid' : 'Airplane' }}
+          iconProps={{ iconName: hideFCColumns ? 'fleetCarrierSolid' : 'fleetCarrier' }}
           title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}
           onClick={() => {
             this.setState({ hideFCColumns: !hideFCColumns });
@@ -285,13 +282,15 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     return <tr key={`cc-${key}`} className={className} style={style}>
 
       <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
-        <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
-        &nbsp;
-        {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
-        &nbsp;
-        {/* {delta >= 0 && need > 0 && <Icon className='icon-inline' iconName='AirplaneSolid' title={fcSumTitle} />} */}
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
 
-        {/* {isContextTarget && <ContextualMenu
+          <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
+          &nbsp;
+          {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
+          &nbsp;
+          {/* {delta >= 0 && need > 0 && <Icon className='icon-inline' iconName='fleetCarrierSolid' title={fcSumTitle} />} */}
+
+          {/* {isContextTarget && <ContextualMenu
           target={`#cn-${key}`}
           onDismiss={() => this.setState({ cargoContext: undefined })}
           items={menuItems}
@@ -309,6 +308,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
             this.setState({ cargoContext: key });
           }}
         /> */}
+        </Stack>
       </td>
 
       <td className={`commodity-need ${cn.br}`} >

@@ -1,13 +1,13 @@
-import { ComboBox, IComboBox, IComboBoxOption } from '@fluentui/react';
-import { Component, createRef } from 'react';
 import * as api from '../api';
+import { ComboBox, IComboBox, IComboBoxOption, IconButton, Stack } from '@fluentui/react';
+import { Component, createRef } from 'react';
 import { appTheme } from '../theme';
 
 interface FindFCProps {
-  onMatch: (marketId: string | undefined) => void;
-  errorMsg?: string;
+  onChange: (marketId: string | undefined) => void;
   match?: boolean;
   preMatches?: Record<string, string>
+  notThese: string[]
 }
 
 interface FindFCState {
@@ -34,7 +34,6 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     this.state = {
       matches: preMatches,
       preMatch: preMatches.length > 0,
-      errorMsg: props.errorMsg,
     };
   }
 
@@ -46,11 +45,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
 
   componentDidUpdate(prevProps: Readonly<FindFCProps>, prevState: Readonly<FindFCState>, snapshot?: any): void {
     if (prevState.marketId !== this.state.marketId) {
-      this.props.onMatch(this.state.marketId);
-    }
-
-    if (this.props.errorMsg && this.props.errorMsg !== this.state.errorMsg) {
-      this.setState({ errorMsg: this.props.errorMsg });
+      this.props.onChange(this.state.marketId);
     }
   }
 
@@ -58,36 +53,54 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     const { matches, errorMsg } = this.state;
 
     return <>
-      <ComboBox
-        id='add-fc-combo'
-        componentRef={this.comboFindFC}
-        openOnKeyboardFocus
-        errorMessage={errorMsg}
-        styles={{
-          root: { maxWidth: 300 },
-          callout: {
-            border: '1px solid ' + appTheme.palette.themePrimary,
-            display: errorMsg ? 'none' : 'flex',
-          },
-        }}
-        allowFreeform
-        autoComplete='off'
-        options={matches}
-        onRenderUpperContent={() => {
-          const hint = this.getUpperContentHint();
-          if (hint)
-            return <div className='add-fc-upper' style={{ color: appTheme.palette.themePrimary }}>{hint}</div>;
-          else
-            return null;
-        }}
-        onInputValueChange={this.onType}
-        onChange={(_, o) => {
-          this.setState({
-            marketId: o?.key.toString(),
-            errorMsg: undefined
-          });
-        }}
-      />
+      <Stack className='add-fc' horizontal tokens={{ childrenGap: 8 }}>
+        <ComboBox
+          id='add-fc-combo'
+          componentRef={this.comboFindFC}
+          openOnKeyboardFocus
+          errorMessage={errorMsg}
+          styles={{
+            root: { maxWidth: 300 },
+            callout: {
+              border: '1px solid ' + appTheme.palette.themePrimary,
+              display: errorMsg ? 'none' : 'flex',
+            },
+          }}
+          allowFreeform
+          autoComplete='off'
+          options={matches}
+
+          onRenderUpperContent={() => {
+            const hint = this.getUpperContentHint();
+            if (hint)
+              return <div className='add-fc-upper' style={{ color: appTheme.palette.themePrimary }}>{hint}</div>;
+            else
+              return null;
+          }}
+
+          onInputValueChange={this.onType}
+
+          onChange={(_, o) => {
+            const newMarketId = o?.key.toString();
+            if (!newMarketId) return;
+
+            if (this.props.notThese.includes(newMarketId)) {
+              this.setState({
+                errorMsg: 'FC already linked'
+              });
+            } else {
+              this.onChooseFC(newMarketId);
+            }
+          }}
+        />
+
+        <IconButton
+          title='Cancel'
+          iconProps={{ iconName: 'Cancel' }}
+          onClick={() => this.props.onChange(undefined)}
+        />
+
+      </Stack>
     </>;
   }
 
@@ -172,4 +185,19 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
       this.comboFindFC.current?.focus(true);
     }
   };
+
+  onChooseFC = async (marketId: string) => {
+    try {
+      // check we know this FC first
+      await api.fc.check(marketId);
+    } catch (err: any) {
+      if (err.statusCode !== 409) {
+        this.setState({ errorMsg: err.message });
+        return;
+      }
+    }
+
+    // pass onto external code
+    this.props.onChange(marketId);
+  }
 }
