@@ -208,6 +208,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
       if (newProj.complete) window.document.title += ' (completed)';
+      return newProj;
 
     } catch (err: any) {
       if (polling) {
@@ -1465,7 +1466,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // valid cargo names that can be included on a delivery
     const validCargoKeys = Object.keys(proj.commodities)
-      .filter(k => !(k in nextDelivery) && proj.commodities[k] > 0)
+      .filter(k => proj.commodities[k] > 0)
 
     return <div className='delivery'>
       {!submitting && <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
