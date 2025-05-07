@@ -33,7 +33,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
 
   componentDidUpdate(prevProps: Readonly<FindSystemNameProps>, prevState: Readonly<FindSystemNameState>, snapshot?: any): void {
     if (this.props.text && prevProps.text !== this.props.text && this.props.text !== this.state.searchText) {
-      this.setState({ searchText: this.props.text, matches: undefined });
+      this.setState({ searchText: this.props.text });
     }
 
     if (this.props.errorMsg && this.props.errorMsg !== this.state.errorMsg) {
@@ -45,7 +45,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
     const { searchText, matches, errorMsg, searching } = this.state;
 
     return <>
-      <Label required={true}>System name:</Label>
+      <Label>System name:</Label>
 
       <Stack horizontal>
         <ComboBox
@@ -64,7 +64,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
             },
           }}
           allowFreeform
-          // autoComplete='off'
+          autoComplete='off'
           options={matches ?? []}
           onInputValueChange={this.onType}
           onMenuOpen={() => {
@@ -87,7 +87,6 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
             const systemName = o?.key.toString();
             if (!!systemName) {
               this.setState({
-                searchText: systemName,
                 errorMsg: undefined
               });
               this.props.onMatch(systemName);
@@ -96,6 +95,10 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
                 errorMsg: 'No matches found'
               });
             }
+          }}
+          onKeyUp={(ev) => {
+            if (ev.key === 'Enter' && this.state.matches?.length === 1) { this.props.onMatch(this.state.matches[0].text); }
+            if (ev.key === 'Escape') { this.setState({ searchText: '' }) }
           }}
         />
 

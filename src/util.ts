@@ -123,12 +123,20 @@ export const openDiscordLink = (link: string | undefined) => {
 
 export const isSurfaceSite = (buildType: string): boolean => {
   const orbitalBuildTypes = [
+    "coriolis", "no_truss", "dual_truss", "quad_truss",
     "plutus", "vulcan", "dysnomia", "vesta", "prometheus", "nemesis",
     "hermes", "angelia", "eirene", "pistis", "soter", "aletheia", "demeter", "apate",
     "laverna", "euthenia", "phorcys", "enodia", "ichnaea", "coriolis",
     "asteroid", "vacuna", "alastor", "dicaeosyne", "poena", "eunomia", "nomos",
-    "harmonia", "asclepius", "eupraxia", "astraeus", "coeus,dodona,dione",
+    "harmonia", "asclepius", "eupraxia", "astraeus", "coeus", "dodona", "dione",
     "hedone", "opora", "pasithea", "dionysus", "bacchus", "ocellus", "apollo", "artemis",
   ];
   return !orbitalBuildTypes.includes(buildType);
+}
+
+export const asPosNegTxt = (n: number): string => {
+  if (n > 0)
+    return `+${n}`;
+  else
+    return `${n}`
 }

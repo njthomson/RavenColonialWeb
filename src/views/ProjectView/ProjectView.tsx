@@ -6,12 +6,14 @@ import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, C
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getTypeForCargo, mergeCargo, openDiscordLink, sumCargo } from '../../util';
+import { asPosNegTxt, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getTypeForCargo, mergeCargo, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 import { TimeRemaining } from '../../components/TimeRemaining';
 import { EditProject } from '../../components/EditProject/EditProject';
+import { getSiteType, mapName, SysEffects } from '../../site-data';
+import { Chevrons, TierPoints } from '../../components/Chevrons';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -857,7 +859,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderProjectDetails(proj: Project) {
-
     return <div className='half'>
       <div className='project'>
         <h3 className={cn.h3}>Build:</h3>
@@ -908,18 +909,78 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               </td>
             </tr>}
 
-            <tr>
+            {!!proj.notes && <tr>
               <td>Notes:</td>
               <td><div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.notes}&nbsp;</div></td>
-            </tr>
+            </tr>}
 
           </tbody>
         </table>
         {this.renderCommanders()}
         {this.renderLinkedFC()}
+        {this.renderBuildEffects(proj)}
       </div>
     </div>;
   };
+
+  renderBuildEffects(proj: Project) {
+
+    const st = getSiteType(proj.buildType);
+
+    const effectRows = Object.keys(st.effects).map(key => {
+      const value = st.effects[key as keyof SysEffects] ?? 0;
+      const displayName = mapName[key];
+      let displayVal = asPosNegTxt(value);
+
+      return <tr key={`se${key}`} title={`${displayName}: ${asPosNegTxt(value)}`}>
+        <td>{displayName}:</td>
+        <td>
+          {value < 0 && <Chevrons name={displayName} count={value} />}
+        </td>
+        <td>
+          {displayVal}
+        </td>
+        <td>
+          {value > 0 && <Chevrons name={displayName} count={value} />}
+        </td>
+      </tr>
+    });
+
+    let needs = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
+    if (st.needs.count > 0) {
+      needs = <TierPoints tier={st.needs.tier} count={st.needs.count} />
+    }
+    let gives = null;
+    if (st.gives.count > 0) {
+      gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
+    }
+
+    return <>
+      <br />
+      <h3 className={cn.h3}>System effects:</h3>
+      <table style={{ fontSize: '14px' }}>
+        <tbody>
+
+          {st.inf !== 'none' && <tr>
+            <td>Economy:</td>
+            <td colSpan={3}><div className='grey'>{mapName[st.inf]}</div>
+            </td>
+          </tr>}
+
+          {effectRows}
+
+          {<tr>
+            <td colSpan={4}>
+              <span>Needs: {needs}</span>
+              &nbsp;
+              <span>Provides: {gives}</span>
+            </td>
+          </tr>}
+
+        </tbody>
+      </table>
+    </>;
+  }
 
   renderCommanders() {
     const { proj, showAddCmdr, newCmdr } = this.state;
