@@ -27,20 +27,14 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
     }
   }
 
-  let maxLinks = 0
-  Object.values(props.site.links.economies).forEach(l => maxLinks += (l.strong * 62) + (l.weak * 8));
-  const blockWidthRatio = 400 / maxLinks;
+  const colorBlocks = generateColorBlocks(props.site, 400, 20);
 
   // table rows for strong/weak links
   const linkRows = [];
-  const colorBlocks = [];
   for (const key of Object.keys(props.site.links.economies)) {
+
     const { strong, weak } = props.site.links.economies[key];
-
     const color = economyColors[key] ?? '#FFF';
-
-    const blockWidth = (((strong * 62) + (weak * 8)) * blockWidthRatio) - 4;
-    colorBlocks.push(<div style={{ display: 'inline-block', width: blockWidth, height: 20, marginRight: 2, backgroundColor: color, border: '1px solid rgba(0,0,0,0.3)' }}></div>);
 
     linkRows.push(<tr key={`link${props.site.buildId}${key}`}>
       <td className={cn.br}>
@@ -68,7 +62,6 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
       {colorBlocks}
     </div>
 
-
     <table className='table-market-links' cellPadding={0} cellSpacing={0}>
       <thead>
         <tr>
@@ -92,3 +85,84 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
     </div>
   </div>;
 };
+
+const generateColorBlocks = (site: SiteMap, width: number, height: number): JSX.Element[] => {
+  if (!site.links) return [];
+
+  let maxLinks = 0
+  Object.values(site.links.economies).forEach(l => maxLinks += (l.strong * 62) + (l.weak * 8));
+  const blockWidthRatio = width / maxLinks;
+
+  const colorBlocks = [];
+  for (const key of Object.keys(site.links.economies)) {
+    const { strong, weak } = site.links.economies[key];
+
+    const color = economyColors[key] ?? '#FFF';
+    const blockWidth = (((strong * 62) + (weak * 8)) * blockWidthRatio) - 4;
+
+    let title = `${mapName[key]} -`;
+    if (strong > 0) { title += ` strong: ${strong}`; }
+    if (weak > 0) { title += ` weak: ${weak}`; }
+
+
+    const block = <div
+      title={title}
+      style={{
+        display: 'inline-block',
+        width: blockWidth,
+        height: height,
+        marginRight: 2,
+        backgroundColor: color,
+        border: '1px solid rgba(0,0,0,0.3)'
+      }}
+    />;
+    colorBlocks.push(block);
+  };
+
+  return colorBlocks;
+};
+
+
+export const MarketLinkBlocks: FunctionComponent<{ site: SiteMap, width: number, height: number; }> = (props) => {
+  if (!props.site.links) return null;
+
+  const colorBlocks = generateColorBlocks(props.site, props.width, props.height);
+
+  return <div>
+    {colorBlocks}
+  </div>
+}
+
+export const EconomyBlocks: FunctionComponent<{ economies: Record<string, number>, width: number, height: number; }> = (props) => {
+
+  let maxCount = 0
+  Object.values(props.economies).forEach(v => maxCount += v);
+  const blockWidthRatio = props.width / maxCount;
+
+  const colorBlocks = [];
+  for (const key of Object.keys(props.economies)) {
+    const v = props.economies[key];
+
+    const color = economyColors[key] ?? '#FFF';
+    const blockWidth = (v * blockWidthRatio) - 4;
+
+    let title = `${mapName[key]}: ${v}`;
+
+    const block = <div
+      title={title}
+      style={{
+        display: 'inline-block',
+        width: blockWidth,
+        height: props.height,
+        marginRight: 2,
+        backgroundColor: color,
+        border: '1px solid rgba(0,0,0,0.3)'
+      }}
+    />;
+    colorBlocks.push(block);
+  };
+
+  return <div style={{ margin: '0' }}>
+    {colorBlocks}
+  </div>
+}

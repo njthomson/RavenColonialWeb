@@ -4,14 +4,14 @@ import { Component } from "react";
 type Environ = 'orbital' | 'surface';
 
 interface ChooseBuildTypeProps {
-  buildType: string,
+  buildType: string | undefined,
   onChange: (value: string) => void
 }
 
 interface ChooseBuildTypeState {
   showList: boolean;
   environ: Environ;
-  selection: string;
+  selection: string | undefined;
   groups: INavLinkGroup[];
 }
 
@@ -57,7 +57,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     return '';
   }
 
-  getEnviron(selection: string) {
+  getEnviron(selection: string | undefined) {
     if (!selection) { return 'orbital'; }
 
     for (let tier of buildTypeMap.orbital) {
@@ -72,7 +72,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     return 'surface';
   }
 
-  getFilteredOptions(selection: string, environ: keyof (typeof buildTypeMap)): INavLinkGroup[] {
+  getFilteredOptions(selection: string | undefined, environ: keyof (typeof buildTypeMap)): INavLinkGroup[] {
 
     let groups: INavLinkGroup[] = [
       {
@@ -162,7 +162,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
   render() {
     const { showList, selection, environ, groups } = this.state;
 
-    let selectedTxt = '';
+    let displayText = '?';
     if (selection) {
       const line = this.findLine(selection);
       if (line) {
@@ -170,13 +170,13 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         if (prefix.endsWith('s')) prefix = prefix.slice(0, -1);
         if (txt.endsWith(prefix)) prefix = '';
         txt = txt.replace(':', '').trim();
-        selectedTxt = `${txt} ${prefix} (${selection})`;
+        displayText = `${txt} ${prefix} (${selection})`;
       }
     }
 
-    return <>
+    return <div>
       <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="center">
-        <div className="hint">{selectedTxt}</div>
+        <div className="hint">{displayText}</div>
 
         <ActionButton
           iconProps={{ iconName: "Manufacturing" }}
@@ -222,7 +222,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         />
       </Panel>}
 
-    </>;
+    </div>;
   }
 }
 

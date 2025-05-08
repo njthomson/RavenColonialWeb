@@ -75,6 +75,9 @@ export interface EconomyLink {
 
 export const buildSystemModel = (projects: ProjectRef[]): SysMap => {
 
+  // Read:
+  // https://forums.frontier.co.uk/threads/constructing-a-specific-economy.637363/
+
   // group sites by their bodies, extract system and architect names
   const sysMap = initializeSysMap(projects);
 
@@ -106,7 +109,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
   let countActive = 0;
 
   // first: group sites by their bodies
-  const bodies = projects.reduce((map, p) => {
+  const bodyMap = projects.reduce((map, p) => {
     let bodyName = p.bodyName || unknown;
 
     let body = map[bodyName];
@@ -140,22 +143,19 @@ const initializeSysMap = (projects: ProjectRef[]) => {
     return map;
   }, {} as Record<string, BodyMap>);
 
-  // sort by body name but force Unknown to be last in the list
-  const keys = Object.keys(bodies)
+  // sort by body name but force Unknown to be first in the list
+  const sortedKeys = Object.keys(bodyMap)
     .filter(n => n !== unknown)
     .sort();
-  if (unknown in bodies) {
-    keys.push(unknown);
+  if (unknown in bodyMap) {
+    sortedKeys.unshift(unknown);
   }
-  const finalMap: Record<string, BodyMap> = {};
-  for (let key of Object.keys(bodies)) { finalMap[key] = bodies[key]; }
+  const bodies: Record<string, BodyMap> = {};
+  for (let key of sortedKeys) { bodies[key] = bodyMap[key]; }
 
   const countSites = projects.length;
   const sysMap = {
-    // these we calculated above:
     systemName, architect, bodies, primaryPort, allSites, countActive, countSites,
-    // these come later:
-    // tierPoints: { tier2: 0, tier3: 0 }
   };
   return sysMap;
 };

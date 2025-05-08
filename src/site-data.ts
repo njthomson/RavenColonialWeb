@@ -109,7 +109,7 @@ export const sysEffects: (keyof SysEffects)[] = [
 
 export const economyColors: Record<string, string> = {
   agriculture: 'rgb(104,204,0)',
-  contraband: 'rgb(255,000,000)', // TODO
+  contraband: 'rgb(4,56,204)',
   extraction: 'rgb(207,1,0)',
   hightech: 'rgb(4,205,204)',
   industrial: 'rgb(207, 205, 0)',

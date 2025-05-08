@@ -32,6 +32,7 @@ export interface ProjectRefLite {
   buildType: string
   systemName: string;
   isPrimaryPort: boolean;
+  isMock?: boolean;
 }
 
 export interface ProjectRefComplete extends ProjectRefLite {

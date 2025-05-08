@@ -2,6 +2,7 @@ import { Icon, Link } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { BuildTypeDisplay } from '..';
 import { ProjectRefLite } from "../../types";
+import { appTheme } from "../../theme";
 
 interface ProjectLinkProps {
   proj: ProjectRefLite;
@@ -11,12 +12,19 @@ interface ProjectLinkProps {
 }
 
 export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
-  return <span className="project-link">
+  const color = props.proj.isMock ? appTheme.palette.yellowDark : undefined;
+
+  return <span className="project-link" style={{ color, fontStyle: props.proj.isMock ? 'italic' : undefined }}>
     {!props.noSys && <><Link href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</Link> : </>}
+
     <Link
+      disabled={props.proj.isMock}
       className="project-name"
       href={`#build=${props.proj.buildId}`}
-      style={{ fontWeight: props.noBold ? 'normal' : 'bold' }}
+      style={{
+        fontWeight: props.noBold ? 'normal' : 'bold',
+        color,
+      }}
     >
       <Icon iconName={props.iconName || 'Manufacturing'} /> {props.proj.buildName}
     </Link>

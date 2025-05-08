@@ -2,7 +2,8 @@ import * as api from '../api';
 import { Component, ReactNode } from "react";
 import { appTheme, cn } from "../theme";
 import { ResponseEdsmSystemBodies, ResponseEdsmSystemBody } from '../types';
-import { ComboBox, IComboBoxOption, Icon, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ComboBox, IComboBoxOption, Icon, ISelectableOption, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { getSysMap } from '../system-model';
 
 interface ChooseBodyProps {
   systemName: string;
@@ -73,11 +74,6 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
   render(): ReactNode {
     const { loading, bodyName, allBodies: validBodies } = this.state;
 
-    const rows = Object.keys(validBodies).map((name, i) => {
-      return <option key={i} value={name}>{name} ({validBodies[name].subType})</option>;
-    });
-    rows.push(<option key={-1} value=''></option>);
-
     const options: IComboBoxOption[] = Object.keys(validBodies).map((name, i) => {
       return {
         key: i,
@@ -94,7 +90,7 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
           openOnKeyboardFocus
           styles={{
             root: { maxHeight: 20 },
-            callout: { border: '1px solid ' + appTheme.palette.themePrimary, },
+            callout: { border: '1px solid ' + appTheme.palette.themePrimary, width: 300 },
           }}
           options={options}
           onChange={(_, o) => {
@@ -102,14 +98,7 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
             this.props.onChange(body.name, body.bodyId);
             this.setState({ bodyName: body.name });
           }}
-          onRenderOption={item => {
-            const body = item?.data as ResponseEdsmSystemBody;
-            return <span>
-              <span style={{ fontWeight: 'bold' }}>{body.name}</span>
-              <br />
-              {body.subType} ~{body.distanceToArrival.toLocaleString()}ls
-            </span>;
-          }}
+          onRenderOption={this.renderDropDownItem}
         />
 
         &nbsp;
@@ -131,4 +120,26 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
       </Stack>
     </>;
   }
+
+  renderDropDownItem = (item?: ISelectableOption) => {
+    const body = item?.data as ResponseEdsmSystemBody;
+
+    const sysMap = getSysMap(this.props.systemName);
+    const bodySiteRows = sysMap?.bodies[body.name]?.sites.map(s => {
+      return <div
+        key={`dd${body.id64}${s.buildId}`}
+        style={{ color: 'grey' }}
+      >
+        &nbsp;{'>'}&nbsp;{s.buildName}
+      </div>;
+    });
+
+    return <div>
+      <div style={{ fontWeight: 'bold' }}>{body.name}</div>
+      <div style={{ color: appTheme.palette.themeSecondary }}>
+        {body.subType} ~{body.distanceToArrival.toLocaleString()}ls
+      </div>
+      {!!bodySiteRows && <Stack>{bodySiteRows}</Stack>}
+    </div>;
+  };
 }

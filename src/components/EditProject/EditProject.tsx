@@ -123,7 +123,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             </td>
           </tr>
 
-          {editProject.buildId && <tr>
+          {editProject.buildId && !editProject.complete && <tr>
             <td><Label>Time remaining:</Label></td>
             <td>
               <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight, height: 22 }}>
@@ -167,7 +167,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
       <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} horizontalAlign='end' verticalAlign='baseline' >
         {(false || this.state.submitting) && <Spinner
           style={{ marginRight: 20 }}
-          label="Updating project ..."
+          label="Saving changes ..."
           labelPosition="right"
         />}
         <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onSaveChanges} />
