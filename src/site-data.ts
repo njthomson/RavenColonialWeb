@@ -17,6 +17,7 @@ export type BuildClass =
   | 'outpost'
   | 'settlement'
   | 'hub'
+  | 'unknown'
   ;
 
 export type PadSize =
@@ -76,7 +77,7 @@ export const mapName: Record<string, string> = {
 
   // Economies
   agriculture: 'Agriculture',
-  contraband: 'Contrabandx',
+  contraband: 'Contraband',
   extraction: 'Extraction',
   hightech: 'High Tech',
   industrial: 'Industrial',
@@ -152,6 +153,18 @@ export const sumEconomies = (economies: string[]): Record<string, number> => {
 
 
 export const siteTypes: SiteType[] = [
+  {
+    "displayName": "Unknown",
+    "subTypes": [''],
+    "buildClass": "unknown",
+    "tier": 1,
+    "padSize": "none",
+    "orbital": true,
+    "needs": { tier: 0, count: 0 },
+    "gives": { tier: 0, count: 0 },
+    "inf": "none",
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+  },
   {
     "displayName": "Coriolis",
     "subTypes": ["no truss", "dual_truss", "quad_truss", "coriolis", "no_truss"],

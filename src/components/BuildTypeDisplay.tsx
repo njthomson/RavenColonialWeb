@@ -2,6 +2,9 @@ import { FunctionComponent } from 'react';
 import { buildTypes } from '.';
 
 export const BuildTypeDisplay: FunctionComponent<{ buildType: string; }> = (props) => {
+  if (!props.buildType) {
+    return <span>?</span>;
+  }
 
   const match = buildTypes.find(i => i.text.toLowerCase().includes(props.buildType));
 
