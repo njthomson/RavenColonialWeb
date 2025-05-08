@@ -1,7 +1,7 @@
 import './App.css';
 import * as api from './api';
 import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, IContextualMenuItem, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
-import { Component, } from 'react';
+import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
 import { TopPivot } from './types';
@@ -64,6 +64,13 @@ export class App extends Component<AppProps, AppState> {
     // migrate local-storage items?
     store.migrateLinkedFCs()
       .catch(err => console.error(err));
+  }
+
+  componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
+    let element = document.getElementById('oops');
+    if (element) { element.style.display = 'block'; }
+    element = document.getElementById('bad-error');
+    if (element) { element.innerText = error.stack ?? error.message ?? "Unknown"; }
   }
 
   fetchPrimaryBuildId() {

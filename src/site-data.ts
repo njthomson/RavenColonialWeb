@@ -121,8 +121,8 @@ export const economyColors: Record<string, string> = {
 export const getSiteType = (buildType: string): SiteType => {
   const match = siteTypes.find(st => st.subTypes.includes(buildType));
   if (!match) {
-    console.error(`Note SiteType match found for: '${buildType}'`);
-    throw new Error(`Note SiteType match found for: '${buildType}'`)
+    console.error(`No SiteType match found for: '${buildType}'`);
+    throw new Error(`No SiteType match found for: '${buildType}'`)
   }
   return match;
 };
@@ -154,7 +154,7 @@ export const sumEconomies = (economies: string[]): Record<string, number> => {
 export const siteTypes: SiteType[] = [
   {
     "displayName": "Coriolis",
-    "subTypes": ["no_truss", "dual_truss", "quad_truss", "coriolis"],
+    "subTypes": ["no truss", "dual_truss", "quad_truss", "coriolis", "no_truss"],
     "buildClass": "port",
     "tier": 2,
     "padSize": "large",
@@ -274,7 +274,7 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Satellite",
-    "subTypes": ["hermese", "angelia", "eirene"],
+    "subTypes": ["hermes", "angelia", "eirene"],
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
