@@ -12,6 +12,8 @@ export const Chevrons: FunctionComponent<{ name: string, count: number, extra?: 
   const maxCount = count + (props.extra ?? 0);
   if (maxCount === 0) return null;
 
+  const w = 6;
+
   const chevrons = [];
   for (let n = 0; n < maxCount; n++) {
 
@@ -24,7 +26,7 @@ export const Chevrons: FunctionComponent<{ name: string, count: number, extra?: 
       key={`${rootKey}${n}`}
       iconName={neg ? 'ChevronLeftSmall' : 'ChevronRightSmall'}
       style={{
-        width: 9,
+        width: w,
         color: color
       }}
     />;
@@ -39,7 +41,7 @@ export const Chevrons: FunctionComponent<{ name: string, count: number, extra?: 
     // title={`${props.name}: ${asPosNegTxt(props.count)}`}
     style={{
       display: 'inline-block',
-      width: (maxCount * 9) + 5,
+      width: (maxCount * w) + 5,
     }}>
     {chevrons}
   </div>;

@@ -1,11 +1,11 @@
-import { ActionButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
 import { Cargo, Project, ProjectRef } from '../types';
 import { EditProject } from '../components/EditProject/EditProject';
 import { delayFocus } from '../util';
-import { SystemView } from './SystemView';
+import { SystemView } from './SystemView/SystemView';
 import { CopyButton } from '../components/CopyButton';
 
 interface ProjectProps {

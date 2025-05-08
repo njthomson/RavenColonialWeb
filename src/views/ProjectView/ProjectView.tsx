@@ -14,6 +14,8 @@ import { TimeRemaining } from '../../components/TimeRemaining';
 import { EditProject } from '../../components/EditProject/EditProject';
 import { getSiteType, mapName, SysEffects } from '../../site-data';
 import { Chevrons, TierPoints } from '../../components/Chevrons';
+import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
+import { fetchSysMap, getSysMap, SysMap } from '../../system-model';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -22,6 +24,7 @@ interface ProjectViewProps {
 interface ProjectViewState {
   buildId?: string;
   proj?: Project;
+  sysMap?: SysMap;
   lastTimestamp?: string;
   autoUpdateUntil: number;
   mode: Mode;
@@ -103,8 +106,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   componentDidMount() {
     // fetch initial data, then start auto-updating
-    this.fetchProject(this.props.buildId).then(() => {
-      this.toggleAutoRefresh();
+    this.fetchProject(this.props.buildId).then(proj => {
+      if (!proj?.complete) {
+        this.toggleAutoRefresh();
+      }
     })
   }
 
@@ -145,9 +150,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     // buildId changed from above
-    if (prevState.buildId !== this.state.buildId && this.state.buildId) {
+    if (prevState.buildId !== this.state.buildId && this.state.buildId && !prevState.buildId) {
       if (this.timer) { clearTimeout(this.timer); }
-      this.pollLastTimestamp(this.state.buildId, true);
+      if (this.state.proj && !this.state.proj.complete) {
+        this.pollLastTimestamp(this.state.buildId, true);
+      }
     }
   }
 
@@ -186,9 +193,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         deliverMarketId = 'site';
       }
 
+      window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
+      if (newProj.complete) window.document.title += ' (completed)';
+
+      let sysMap = getSysMap(newProj.systemName);
       this.setState({
         buildId: newProj.buildId,
         proj: newProj,
+        sysMap: sysMap,
         editProject: window.location.hash.startsWith('#edit'),
         lastTimestamp: newProj.timestamp,
         editReady: new Set(newProj.ready),
@@ -200,16 +212,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         deliverMarketId: deliverMarketId,
       });
 
-      // if ALL commodities have a count of 10 - it means the project is brand new and we want people to edit them to real numbers
-      if (Object.values(newProj.commodities).every(v => v === 10 || v === -1)) {
-        this.setState({
-          editCommodities: { ...newProj.commodities },
-        });
-        delayFocus('first-commodity-edit');
+      if (!sysMap && newProj.complete) {
+        const sysMap = await fetchSysMap(newProj.systemName);
+        this.setState({ sysMap });
+      } else {
+        // if ALL commodities have a count of 10 - it means the project is brand new and we want people to edit them to real numbers
+        if (Object.values(newProj.commodities).every(v => v === 10 || v === -1)) {
+          this.setState({
+            editCommodities: { ...newProj.commodities },
+          });
+          delayFocus('first-commodity-edit');
+        }
       }
 
-      window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
-      if (newProj.complete) window.document.title += ' (completed)';
       return newProj;
 
     } catch (err: any) {
@@ -415,6 +430,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {!proj.complete && mode === Mode.view && <div className='half'>
           {this.renderCommodities()}
         </div>}
+
+        {mode === Mode.view && proj.complete && this.renderSystemEffects(proj)}
 
         {!!editCommodities && this.renderEditCommodities()}
 
@@ -869,7 +886,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               <td>
                 <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
                   {proj.buildName}
-                  {proj.isPrimaryPort && <span title='System primary port' style={{ marginLeft: 8, cursor: 'default' }}>⚑</span>}
+                  {proj.isPrimaryPort && <Icon iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
                 </div>
               </td>
             </tr>
@@ -918,69 +935,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </table>
         {this.renderCommanders()}
         {this.renderLinkedFC()}
-        {this.renderBuildEffects(proj)}
+        {!proj.complete && this.renderBuildEffects(proj)}
       </div>
     </div>;
   };
-
-  renderBuildEffects(proj: Project) {
-
-    const st = getSiteType(proj.buildType);
-
-    const effectRows = Object.keys(st.effects).map(key => {
-      const value = st.effects[key as keyof SysEffects] ?? 0;
-      const displayName = mapName[key];
-      let displayVal = asPosNegTxt(value);
-
-      return <tr key={`se${key}`} title={`${displayName}: ${asPosNegTxt(value)}`}>
-        <td>{displayName}:</td>
-        <td>
-          {value < 0 && <Chevrons name={displayName} count={value} />}
-        </td>
-        <td>
-          {displayVal}
-        </td>
-        <td>
-          {value > 0 && <Chevrons name={displayName} count={value} />}
-        </td>
-      </tr>
-    });
-
-    let needs = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
-    if (st.needs.count > 0) {
-      needs = <TierPoints tier={st.needs.tier} count={st.needs.count} />
-    }
-    let gives = null;
-    if (st.gives.count > 0) {
-      gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
-    }
-
-    return <>
-      <br />
-      <h3 className={cn.h3}>System effects:</h3>
-      <table style={{ fontSize: '14px' }}>
-        <tbody>
-
-          {st.inf !== 'none' && <tr>
-            <td>Economy:</td>
-            <td colSpan={3}><div className='grey'>{mapName[st.inf]}</div>
-            </td>
-          </tr>}
-
-          {effectRows}
-
-          {<tr>
-            <td colSpan={4}>
-              <span>Needs: {needs}</span>
-              &nbsp;
-              <span>Provides: {gives}</span>
-            </td>
-          </tr>}
-
-        </tbody>
-      </table>
-    </>;
-  }
 
   renderCommanders() {
     const { proj, showAddCmdr, newCmdr } = this.state;
@@ -1650,5 +1608,76 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.pollLastTimestamp(this.state.proj?.buildId, true);
     }
   };
+
+  renderSystemEffects(proj: Project) {
+    const { sysMap } = this.state;
+    const site = sysMap?.allSites.find(s => s.buildId === proj.buildId);
+
+    return <div className='half'>
+      {site && sysMap && <MarketLinks site={site} />}
+
+      {this.renderBuildEffects(proj)}
+    </div>;
+  }
+
+  renderBuildEffects(proj: Project) {
+    const st = getSiteType(proj.buildType);
+    const effectRows = Object.keys(st.effects)
+      .map(key => {
+        if (!st.effects[key as keyof SysEffects]) return null;
+
+        const value = st.effects[key as keyof SysEffects] ?? 0;
+        const displayName = mapName[key];
+        let displayVal = asPosNegTxt(value);
+
+        return <tr key={`se${key}`} title={`${displayName}: ${asPosNegTxt(value)}`}>
+          <td>{displayName}:</td>
+          <td>
+            {value < 0 && <Chevrons name={displayName} count={value} />}
+          </td>
+          <td>
+            {displayVal}
+          </td>
+          <td>
+            {value > 0 && <Chevrons name={displayName} count={value} />}
+          </td>
+        </tr>
+      });
+
+    let needs = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
+    if (st.needs.count > 0) {
+      needs = <TierPoints tier={st.needs.tier} count={st.needs.count} />
+    }
+    let gives = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
+    if (st.gives.count > 0) {
+      gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
+    }
+
+    return <>
+      <h3 className={cn.h3}>System effects:</h3>
+      <table style={{ fontSize: '14px' }}>
+        <tbody>
+
+          {st.inf !== 'none' && <tr>
+            <td>Economy:</td>
+            <td colSpan={3}><div className='grey'>{mapName[st.inf]}</div>
+            </td>
+          </tr>}
+
+          {effectRows}
+
+          {<tr>
+            <td colSpan={4}>
+              <span>Needs: {needs}</span>
+              &nbsp;
+              <span>Provides: {gives}</span>
+            </td>
+          </tr>}
+
+        </tbody>
+      </table>
+    </>;
+  }
+
 }
 

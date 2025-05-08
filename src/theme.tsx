@@ -193,9 +193,6 @@ export const cn = mergeStyleSets({
     ':active': {
       backgroundColor: appTheme.palette.themeSecondary,
     }
-  },
-  ffcc: {
-    // background: getThemedIconFC('#fff', '#fff')
   }
 });
 

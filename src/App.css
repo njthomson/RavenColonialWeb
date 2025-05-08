@@ -166,6 +166,7 @@ h3 {
 .icon-btn {
   padding: 2px;
   height: unset;
+  cursor: pointer;
 }
 
 /* .icon-btn:hover {
@@ -178,7 +179,7 @@ h3 {
 } */
 
 i {
-  cursor: pointer;
+  cursor: default;
 }
 
 i.icon-inline {
