@@ -857,6 +857,7 @@ export const siteTypes: SiteType[] = [
   {
     "displayName": "Industrial",
     "subTypes": ["molae", "tellus_i", "eunostus"],
+    "altTypes": ["tellus"],
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
