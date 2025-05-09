@@ -13,6 +13,7 @@ import { BuildType } from '../../components/BuildType';
 import { ChooseBody } from '../../components/ChooseBody';
 import { EditProject } from '../../components/EditProject/EditProject';
 import { BuildEffects } from '../../components/BuildEffects';
+import { store } from '../../local-storage';
 
 interface SystemViewProps {
   systemName: string;
@@ -24,6 +25,7 @@ interface SystemViewState extends SysMap {
   showInlineMarketLinks?: boolean;
   editMockSite?: SiteMap;
   editRealSite?: SiteMap;
+  useIncomplete: boolean;
 }
 
 export class SystemView extends Component<SystemViewProps, SystemViewState> {
@@ -34,33 +36,72 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   constructor(props: SystemViewProps) {
     super(props);
 
-    const sysMap = buildSystemModel(props.projects);
+    const useIncomplete = store.useIncomplete;
+    const sysMap = buildSystemModel(props.projects, useIncomplete);
 
     // const mockSite = this.createMockSite(props.projects[0]);
-    // mockSite.buildType = 'dodona';
-    // const sysMap = buildSystemModel([...props.projects, mockSite]);
+    // mockSite.buildType = 'vulcan';
+    // mockSite.bodyName = props.projects[0].bodyName;
+    // const sysMap = buildSystemModel([...props.projects, mockSite], store.useIncomplete);
 
     this.state = {
       ...sysMap,
       showInlineMarketLinks: true,
+      useIncomplete: useIncomplete,
     };
   }
+
+  componentDidMount(): void {
+    window.addEventListener('keyup', this.onKeyPress);
+  }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('keyup', this.onKeyPress);
+  }
+
+  onKeyPress = (ev: KeyboardEvent) => {
+    if (ev.altKey && ev.key === 'c') {
+      // Use key combination ALT + C to toggle between using incomplete sites or not
+      this.toggleUseIncomplete();
+    }
+  };
+
+  toggleUseIncomplete = () => {
+    const newUseIncomplete = !this.state.useIncomplete;
+    store.useIncomplete = newUseIncomplete;
+    this.setState({
+      ...buildSystemModel(this.state.allSites, newUseIncomplete),
+      useIncomplete: newUseIncomplete
+    });
+  };
 
   componentDidUpdate(prevProps: Readonly<SystemViewProps>, prevState: Readonly<SystemViewState>, snapshot?: any): void {
     if (prevProps.projects !== this.props.projects) {
       this.setState({
-        ...buildSystemModel(this.props.projects)
+        ...buildSystemModel(this.props.projects, this.state.useIncomplete)
       });
     }
   }
 
   render() {
-    const { allSites, bodies, architect, primaryPort, countSites, tierPoints, showPortLinks, showInlineMarketLinks, editMockSite, editRealSite } = this.state;
+    const { allSites, bodies, architect, primaryPort, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete } = this.state;
     const showClearAllMocks = allSites.some(s => s.isMock);
 
-    return <div className='half'>
+    return <div className='half system-view'>
       <h3 className={cn.h3}>
-        Summary: {countSites} sites
+        <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }} horizontalAlign='space-between'>
+          <span>Summary: {countSites} sites</span>
+          <span title='(ALT + C) Toggles inclusion of incomplete site in system calculations.'>
+            <Toggle
+              onText='Include incomplete projects'
+              offText='Include incomplete projects'
+
+              checked={useIncomplete}
+              styles={{ container: { margin: 0 } }}
+              onClick={this.toggleUseIncomplete}
+            />
+          </span>
+        </Stack>
       </h3>
 
       <div style={{
@@ -99,13 +140,6 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       </h3>
 
       <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }}>
-        {false && <Toggle
-          onText='Show market bars'
-          offText='Show market bars'
-          checked={showInlineMarketLinks}
-          styles={{ container: { justifyContent: 'flex-end', margin: 0 } }}
-          onClick={() => this.setState({ showInlineMarketLinks: !this.state.showInlineMarketLinks })}
-        />}
 
         <DefaultButton
           iconProps={{ iconName: 'WebAppBuilderFragmentCreate' }}
@@ -125,7 +159,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
             // remove all mocks
             const newAllSites: ProjectRef[] = this.state.allSites.filter(s => !s.isMock);
             this.setState({
-              ...buildSystemModel(newAllSites),
+              ...buildSystemModel(newAllSites, useIncomplete),
             });
           }}
         />}
@@ -273,21 +307,23 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   renderSite(body: BodyMap, site: SiteMap) {
-    const { showInlineMarketLinks } = this.state;
+    const { showInlineMarketLinks, useIncomplete } = this.state;
     const isBodyPrimary = body.orbitalPrimary === site;
 
-    const viewMarketLink = <Link
+    const viewMarketLink = <IconButton
+      className={`icon-inline ${cn.btn}`}
+      iconProps={{ iconName: 'Link' }}
+      style={{ width: 22, height: 22, marginLeft: 8, fontWeight: 'bold' }}
       title={`Market links for: ${site.buildName}`}
       onClick={() => this.setState({ showPortLinks: site })}
-    >
-      <Icon className='icon-inline' iconName='Link' style={{ marginLeft: 8, fontWeight: 'bold' }} />
-    </Link>;
+    />;
 
-    return <div>
-      <Stack key={site.buildId} horizontal verticalAlign='baseline'>
-        <ProjectLink proj={site} noSys noBold iconName={site.complete ? 'Communications' : ''} />
+    return <div className={`removable ${cn.removable}`} >
+      <Stack key={site.buildId} horizontal verticalAlign='center' style={{ height: 22 }}>
+        <ProjectLink proj={site} noSys noBold iconName={site.complete ? 'Communications' : ''} greyIncomplete={!useIncomplete} />
 
         {!site.complete && !site.isMock && <Icon iconName='ConstructionCone' style={{ marginLeft: 8 }} title='Under construction' />}
+        {!site.complete && site.isMock && <Icon iconName='WebAppBuilderFragmentCreate' style={{ marginLeft: 8 }} title='A "What if" site' />}
 
         {isBodyPrimary && !showInlineMarketLinks && viewMarketLink}
 
@@ -300,7 +336,8 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         </IconButton>} */}
 
         <IconButton
-          iconProps={{ className: 'icon-inline', iconName: 'Edit' }}
+          className={`btn ${cn.btn}`}
+          iconProps={{ iconName: 'Edit' }}
           style={{ width: 22, height: 22, marginLeft: 4 }}
           onClick={() => {
             if (site.isMock) {
@@ -334,7 +371,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       maxNeed: 0,
 
       isMock: true,
-      complete: true,
+      complete: false,
       isPrimaryPort: false,
 
       buildType: SystemView.lastBuildType,
@@ -373,7 +410,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       <h3 className={cn.h3}>
         What if ... ?
       </h3>
-      <div style={{ color: appTheme.palette.themeSecondary }}>Use a theoretical site to observe it's impact upon system economies.</div>
+      <div style={{ color: appTheme.palette.themeSecondary }}>A theoretical site to observe impact upon system economies</div>
 
       <div style={{
         display: 'grid',
@@ -468,7 +505,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   onApplyMockSite = (editMockSite: SiteMap | undefined, remove: boolean = false) => {
-    const { allSites } = this.state;
+    const { allSites, useIncomplete } = this.state;
     if (!editMockSite) return;
 
     // remove old instance of the mock site, before adding it back
@@ -479,13 +516,13 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     }
 
     this.setState({
-      ...buildSystemModel(newAllSites),
+      ...buildSystemModel(newAllSites, useIncomplete),
       editMockSite: undefined
     });
   };
 
   renderEditRealSite() {
-    const { editRealSite } = this.state;
+    const { editRealSite, useIncomplete } = this.state;
     if (!editRealSite) return null;
 
     return <EditProject
@@ -499,7 +536,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         }
 
         this.setState({
-          ...buildSystemModel(newAllSites),
+          ...buildSystemModel(newAllSites, useIncomplete),
           editRealSite: undefined
         });
       }}

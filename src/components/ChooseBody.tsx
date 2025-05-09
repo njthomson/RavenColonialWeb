@@ -130,7 +130,7 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
         key={`dd${body.id64}${s.buildId}`}
         style={{ color: 'grey' }}
       >
-        &nbsp;{'>'}&nbsp;{s.buildName}
+        &nbsp;»&nbsp;{s.buildName}
       </div>;
     });
 

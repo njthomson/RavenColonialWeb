@@ -6,11 +6,13 @@ export const unknown = 'Unknown';
 
 const sysMapCache: Record<string, SysMap> = {};
 
+/** Returns what ever cached value we have for the given system */
 export const getSysMap = (systemName: string): SysMap | undefined => {
   // return what ever we have cached
   return sysMapCache[systemName];
 }
 
+/** Returns cached value, or requests + calculates, for the given system. Automatically includes incomplete sites. */
 export const fetchSysMap = async (systemName: string): Promise<SysMap> => {
   // return from cache if already present
   if (sysMapCache[systemName]) {
@@ -18,7 +20,7 @@ export const fetchSysMap = async (systemName: string): Promise<SysMap> => {
   }
 
   const projects = await api.project.findAllBySystem(systemName);
-  const sysMap = buildSystemModel(projects);
+  const sysMap = buildSystemModel(projects, true);
   return sysMap;
 }
 
@@ -59,11 +61,6 @@ export interface SiteMap extends ProjectRef {
 }
 
 export interface SiteLinks {
-  // /** A count of each Economy */
-  // strong: Record<string, number>
-  // /** A count of each Economy */
-  // weak: Record<string, number>
-
   economies: Record<string, EconomyLink>
   strongSites: SiteMap[];
 }
@@ -73,7 +70,7 @@ export interface EconomyLink {
   weak: number;
 }
 
-export const buildSystemModel = (projects: ProjectRef[]): SysMap => {
+export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean): SysMap => {
 
   // Read:
   // https://forums.frontier.co.uk/threads/constructing-a-specific-economy.637363/
@@ -82,12 +79,12 @@ export const buildSystemModel = (projects: ProjectRef[]): SysMap => {
   const sysMap = initializeSysMap(projects);
 
   // calc sum effects from all sites
-  const sumEffects = sumSystemEffects(sysMap.allSites, false);
+  const sumEffects = sumSystemEffects(sysMap.allSites, useIncomplete);
 
   // per body, calc strong/weak links
   const allBodies = Object.values(sysMap.bodies);
   for (const body of allBodies) {
-    calcBodyLinks(allBodies, body);
+    calcBodyLinks(allBodies, body, useIncomplete);
   }
 
   const finalMap = {
@@ -167,6 +164,8 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
   const tierPoints: [number, number] = [0, 0];
 
   for (const site of allSites!) {
+    // skip incomplete sites, unless ...
+    if (!site.complete && !useIncomplete) continue;
 
     // calc total system economic influence
     if (site.type.inf !== 'none') {
@@ -176,7 +175,7 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
     // sum total system effects
     for (const key of sysEffects) {
       const effect = site.type.effects[key] ?? 0;
-      if (effect > 0 && (site.complete || useIncomplete)) {
+      if (effect > 0) {
         sumEffects[key] = (sumEffects[key] ?? 0) + effect;
       }
     }
@@ -190,7 +189,7 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
     }
   }
 
-  // sort by strong, then weak count
+  // sort: highest count first
   const sorted = Object.keys(mapEconomies).sort((a, b) => mapEconomies[b] - mapEconomies[a]);
   const economies: Record<string, number> = {};
   sorted.forEach(key => economies[key] = mapEconomies[key]);
@@ -203,7 +202,11 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
   };
 }
 
-const getBodyPrimaryPort = (sites: SiteMap[]): SiteMap | undefined => {
+const getBodyPrimaryPort = (sites: SiteMap[], useIncomplete: boolean): SiteMap | undefined => {
+  // skip incomplete sites?
+  if (!useIncomplete) {
+    sites = sites.filter(s => s.complete);
+  }
 
   // do we have any Tier 3's ?
   const t3s = sites.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
@@ -236,11 +239,11 @@ const getBodyPrimaryPort = (sites: SiteMap[]): SiteMap | undefined => {
   return undefined;
 }
 
-const calcBodyLinks = (allBodies: BodyMap[], body: BodyMap) => {
+const calcBodyLinks = (allBodies: BodyMap[], body: BodyMap, useIncomplete: boolean) => {
 
   // TODO: if we have a t3 on the surface - we need to funnel all surface links to that first
-  body.surfacePrimary = getBodyPrimaryPort(body.surface);
-  body.orbitalPrimary = getBodyPrimaryPort(!!body.surfacePrimary ? body.orbital : body.sites);
+  body.surfacePrimary = getBodyPrimaryPort(body.surface, useIncomplete);
+  body.orbitalPrimary = getBodyPrimaryPort(!!body.surfacePrimary ? body.orbital : body.sites, useIncomplete);
 
   // exit early if no primary port for this body
   if (!body.surfacePrimary && !body.orbitalPrimary) { return; }
@@ -251,17 +254,17 @@ const calcBodyLinks = (allBodies: BodyMap[], body: BodyMap) => {
   }
 
   if (body.orbitalPrimary) {
-    calcSiteLinks(allBodies, body, body.orbitalPrimary);
+    calcSiteLinks(allBodies, body, body.orbitalPrimary, useIncomplete);
   }
 }
 
-const calcSiteLinks = (allBodies: BodyMap[], body: BodyMap, primarySite: SiteMap) => {
+const calcSiteLinks = (allBodies: BodyMap[], body: BodyMap, primarySite: SiteMap, useIncomplete: boolean) => {
 
   const map: Record<string, EconomyLink> = {};
 
   // strong links are everything else tied to the current body, alpha sort by name
   const strongSites = body.sites
-    .filter(s => s !== primarySite)
+    .filter(s => s !== primarySite && (s.complete || useIncomplete))
     .sort((a, b) => a.buildName.localeCompare(b.buildName));
 
   for (const site of strongSites) {
@@ -277,8 +280,8 @@ const calcSiteLinks = (allBodies: BodyMap[], body: BodyMap, primarySite: SiteMap
   Object.values(allBodies)
     .filter(b => b !== body)
     .flatMap(b => b.sites)
+    .filter(s => s.type.inf !== 'none' && (s.complete || useIncomplete))
     .map(s => s.type.inf)
-    .filter(econ => econ !== 'none')
     .forEach(econ => {
       if (!map[econ]) { map[econ] = { strong: 0, weak: 0 }; }
       map[econ].weak += 1;

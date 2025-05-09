@@ -33,6 +33,7 @@ export interface ProjectRefLite {
   systemName: string;
   isPrimaryPort: boolean;
   isMock?: boolean;
+  complete: boolean;
 }
 
 export interface ProjectRefComplete extends ProjectRefLite {
@@ -50,7 +51,6 @@ export interface ProjectRef extends ProjectRefComplete {
   factionName?: string;
   discordLink?: string;
   timeDue?: string;
-  complete: boolean;
   maxNeed: number;
   notes?: string;
 }

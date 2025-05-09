@@ -16,6 +16,7 @@ enum Stored {
   theme = 'theme',
   hideShipTrips = 'hideShipTrips',
   useNativeDiscord = 'useNativeDiscord',
+  useIncomplete = 'useIncomplete',
 }
 
 interface CmdrData {
@@ -30,15 +31,15 @@ const writeValue = (key: Stored, newValue: unknown) => {
 
 const readString = (key: Stored): string => window.localStorage.getItem(key) ?? '';
 
-const readValue = <T>(key: Stored): T | undefined => {
+const readValue = <T>(key: Stored, defaultValue?: T): T | undefined => {
   const json = window.localStorage.getItem(key);
   if (!json)
-    return undefined;
+    return defaultValue;
   else
     return JSON.parse(json) as T;
 }
 
-const readBoolean = (key: Stored): boolean => !!readValue(key);
+const readBoolean = (key: Stored, defaultValue?: boolean): boolean => !!readValue(key, defaultValue);
 
 class LocalStorage {
   clearCmdr(): void {
@@ -87,6 +88,9 @@ class LocalStorage {
   get recentProjects(): ProjectRefLite[] { return readValue(Stored.recentProjects) ?? []; }
 
   addRecentProject(proj: Project): void {
+    // ignore any mock projects
+    if (proj.isMock) return;
+
     // read recent projects and remove entry for this project
     const recentProjects = this.recentProjects
       .filter(rp => rp.buildId !== proj.buildId);
@@ -96,7 +100,8 @@ class LocalStorage {
       systemName: proj.systemName!,
       buildName: proj.buildName,
       buildType: proj.buildType,
-      isPrimaryPort: proj.isPrimaryPort
+      isPrimaryPort: proj.isPrimaryPort,
+      complete: proj.complete,
     };
 
     // add to the array, trim if getting too long
@@ -150,6 +155,9 @@ class LocalStorage {
 
   get useNativeDiscord(): boolean { return readBoolean(Stored.useNativeDiscord); }
   set useNativeDiscord(newValue: boolean) { writeValue(Stored.useNativeDiscord, newValue); }
+
+  get useIncomplete(): boolean { return readBoolean(Stored.useIncomplete, true); }
+  set useIncomplete(newValue: boolean) { writeValue(Stored.useIncomplete, newValue); }
 }
 
 export const store = new LocalStorage();

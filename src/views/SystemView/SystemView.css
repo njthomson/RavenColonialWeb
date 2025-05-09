@@ -2,3 +2,14 @@
 .table-market-links td {
   padding: 1px 8px;
 }
+
+.system-view .removable {
+  display: block;
+  width: max-content;
+  padding: 2px;
+  margin: -4px;
+}
+
+.system-view .removable .btn {
+  display: none;
+}

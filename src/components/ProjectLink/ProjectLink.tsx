@@ -9,12 +9,21 @@ interface ProjectLinkProps {
   noSys?: boolean;
   noBold?: boolean;
   iconName?: string;
+  greyIncomplete?: boolean;
 }
 
 export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
-  const color = props.proj.isMock ? appTheme.palette.yellowDark : undefined;
+  let color = props.proj.isMock ? appTheme.palette.yellowDark : undefined;
+  if (props.greyIncomplete && !props.proj.complete) {
+    color = 'grey'; //appTheme.palette.neutralTertiary;
+  }
 
-  return <span className="project-link" style={{ color, fontStyle: props.proj.isMock ? 'italic' : undefined }}>
+  return <span
+    className="project-link" style={{
+      color,
+      fontStyle: props.proj.isMock ? 'italic' : undefined
+    }}
+  >
     {!props.noSys && <><Link href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</Link> : </>}
 
     <Link

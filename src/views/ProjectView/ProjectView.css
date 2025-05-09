@@ -99,12 +99,12 @@ h3 .ms-Button--action {
   text-align: right;
 }
 
-.removable {
+.project-view .removable {
   align-items: center;
   line-height: 12px;
 }
 
-.removable .btn {
+.project-view .removable .btn {
   display: none;
   margin: 0 0 0 4px;
   padding: 2px;

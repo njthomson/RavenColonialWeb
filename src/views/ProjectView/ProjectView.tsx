@@ -215,7 +215,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const sysMap = await fetchSysMap(newProj.systemName);
         this.setState({ sysMap });
       } else {
-        // if ALL commodities have a count of 10 - it means the project is brand new and we want people to edit them to real numbers
+        // if ALL commodities have a count of -1 ... it means the project is brand new and we want people to edit them to real numbers
         if (Object.values(newProj.commodities).every(v => v === 10 || v === -1)) {
           this.setState({
             editCommodities: { ...newProj.commodities },
@@ -413,7 +413,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       'text/html': new Blob([`<a href='${`https://ravencolonial.com/#build=${proj.buildId}`}'>${proj.buildName}</a>`], { type: 'text/html' }),
     });
 
-    return <>
+    return <div className='project-view'>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
@@ -503,7 +503,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </Modal>
 
       {mode === Mode.deliver && this.renderDeliver()}
-    </>;
+    </div>;
   }
 
   renderEditCommodities() {
