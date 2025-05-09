@@ -23,6 +23,7 @@ export const Chevrons: FunctionComponent<{ name: string, count: number, extra?: 
     }
 
     const nextIcon = <Icon
+      className="icon-inline"
       key={`${rootKey}${n}`}
       iconName={neg ? 'ChevronLeftSmall' : 'ChevronRightSmall'}
       style={{
@@ -60,9 +61,10 @@ export const TierPoints: FunctionComponent<{ tier: number, count: number }> = (p
     style={{ display: 'inline-block', cursor: 'default' }}
   >
     <span>
-      {props.count}
+      {asPosNegTxt(props.count)}
       &nbsp;
       <Icon
+        className="icon-inline"
         iconName={props.tier === 2 ? 'Product' : 'ProductVariant'}
         style={{
           color: props.tier === 2 ? appTheme.palette.yellow : appTheme.palette.green

@@ -6,16 +6,15 @@ import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, C
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { asPosNegTxt, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getTypeForCargo, mergeCargo, openDiscordLink, sumCargo } from '../../util';
+import { delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getTypeForCargo, mergeCargo, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 import { TimeRemaining } from '../../components/TimeRemaining';
 import { EditProject } from '../../components/EditProject/EditProject';
-import { getSiteType, mapName, SysEffects } from '../../site-data';
-import { Chevrons, TierPoints } from '../../components/Chevrons';
 import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { fetchSysMap, getSysMap, SysMap } from '../../system-model';
+import { BuildEffects } from '../../components/BuildEffects';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -935,7 +934,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </table>
         {this.renderCommanders()}
         {this.renderLinkedFC()}
-        {!proj.complete && this.renderBuildEffects(proj)}
+        {!proj.complete && <BuildEffects proj={proj} />}
       </div>
     </div>;
   };
@@ -1616,68 +1615,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <div className='half'>
       {site && sysMap && <MarketLinks site={site} />}
 
-      {this.renderBuildEffects(proj)}
+      {<BuildEffects proj={proj} />}
     </div>;
   }
-
-  renderBuildEffects(proj: Project) {
-    const st = getSiteType(proj.buildType);
-    const effectRows = Object.keys(st.effects)
-      .map(key => {
-        if (!st.effects[key as keyof SysEffects]) return null;
-
-        const value = st.effects[key as keyof SysEffects] ?? 0;
-        const displayName = mapName[key];
-        let displayVal = asPosNegTxt(value);
-
-        return <tr key={`se${key}`} title={`${displayName}: ${asPosNegTxt(value)}`}>
-          <td>{displayName}:</td>
-          <td>
-            {value < 0 && <Chevrons name={displayName} count={value} />}
-          </td>
-          <td>
-            {displayVal}
-          </td>
-          <td>
-            {value > 0 && <Chevrons name={displayName} count={value} />}
-          </td>
-        </tr>
-      });
-
-    let needs = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
-    if (st.needs.count > 0) {
-      needs = <TierPoints tier={st.needs.tier} count={st.needs.count} />
-    }
-    let gives = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
-    if (st.gives.count > 0) {
-      gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
-    }
-
-    return <>
-      <h3 className={cn.h3}>System effects:</h3>
-      <table style={{ fontSize: '14px' }}>
-        <tbody>
-
-          {st.inf !== 'none' && <tr>
-            <td>Economy:</td>
-            <td colSpan={3}><div className='grey'>{mapName[st.inf]}</div>
-            </td>
-          </tr>}
-
-          {effectRows}
-
-          {<tr>
-            <td colSpan={4}>
-              <span>Needs: {needs}</span>
-              &nbsp;
-              <span>Provides: {gives}</span>
-            </td>
-          </tr>}
-
-        </tbody>
-      </table>
-    </>;
-  }
-
 }
 

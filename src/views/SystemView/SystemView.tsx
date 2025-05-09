@@ -1,17 +1,18 @@
 import './SystemView.css';
 import { Component } from "react";
 import { ProjectRef } from "../../types";
-import { ActionButton, DefaultButton, Icon, IconButton, Label, Link, Modal, PrimaryButton, Stack, TextField, Toggle } from "@fluentui/react";
+import { DefaultButton, Icon, IconButton, Label, Link, MessageBar, MessageBarType, Modal, PrimaryButton, Stack, Toggle } from "@fluentui/react";
 import { ProjectLink } from "../../components";
 import { appTheme, cn } from "../../theme";
 import { Chevrons, TierPoints } from "../../components/Chevrons";
 import { asPosNegTxt, delayFocus } from "../../util";
-import { BodyMap, buildSystemModel, SiteMap, SysMap } from "../../system-model";
+import { BodyMap, buildSystemModel, SiteMap, SysMap, unknown } from "../../system-model";
 import { SysEffects, getSiteType, mapName, sysEffects } from "../../site-data";
 import { EconomyBlocks, MarketLinkBlocks, MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { BuildType } from '../../components/BuildType';
 import { ChooseBody } from '../../components/ChooseBody';
 import { EditProject } from '../../components/EditProject/EditProject';
+import { BuildEffects } from '../../components/BuildEffects';
 
 interface SystemViewProps {
   systemName: string;
@@ -36,8 +37,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     const sysMap = buildSystemModel(props.projects);
 
     // const mockSite = this.createMockSite(props.projects[0]);
-    // mockSite.buildName = 'Hello there';
-    // mockSite.bodyName = '52 Herculis 6 d';
+    // mockSite.buildType = 'dodona';
     // const sysMap = buildSystemModel([...props.projects, mockSite]);
 
     this.state = {
@@ -46,12 +46,17 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     };
   }
 
+  componentDidUpdate(prevProps: Readonly<SystemViewProps>, prevState: Readonly<SystemViewState>, snapshot?: any): void {
+    if (prevProps.projects !== this.props.projects) {
+      this.setState({
+        ...buildSystemModel(this.props.projects)
+      });
+    }
+  }
+
   render() {
     const { allSites, bodies, architect, primaryPort, countSites, tierPoints, showPortLinks, showInlineMarketLinks, editMockSite, editRealSite } = this.state;
-
     const showClearAllMocks = allSites.some(s => s.isMock);
-
-    // const bodyKeys = Object.keys(bodies);
 
     return <div className='half'>
       <h3 className={cn.h3}>
@@ -87,12 +92,13 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       {/* {this.renderSysEffects()} */}
 
-      <br />
+      {this.renderSystemValidationWarnings()}
+
       <h3 className={cn.h3}>
         {Object.keys(bodies).length} Colonised bodies:
       </h3>
 
-      <Stack horizontal verticalAlign='start' tokens={{ childrenGap: 8 }}>
+      <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }}>
         <Toggle
           onText='Show market bars'
           offText='Show market bars'
@@ -101,7 +107,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
           onClick={() => this.setState({ showInlineMarketLinks: !this.state.showInlineMarketLinks })}
         />
 
-        <ActionButton
+        <DefaultButton
           iconProps={{ iconName: 'WebAppBuilderFragmentCreate' }}
           text='What if ... ?'
           style={{ height: 22, }}
@@ -111,7 +117,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
           }}
         />
 
-        {showClearAllMocks && <ActionButton
+        {showClearAllMocks && <DefaultButton
           iconProps={{ iconName: 'RecycleBin' }}
           text='Reset...'
           style={{ height: 22 }}
@@ -179,6 +185,28 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         </div>
       </>
     });
+  }
+
+  renderSystemValidationWarnings() {
+    const { tierPoints, bodies } = this.state;
+
+    const validations = [];
+    if (tierPoints.tier2 < 0) {
+      validations.push(<div>System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
+    }
+    if (tierPoints.tier3 < 0) {
+      validations.push(<div>System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
+    }
+
+    if (unknown in bodies) {
+      validations.push(<div>{bodies.Unknown.sites.length} sites on unknown body</div>);
+    }
+
+    // TODO: check for missing preReq's?
+
+    if (validations.length === 0) return <br />;
+
+    return <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0' } }}> {validations}</MessageBar >;
   }
 
   // renderSysEffects() {
@@ -252,7 +280,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       title={`Market links for: ${site.buildName}`}
       onClick={() => this.setState({ showPortLinks: site })}
     >
-      <Icon iconName='Link' style={{ marginLeft: 8, fontWeight: 'bold' }} />
+      <Icon className='icon-inline' iconName='Link' style={{ marginLeft: 8, fontWeight: 'bold' }} />
     </Link>;
 
     return <div>
@@ -272,7 +300,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         </IconButton>} */}
 
         <IconButton
-          iconProps={{ iconName: 'Edit' }}
+          iconProps={{ className: 'icon-inline', iconName: 'Edit' }}
           style={{ width: 22, height: 22, marginLeft: 4 }}
           onClick={() => {
             if (site.isMock) {
@@ -311,7 +339,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       buildType: SystemView.lastBuildType,
       type: getSiteType(SystemView.lastBuildType),
-      buildName: `New ${++SystemView.countNew}`,
+      buildName: `New #${++SystemView.countNew}`,
       bodyName: this.lastBodyName,
 
       buildId: Date.now().toString(),
@@ -320,7 +348,23 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   renderEditMockSite() {
-    const { editMockSite } = this.state;
+    const { editMockSite, tierPoints, allSites } = this.state;
+    if (!editMockSite) return;
+
+    const original = allSites.find(s => s.buildId === editMockSite.buildId);
+
+    // is this valid for the current system?
+    const validations = [];
+    const needs = editMockSite.type.needs;
+    if (needs.count > 0) {
+      let deficit = needs.count - (needs.tier === 2 ? tierPoints.tier2 : tierPoints.tier3);
+      if (editMockSite.buildType === original?.buildType) deficit -= needs.count;
+
+      if (deficit > 0) {
+        validations.push(<div>System needs <TierPoints tier={needs.tier} count={deficit} /></div>);
+      }
+
+    }
 
     return <Modal
       isOpen
@@ -336,7 +380,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         gridTemplateColumns: 'max-content auto',
         gap: '2px 10px',
         fontSize: '14px',
-        margin: '8px 0 0 0',
+        margin: '8px 0 8px 0',
       }}>
 
         <Label required>Name:</Label>
@@ -349,7 +393,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
             style={{
               backgroundColor: appTheme.palette.white,
               color: appTheme.palette.black,
-              border: '1px solid ' + appTheme.palette.accent,
+              border: '1px solid ' + appTheme.palette.black,
               width: 300,
             }}
             onChange={(ev) => {
@@ -361,19 +405,6 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
             }}
           />
         </div>
-
-        <Label required>Type:</Label>
-        <BuildType
-          buildType={this.state.editMockSite?.buildType}
-          onChange={(newBuildType) => {
-            const editMockSite = this.state.editMockSite;
-            if (editMockSite) {
-              SystemView.lastBuildType = newBuildType;
-              editMockSite.buildType = newBuildType;
-              this.setState({ editMockSite: editMockSite });
-            }
-          }}
-        />
 
         <Label>Body:</Label>
         <ChooseBody
@@ -389,9 +420,31 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
             }
           }}
         />
+
+        <Label required>Type:</Label>
+        <div>
+          <span style={{ fontWeight: 'bold' }}>
+            <BuildType
+              buildType={this.state.editMockSite?.buildType}
+              onChange={(newBuildType) => {
+                const editMockSite = this.state.editMockSite;
+                if (editMockSite) {
+                  SystemView.lastBuildType = newBuildType;
+                  editMockSite.buildType = newBuildType;
+                  editMockSite.type = getSiteType(newBuildType);
+                  this.setState({ editMockSite: editMockSite });
+                }
+              }}
+            />
+          </span>
+          <BuildEffects proj={editMockSite} noTitle />
+        </div>
+
       </div>
 
-      <div className='small' style={{ color: appTheme.palette.themeSecondary, margin: '12px 0' }}>These are temporary and will not be saved for future sessions</div>
+      {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning}>{validations}</MessageBar>}
+
+      <div className='small' style={{ color: appTheme.palette.themeSecondary, margin: '8px 0' }}>These are temporary and will not be saved for future sessions</div>
 
       <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} horizontalAlign='end' verticalAlign='baseline' >
         <PrimaryButton

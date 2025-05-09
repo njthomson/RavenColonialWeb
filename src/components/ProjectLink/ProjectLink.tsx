@@ -31,6 +31,6 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
 
     &nbsp;- <BuildTypeDisplay buildType={props.proj.buildType} />
 
-    {props.proj.isPrimaryPort && <Icon iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
+    {props.proj.isPrimaryPort && <Icon className='icon-inline' iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
   </span>;
 };

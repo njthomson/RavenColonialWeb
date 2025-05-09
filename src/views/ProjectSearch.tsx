@@ -1,4 +1,4 @@
-import { ActionButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
+import { DefaultButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
@@ -98,16 +98,18 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         {!loading && this.renderActiveProjects()}
 
         {!loading && !showCreate && <div>
-          <ActionButton
-            iconProps={{ iconName: 'Manufacturing' }}
-            text='Start a new project?'
-            onClick={() => this.setState({ showCreate: !this.state.showCreate })}
-          />
-          <ActionButton
-            iconProps={{ iconName: 'CityNext2' }}
-            text='Add a completed project?'
-            onClick={() => this.setState({ showAddExisting: !this.state.showAddExisting })}
-          />
+          <Stack horizontal tokens={{ childrenGap: 8 }} style={{ marginTop: 16 }}>
+            <DefaultButton
+              iconProps={{ iconName: 'Manufacturing' }}
+              text='Start a new project?'
+              onClick={() => this.setState({ showCreate: !this.state.showCreate })}
+            />
+            <DefaultButton
+              iconProps={{ iconName: 'CityNext2' }}
+              text='Add a completed project?'
+              onClick={() => this.setState({ showAddExisting: !this.state.showAddExisting })}
+            />
+          </Stack>
 
           {systemName && refs.length > 0 && <SystemView systemName={systemName} projects={refs} />}
         </div>}
@@ -145,6 +147,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       systemName: this.state.systemName,
       // we need some marketId and some commodities otherwise other things kick in populate those (which is not helpful in this case)
       marketId: 1,
+      complete: true,
       commodities: { steel: 0 } as Cargo,
     } as Project;
 
