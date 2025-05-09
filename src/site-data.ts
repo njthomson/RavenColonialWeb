@@ -12,7 +12,8 @@ export type Economy =
   ;
 
 export type BuildClass =
-  | 'port'
+  | 'starport'
+  | 'planetary'
   | 'installation'
   | 'outpost'
   | 'settlement'
@@ -34,6 +35,9 @@ export interface SiteType {
   /** Subtypes, eg: vulcan, coriolis, consus */
   subTypes: string[];
 
+  /** Alternative Subtypes, to match old typo's, etc*/
+  altTypes?: string[];
+
   /** Classification, eg: outpost, installation, settlement, port */
   buildClass: BuildClass;
 
@@ -44,7 +48,7 @@ export interface SiteType {
   padSize: PadSize;
 
   /** Is an orbital or surface site */
-  orbital: Boolean;
+  orbital: boolean;
 
   /** System influence */
   inf: Economy;
@@ -68,6 +72,9 @@ export interface SiteType {
 }
 
 export const mapName: Record<string, string> = {
+  port: "Star port",
+  planetary: 'Planetary port',
+
   // Effect key names
   pop: "Population",
   mpop: "Max population",
@@ -132,8 +139,13 @@ export const economyColors: Record<string, string> = {
 }
 
 
+export const isOrbital = (buildType: string | undefined): boolean => {
+  if (!buildType) return true;
+  return getSiteType(buildType).orbital;
+};
+
 export const getSiteType = (buildType: string): SiteType => {
-  const match = siteTypes.find(st => st.subTypes.includes(buildType));
+  const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType));
   if (!match) {
     console.error(`No SiteType match found for: '${buildType}'`);
     throw new Error(`No SiteType match found for: '${buildType}'`)
@@ -141,10 +153,27 @@ export const getSiteType = (buildType: string): SiteType => {
   return match;
 };
 
+export const getBuildTypeDisplayName = (buildType: string | undefined) => {
+  if (!buildType) return '?';
+
+  const type = getSiteType(buildType);
+  let txt = type.buildClass === 'starport' || type.buildClass === 'planetary'
+    ? `${type.displayName}`
+    : `${type.displayName} ${type.buildClass}`;
+
+  if (type.buildClass === 'settlement') {
+    txt = txt.replace('Small ', '')
+      .replace('Medium ', '')
+      .replace('Large ', '');
+  }
+
+  return txt + ` (${buildType})`;
+}
+
 export const canReceiveLinks = (type: SiteType): boolean => {
 
   // star ports and orbital outposts can receive links
-  if (type.buildClass === 'port') {
+  if (type.buildClass === 'starport' || type.buildClass === 'planetary') {
     return true;
   } else if (type.buildClass === 'outpost' && type.orbital) {
     return true;
@@ -180,8 +209,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Coriolis",
-    "subTypes": ["no truss", "dual_truss", "quad_truss", "coriolis", "no_truss"],
-    "buildClass": "port",
+    "subTypes": ["no_truss", "dual_truss", "quad_truss"],
+    "altTypes": ["no truss", "coriolis"],
+    "buildClass": "starport",
     "tier": 2,
     "padSize": "large",
     "orbital": true,
@@ -191,9 +221,9 @@ export const siteTypes: SiteType[] = [
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 2, sol: 3, dev: 3 }
   },
   {
-    "displayName": "Asteroid",
+    "displayName": "Asteroid base",
     "subTypes": ["asteroid"],
-    "buildClass": "port",
+    "buildClass": "starport",
     "tier": 2,
     "padSize": "large",
     "orbital": true,
@@ -205,7 +235,7 @@ export const siteTypes: SiteType[] = [
   {
     "displayName": "Ocellus",
     "subTypes": ["ocellus"],
-    "buildClass": "port",
+    "buildClass": "starport",
     "tier": 3,
     "padSize": "large",
     "orbital": true,
@@ -217,7 +247,7 @@ export const siteTypes: SiteType[] = [
   {
     "displayName": "Orbis",
     "subTypes": ["apollo", "artemis"],
-    "buildClass": "port",
+    "buildClass": "starport",
     "tier": 3,
     "padSize": "large",
     "orbital": true,
@@ -347,7 +377,7 @@ export const siteTypes: SiteType[] = [
     "effects": { pop: 0, mpop: 0, sec: -4, wealth: 4, tech: 0, sol: 0, dev: 0 }
   },
   {
-    "displayName": "Mining/Industrial",
+    "displayName": "Mining",
     "subTypes": ["euthenia", "phorcys"],
     "buildClass": "installation",
     "tier": 1,
@@ -494,9 +524,9 @@ export const siteTypes: SiteType[] = [
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 5, sol: 0, dev: 1 }
   },
   {
-    "displayName": "Large",
+    "displayName": "Planetary port",
     "subTypes": ["zeus", "hera", "poseidon", "aphrodite"],
-    "buildClass": "port",
+    "buildClass": "planetary",
     "tier": 3,
     "padSize": "large",
     "orbital": false,

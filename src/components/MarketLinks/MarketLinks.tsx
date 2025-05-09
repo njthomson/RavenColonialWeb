@@ -106,6 +106,7 @@ const generateColorBlocks = (site: SiteMap, width: number, height: number): JSX.
 
 
     const block = <div
+      key={`cb${key}`}
       title={title}
       style={{
         display: 'inline-block',
@@ -149,6 +150,7 @@ export const EconomyBlocks: FunctionComponent<{ economies: Record<string, number
     let title = `${mapName[key]}: ${v}`;
 
     const block = <div
+      key={`eb${key}`}
       title={title}
       style={{
         display: 'inline-block',

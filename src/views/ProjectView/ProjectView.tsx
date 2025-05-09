@@ -475,7 +475,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             text='Yes'
             disabled={submitting}
             iconProps={{ iconName: 'Warning' }}
-            style={{ backgroundColor: appTheme.palette.yellowLight }}
+            style={{ backgroundColor: appTheme.palette.yellowLight, color: appTheme.palette.teal }}
             onClick={this.onProjectDelete}
           />
           &nbsp;

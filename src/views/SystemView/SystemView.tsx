@@ -99,13 +99,13 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       </h3>
 
       <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }}>
-        <Toggle
+        {false && <Toggle
           onText='Show market bars'
           offText='Show market bars'
           checked={showInlineMarketLinks}
           styles={{ container: { justifyContent: 'flex-end', margin: 0 } }}
           onClick={() => this.setState({ showInlineMarketLinks: !this.state.showInlineMarketLinks })}
-        />
+        />}
 
         <DefaultButton
           iconProps={{ iconName: 'WebAppBuilderFragmentCreate' }}
