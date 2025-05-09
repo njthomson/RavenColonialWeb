@@ -621,7 +621,7 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Industrial",
-    "subTypes": ["metope", "palici", "minthe"],
+    "subTypes": ["meteope", "palici", "minthe"],
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "none",
