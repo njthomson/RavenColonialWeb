@@ -927,7 +927,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
             {!!proj.notes && <tr>
               <td>Notes:</td>
-              <td><div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.notes}&nbsp;</div></td>
+              <td><div className='grey notes' style={{ backgroundColor: appTheme.palette.purpleLight, maxWidth: 400 }}>{proj.notes}&nbsp;</div></td>
             </tr>}
 
           </tbody>

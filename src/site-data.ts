@@ -134,7 +134,7 @@ export const economyColors: Record<string, string> = {
   hightech: 'rgb(4,205,204)',
   industrial: 'rgb(207, 205, 0)',
   military: 'rgb(183,0,183)',
-  tourism: 'rgb(000,255,000)', // TODO
+  tourism: 'rgb(71, 15, 172)',
   refinery: 'rgb(208,103,9)',
 }
 
@@ -144,10 +144,11 @@ export const isOrbital = (buildType: string | undefined): boolean => {
   return getSiteType(buildType).orbital;
 };
 
-export const getSiteType = (buildType: string): SiteType => {
+export const getSiteType = (buildType: string, noThrow?: boolean): SiteType => {
   const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType));
   if (!match) {
     console.error(`No SiteType match found for: '${buildType}'`);
+    if (noThrow) return undefined!;
     throw new Error(`No SiteType match found for: '${buildType}'`)
   }
   return match;

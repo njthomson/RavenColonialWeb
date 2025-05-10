@@ -3,12 +3,13 @@ import { Component, ReactNode } from "react";
 import { appTheme, cn } from "../theme";
 import { ResponseEdsmSystemBodies, ResponseEdsmSystemBody } from '../types';
 import { ComboBox, IComboBoxOption, Icon, ISelectableOption, Spinner, SpinnerSize, Stack } from '@fluentui/react';
-import { getSysMap } from '../system-model';
+import { getSysMap, SysMap } from '../system-model';
 
 interface ChooseBodyProps {
   systemName: string;
   bodyName: string | undefined;
   onChange: (name: string, num: number) => void;
+  sysMap?: SysMap;
 }
 
 interface ChooseBodyState {
@@ -19,6 +20,11 @@ interface ChooseBodyState {
 
 export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
   static cache: Record<string, ResponseEdsmSystemBodies> = {};
+
+  static async prepCache(systemName: string) {
+    const system = await api.edsm.getSystemBodies(systemName);
+    ChooseBody.cache[systemName] = system;
+  }
 
   constructor(props: ChooseBodyProps) {
     super(props);
@@ -124,7 +130,7 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
   renderDropDownItem = (item?: ISelectableOption) => {
     const body = item?.data as ResponseEdsmSystemBody;
 
-    const sysMap = getSysMap(this.props.systemName);
+    const sysMap = this.props.sysMap ?? getSysMap(this.props.systemName);
     const bodySiteRows = sysMap?.bodies[body.name]?.sites.map(s => {
       return <div
         key={`dd${body.id64}${s.buildId}`}

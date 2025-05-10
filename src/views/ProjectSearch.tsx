@@ -1,4 +1,4 @@
-import { DefaultButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, Icon, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
@@ -7,6 +7,9 @@ import { EditProject } from '../components/EditProject/EditProject';
 import { delayFocus } from '../util';
 import { SystemView } from './SystemView/SystemView';
 import { CopyButton } from '../components/CopyButton';
+import { ImportStationsFromEDSM } from '../components/ImportStationsFromEDSM';
+import { ChooseBody } from '../components/ChooseBody';
+import { appTheme } from '../theme';
 
 interface ProjectProps {
   systemName?: string;
@@ -20,6 +23,7 @@ interface ProjectState {
 
   showCompleted?: boolean;
   showCreate?: boolean;
+  showImportEDSM?: boolean;
   showAddExisting?: boolean;
 }
 
@@ -65,13 +69,16 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         refs: matches,
       });
 
+      ChooseBody.prepCache(systemName)
+        .catch(err => console.error(err.stack));
+
     } catch (err: any) {
       this.setState({ loading: false, errorMsg: err.message });
     }
   }
 
   render() {
-    const { systemName, loading, errorMsg, refs, showCreate, showAddExisting } = this.state;
+    const { systemName, loading, errorMsg, refs, showCreate, showAddExisting, showImportEDSM } = this.state;
 
     const knownMarketIds = refs?.map(p => p.marketId.toString()) ?? [];
 
@@ -81,7 +88,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
           text={systemName}
           onMatch={(text) => {
             if (text && text !== this.state.systemName) {
-              window.location.assign(`#find=${text}`);
+              window.location.assign(`#find=${text.trim()}`);
             }
           }}
         />}
@@ -90,10 +97,17 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
         {loading && <Spinner size={SpinnerSize.large} label={`Searching for projects in: ${systemName}`} />}
 
-        {!loading && refs.length === 0 && systemName && <h2>
-          No known projects in: {systemName}
-          <span style={{ fontSize: 16 }}> <CopyButton text={systemName} /></span>
-        </h2>}
+        {!loading && refs.length === 0 && systemName && <>
+          <h2>
+            No known projects in: {systemName}
+            <span style={{ fontSize: 16 }}><CopyButton text={systemName} /></span>
+          </h2>
+          <div style={{ fontSize: 14, marginLeft: 20, marginTop: -10 }}>
+            <Icon className='icon-inline' iconName='LightBulb' style={{ color: appTheme.palette.accent }} />
+            &nbsp;
+            Would you like to <Link onClick={() => this.setState({ showImportEDSM: true })}>import data from EDSM ?</Link>
+          </div>
+        </>}
 
         {!loading && this.renderActiveProjects()}
 
@@ -107,13 +121,38 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
             <DefaultButton
               iconProps={{ iconName: 'CityNext2' }}
               text='Add a completed project?'
+              split
+              menuProps={{
+                items: [
+                  {
+                    key: 'import-from-edsm',
+                    text: 'Import from EDSM ...',
+                    onClick: () => {
+                      this.setState({ showImportEDSM: true });
+                    }
+                  }
+                ],
+                calloutProps: {
+                  style: { border: '1px solid ' + appTheme.palette.themePrimary, width: 300 }
+                }
+              }}
               onClick={() => this.setState({ showAddExisting: !this.state.showAddExisting })}
             />
           </Stack>
 
-          {systemName && refs.length > 0 && <SystemView systemName={systemName} projects={refs} />}
+          {systemName && <SystemView systemName={systemName} projects={refs} />}
         </div>}
+
       </div>
+
+      {!loading && showImportEDSM && systemName && <Modal
+        allowTouchBodyScroll
+        isBlocking
+        isOpen={true}
+        onDismiss={() => this.setState({ showImportEDSM: false })}
+      >
+        <ImportStationsFromEDSM systemName={systemName} projects={refs} onClose={() => this.setState({ showImportEDSM: false })} />
+      </Modal>}
 
       {showCreate && <div className='half right'>
         <ProjectCreate
@@ -145,7 +184,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   renderAddExisting() {
     const proj = {
       systemName: this.state.systemName,
-      // we need some marketId and some commodities otherwise other things kick in populate those (which is not helpful in this case)
+      // we need some commodities otherwise other wise server create logic applies a default template (which is not helpful in this case)
       marketId: 1,
       complete: true,
       commodities: { steel: 0 } as Cargo,

@@ -84,7 +84,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   render() {
-    const { allSites, bodies, architect, primaryPort, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete } = this.state;
+    const { allSites, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete } = this.state;
     const showClearAllMocks = allSites.some(s => s.isMock);
 
     return <div className='half system-view'>
@@ -110,11 +110,6 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         gap: '2px 10px',
         fontSize: '14px',
       }}>
-
-        {!primaryPort && <>
-          <div />
-          <div style={{ gridColumn: '2 / span 3' }}>⚑ No Primary port?</div>
-        </>}
 
         <div>System architect:</div>
         <div style={{ gridColumn: '2 / span 3' }}>{architect}</div>
@@ -222,9 +217,14 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   renderSystemValidationWarnings() {
-    const { tierPoints, bodies } = this.state;
+    const { tierPoints, bodies, primaryPort } = this.state;
 
     const validations = [];
+
+    if (!primaryPort) {
+      validations.push(<div>No station has been marked as the system primary port <Icon className='icon-inline' iconName='CrownSolid' style={{ fontWeight: 'bold' }} /></div>);
+    }
+
     if (tierPoints.tier2 < 0) {
       validations.push(<div>System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
     }
@@ -363,10 +363,10 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
   createMockSite(proj: ProjectRef) {
     const site: SiteMap = {
-      architectName: proj.architectName,
-      systemAddress: proj.systemAddress,
-      systemName: proj.systemName,
-      starPos: proj.starPos,
+      architectName: proj?.architectName,
+      systemAddress: proj?.systemAddress,
+      systemName: proj?.systemName,
+      starPos: proj?.starPos,
       marketId: 0,
       maxNeed: 0,
 

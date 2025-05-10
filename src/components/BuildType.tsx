@@ -127,7 +127,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
     const displayText = getBuildTypeDisplayName(selection);
 
-    return <div>
+    return <div style={{ display: 'inline-block' }}>
       <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="center">
         <div className="hint">{displayText}</div>
 

@@ -70,7 +70,7 @@ export interface EconomyLink {
   weak: number;
 }
 
-export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean): SysMap => {
+export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean, noCache?: boolean): SysMap => {
 
   // Read:
   // https://forums.frontier.co.uk/threads/constructing-a-specific-economy.637363/
@@ -93,13 +93,15 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean)
   };
 
   // store in the cache
-  sysMapCache[finalMap.systemName] = finalMap;
+  if (!noCache) {
+    sysMapCache[finalMap.systemName] = finalMap;
+  }
   return finalMap
 };
 
 const initializeSysMap = (projects: ProjectRef[]) => {
 
-  let systemName = projects[0].systemName;
+  let systemName = projects[0]?.systemName;
   let architect = '';
   let primaryPort = undefined;
   let allSites: SiteMap[] = [];
@@ -175,9 +177,9 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
     // sum total system effects
     for (const key of sysEffects) {
       const effect = site.type.effects[key] ?? 0;
-      if (effect > 0) {
-        sumEffects[key] = (sumEffects[key] ?? 0) + effect;
-      }
+      if (effect === 0) continue;
+
+      sumEffects[key] = (sumEffects[key] ?? 0) + effect;
     }
 
     // sum system tier points
