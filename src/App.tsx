@@ -70,7 +70,7 @@ export class App extends Component<AppProps, AppState> {
     let element = document.getElementById('oops');
     if (element) { element.style.display = 'block'; }
     element = document.getElementById('bad-error');
-    if (element) { element.innerText = error.stack ?? error.message ?? "Unknown"; }
+    if (element) { element.innerText = `${window.location}\n\n` + (error.stack ?? error.message ?? "Unknown"); }
   }
 
   fetchPrimaryBuildId() {
