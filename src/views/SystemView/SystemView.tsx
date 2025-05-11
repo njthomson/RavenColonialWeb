@@ -320,7 +320,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
     return <div className={`removable ${cn.removable}`} >
       <Stack key={site.buildId} horizontal verticalAlign='center' style={{ height: 22 }}>
-        <ProjectLink proj={site} noSys noBold iconName={site.complete ? 'Communications' : ''} greyIncomplete={!useIncomplete} />
+        <ProjectLink proj={site} noSys noBold iconName={site.complete ? (site.type.orbital ? 'Communications' : 'MountainClimbing') : ''} greyIncomplete={!useIncomplete} />
 
         {!site.complete && !site.isMock && <Icon iconName='ConstructionCone' style={{ marginLeft: 8 }} title='Under construction' />}
         {!site.complete && site.isMock && <Icon iconName='WebAppBuilderFragmentCreate' style={{ marginLeft: 8 }} title='A "What if" site' />}
