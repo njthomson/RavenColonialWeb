@@ -176,7 +176,7 @@ export const canReceiveLinks = (type: SiteType): boolean => {
   // star ports and orbital outposts can receive links
   if (type.buildClass === 'starport' || type.buildClass === 'planetary') {
     return true;
-  } else if (type.buildClass === 'outpost' && type.orbital) {
+  } else if (type.buildClass === 'outpost') {
     return true;
   }
   return false;

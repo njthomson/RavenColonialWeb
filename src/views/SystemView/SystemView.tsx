@@ -349,7 +349,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         />
       </Stack>
 
-      {isBodyPrimary && showInlineMarketLinks && <Stack
+      {showInlineMarketLinks && !!site.links && <Stack
         horizontal verticalAlign='baseline'
         tokens={{ childrenGap: 8 }}
         style={{ marginLeft: 20 }}

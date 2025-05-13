@@ -258,6 +258,9 @@ const calcBodyLinks = (allBodies: BodyMap[], body: BodyMap, useIncomplete: boole
   if (body.orbitalPrimary) {
     calcSiteLinks(allBodies, body, body.orbitalPrimary, useIncomplete);
   }
+  if (body.surfacePrimary) {
+    calcSiteLinks(allBodies, body, body.surfacePrimary, useIncomplete);
+  }
 }
 
 const calcSiteLinks = (allBodies: BodyMap[], body: BodyMap, primarySite: SiteMap, useIncomplete: boolean) => {
