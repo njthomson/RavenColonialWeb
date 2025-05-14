@@ -731,7 +731,8 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Tourist",
-    "subTypes": ["comus", "gelos"],
+    "subTypes": ["comos", "gelos"],
+    "altTypes": ["comus"],
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "none",

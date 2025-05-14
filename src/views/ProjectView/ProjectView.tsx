@@ -80,7 +80,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const sortMode = store.commoditySort;
     this.state = {
       loading: true,
-      autoUpdateUntil: 0,
+      autoUpdateUntil: Date.now() + autoUpdateStopDuration,
       primaryBuildId: store.primaryBuildId,
       mode: Mode.view,
       sort: sortMode ?? SortMode.group,
@@ -104,12 +104,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   componentDidMount() {
-    // fetch initial data, then start auto-updating
-    this.fetchProject(this.props.buildId).then(proj => {
-      if (!proj?.complete) {
-        this.toggleAutoRefresh();
-      }
-    })
+    // fetch initial data, which starts auto-updating as necessary
+    this.fetchProject(this.props.buildId);
   }
 
   componentWillUnmount(): void {
@@ -126,7 +122,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         buildId: this.props.buildId,
         proj: undefined,
         loading: true,
-        autoUpdateUntil: 0,
+        autoUpdateUntil: Date.now() + autoUpdateStopDuration,
         primaryBuildId: store.primaryBuildId,
         mode: Mode.view,
         newCmdr: '',
@@ -149,10 +145,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     // buildId changed from above
-    if (prevState.buildId !== this.state.buildId && this.state.buildId && !prevState.buildId) {
+    if (prevState.buildId !== this.state.buildId && this.state.buildId) {
       if (this.timer) { clearTimeout(this.timer); }
-      if (this.state.proj && !this.state.proj.complete) {
-        this.pollLastTimestamp(this.state.buildId, true);
+      if (!this.state.proj) {
+        this.fetchProject(this.state.buildId, false);
       }
     }
   }
@@ -172,6 +168,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     try {
+clearTimeout(this.timer);
       this.setState({
         loading: !refreshing,
         refreshing: refreshing,
@@ -192,8 +189,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         deliverMarketId = 'site';
       }
 
+let newAutoUpdateUntil = this.state.autoUpdateUntil;
       window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
-      if (newProj.complete) window.document.title += ' (completed)';
+      if (newProj.complete) {
+window.document.title += ' (completed)';
+newAutoUpdateUntil = 0;
+      }
 
       let sysMap = getSysMap(newProj.systemName);
       this.setState({
@@ -209,6 +210,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         refreshing: false,
         disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
         deliverMarketId: deliverMarketId,
+autoUpdateUntil: newAutoUpdateUntil,
       });
 
       if (!sysMap && newProj.complete) {
@@ -224,6 +226,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         }
       }
 
+      // schedule next poll? (if project is incomplete)
+      if (!newProj.complete && newAutoUpdateUntil > 0 && Date.now() < this.state.autoUpdateUntil) {
+          //schedule next poll
+          this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
+              }
+
       return newProj;
 
     } catch (err: any) {
@@ -235,6 +243,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     }
   }
+
+  doNextPoll = async (buildId: string) => {
+    // call server to see if anything changed
+    let timestamp = await api.project.last(buildId);
+
+    // use current state if no .last added yet
+    if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
+
+    console.debug(`pollTimestamp at ${new Date().toISOString()}: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp}) Will stop after: ${new Date(this.state.autoUpdateUntil).toISOString()}`);
+    if (timestamp !== this.state.lastTimestamp) {
+      // something has changed
+      await this.fetchProject(buildId, true, true);
+    } else if (Date.now() < this.state.autoUpdateUntil) {
+      // nothing changed, schedule next poll
+      this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
+    } else {
+      console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+      this.setState({ autoUpdateUntil: 0 });
+    }
+  };
 
   fetchProjectStats(buildId: string) {
     api.project.getStats(buildId)
@@ -249,43 +277,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     api.project.getCargoFC(buildId)
       .then(fcCargo => this.setState({ fcCargo: fcCargo }))
       .catch(err => this.setState({ errorMsg: err.message }));
-  }
-
-  async pollLastTimestamp(buildId: string, force: boolean = false) {
-    try {
-      if (!force) {
-        // call server to see if anything changed
-        let timestamp = await api.project.last(buildId);
-
-        // use current state if no .last added yet
-        if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
-
-        console.debug(`pollTimestamp: changed? ${timestamp !== this.state.lastTimestamp || force}  (${timestamp} vs ${this.state.lastTimestamp})`);
-
-        if (timestamp !== this.state.lastTimestamp || force) {
-          // something has changed
-          await this.fetchProject(buildId, true, true);
-        }
-      } else {
-        // forcing...
-        await this.fetchProject(buildId, true, true);
-      }
-
-      // schedule next poll?
-      if (this.state.autoUpdateUntil > 0) {
-        if (Date.now() < this.state.autoUpdateUntil) {
-          this.timer = setTimeout(() => {
-            this.pollLastTimestamp(buildId);
-          }, autoUpdateFrequency);
-        } else {
-          console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
-          this.setState({ autoUpdateUntil: 0 });
-        }
-      }
-    } catch (err: any) {
-      console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
-      this.setState({ autoUpdateUntil: 0 });
-    }
   }
 
   async setAsPrimary(buildId: string) {
@@ -331,6 +322,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         ? `Open link in Discord app:\n${this.state.proj?.discordLink}`
         : `Open Discord link in a tab:\n${this.state.proj?.discordLink}`;
 
+let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds';
+    if (proj.complete) refreshTitle = '';
     const commands: ICommandBarItemProps[] = [
       {
         key: 'deliver-cargo',
@@ -365,7 +358,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {
         key: 'btn-refresh',
         text: 'Refresh',
-        title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
+        title: refreshTitle,
         iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
         disabled: refreshing,
         style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
@@ -404,8 +397,44 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         style: { color: !hasDiscordLink || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         iconProps: { iconName: 'OfficeChatSolid' },
         onClick: () => openDiscordLink(this.state.proj?.discordLink)
-      }
+      },
+      {
+        key: 'btn-open',
+        iconProps: { iconName: 'OpenInNewWindow' },
+        disabled: refreshing,
+        style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
+        subMenuProps: {
+          calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
+          items: [
+            {
+              key: 'btn-open-inara',
+              text: 'View on Inara',
+              disabled: refreshing,
+              style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
+              onClick: () => {
+                window.open(`https://inara.cz/elite/station/?search=${proj.buildName} [${proj.systemName}]`, 'Inara');
+              },
+            },
+            {
+              key: 'btn-open-spansh',
+              text: 'View on Spansh',
+              disabled: refreshing,
+              style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
+              onClick: () => {
+                window.open(`https://spansh.co.uk/station/${proj.marketId}`, 'Spansh');
+              },
+            }
+          ],
+        },
+      },
     ];
+
+    // remove buttons from completed projects: Deliver and Edit Commodities
+    if (proj.complete) {
+      commands.splice(0, 1); // Deliver
+      commands.splice(1, 1); // Edit commodities
+      commands.splice(3, 1); // Set primary
+    }
 
     // prepare rich copy link
     var copyLink = new ClipboardItem({
@@ -1604,7 +1633,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // start polling (which causes an immediate refresh)
       console.log(`Starting timer at: ${new Date().toISOString()}`);
       this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
-      this.pollLastTimestamp(this.state.proj?.buildId, true);
+      this.fetchProject(this.state.proj?.buildId, true);
     }
   };
 

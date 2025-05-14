@@ -3,7 +3,7 @@ import costs1 from './assets/colonization-costs.json';
 import costs2 from './assets/colonization-costs2.json';
 
 const mapCargo1: Record<string, string> = {
-  "Liquid Oxygen": "liquidoxygen",
+  "Liquid oxygen": "liquidoxygen",
   "Water": "water",
   "Ceramic Composites": "ceramiccomposites",
   "CMM Composite": "cmmcomposite",
