@@ -20,6 +20,7 @@ export const learnAbout = (currentHelpId?: string) => {
     build: 'Building a project',
     groups: 'Working in groups',
     fc: 'Linking Fleet Carriers',
+    markets: 'Finding markets',
   }
 
   return <div className={`home-box ${cn.greyer}`}>
@@ -155,6 +156,23 @@ export const About: React.FunctionComponent = () => {
       </ul>
     </div>}
 
+
+    {(!helpId || helpId === 'markets') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Finding markets</h3>
+      Minimizing trips and distance travelled is key to completing constructions quickly. Use the <Icon iconName='ShoppingCart' className='icon-inline' /> button above the commodities table to find markets near your construction site with the required supplies.
+      <ul>
+        <li>Start with criteria to fit your needs: excluding markets too far, wrong landing pad size, etc.</li>
+        <li>The tool will search for the 5 closest markets for each commodity, then presents them in a combined interactive list.</li>
+        <li>The list can be sorted by any column, defaulting to highest count of matched commodities. There is a lot of information on each row that can be seen by hovering the mouse in different places.</li>
+        <li>Click the <Icon className="btn icon-inline" iconName='DoubleChevronLeft' /> button top right to make the list bigger.</li>
+        <li>Expand any row to see the relevant commodities available at that market.</li>
+        <li>Click any commodity bubble to highlight it, which will higlight any other markets with that commodity.</li>
+        <li>Commodities with insuffient quantities at a market will be grey but are still clickable.</li>
+        <li>Toggle "Expand highlights" to auto expand any market row containing any of the highlighted commodities.</li>
+        <li>Tap the system name to view the market in Inara.</li>
+        <IconBtnScrollTop />
+      </ul>
+    </div>}
   </>;
 };
 

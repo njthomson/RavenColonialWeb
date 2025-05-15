@@ -197,7 +197,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           </ul>
         </div>
 
-        <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
+        <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }} horizontalAlign='end'>
           <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} />
           <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.onClear} />
           <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} />

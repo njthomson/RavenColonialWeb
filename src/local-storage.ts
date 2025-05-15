@@ -1,5 +1,5 @@
 import * as api from './api';
-import { GlobalStats, Project, ProjectRefLite, SortMode } from "./types";
+import { FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectRefLite, SortMode } from "./types";
 import { fcFullName } from './util';
 
 enum Stored {
@@ -17,6 +17,9 @@ enum Stored {
   hideShipTrips = 'hideShipTrips',
   useNativeDiscord = 'useNativeDiscord',
   useIncomplete = 'useIncomplete',
+  findMarketsOptions = 'findMarketsOptions',
+  foundMarkets = 'foundMarkets',
+  notAgain = 'notAgain',
 }
 
 interface CmdrData {
@@ -26,7 +29,11 @@ interface CmdrData {
 }
 
 const writeValue = (key: Stored, newValue: unknown) => {
-  window.localStorage.setItem(key, typeof newValue === 'string' ? newValue : JSON.stringify(newValue));
+  if (typeof newValue === 'undefined') {
+    window.localStorage.removeItem(key);
+  } else {
+    window.localStorage.setItem(key, typeof newValue === 'string' ? newValue : JSON.stringify(newValue));
+  }
 };
 
 const readString = (key: Stored): string => window.localStorage.getItem(key) ?? '';
@@ -158,6 +165,15 @@ class LocalStorage {
 
   get useIncomplete(): boolean { return readBoolean(Stored.useIncomplete, true); }
   set useIncomplete(newValue: boolean) { writeValue(Stored.useIncomplete, newValue); }
+
+  get findMarketsOptions(): FindMarketsOptions { return readValue(Stored.findMarketsOptions, { maxDistance: 500, noFC: true, noSurface: false, shipSize: 'medium', requireNeed: true } as FindMarketsOptions)!; }
+  set findMarketsOptions(newValue: FindMarketsOptions) { writeValue(Stored.findMarketsOptions, newValue); }
+
+  get foundMarkets(): FoundMarkets | undefined { return readValue(Stored.foundMarkets); }
+  set foundMarkets(newValue: FoundMarkets | undefined) { writeValue(Stored.foundMarkets, newValue); }
+
+  get notAgain(): string[] { return readValue(Stored.notAgain, [])!; }
+  set notAgain(newValue: string[]) { writeValue(Stored.notAgain, newValue); }
 }
 
 export const store = new LocalStorage();

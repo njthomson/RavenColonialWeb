@@ -486,7 +486,7 @@
     "points": {
       "Tier 2": 1
     },
-    "economy": {},
+    "economy": { },
     "Tier": "1",
     "Location": "Orbital",
     "Category": "Satellite",
@@ -526,7 +526,7 @@
     "points": {
       "Tier 2": 1
     },
-    "economy": {},
+    "economy": { },
     "Tier": "1",
     "Location": "Orbital",
     "Category": "Communication Station",
@@ -825,7 +825,7 @@
       "Tier 2": -1,
       "Tier 3": 1
     },
-    "economy": {},
+    "economy": { },
     "Tier": "2",
     "Location": "Orbital",
     "Category": "Government",
@@ -2049,7 +2049,7 @@
     "Category": "Tourism Tier 1",
     "Building Type": "Medium",
     "Layouts": [
-      "Comos",
+      "Comus",
       "Gelos"
     ],
     "Required Facility In System": "Installation - Satellite",
@@ -2177,7 +2177,7 @@
       "Tier 2": -1,
       "Tier 3": 1
     },
-    "economy": {},
+    "economy": { },
     "Tier": "2",
     "Location": "Surface",
     "Category": "Civilian",
@@ -2256,7 +2256,7 @@
       "Tier 2": -1,
       "Tier 3": 1
     },
-    "economy": {},
+    "economy": { },
     "Tier": "2",
     "Location": "Surface",
     "Category": "Outpost",

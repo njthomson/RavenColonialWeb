@@ -136,6 +136,38 @@ export interface AppProps {
   setTS: React.Dispatch<React.SetStateAction<TopState>>;
 }
 
+export interface FindMarketsOptions {
+  shipSize: string;
+  maxDistance: number;
+  noSurface: boolean;
+  noFC: boolean;
+  requireNeed: boolean;
+}
+
+export interface FoundMarkets {
+  preparedAt: string;
+  buildId: string;
+  systemName: string;
+  markets: MarketSummary[];
+}
+
+export interface MarketSummary {
+  marketId: number;
+  stationName: string;
+  type: string;
+  economy: string;
+  updatedAt: string;
+  supplies: Record<string, number>;
+  surface: boolean;
+  padSize: string;
+
+  bodyName: string;
+  systemName: string;
+  distance: number;
+  distanceToArrival: number;
+  starPos: number[];
+}
+
 export interface ResponseEdsmStations {
   id: number;
   id64: number;
@@ -308,9 +340,9 @@ export const mapCommodityNames: Record<string, string> = {
   "resonatingseparators": "Resonating Separators",
   "bioreducinglichen": "Bioreducing Lichen",
   "geologicalequipment": "Geological Equipment",
-    "mutomimager": "Muon Imager",
+  "mutomimager": "Muon Imager",
   "basicmedicines": "Basic Medicines",
-    "combatstabilisers": "Combat Stabilisers",
+  "combatstabilisers": "Combat Stabilisers",
   "militarygradefabrics": "Military Grade Fabrics",
   "advancedcatalysers": "Advanced Catalysers",
   "wine": "Wine",
@@ -318,7 +350,7 @@ export const mapCommodityNames: Record<string, string> = {
   "fish": "Fish",
   "tea": "Tea",
   "coffee": "Coffee",
-    "terrainenrichmentsystems": "Land Enrichment Systems",
+  "terrainenrichmentsystems": "Land Enrichment Systems",
   "surfacestabilisers": "Surface Stabilisers",
   "buildingfabricators": "Building Fabricators",
   "structuralregulators": "Structural Regulators",
@@ -327,11 +359,11 @@ export const mapCommodityNames: Record<string, string> = {
   "survivalequipment": "Survival Equipment",
   "thermalcoolingunits": "Thermal Cooling Units",
   "heliostaticfurnaces": "Microbial Furnaces",
-"mineralextractors": "Mineral Extractors",
+  "mineralextractors": "Mineral Extractors",
 
   // prior mistakes
   "combatstabilizers": "Combat Stabilisers",
   "muonimager": "Muon Imager",
   "landenrichmentsystems": "Land Enrichment Systems",
   "microbialfurnaces": "Microbial Furnaces",
-  };
+};

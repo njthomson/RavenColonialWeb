@@ -1,0 +1,55 @@
+.where-to-buy .ms-Button--action {
+  text-align: left;
+}
+
+.where-to-buy th {
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.where-to-buy table .c1 {
+  cursor: pointer;
+  text-align: left;
+}
+
+.where-to-buy .c1 .ms-Button--action {
+  margin: 0;
+  padding: 0;
+}
+
+.where-to-buy table .c2 {
+  cursor: pointer;
+  text-align: center;
+}
+
+.where-to-buy table .c3 {
+  width: fit-content;
+  font-size: 11px;
+}
+
+.where-to-buy table .c4 {
+  text-align: right;
+  padding-left: 4px;
+}
+
+.where-to-buy table .r2 .c1 {
+  padding-left: 26px;
+}
+
+.where-to-buy table .r2 .bubble {
+  cursor: pointer;
+  margin: 1px 4px;
+  padding: 1px;
+}
+
+.where-to-buy .highlight .bubble {
+  cursor: pointer;
+  font-size: 12px;
+  margin: 1px 4px;
+  padding: 2px;
+}
+
+.where-to-buy .ms-Callout-main {
+  padding: 10px;
+}

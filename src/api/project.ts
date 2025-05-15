@@ -1,4 +1,4 @@
-import { Cargo, CreateProject, GlobalStats, Project, ProjectFC, ProjectRef, ProjectRefComplete, SupplyStatsSummary } from "../types";
+import { Cargo, CreateProject, FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectFC, ProjectRef, ProjectRefComplete, SupplyStatsSummary } from "../types";
 import { callAPI } from "./api-util";
 
 /** Project APIs */
@@ -110,5 +110,9 @@ export const project = {
 
   globalStats: async (): Promise<GlobalStats> => {
     return await callAPI<GlobalStats>(`/api/stats/`);
+  },
+
+  findMarkets: async (buildId: string, options: FindMarketsOptions): Promise<FoundMarkets> => {
+    return await callAPI<FoundMarkets>(`/api/project/${encodeURIComponent(buildId)}/markets`, 'POST', JSON.stringify(options));
   },
 };

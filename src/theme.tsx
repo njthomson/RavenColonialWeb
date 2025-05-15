@@ -193,7 +193,19 @@ export const cn = mergeStyleSets({
     ':active': {
       backgroundColor: appTheme.palette.themeSecondary,
     }
-  }
+  },
+  trh: {
+    ':hover': {
+      backgroundColor: appTheme.palette.neutralLight,
+    }
+  },
+  padSize: {
+    cursor: 'default',
+    backgroundColor: appTheme.palette.neutralLight,
+    border: '1px solid ' + appTheme.palette.themeTertiary,
+    fontSize: 10,
+    textAlign: 'center',
+  },
 });
 
 

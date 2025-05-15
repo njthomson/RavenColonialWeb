@@ -22,6 +22,10 @@ export const callSvcAPI = async <T>(url: URL, method: string = 'GET', body?: str
       headers: { 'Content-Type': 'application/json' }
     });
 
+  if (method === 'HEAD') {
+    return response as T;
+  }
+
   if (response.status === 200) {
     const obj: T = await response.json();
     return obj;

@@ -1,6 +1,6 @@
 import './ProjectView.css';
 import * as api from '../../api';
-import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, Coachmark, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TeachingBubbleContent, TextField } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
@@ -15,6 +15,7 @@ import { EditProject } from '../../components/EditProject/EditProject';
 import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { fetchSysMap, getSysMap, SysMap } from '../../system-model';
 import { BuildEffects } from '../../components/BuildEffects';
+import { WhereToBuy } from '../../components/WhereToBuy/WhereToBuy';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -62,6 +63,11 @@ interface ProjectViewState {
 
   fcCargo: Record<string, Cargo>;
   fcEditMarketId?: string;
+
+  showWhereToBuy?: boolean;
+
+  notAgain: string[];
+  notAgainPending?: string;
 }
 
 enum Mode {
@@ -100,6 +106,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       showAddFC: false,
       fcCargo: {},
+
+      notAgain: store.notAgain,
     };
   }
 
@@ -168,7 +176,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     try {
-clearTimeout(this.timer);
+      clearTimeout(this.timer);
       this.setState({
         loading: !refreshing,
         refreshing: refreshing,
@@ -189,11 +197,11 @@ clearTimeout(this.timer);
         deliverMarketId = 'site';
       }
 
-let newAutoUpdateUntil = this.state.autoUpdateUntil;
+      let newAutoUpdateUntil = this.state.autoUpdateUntil;
       window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
       if (newProj.complete) {
-window.document.title += ' (completed)';
-newAutoUpdateUntil = 0;
+        window.document.title += ' (completed)';
+        newAutoUpdateUntil = 0;
       }
 
       let sysMap = getSysMap(newProj.systemName);
@@ -210,7 +218,7 @@ newAutoUpdateUntil = 0;
         refreshing: false,
         disableDelete: !!store.cmdrName && (!newProj.architectName || newProj.architectName.toLowerCase() !== store.cmdrName.toLowerCase()),
         deliverMarketId: deliverMarketId,
-autoUpdateUntil: newAutoUpdateUntil,
+        autoUpdateUntil: newAutoUpdateUntil,
       });
 
       if (!sysMap && newProj.complete) {
@@ -228,9 +236,9 @@ autoUpdateUntil: newAutoUpdateUntil,
 
       // schedule next poll? (if project is incomplete)
       if (!newProj.complete && newAutoUpdateUntil > 0 && Date.now() < this.state.autoUpdateUntil) {
-          //schedule next poll
-          this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
-              }
+        //schedule next poll
+        this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
+      }
 
       return newProj;
 
@@ -306,7 +314,7 @@ autoUpdateUntil: newAutoUpdateUntil,
   }
 
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy } = this.state;
 
     if (loading) {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
@@ -322,7 +330,7 @@ autoUpdateUntil: newAutoUpdateUntil,
         ? `Open link in Discord app:\n${this.state.proj?.discordLink}`
         : `Open Discord link in a tab:\n${this.state.proj?.discordLink}`;
 
-let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds';
+    let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds';
     if (proj.complete) refreshTitle = '';
     const commands: ICommandBarItemProps[] = [
       {
@@ -461,6 +469,14 @@ let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to
 
         {mode === Mode.view && proj.complete && this.renderSystemEffects(proj)}
 
+        {<WhereToBuy
+          visible={!!showWhereToBuy}
+          buildId={this.state.buildId!}
+          systemName={this.state.proj!.systemName}
+          need={this.state.proj!.commodities}
+          onClose={() => this.setState({ showWhereToBuy: false })}
+        />}
+
         {!!editCommodities && this.renderEditCommodities()}
 
         {mode === Mode.view && this.renderProjectDetails(proj)}
@@ -493,6 +509,8 @@ let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to
 
         {mode === Mode.view && !!proj.maxNeed && this.renderStats()}
       </div>
+
+      {this.renderCoachMarks()}
 
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
         <div className='center'>
@@ -609,7 +627,7 @@ let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to
   }
 
   renderCommodities() {
-    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo } = this.state;
+    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     // do not render list if nothing left to deliver
@@ -702,6 +720,15 @@ let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to
             store.commodityHideFCColumns = !hideFCColumns;
           }}
         />}
+
+        <ActionButton
+          id='btnWhereToBuy'
+          iconProps={{ iconName: showWhereToBuy ? 'ShoppingCartSolid' : 'ShoppingCart' }}
+          title='Find markets supplying required commodities'
+          onClick={() => {
+            this.setState({ showWhereToBuy: !showWhereToBuy });
+          }}
+        />
       </h3>}
 
       <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0}>
@@ -721,6 +748,56 @@ let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to
         {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
       </div>}
     </>
+  }
+
+  renderCoachMarks() {
+    const { notAgain } = this.state;
+
+    return <>
+      {!notAgain.includes('market1') && <Coachmark
+        target='#btnWhereToBuy'
+        delayBeforeCoachmarkAnimation={100}
+        positioningContainerProps={{ directionalHint: DirectionalHint.rightCenter }}
+      >
+        <TeachingBubbleContent
+          headline="Search for markets (new!)"
+          target='#btnWhereToBuy'
+          styles={{
+            bodyContent: {
+              backgroundColor: appTheme.palette.white,
+              border: '1px solid ' + appTheme.palette.accent,
+            },
+            headline: { color: appTheme.palette.black }
+          }}
+        >
+          <div style={{ color: appTheme.palette.black }}>
+            <div>Use button <Icon iconName='ShoppingCart' className='icon-inline' /> to find markets near the construction site with the commodities you need.</div>
+            <br />
+            <LinkSrvSurvey href='#about=markets' text='Learn more?' title='Learn more on the About page' />
+            <br />
+            <br />
+
+            <Checkbox
+              label='Do not show me this again'
+              onChange={(_, checked) => {
+                this.setState({ notAgainPending: checked ? 'market1' : undefined });
+              }}
+            />
+            <Stack horizontal horizontalAlign='end'>
+              <PrimaryButton text='Okay' onClick={() => {
+                const { notAgainPending } = this.state;
+                if (!!notAgainPending) {
+                  store.notAgain = [...store.notAgain, notAgainPending];
+                }
+                this.setState({ notAgain: [...this.state.notAgain, 'market1'] });
+              }} />
+
+            </Stack>
+          </div>
+
+        </TeachingBubbleContent>
+      </Coachmark>}
+    </>;
   }
 
   getCargoFCHeaders() {
@@ -1135,7 +1212,7 @@ let refreshTitle = !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to
   onShowAddCmdr = () => {
     console.log('onShowAddCmdr:', this.state.showAddCmdr);
     const cmdrName = store.cmdrName;
-    const cmdrKnown = cmdrName && this.state.proj && (cmdrName in this.state.proj?.commanders);
+    const cmdrKnown = cmdrName && this.state.proj && Object.keys(this.state.proj?.commanders).some(cmdr => cmdr.toLowerCase() === cmdrName.toLowerCase());
     if (!cmdrKnown) {
       this.setState({ newCmdr: cmdrName })
     }
