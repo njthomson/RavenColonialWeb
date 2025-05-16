@@ -1,12 +1,12 @@
 import './ProjectView.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, Coachmark, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TeachingBubbleContent, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, Coachmark, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TeachingBubbleContent, TextField } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getTypeForCargo, mergeCargo, openDiscordLink, sumCargo } from '../../util';
+import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, iconForSort, mergeCargo, nextSort, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
@@ -16,6 +16,8 @@ import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { fetchSysMap, getSysMap, SysMap } from '../../system-model';
 import { BuildEffects } from '../../components/BuildEffects';
 import { WhereToBuy } from '../../components/WhereToBuy/WhereToBuy';
+import { mapName } from '../../site-data';
+import { EconomyBlock } from '../../components/EconomyBlock';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -290,7 +292,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   async setAsPrimary(buildId: string) {
     // add a little artificial delay so UI doesn't flicker
     this.setState({ refreshing: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await delay(500);
 
     api.cmdr.setPrimary(store.cmdrName, buildId)
       .then(() => {
@@ -303,7 +305,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   async clearPrimary() {
     // add a little artificial delay so UI doesn't flicker
     this.setState({ refreshing: true })
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await delay(500);
 
     api.cmdr.clearPrimary(store.cmdrName)
       .then(() => {
@@ -557,8 +559,42 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj, editCommodities, sort, submitting } = this.state;
     const isDefaultCargo = Object.values(proj!.commodities).every(v => v === 10 || v === -1);
 
-    return <Modal
+    return <Panel
       isOpen
+      // allowTouchBodyScroll // causes double scroll bars :/
+      type={PanelType.custom}
+      customWidth={'380px'}
+      headerText='Edit commodities'
+      onDismiss={() => this.setState({ mode: Mode.view, editCommodities: undefined })}
+      styles={{
+        overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+      }}
+
+      isFooterAtBottom
+      onRenderFooterContent={() => {
+        return <>
+          {submitting && <Spinner
+            className='submitting'
+            label="Updating commodities ..."
+            labelPosition="right"
+          />}
+
+          {!submitting && <Stack horizontal horizontalAlign='end' tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
+            <PrimaryButton
+              text='Save'
+              iconProps={{ iconName: 'Save' }}
+              onClick={this.onUpdateProjectCommodities}
+            />
+            <DefaultButton
+              text='Cancel'
+              iconProps={{ iconName: 'Cancel' }}
+              onClick={() => {
+                this.setState({ mode: Mode.view, editCommodities: undefined });
+              }}
+            />
+          </Stack>}
+        </>;
+      }}
     >
       {isDefaultCargo && <MessageBar
         messageBarType={MessageBarType.warning}
@@ -573,57 +609,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </MessageBar>}
 
       <EditCargo
+        noAdd noDelete showTotalsRow
         cargo={editCommodities!}
         sort={sort}
-        noAdd noDelete showTotalsRow
         onChange={cargo => this.setState({ editCommodities: cargo })}
       />
-      <br />
-      <br />
-      {submitting && <Spinner
-        className='submitting'
-        label="Updating commodities ..."
-        labelPosition="right"
-      />}
-
-      {!submitting && <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
-        <PrimaryButton
-          text='Update cargo'
-          iconProps={{ iconName: 'Save' }}
-          onClick={this.onUpdateProjectCommodities}
-        />
-        <DefaultButton
-          text='Cancel'
-          iconProps={{ iconName: 'Cancel' }}
-          onClick={() => {
-            this.setState({ mode: Mode.view, editCommodities: undefined });
-          }}
-        />
-      </Stack>}
-    </Modal>;
-  }
-
-  getGroupedCommodities(): Record<string, string[]> {
-    const { proj, sort, hideDoneRows } = this.state;
-    if (!proj?.commodities) throw new Error("Why no commodities?");
-
-    const sorted = Object.keys(proj.commodities)
-      .filter(k => !hideDoneRows || proj.commodities[k] !== 0 || proj.complete);
-    sorted.sort();
-
-    // just alpha sort
-    if (sort === SortMode.alpha) {
-      return { alpha: sorted };
-    }
-
-    const dd = sorted.reduce((d, c) => {
-      const t = getTypeForCargo(c);
-      if (!d[t]) d[t] = [];
-      d[t].push(c);
-
-      return d;
-    }, {} as Record<string, string[]>);
-    return dd;
+    </Panel>;
   }
 
   renderCommodities() {
@@ -643,7 +634,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
 
     let flip = false;
-    const groupedCommodities = this.getGroupedCommodities();
+    const validCargoNames = Object.keys(proj.commodities).filter(k => !hideDoneRows || proj.commodities[k] !== 0 || proj.complete);
+    const groupedCommodities = getGroupedCommodities(validCargoNames, sort);
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
 
     let colSpan = 0;
@@ -670,12 +662,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
+        if (sort === SortMode.alpha) { continue; }
+
         // group row
-        if (sort !== SortMode.alpha) {
-          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeSecondary, color: appTheme.palette.neutralLight }}>
-            <td colSpan={2 + colSpan} className='hint'> {key}</td>
-          </tr>)
+        let td = <td colSpan={2 + colSpan} className='hint'> {key}</td>;
+        if (sort === SortMode.econ) {
+          const txt = key.split(',').map(t => mapName[t] ?? '??').join(' / ');
+          td = <td colSpan={2 + colSpan}>
+            <Stack horizontal verticalAlign='center'>
+              <div><EconomyBlock economy={key} /></div>
+              <div className='hint'>{txt}</div>
+            </Stack>
+          </td>;
         }
+
+        rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeSecondary, color: appTheme.palette.neutralLight }}>{td}</tr>);
         continue;
       }
 
@@ -694,9 +695,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {mode === Mode.view && <h3 className={cn.h3}>
         Commodities:&nbsp;
         <ActionButton
-          iconProps={{ iconName: 'Sort' }}
+          iconProps={{ iconName: iconForSort(sort) }}
           onClick={() => {
-            const newSort = sort === SortMode.alpha ? SortMode.group : SortMode.alpha;
+            const newSort = nextSort(sort);
             this.setState({ sort: newSort });
             store.commoditySort = newSort;
           }}
@@ -1353,7 +1354,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // add a little artificial delay so the spinner doesn't flicker in and out
     this.setState({ submitting: true });
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await delay(500);
 
     try {
       await api.project.delete(buildId);
@@ -1374,7 +1375,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // add a little artificial delay so the spinner doesn't flicker in and out
     this.setState({ submitting: true });
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await delay(500);
 
     try {
       await api.project.complete(buildId);
@@ -1413,7 +1414,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await delay(500);
 
       try {
         const savedProj = await api.project.update(proj.buildId, deltaProj);
@@ -1440,7 +1441,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     try {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await delay(500);
 
       const savedProj = await api.project.setDefaultCargo(this.state.proj?.buildId!)
       // success - apply new commodity count
@@ -1659,7 +1660,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     try {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await delay(500);
 
       const nextState: Partial<ProjectViewState> = {
         submitting: false,

@@ -6,7 +6,9 @@ import { CommodityIcon } from '..';
 import { store } from '../../local-storage';
 import { appTheme } from '../../theme';
 import { Cargo, mapCommodityNames, SortMode } from '../../types';
-import { delayFocus, flattenObj, getGroupedCommodities, sumCargo } from '../../util';
+import { delayFocus, flattenObj, getGroupedCommodities, iconForSort, nextSort, sumCargo } from '../../util';
+import { EconomyBlock } from '../EconomyBlock';
+import { mapName } from '../../site-data';
 
 interface EditCargoProps {
   /** Counts of cargo */
@@ -52,7 +54,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     this.state = {
       cargo: props.cargo,
       canAddMore: this.getCanAddMore(props, props.cargo),
-      sort: props.sort ?? SortMode.group,
+      sort: props.sort ?? store.commoditySort,
     };
   }
 
@@ -123,6 +125,8 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         }}
       />}
 
+      {showAddNew && this.renderAddNew()}
+
       {hasCargoRows && <table cellSpacing={0}>
         <thead>
           <tr>
@@ -133,13 +137,18 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
                 <span>Commodity:</span>
 
                 {/* Toggle sort order button */}
-                <Icon
+                <ActionButton
                   className='icon-btn'
                   title={sort}
-                  iconName='Sort'
+                  text={sort}
+                  iconProps={{ iconName: iconForSort(sort) }}
                   tabIndex={0}
                   style={{ color: appTheme.palette.themePrimary }}
-                  onClick={() => this.setState({ sort: sort === SortMode.alpha ? SortMode.group : SortMode.alpha })}
+                  onClick={() => {
+                    const newSort = nextSort(sort);
+                    this.setState({ sort: newSort });
+                    store.commoditySort = newSort;
+                  }}
                 />
 
                 {/* Add new items button */}
@@ -170,7 +179,6 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
       {!hasCargoRows && <Label>No known cargo. Please add ...</Label>}
 
-      {showAddNew && this.renderAddNew()}
 
       {!showAddNew && canAddMore && addButtonBelow && <ActionButton
         text='Add commodity?'
@@ -200,6 +208,11 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   }
 
   renderGroupRow(key: string, sort: SortMode) {
+    const colorBlock = sort === SortMode.econ ? <div><EconomyBlock economy={key} /></div> : null;
+    const txt = sort === SortMode.econ
+      ? key.split(',').map(t => mapName[t] ?? '??').join(' / ')
+      : key;
+
     return sort === SortMode.alpha
       ? undefined
       : <tr
@@ -210,7 +223,12 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
           color: appTheme.palette.themeLighter
         }}
       >
-        <td colSpan={3} className='hint'> {key}</td>
+        <td colSpan={3}>
+          <Stack horizontal verticalAlign='center'>
+            {colorBlock}
+            <div className='hint'>{txt}</div>
+          </Stack>
+        </td>
       </tr>;
   }
 
@@ -344,24 +362,23 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
       }
     });
 
-    return <>
-      <Stack horizontal verticalAlign='end'>
-        <Dropdown
-          id='new-cargo'
-          openOnKeyboardFocus
-          placeholder='Choose a commodity...'
-          options={cargoOptions}
-          selectedKey={newCargo}
-          onDismiss={() => this.setState({ newCargo: undefined })}
-          onChange={(_, o) => {
-            const k = `${o?.key}`;
-            this.updateCargoState(uc => uc[k] = 0);
-            delayFocus(`edit-${k}`);
-          }}
-          styles={{ callout: { border: '1px solid ' + appTheme.palette.themePrimary } }}
-        />
-      </Stack>
-    </>;
+    return <Dropdown
+      id='new-cargo'
+      openOnKeyboardFocus
+      placeholder='Choose a commodity...'
+      options={cargoOptions}
+      selectedKey={newCargo}
+      onDismiss={() => this.setState({ newCargo: undefined })}
+      onChange={(_, o) => {
+        const k = `${o?.key}`;
+        this.updateCargoState(uc => uc[k] = 0);
+        delayFocus(`edit-${k}`);
+      }}
+      style={{ margin: '4px 0' }}
+      styles={{
+        callout: { border: '1px solid ' + appTheme.palette.themePrimary }
+      }}
+    />;
   }
 
 }

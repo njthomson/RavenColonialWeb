@@ -24,8 +24,10 @@ interface WhereToBuyProps {
 interface WhereToBuyState extends FindMarketsOptions {
   panelType: PanelType;
   searching: boolean;
+  showSearchCriteria: boolean;
   hasSearched?: boolean;
-  markets?: FoundMarkets;
+  foundMarkets?: FoundMarkets;
+  sortedRows: MarketSummary[];
 
   expandMatches: Set<string>;
   expandHighlights?: boolean;
@@ -41,7 +43,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   constructor(props: WhereToBuyProps) {
     super(props);
 
-    // disregard prior data if the buildId does not match
+    // disregard prior data if the buildId does not match (and clear our cached data)
     let priorMarkets = store.foundMarkets;
     if (props.buildId !== priorMarkets?.buildId) {
       priorMarkets = undefined;
@@ -54,24 +56,39 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       findMarketsOptions.maxDistance = maxMaxDistance;
     }
 
+    // do initial sort/filter by initial sort criteria
+    const defaultSortColumn = 'matches';
+    const defaultSortAscending = true;
+    const sortedRows = this.sortMarkets(priorMarkets, defaultSortColumn, defaultSortAscending);
+
     // auto expand the first row
     const expandMatches = new Set<string>();
-    if (priorMarkets && priorMarkets.markets.length > 0) {
-      const firstMarketName = this.sortMarkets(priorMarkets.markets, 'matches', true)[0].stationName;
-      expandMatches.add(firstMarketName);
-    }
+    if (sortedRows.length > 0) { expandMatches.add(sortedRows[0].stationName); }
 
     this.state = {
       ...findMarketsOptions,
       panelType: PanelType.medium,
       searching: false,
-      hasSearched: !!priorMarkets,
-      markets: priorMarkets,
+      showSearchCriteria: sortedRows.length === 0,
+      hasSearched: false,
+      foundMarkets: priorMarkets,
+      sortedRows: sortedRows,
       expandMatches: expandMatches,
       highlights: new Set(),
-      sortColumn: 'matches',
-      sortAscending: true
+      sortColumn: defaultSortColumn,
+      sortAscending: defaultSortAscending
     };
+  }
+
+  componentDidUpdate(prevProps: Readonly<WhereToBuyProps>, prevState: Readonly<WhereToBuyState>, snapshot?: any): void {
+    // re-sort/filter if needs have changed
+    if (prevProps.need !== this.props.need) {
+      const { sortColumn, sortAscending } = this.state;
+      const newSortedRows = this.sortMarkets(this.state.foundMarkets, sortColumn, sortAscending);
+      this.setState({
+        sortedRows: newSortedRows,
+      });
+    }
   }
 
   doSearch = async () => {
@@ -95,16 +112,17 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       // store response for future reference
       store.foundMarkets = foundMarkets;
 
+      const sortedRows = this.sortMarkets(foundMarkets, this.state.sortColumn, this.state.sortAscending);
+
       // auto expand the first row
       const expandMatches = new Set<string>();
-      if (foundMarkets.markets.length > 0) {
-        const firstMarketName = this.sortMarkets(foundMarkets.markets, 'matches', true)[0].stationName;
-        expandMatches.add(firstMarketName);
-      }
+      if (sortedRows.length > 0) { expandMatches.add(sortedRows[0].stationName); }
 
       this.setState({
         searching: false,
-        markets: foundMarkets,
+        showSearchCriteria: sortedRows.length === 0,
+        foundMarkets: foundMarkets,
+        sortedRows: sortedRows,
         expandMatches: expandMatches,
       });
     } catch (err: any) {
@@ -112,35 +130,54 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     }
   };
 
-  sortMarkets(markets: MarketSummary[], sortColumn: string, sortAscending: boolean,): MarketSummary[] {
-    const sortedRows = markets.sort((a, b) => {
-      const inverter = sortAscending ? 1 : -1;
-      switch (sortColumn) {
-        case 'stationName':
-          return b.stationName.localeCompare(a.stationName) * inverter;
-        case 'matches':
-        default:
-          return (Object.keys(b.supplies).length - Object.keys(a.supplies).length) * inverter;
-        case 'systemName':
-          return b.systemName.localeCompare(a.systemName) * inverter;
-        case 'distance':
-          return (b.distance - a.distance) * inverter;
-        case 'distanceToArrival':
-          return (b.distanceToArrival - a.distanceToArrival) * inverter;
-      }
-    });
+  sortMarkets(foundMarkets: FoundMarkets | undefined, sortColumn: string, sortAscending: boolean,): MarketSummary[] {
+    if (!foundMarkets) { return []; }
+
+    const sortedRows = foundMarkets.markets
+      // reduce each market's supplies to those that matter
+      .map(m => {
+        const matchedSupplies = Object.keys(m.supplies)
+          .filter(cargo => cargo in this.props.need && this.props.need[cargo] > 0)
+          .reduce((map, cargo) => {
+            map[cargo] = m.supplies[cargo];
+            return map;
+          }, {} as Record<string, number>);
+
+        return {
+          ...m,
+          supplies: matchedSupplies,
+        };
+      })
+      // remove any market that no longer has supplies
+      .filter(m => Object.keys(m.supplies).length > 0)
+      .sort((a, b) => {
+        const inverter = sortAscending ? 1 : -1;
+        switch (sortColumn) {
+          case 'stationName':
+            return b.stationName.localeCompare(a.stationName) * inverter;
+          case 'matches':
+          default:
+            return (Object.keys(b.supplies).length - Object.keys(a.supplies).length) * inverter;
+          case 'systemName':
+            return b.systemName.localeCompare(a.systemName) * inverter;
+          case 'distance':
+            return (b.distance - a.distance) * inverter;
+          case 'distanceToArrival':
+            return (b.distanceToArrival - a.distanceToArrival) * inverter;
+        }
+      });
 
     return sortedRows;
   }
 
   render() {
-    const { markets, panelType } = this.state;
+    const { foundMarkets, sortedRows, panelType, showSearchCriteria } = this.state;
 
     const isMedium = panelType === PanelType.medium;
-    const showSearchCriteria = !markets || markets.markets.length === 0;
 
     return <Panel
-      allowTouchBodyScroll isHiddenOnDismiss isFooterAtBottom
+      isHiddenOnDismiss isFooterAtBottom
+      // allowTouchBodyScroll // causes double scroll bars :/
       isOpen={this.props.visible}
       type={panelType}
       onDismiss={() => this.props.onClose()}
@@ -166,10 +203,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
       onRenderFooterContent={() => {
 
-        const preparedAt = new Date(markets?.preparedAt ?? 0);
+        const preparedAt = new Date(foundMarkets?.preparedAt ?? 0);
 
         return <Stack horizontal horizontalAlign='space-between' style={{ margin: 6, fontSize: 12 }}>
-          {!showSearchCriteria && <span>Found: {markets.markets.length} markets. Searched on: {preparedAt.toLocaleDateString()} {preparedAt.toLocaleTimeString()}</span>}
+          {!showSearchCriteria && <span>Found: {sortedRows.length} markets. Searched on: {preparedAt.toLocaleDateString()} {preparedAt.toLocaleTimeString()}</span>}
           <LinkSrvSurvey href='#about=markets' text='Help?' title='Learn more on the About page' />
         </Stack>;
       }}
@@ -182,10 +219,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderSearchCriteria() {
-    const { markets, shipSize, maxDistance, noSurface, noFC, requireNeed, searching, hasSearched } = this.state;
+    const { foundMarkets, shipSize, maxDistance, noSurface, noFC, requireNeed, searching, hasSearched } = this.state;
 
     const maxDistanceTxt = maxDistance === 0 || maxDistance >= maxMaxDistance ? 'Unlimited' : maxDistance.toString();
-    const noMarketsFound = !searching && hasSearched && markets?.markets.length === 0;
+    const noMarketsFound = !searching && hasSearched && foundMarkets?.markets.length === 0;
     // const hours = new Date().getUTCHours() + 2;
 
     return <div>
@@ -280,7 +317,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
               this.props.onClose();
             } else {
               this.setState({
-                markets: store.foundMarkets,
+                showSearchCriteria: false,
               })
             }
           }}
@@ -290,11 +327,9 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderFoundMarkets() {
-    const { markets, highlights, expandMatches, expandHighlights, sortColumn, sortAscending } = this.state;
-    if (!markets) return null;
+    const { sortedRows, highlights, expandMatches, expandHighlights } = this.state;
 
     const allCollapsed = expandMatches.size === 0;
-    const sortedRows = this.sortMarkets(markets.markets, sortColumn, sortAscending);
     const highlightTitleTxt = 'Click station commodities to highlight them at other stations';
 
     return <div>
@@ -306,7 +341,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           style={{ height: 22 }}
           onClick={() => {
             if (allCollapsed) {
-              markets.markets.forEach(m => expandMatches.add(m.stationName));
+              sortedRows.forEach(m => expandMatches.add(m.stationName));
             } else {
               expandMatches.clear();
             }
@@ -325,7 +360,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           iconProps={{ iconName: 'SearchAndApps' }}
           text='Change criteria'
           style={{ height: 22 }}
-          onClick={() => this.setState({ markets: undefined })}
+          onClick={() => this.setState({ showSearchCriteria: true })}
         />
       </Stack>
 
@@ -401,9 +436,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     return <th
       className={`${col} ${cn.bb}`}
       onClick={() => {
+        const nextSortAscending = sortColumn === name ? !sortAscending : sortAscending;
         this.setState({
           sortColumn: name,
-          sortAscending: sortColumn === name ? !sortAscending : sortAscending
+          sortAscending: nextSortAscending,
+          sortedRows: this.sortMarkets(this.state.foundMarkets, name, nextSortAscending),
         });
       }}
     >

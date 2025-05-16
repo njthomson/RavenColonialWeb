@@ -7,6 +7,15 @@
   width: 240px;
 }
 
+.edit-cargo .group td {
+  height: 20px;
+  padding: 0;
+}
+
+.edit-cargo .group .hint {
+  padding-left: 5px;
+}
+
 .edit-cargo .amount {
   text-align: center;
 }

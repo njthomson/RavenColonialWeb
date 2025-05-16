@@ -86,7 +86,8 @@ export const mapName: Record<string, string> = {
 
   // Economies
   agriculture: 'Agriculture',
-  contraband: 'Contraband',
+  contraband: 'Service',
+  service: 'Service',
   extraction: 'Extraction',
   hightech: 'High Tech',
   industrial: 'Industrial',
@@ -94,6 +95,12 @@ export const mapName: Record<string, string> = {
   none: 'None',
   tourism: 'Tourism',
   refinery: 'Refinery',
+  'not/agri': 'Not Agriculture',
+  'industrial/surface': 'Industrial (Surface)',
+  'hightech/surface': 'High Tech (Surface)',
+  'refinery/surface': 'Refinery (Surface)',
+  terraforming: 'Terraforming',
+  'near/akhenaten': 'High Tech or Industrial near Akhenaten',
 
   // pre-req explanations
   satellite: 'a satellite installation',

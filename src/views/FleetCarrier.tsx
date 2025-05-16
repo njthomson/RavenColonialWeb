@@ -1,11 +1,11 @@
-import { DefaultButton, IconButton, MessageBar, MessageBarType, Panel, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, IconButton, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { EditCargo } from '../components';
 import { appTheme, cn } from '../theme';
 import { KnownFC } from '../types';
 import { store } from '../local-storage';
-import { fcFullName } from '../util';
+import { delay, fcFullName } from '../util';
 import { CopyButton } from '../components/CopyButton';
 
 interface FleetCarrierProps {
@@ -19,6 +19,7 @@ interface FleetCarrierState {
   errorMsg?: string;
 
   loading: boolean;
+  saving?: boolean;
   fc?: KnownFC;
   editCargo: Record<string, number>;
   editDisplayName?: string;
@@ -58,29 +59,63 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   render() {
-    const { errorMsg } = this.state;
+    const { errorMsg, loading, saving } = this.state;
 
     return <Panel
       isOpen
-      allowTouchBodyScroll
-      styles={{ main: { maxWidth: 400 } }}
+      // allowTouchBodyScroll // causes double scroll bars :/
+      type={PanelType.custom}
+      customWidth={'380px'}
+      headerText='Edit Fleet Carrier'
+      styles={{
+        main: { maxWidth: 400 },
+        overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+      }}
       onDismiss={() => this.props.onClose()}
+      isFooterAtBottom
+
+      onRenderFooterContent={() => {
+        return <div>
+          {saving && <Spinner size={SpinnerSize.large} labelPosition='right' label={'Saving ...'} />}
+
+          {!loading && !saving && <Stack horizontal horizontalAlign='end' verticalAlign='end' tokens={{ childrenGap: 4, padding: 0, }}>
+            <PrimaryButton
+              text='Save'
+              iconProps={{ iconName: 'Save' }}
+              disabled={loading}
+              onClick={this.onUpdateCargo}
+            />
+            <DefaultButton
+              text='Cancel'
+              iconProps={{ iconName: 'Cancel' }}
+              disabled={loading}
+              onClick={() => {
+                this.setState({ editCargo: this.state.fc!.cargo });
+                this.props.onClose();
+              }}
+            />
+          </Stack>}
+        </div>;
+      }}
     >
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
-
-      <h3 className={cn.h3} style={{ cursor: 'all-scroll' }}>Fleet Carrier:</h3>
 
       {this.props.marketId && this.renderFC()}
     </Panel>;
   }
 
   renderFC() {
-    const { loading, fc } = this.state;
+    const { loading, fc, editCargo } = this.state;
 
     return <>
       {this.renderFields()}
-      {loading && <Spinner size={SpinnerSize.large} labelPosition='right' label={`Loading  ...`} />}
-      {!!fc && this.renderCargo(fc.marketId)}
+      {loading && <Spinner size={SpinnerSize.large} labelPosition='right' label={'Loading  ...'} />}
+      {!!fc && <EditCargo
+        addButtonAbove
+        showTotalsRow
+        cargo={editCargo}
+        onChange={cargo => this.setState({ editCargo: cargo })}
+      />}
     </>;
   }
 
@@ -180,45 +215,14 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     }
   }
 
-  renderCargo(marketId: number) {
-    const { editCargo, loading } = this.state;
-
-    return <div style={{ display: 'inline-block' }}>
-      <EditCargo
-        addButtonAbove
-        showTotalsRow
-        cargo={editCargo}
-        onChange={cargo => this.setState({ editCargo: cargo })}
-      />
-      <br />
-      <br />
-      <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
-        <PrimaryButton
-          text='Update cargo'
-          iconProps={{ iconName: 'Save' }}
-          disabled={loading}
-          onClick={this.onUpdateCargo}
-        />
-        <DefaultButton
-          text='Cancel'
-          iconProps={{ iconName: 'Cancel' }}
-          disabled={loading}
-          onClick={() => {
-            this.setState({ editCargo: this.state.fc!.cargo });
-            this.props.onClose();
-          }}
-        />
-      </Stack>
-    </div>;
-  }
-
   onUpdateCargo = async () => {
     // also save the display name if it has changed
     if (this.state.fc!.displayName !== this.state.editDisplayName) {
       await this.onUpdateFields();
     }
 
-    this.setState({ loading: true });
+    this.setState({ saving: true });
+    await delay(500);
 
     try {
       // the API call is update, not patch/delta. Make sure we have entries with zero for anything the user removed
@@ -230,10 +234,10 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
       }
 
       const cargoUpdated = await api.fc.updateCargo(this.state.fc!.marketId, cargoEdit);
-      this.setState({ loading: false, editCargo: cargoUpdated });
+      this.setState({ saving: false, editCargo: cargoUpdated });
       this.props.onClose(cargoUpdated);
     } catch (err: any) {
-      this.setState({ loading: false, errorMsg: err.message });
+      this.setState({ saving: false, errorMsg: err.message });
     }
   };
 }

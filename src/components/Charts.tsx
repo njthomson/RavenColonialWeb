@@ -44,6 +44,7 @@ export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOn
 export const ChartByCmdrs: FunctionComponent<{ summary: SupplyStatsSummary, cmdrColors: Record<string, string> }> = (props) => {
   const { summary, cmdrColors } = props;
   const points: IChartDataPoint[] = Object.keys(summary.cmdrs)
+    .sort()
     .map(cmdr => ({
       legend: cmdr,
       data: summary.cmdrs[cmdr],
@@ -120,12 +121,14 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
 };
 
 const mapDay = (ss: SupplyStats, colors: Record<string, string>): IVSChartDataPoint[] => {
-  return Object.keys(ss.cmdrs).map(cmdr => ({
-    legend: cmdr,
-    data: ss.cmdrs[cmdr],
-    color: getColorFromToken(colors[cmdr]),
-    xAxisCalloutData: new Date(ss.time).toLocaleString(),
+  return Object.keys(ss.cmdrs)
+    .sort()
+    .map(cmdr => ({
+      legend: cmdr,
+      data: ss.cmdrs[cmdr],
+      color: getColorFromToken(colors[cmdr]),
+      xAxisCalloutData: new Date(ss.time).toLocaleString(),
 
-  }) as IVSChartDataPoint);
+    }) as IVSChartDataPoint);
 };
 

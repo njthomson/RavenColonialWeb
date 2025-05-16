@@ -6,6 +6,7 @@ import { CreateProject, StationEDSM } from '../types';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
 import { cn } from '../theme';
 import { BuildType } from './BuildType';
+import { delay } from '../util';
 
 interface ProjectCreateProps {
   systemName?: string;
@@ -193,7 +194,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     try {
 
       // add a little artificial delay so the spinner doesn't flicker in and out
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await delay(500);
 
       const data = await api.edsm.findStationsInSystem(this.state.systemName);
 

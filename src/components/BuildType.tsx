@@ -1,6 +1,7 @@
 import { ActionButton, INavLink, INavLinkGroup, Nav, Panel, Pivot, PivotItem, Stack } from "@fluentui/react";
 import { Component } from "react";
 import { getBuildTypeDisplayName, getSiteType, isOrbital, mapName, SiteType, siteTypes } from "../site-data";
+import { appTheme } from "../theme";
 
 interface ChooseBuildTypeProps {
   buildType: string | undefined,
@@ -142,7 +143,10 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
       {showList && <Panel
         isOpen={true}
-        styles={{ main: { maxWidth: 400 } }}
+        styles={{
+          main: { maxWidth: 400 },
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        }}
         onDismiss={() => this.setState({ showList: false })}
       >
         <Pivot

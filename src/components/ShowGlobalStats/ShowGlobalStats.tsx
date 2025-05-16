@@ -6,6 +6,7 @@ import { Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { GlobalStats } from '../../types';
 import { cn } from '../../theme';
 import { CalloutMsg } from '../CalloutMsg';
+import { delay } from '../../util';
 
 
 interface ShowGlobalStatsProps { }
@@ -33,7 +34,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
     // fetch stats if we have none cached
     if (!this.state.stats) {
       // add a little artificial delay so the spinner doesn't flicker in and out
-      new Promise(resolve => setTimeout(resolve, 1000))
+      delay(1000)
         .then(async () => {
           const stuff = await api.project.globalStats();
           store.globalStats = stuff;

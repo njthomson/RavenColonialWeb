@@ -7,6 +7,7 @@ import { cn, appTheme } from "../../theme";
 import { BuildType } from "../BuildType";
 import { ChooseBody } from "../ChooseBody";
 import { TimeRemaining } from "../TimeRemaining";
+import { delay } from '../../util';
 
 
 interface ChooseEditProjectProps {
@@ -238,8 +239,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
     // add a little artificial delay so the spinner doesn't flicker in and out
     this.setState({ submitting: true, errorMsg: undefined });
-
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await delay(500);
 
     try {
       const savedProj = await api.project.update(deltaProj.buildId, deltaProj);
@@ -270,8 +270,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
     // add a little artificial delay so the spinner doesn't flicker in and out
     this.setState({ submitting: true, errorMsg: undefined });
-
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await delay(500);
 
     try {
       const newProj = {

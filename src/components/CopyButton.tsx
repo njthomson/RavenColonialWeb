@@ -9,7 +9,8 @@ export const CopyButton: FunctionComponent<{ text: string | ClipboardItem, title
     iconName='Copy'
     title={props.title ?? `Copy: "${props.text.toString()}"`}
     style={{ fontSize: props.fontSize }}
-    onClick={() => {
+    onClick={(ev) => {
+      ev.stopPropagation();
       if (typeof props.text === 'string') {
         // write a plain string
         navigator.clipboard.writeText(props.text);

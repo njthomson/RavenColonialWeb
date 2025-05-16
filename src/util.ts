@@ -1,6 +1,11 @@
 import cargoTypes from './assets/cargo-types.json';
 import { store } from './local-storage';
-import { Cargo, mapCommodityNames, SortMode } from "./types";
+import { Cargo, mapCommodityNames, mapSourceEconomy, SortMode } from "./types";
+
+/** Artificial delay so spinners doesn't flicker in and out */
+export const delay = async (durationMS: number) => {
+  await new Promise(resolve => setTimeout(resolve, durationMS));
+};
 
 export const getColorTable = (tokens: string[]): Record<string, string> => {
   const colors: Record<string, string> = {};
@@ -20,6 +25,24 @@ export const getTypeForCargo = (cargo: string) => {
   return '?';
 };
 
+export const iconForSort = (sort: SortMode) => {
+  switch (sort) {
+    default:
+    case SortMode.alpha: return 'Sort';
+    case SortMode.group: return 'GroupList';
+    case SortMode.econ: return 'EMI';
+  }
+};
+
+export const nextSort = (sort: SortMode) => {
+  switch (sort) {
+    default:
+    case SortMode.alpha: return SortMode.group
+    case SortMode.group: return SortMode.econ;
+    case SortMode.econ: return SortMode.alpha;
+  }
+};
+
 export const getGroupedCommodities = (cargoNames: string[], sort: SortMode): Record<string, string[]> => {
 
   const sorted = cargoNames
@@ -30,8 +53,11 @@ export const getGroupedCommodities = (cargoNames: string[], sort: SortMode): Rec
     return { alpha: sorted };
   }
 
+  // group by ...
   const dd = sorted.reduce((d, c) => {
-    const t = getTypeForCargo(c);
+    const t = sort === SortMode.econ
+      ? mapSourceEconomy[c]
+      : getTypeForCargo(c);
     if (!d[t]) d[t] = [];
     d[t].push(c);
 

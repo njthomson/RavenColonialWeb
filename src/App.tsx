@@ -4,7 +4,7 @@ import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, IContextualMenu
 import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
-import { TopPivot } from './types';
+import { SortMode, TopPivot } from './types';
 import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
@@ -62,6 +62,7 @@ export class App extends Component<AppProps, AppState> {
     this.fetchPrimaryBuildId();
 
     // migrate local-storage items?
+    if ((store.commoditySort as any) === 'Group by type') { store.commoditySort = SortMode.group; }
     store.migrateLinkedFCs()
       .catch(err => console.error(err));
   }
