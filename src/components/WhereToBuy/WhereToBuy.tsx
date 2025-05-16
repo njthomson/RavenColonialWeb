@@ -10,6 +10,7 @@ import { CopyButton } from '../CopyButton';
 import { CalloutMsg } from '../CalloutMsg';
 import { PadSize } from '../PadSize';
 import { LinkSrvSurvey } from '../LinkSrvSurvey';
+import { isMobile } from '../../util';
 
 const maxMaxDistance = 1000;
 
@@ -177,7 +178,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     return <Panel
       isHiddenOnDismiss isFooterAtBottom
-      // allowTouchBodyScroll // causes double scroll bars :/
+      allowTouchBodyScroll={isMobile()}
       isOpen={this.props.visible}
       type={panelType}
       onDismiss={() => this.props.onClose()}

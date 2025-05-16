@@ -3,9 +3,11 @@ import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
 import { Cargo, KnownFC, mapCommodityNames, SortMode } from '../types';
-import { flattenObj, getTypeForCargo, mergeCargo } from '../util';
+import { flattenObj, getGroupedCommodities, mergeCargo, nextSort } from '../util';
 import { CommodityIcon } from './CommodityIcon/CommodityIcon';
 import { FleetCarrier } from '../views';
+import { EconomyBlock } from './EconomyBlock';
+import { mapName } from '../site-data';
 
 interface CargoGridProps {
   cargo: Cargo,
@@ -65,7 +67,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         <ActionButton
           iconProps={{ iconName: 'Sort' }}
           onClick={() => {
-            const newSort = sort === SortMode.alpha ? SortMode.group : SortMode.alpha;
+            const newSort = nextSort(sort);
             this.setState({ sort: newSort });
             store.commoditySort = newSort;
           }}
@@ -142,35 +144,14 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     ];
   }
 
-  getGroupedCommodities(): Record<string, string[]> {
-    const { cargo, sort, hideDoneRows } = this.state;
-
-    const sorted = Object.keys(cargo)
-      .filter(k => !hideDoneRows || cargo[k] !== 0);
-    sorted.sort();
-
-    // just alpha sort
-    if (sort === SortMode.alpha) {
-      return { alpha: sorted };
-    }
-
-    const dd = sorted.reduce((d, c) => {
-      const t = getTypeForCargo(c);
-      if (!d[t]) d[t] = [];
-      d[t].push(c);
-
-      return d;
-    }, {} as Record<string, string[]>);
-    return dd;
-  }
-
   getTableRows() {
-    const { sort, linkedFC, hideFCColumns } = this.state;
+    const { sort, linkedFC, hideFCColumns, cargo, hideDoneRows } = this.state;
 
-    const groupedCommodities = this.getGroupedCommodities();
+    const validCargoNames = Object.keys(cargo).filter(k => !hideDoneRows || cargo[k] !== 0)
+    const groupedCommodities = getGroupedCommodities(validCargoNames, sort);
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
 
-    const colSpan = hideFCColumns ? 0 : linkedFC.length + 1;
+    const colSpan = 2 + (hideFCColumns ? 0 : linkedFC.length + 1);
 
     let flip = true;
     const rows = [];
@@ -178,9 +159,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       if (key in groupedCommodities) {
         // group row
         if (sort !== SortMode.alpha) {
-          rows.push(<tr key={`group-${key}`} className='group' style={{ background: appTheme.palette.themeSecondary, color: appTheme.palette.neutralLight }}>
-            <td colSpan={2 + colSpan} className='hint'> {key}</td>
-          </tr>)
+          rows.push(this.renderGroupRow(key, sort, colSpan));
         }
         continue;
       }
@@ -196,6 +175,29 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     }
 
     return rows;
+  }
+
+  renderGroupRow(key: string, sort: SortMode, colSpan: number) {
+    const colorBlock = sort === SortMode.econ ? <div><EconomyBlock economy={key} /></div> : null;
+    const txt = sort === SortMode.econ
+      ? key.split(',').map(t => mapName[t] ?? '??').join(' / ')
+      : key;
+
+    return <tr
+      key={`group-${key}`}
+      className='group'
+      style={{
+        background: appTheme.palette.themeDark,
+        color: appTheme.palette.themeLighter
+      }}
+    >
+      <td colSpan={colSpan}>
+        <Stack horizontal verticalAlign='center'>
+          {colorBlock}
+          <div className='hint'>{txt}</div>
+        </Stack>
+      </td>
+    </tr>;
   }
 
   getCommodityRow(key: string, flip: boolean): JSX.Element {

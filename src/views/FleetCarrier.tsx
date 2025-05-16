@@ -5,7 +5,7 @@ import { EditCargo } from '../components';
 import { appTheme, cn } from '../theme';
 import { KnownFC } from '../types';
 import { store } from '../local-storage';
-import { delay, fcFullName } from '../util';
+import { delay, fcFullName, isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
 
 interface FleetCarrierProps {
@@ -63,7 +63,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
 
     return <Panel
       isOpen
-      // allowTouchBodyScroll // causes double scroll bars :/
+      allowTouchBodyScroll={isMobile()}
       type={PanelType.custom}
       customWidth={'380px'}
       headerText='Edit Fleet Carrier'

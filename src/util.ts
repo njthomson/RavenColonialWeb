@@ -2,6 +2,11 @@ import cargoTypes from './assets/cargo-types.json';
 import { store } from './local-storage';
 import { Cargo, mapCommodityNames, mapSourceEconomy, SortMode } from "./types";
 
+export const isMobile = () => {
+
+  return (navigator as any).userAgentData?.mobile || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+};
+
 /** Artificial delay so spinners doesn't flicker in and out */
 export const delay = async (durationMS: number) => {
   await new Promise(resolve => setTimeout(resolve, durationMS));

@@ -2,6 +2,7 @@ import { ActionButton, INavLink, INavLinkGroup, Nav, Panel, Pivot, PivotItem, St
 import { Component } from "react";
 import { getBuildTypeDisplayName, getSiteType, isOrbital, mapName, SiteType, siteTypes } from "../site-data";
 import { appTheme } from "../theme";
+import { isMobile } from "../util";
 
 interface ChooseBuildTypeProps {
   buildType: string | undefined,
@@ -143,6 +144,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
       {showList && <Panel
         isOpen={true}
+        allowTouchBodyScroll={isMobile()}
         styles={{
           main: { maxWidth: 400 },
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },

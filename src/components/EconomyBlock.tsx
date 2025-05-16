@@ -18,7 +18,7 @@ export const EconomyBlock: FunctionComponent<{ economy: string }> = (props) => {
     innerBlock = <div style={{
       backgroundColor: bgColor1,
       position: 'relative',
-      top: 7,
+      top: 6,
       left: 0,
       width: sz * 2,
       height: sz * 2,
@@ -78,6 +78,6 @@ export const EconomyBlock: FunctionComponent<{ economy: string }> = (props) => {
   >
     {innerBlock}
     {isSurface && <Icon
-      iconName='GlobeFavorite' style={{ position: 'absolute', left: 3, top: 3, }} />}
+      iconName='GlobeFavorite' style={{ position: 'absolute', left: 3, top: 3, color: 'black' }} />}
   </div>;
 };

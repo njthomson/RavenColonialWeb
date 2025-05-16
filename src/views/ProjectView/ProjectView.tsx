@@ -6,7 +6,7 @@ import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, C
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, iconForSort, mergeCargo, nextSort, openDiscordLink, sumCargo } from '../../util';
+import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, iconForSort, isMobile, mergeCargo, nextSort, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
@@ -561,7 +561,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <Panel
       isOpen
-      // allowTouchBodyScroll // causes double scroll bars :/
+      allowTouchBodyScroll={isMobile()}
       type={PanelType.custom}
       customWidth={'380px'}
       headerText='Edit commodities'
