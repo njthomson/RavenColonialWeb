@@ -322,7 +322,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
     }
 
-    if (!proj) { return null; }
+    if (!proj) {
+      return <div>
+        {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+      </div>;
+    }
 
     // prep CommandBar buttons
     const hasDiscordLink = !!this.state.proj?.discordLink;

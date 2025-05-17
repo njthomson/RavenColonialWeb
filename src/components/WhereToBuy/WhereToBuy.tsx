@@ -10,9 +10,10 @@ import { CopyButton } from '../CopyButton';
 import { CalloutMsg } from '../CalloutMsg';
 import { PadSize } from '../PadSize';
 import { LinkSrvSurvey } from '../LinkSrvSurvey';
-import { isMobile } from '../../util';
+import { isMobile, parseIntLocale, validIncDecLocale } from '../../util';
 
 const maxMaxDistance = 1000;
+const maxMaxArrival = 250_000;
 
 interface WhereToBuyProps {
   visible: boolean;
@@ -53,9 +54,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     // set max distance to "no limit" if it was zero previously
     const findMarketsOptions = store.findMarketsOptions;
-    if (findMarketsOptions.maxDistance === 0) {
-      findMarketsOptions.maxDistance = maxMaxDistance;
-    }
+    if (!findMarketsOptions.maxDistance) { findMarketsOptions.maxDistance = maxMaxDistance; }
+    if (!findMarketsOptions.maxArrival) { findMarketsOptions.maxArrival = maxMaxArrival; }
 
     // do initial sort/filter by initial sort criteria
     const defaultSortColumn = 'matches';
@@ -98,17 +98,20 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
       // use distance: zero to indicate no limit
       const maxDistance = this.state.maxDistance < maxMaxDistance ? this.state.maxDistance : 0;
+      const maxArrival = this.state.maxArrival < maxMaxArrival ? this.state.maxArrival : 0;
 
-      // push choices into local storage
-      store.findMarketsOptions = {
+      // extract options parts + store
+      const findMarketsOptions = {
         shipSize: this.state.shipSize,
         maxDistance: maxDistance,
+        maxArrival: maxArrival,
         noFC: this.state.noFC,
         noSurface: this.state.noSurface,
         requireNeed: this.state.requireNeed,
       };
+      store.findMarketsOptions = findMarketsOptions;
 
-      const foundMarkets = await api.project.findMarkets(this.props.buildId, this.state);
+      const foundMarkets = await api.project.findMarkets(this.props.buildId, findMarketsOptions);
 
       // store response for future reference
       store.foundMarkets = foundMarkets;
@@ -128,6 +131,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       });
     } catch (err: any) {
       console.error(`WhereToBuy: search failed: ${err.stack}`);
+      this.setState({
+        searching: false,
+        showSearchCriteria: false,
+      });
+      this.props.onClose();
     }
   };
 
@@ -220,9 +228,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderSearchCriteria() {
-    const { foundMarkets, shipSize, maxDistance, noSurface, noFC, requireNeed, searching, hasSearched } = this.state;
+    const { foundMarkets, shipSize, maxDistance, maxArrival, noSurface, noFC, requireNeed, searching, hasSearched } = this.state;
 
-    const maxDistanceTxt = maxDistance === 0 || maxDistance >= maxMaxDistance ? 'Unlimited' : maxDistance.toString();
+    const maxDistanceTxt = !maxDistance || maxDistance >= maxMaxDistance ? 'Unlimited' : maxDistance.toString();
+    const maxArrivalTxt = !maxArrival || maxArrival >= maxMaxArrival ? 'Unlimited' : maxArrival.toLocaleString();
     const noMarketsFound = !searching && hasSearched && foundMarkets?.markets.length === 0;
     // const hours = new Date().getUTCHours() + 2;
 
@@ -247,7 +256,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         }}
       />
 
-      <Label>Maximum distance: (LY)</Label>
+      <Label>Maximum distance: (ly)</Label>
       <Stack horizontal>
         <Slider
           showValue={false}
@@ -263,9 +272,39 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         />
         <SpinButton
           value={maxDistanceTxt}
+          min={0} max={maxMaxDistance}
           style={{ width: 102, marginLeft: 8 }}
           disabled={searching}
-          onChange={(_, v) => this.setState({ maxDistance: parseInt(v!) })}
+          onChange={(_, v) => this.setState({ maxDistance: parseIntLocale(v, true) })}
+          onValidate={txt => validIncDecLocale(txt, 0, maxMaxDistance)}
+          onIncrement={txt => validIncDecLocale(txt, +25, maxMaxDistance)}
+          onDecrement={txt => validIncDecLocale(txt, -25, maxMaxDistance)}
+        />
+      </Stack>
+
+      <Label>Maximum distance to arrival: (ls)</Label>
+      <Stack horizontal>
+        <Slider
+          showValue={false}
+          min={0} max={maxMaxArrival}
+          step={10_000}
+          value={maxArrival}
+          disabled={searching}
+          styles={{
+            container: { width: 200, },
+            line: { width: '100%', },
+          }}
+          onChange={v => this.setState({ maxArrival: v })}
+        />
+        <SpinButton
+          value={maxArrivalTxt}
+          min={0} max={maxMaxArrival}
+          style={{ width: 102, marginLeft: 8 }}
+          disabled={searching}
+          onChange={(_, v) => this.setState({ maxArrival: parseIntLocale(v, true) })}
+          onValidate={txt => validIncDecLocale(txt, 0, maxMaxArrival)}
+          onIncrement={txt => validIncDecLocale(txt, +10_000, maxMaxArrival)}
+          onDecrement={txt => validIncDecLocale(txt, -10_000, maxMaxArrival)}
         />
       </Stack>
 
@@ -314,12 +353,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           text="Cancel"
           style={{ height: 25 }}
           onClick={() => {
-            if (!hasSearched || !store.foundMarkets || noMarketsFound) {
+            if (!store.foundMarkets || noMarketsFound) {
               this.props.onClose();
             } else {
-              this.setState({
-                showSearchCriteria: false,
-              })
+              this.setState({ showSearchCriteria: false });
             }
           }}
         />
@@ -334,7 +371,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const highlightTitleTxt = 'Click station commodities to highlight them at other stations';
 
     return <div>
-      <Stack horizontal>
+      <Stack horizontal style={{ marginTop: 2 }}>
 
         <ActionButton
           iconProps={{ iconName: allCollapsed ? 'ChevronDownSmall' : 'ChevronUpSmall' }}

@@ -2,8 +2,37 @@ import cargoTypes from './assets/cargo-types.json';
 import { store } from './local-storage';
 import { Cargo, mapCommodityNames, mapSourceEconomy, SortMode } from "./types";
 
-export const isMobile = () => {
+let numSeparator: string | undefined = undefined;
+export const parseIntLocale = (txt: string | null | undefined, force: boolean = false) => {
+  if (typeof numSeparator === 'undefined') {
+    numSeparator = Intl.NumberFormat().formatToParts(1234).find(p => p.type === 'group')?.value
+      ?? ','; // fallback to a basic comma if nothing else found
+  }
+  const n = parseInt((txt ?? '').replaceAll(numSeparator, ''));
+  if (isNaN(n) && force) {
+    return 0;
+  } else {
+    return n;
+  }
+};
 
+export const validIncDecLocale = (txt: string, step: number, max: number) => {
+  let n = txt === 'Unlimited'
+    ? max
+    : parseIntLocale(txt);
+
+  n += step;
+
+  if (n < 0) {
+    return (0).toString();
+  } else if (n <= max) {
+    return n.toString();
+  } else {
+    return max.toString();
+  }
+}
+
+export const isMobile = () => {
   return (navigator as any).userAgentData?.mobile || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
 };
 

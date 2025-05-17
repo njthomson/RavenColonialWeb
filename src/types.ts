@@ -139,6 +139,7 @@ export interface AppProps {
 export interface FindMarketsOptions {
   shipSize: string;
   maxDistance: number;
+  maxArrival: number;
   noSurface: boolean;
   noFC: boolean;
   requireNeed: boolean;

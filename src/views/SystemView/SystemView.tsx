@@ -293,14 +293,14 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       {!!body.orbital.length && body.orbital.map(site => this.renderSite(body, site))}
       {!body.orbital.length && <>
-        <span key={`b${body.name}-noo`} style={{ color: appTheme.palette.neutralTertiaryAlt }}><Icon iconName='Communications' /> No orbital sites</span>
+        <span key={`b${body.name}-noo`} style={{ color: appTheme.palette.neutralTertiaryAlt }}><Icon iconName='ProgressRingDots' /> No orbital sites</span>
       </>}
 
       <div style={{ margin: '4px 40px 4px -10px', height: 1, borderBottom: `1px dashed ${appTheme.palette.neutralTertiaryAlt}` }}></div>
 
       {!!body.surface.length && body.surface.map(site => this.renderSite(body, site))}
       {!body.surface.length && <>
-        <span key={`b${body.name}-nos`} style={{ color: appTheme.palette.neutralTertiaryAlt }}><Icon iconName='MountainClimbing' /> No surface sites</span>
+        <span key={`b${body.name}-nos`} style={{ color: appTheme.palette.neutralTertiaryAlt }}><Icon iconName='GlobeFavorite' /> No surface sites</span>
       </>}
 
     </li>;
@@ -320,7 +320,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
     return <div className={`removable ${cn.removable}`} >
       <Stack key={site.buildId} horizontal verticalAlign='center' style={{ height: 22 }}>
-        <ProjectLink proj={site} noSys noBold iconName={site.complete ? (site.type.orbital ? 'Communications' : 'MountainClimbing') : ''} greyIncomplete={!useIncomplete} />
+        <ProjectLink proj={site} noSys noBold iconName={site.complete ? (site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} greyIncomplete={!useIncomplete} />
 
         {!site.complete && !site.isMock && <Icon iconName='ConstructionCone' style={{ marginLeft: 8 }} title='Under construction' />}
         {!site.complete && site.isMock && <Icon iconName='WebAppBuilderFragmentCreate' style={{ marginLeft: 8 }} title='A "What if" site' />}

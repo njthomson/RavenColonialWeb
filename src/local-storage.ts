@@ -166,7 +166,7 @@ class LocalStorage {
   get useIncomplete(): boolean { return readBoolean(Stored.useIncomplete, true); }
   set useIncomplete(newValue: boolean) { writeValue(Stored.useIncomplete, newValue); }
 
-  get findMarketsOptions(): FindMarketsOptions { return readValue(Stored.findMarketsOptions, { maxDistance: 500, noFC: true, noSurface: false, shipSize: 'medium', requireNeed: true } as FindMarketsOptions)!; }
+  get findMarketsOptions(): FindMarketsOptions { return readValue(Stored.findMarketsOptions, { maxDistance: 500, maxArrival: 0, noFC: true, noSurface: false, shipSize: 'medium', requireNeed: true } as FindMarketsOptions)!; }
   set findMarketsOptions(newValue: FindMarketsOptions) { writeValue(Stored.findMarketsOptions, newValue); }
 
   get foundMarkets(): FoundMarkets | undefined { return readValue(Stored.foundMarkets); }
