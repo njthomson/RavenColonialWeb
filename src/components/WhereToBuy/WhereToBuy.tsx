@@ -3,7 +3,7 @@ import * as api from '../../api';
 import { ActionButton, Checkbox, ComboBox, DefaultButton, Icon, IconButton, Label, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import { appTheme, cn } from '../../theme';
-import { FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames } from '../../types';
+import { FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames, mapSourceEconomy } from '../../types';
 import { store } from '../../local-storage';
 import { CommodityIcon } from '../CommodityIcon/CommodityIcon';
 import { CopyButton } from '../CopyButton';
@@ -11,6 +11,8 @@ import { CalloutMsg } from '../CalloutMsg';
 import { PadSize } from '../PadSize';
 import { LinkSrvSurvey } from '../LinkSrvSurvey';
 import { isMobile, parseIntLocale, validIncDecLocale } from '../../util';
+import { mapName } from '../../site-data';
+import { EconomyBlock } from '../EconomyBlock';
 
 const maxMaxDistance = 1000;
 const maxMaxArrival = 250_000;
@@ -30,7 +32,9 @@ interface WhereToBuyState extends FindMarketsOptions {
   hasSearched?: boolean;
   foundMarkets?: FoundMarkets;
   sortedRows: MarketSummary[];
+  missedCargo: string[];
 
+  expandTopBubbles: boolean;
   expandMatches: Set<string>;
   expandHighlights?: boolean;
   highlightHover?: string;
@@ -58,9 +62,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     if (!findMarketsOptions.maxArrival) { findMarketsOptions.maxArrival = maxMaxArrival; }
 
     // do initial sort/filter by initial sort criteria
-    const defaultSortColumn = 'matches';
-    const defaultSortAscending = true;
+    const defaultSortColumn = 'distance';
+    const defaultSortAscending = false;
     const sortedRows = this.sortMarkets(priorMarkets, defaultSortColumn, defaultSortAscending);
+    const missedCargo = Object.keys(props.need).filter(cargo => sortedRows.some(m => cargo in m.supplies));
 
     // auto expand the first row
     const expandMatches = new Set<string>();
@@ -74,6 +79,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       hasSearched: false,
       foundMarkets: priorMarkets,
       sortedRows: sortedRows,
+      missedCargo: missedCargo,
+      expandTopBubbles: true,
       expandMatches: expandMatches,
       highlights: new Set(),
       sortColumn: defaultSortColumn,
@@ -86,8 +93,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     if (prevProps.need !== this.props.need) {
       const { sortColumn, sortAscending } = this.state;
       const newSortedRows = this.sortMarkets(this.state.foundMarkets, sortColumn, sortAscending);
+      const newMissedCargo = Object.keys(this.props.need).filter(cargo => newSortedRows.some(m => cargo in m.supplies));
+
       this.setState({
         sortedRows: newSortedRows,
+        missedCargo: newMissedCargo,
       });
     }
   }
@@ -117,6 +127,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       store.foundMarkets = foundMarkets;
 
       const sortedRows = this.sortMarkets(foundMarkets, this.state.sortColumn, this.state.sortAscending);
+      const missedCargo = Object.keys(this.props.need).filter(cargo => sortedRows.some(m => cargo in m.supplies));
 
       // auto expand the first row
       const expandMatches = new Set<string>();
@@ -127,6 +138,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         showSearchCriteria: sortedRows.length === 0,
         foundMarkets: foundMarkets,
         sortedRows: sortedRows,
+        missedCargo: missedCargo,
         expandMatches: expandMatches,
       });
     } catch (err: any) {
@@ -243,13 +255,16 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         useComboBoxAsMenuWidth
         selectedKey={shipSize}
         style={{ marginBottom: 10 }}
+        styles={{
+          callout: { border: '1px solid ' + appTheme.palette.themePrimary, width: 300 },
+        }}
         disabled={searching}
         options={[
           { key: 'large', text: 'Large', },
           { key: 'medium', text: 'Medium', },
           { key: 'small', text: 'Small', },
         ]}
-        onChange={(_, o, i, v) => {
+        onChange={(_, o) => {
           this.setState({
             shipSize: o?.key.toString() ?? ''
           });
@@ -365,10 +380,9 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderFoundMarkets() {
-    const { sortedRows, highlights, expandMatches, expandHighlights } = this.state;
+    const { sortedRows, expandMatches, expandHighlights } = this.state;
 
     const allCollapsed = expandMatches.size === 0;
-    const highlightTitleTxt = 'Click station commodities to highlight them at other stations';
 
     return <div>
       <Stack horizontal style={{ marginTop: 2 }}>
@@ -402,38 +416,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         />
       </Stack>
 
-      <Stack className={`highlight ${cn.bb}`} horizontal verticalAlign='start' style={{ padding: 4, marginBottom: 8 }} wrap>
-        <Stack horizontal verticalAlign='center' title={highlightTitleTxt}>
-          <span id='where-higlight' style={{ height: 22, marginRight: 4 }}>Highlight:</span>
-          <CalloutMsg id='where-higlight' msg={highlightTitleTxt} />
-          &nbsp;
-        </Stack>
-        {Array.from(highlights).map(cargo => <div
-          key={`topBubble${cargo}`}
-          className='bubble'
-          title={`Remove ${mapCommodityNames[cargo]} from higlights`}
-          style={{
-            color: appTheme.palette.black,
-            backgroundColor: appTheme.palette.neutralTertiaryAlt,
-          }}
-          onClick={() => {
-            highlights.delete(cargo);
-            this.setState({ highlights });
-          }}
-        >
-          <CommodityIcon name={cargo} />&nbsp;{mapCommodityNames[cargo]}
-        </div>)}
-
-        {!!highlights.size && <IconButton
-          iconProps={{ iconName: 'Clear' }}
-          title='Remove all highlighted commodities'
-          style={{ width: 22, height: 22 }}
-          onClick={() => {
-            highlights.clear();
-            this.setState({ highlights });
-          }}
-        />}
-      </Stack>
+      {this.renderBubblesNeeded()}
 
       <table cellPadding={0} cellSpacing={0}>
         <colgroup>
@@ -490,6 +473,90 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     </th>;
   }
 
+  renderBubblesNeeded() {
+    const { expandTopBubbles, highlights, highlightHover, missedCargo } = this.state;
+
+    const bubbleNames = expandTopBubbles
+      ? Object.keys(this.props.need)
+      : Array.from(this.state.highlights);
+
+    const bubbles = bubbleNames.map(cargo => {
+      const isHighlighted = highlights.has(cargo);
+      const backColor = isHighlighted ? appTheme.palette.themeSecondary : appTheme.palette.neutralTertiaryAlt;
+      let textColor = isHighlighted ? 'white' : appTheme.palette.black;
+
+      let sourceMarkets = mapSourceEconomy[cargo].split(',').map(t => ' - ' + mapName[t]).join('\n');
+      const countTxt = this.props.need[cargo].toLocaleString();
+      let titleTxt = `Need ${countTxt} units, found in markets:\n${sourceMarkets}\n\n`
+        + (isHighlighted ? `Click to remove highlight` : `Click to highlight`);
+
+      if (!missedCargo.includes(cargo)) {
+        titleTxt = `** Not available in any markets below **\n\n` + titleTxt;
+        if (!isHighlighted) {
+          textColor = 'grey'; //or appTheme.palette.themeLighterAlt; ?
+        }
+      }
+
+      return <div
+        key={`topBubble${cargo}`}
+        className='bubble'
+        title={titleTxt}
+        style={{
+          color: textColor,
+          backgroundColor: backColor,
+          border: `2px solid ${cargo === highlightHover ? appTheme.palette.black : backColor}`,
+          userSelect: 'none',
+        }}
+        onMouseEnter={() => this.setState({ highlightHover: cargo })}
+        onMouseLeave={() => this.setState({ highlightHover: '' })}
+        onClick={() => {
+          if (isHighlighted) {
+            highlights.delete(cargo);
+          } else {
+            highlights.add(cargo);
+          }
+          this.setState({ highlights });
+        }}
+      >
+        <CommodityIcon name={cargo} />&nbsp;{mapCommodityNames[cargo]}: {countTxt}
+      </div>;
+    });
+
+    const highlightTitleTxt = 'Click commodities to highlight stations that can provide them';
+    return <>
+      <Stack
+        horizontal wrap
+        className={`highlight ${cn.bb}`}
+        verticalAlign='start'
+        style={{ padding: 4, marginBottom: 8 }}
+      >
+        <Stack horizontal verticalAlign='center' title={highlightTitleTxt}>
+          <ActionButton
+            id='where-highlight'
+            iconProps={{ iconName: expandTopBubbles ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
+            text={'Highlight:'}
+            style={{ height: 22, paddingLeft: 0, }}
+            onClick={() => this.setState({ expandTopBubbles: !expandTopBubbles })}
+          />
+
+          <CalloutMsg id='where-highlight' msg={highlightTitleTxt} />
+        </Stack>
+
+        {bubbles}
+
+        {!!highlights.size && <IconButton
+          iconProps={{ iconName: 'Clear' }}
+          title='Remove all highlights'
+          style={{ width: 22, height: 22 }}
+          onClick={() => {
+            highlights.clear();
+            this.setState({ highlights });
+          }}
+        />}
+      </Stack>
+    </>;
+  }
+
   renderMarketSummary(market: MarketSummary, idx: number) {
     const { expandMatches, highlights, expandHighlights } = this.state;
 
@@ -502,7 +569,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       : market.stationName;
     const inaraLink = `https://inara.cz/elite/station/?search=${stationName} [${market.systemName}]`;
 
-    const subMatches = Object.entries(market.supplies).filter(([cargo, count]) => cargo in this.props.need && this.props.need[cargo] > 0);
+    const subMatches = Object.entries(market.supplies).filter(([cargo]) => cargo in this.props.need && this.props.need[cargo] > 0);
     const countMatches = subMatches.length;
 
     let marketLocationTitle = market.type;
@@ -547,12 +614,15 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       </td>
 
       <td>
-        <Icon
-          iconName={market.surface ? 'GlobeFavorite' : 'ProgressRingDots'}
-          title={marketLocationTitle}
-          style={{ fontSize: 12 }}
-        />
-        <PadSize size={market.padSize} />
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
+          <Icon
+            iconName={market.surface ? 'GlobeFavorite' : 'ProgressRingDots'}
+            title={marketLocationTitle}
+            style={{ fontSize: 12 }}
+          />
+          <EconomyBlock economy={market.economy.toLowerCase()} size='10px' ratio={market.economies} />
+          <PadSize size={market.padSize} />
+        </Stack>
       </td>
 
       <td className='c2'>
@@ -599,7 +669,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const backColor = isHighlighted ? appTheme.palette.themeSecondary : appTheme.palette.neutralTertiaryAlt;
 
     let textColor = isHighlighted ? 'white' : appTheme.palette.black;
-    let titleTxt = isHighlighted ? `Remove ${mapCommodityNames[cargo]} from higlights` : `Click to highlight: ${mapCommodityNames[cargo]}`
+    let titleTxt = isHighlighted ? `Remove ${mapCommodityNames[cargo]} from highlights` : `Click to highlight: ${mapCommodityNames[cargo]}`
 
     if (count < this.props.need[cargo]) {
       // should we include the deficit count?
@@ -618,6 +688,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         color: textColor,
         backgroundColor: backColor,
         border: `2px solid ${cargo === highlightHover ? appTheme.palette.black : backColor}`,
+        userSelect: 'none',
       }}
       onMouseEnter={() => this.setState({ highlightHover: cargo })}
       onMouseLeave={() => this.setState({ highlightHover: '' })}

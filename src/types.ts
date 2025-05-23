@@ -157,6 +157,7 @@ export interface MarketSummary {
   stationName: string;
   type: string;
   economy: string;
+  economies: Record<string, number>;
   updatedAt: string;
   supplies: Record<string, number>;
   surface: boolean;

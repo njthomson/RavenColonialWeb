@@ -182,6 +182,10 @@ i {
   cursor: default;
 }
 
+button i {
+  cursor: pointer;
+}
+
 i.icon-inline {
   position: relative;
   top: 2px;

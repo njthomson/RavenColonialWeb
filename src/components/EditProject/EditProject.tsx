@@ -117,12 +117,12 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             </td>
           </tr>
 
-          <tr>
+          {/* <tr>
             <td><Label>Faction:</Label></td>
             <td>
               <input className='tinput' type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />
             </td>
-          </tr>
+          </tr> */}
 
           {editProject.buildId && !editProject.complete && <tr>
             <td><Label>Time remaining:</Label></td>

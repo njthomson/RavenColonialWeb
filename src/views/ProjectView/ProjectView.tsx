@@ -199,7 +199,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         deliverMarketId = 'site';
       }
 
-      let newAutoUpdateUntil = this.state.autoUpdateUntil;
+      // shift end of auto-updating to be +1 hour from now
+      let newAutoUpdateUntil = Date.now() + autoUpdateStopDuration;
       window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
       if (newProj.complete) {
         window.document.title += ' (completed)';
@@ -255,21 +256,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   doNextPoll = async (buildId: string) => {
-    // call server to see if anything changed
-    let timestamp = await api.project.last(buildId);
+    try {
+      // call server to see if anything changed
+      let timestamp = await api.project.last(buildId);
 
-    // use current state if no .last added yet
-    if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
+      // use current state if no .last added yet
+      if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
 
-    console.debug(`pollTimestamp at ${new Date().toISOString()}: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp}) Will stop after: ${new Date(this.state.autoUpdateUntil).toISOString()}`);
-    if (timestamp !== this.state.lastTimestamp) {
-      // something has changed
-      await this.fetchProject(buildId, true, true);
-    } else if (Date.now() < this.state.autoUpdateUntil) {
-      // nothing changed, schedule next poll
-      this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
-    } else {
-      console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+      console.debug(`pollTimestamp at ${new Date().toISOString()}: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp}) Will stop after: ${new Date(this.state.autoUpdateUntil).toISOString()}`);
+      if (timestamp !== this.state.lastTimestamp) {
+        // something has changed
+        await this.fetchProject(buildId, true, true);
+      } else if (Date.now() < this.state.autoUpdateUntil) {
+        // nothing changed, schedule next poll
+        this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
+      } else {
+        console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+        this.setState({ autoUpdateUntil: 0 });
+      }
+    } catch (err: any) {
+      console.error(`doNextPoll:`, err.stack);
       this.setState({ autoUpdateUntil: 0 });
     }
   };
@@ -1022,12 +1028,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.architectName}&nbsp;</div></td>
             </tr>
 
-            <tr>
+            {/* <tr>
               <td>Faction:</td>
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.factionName}&nbsp;</div></td>
-            </tr>
+            </tr> */}
 
-            {proj.timeDue && <tr>
+            {proj.timeDue && !proj.complete && <tr>
               <td>Time remaining:</td>
               <td>
                 <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>

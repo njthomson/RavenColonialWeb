@@ -135,14 +135,19 @@ export const sysEffects: (keyof SysEffects)[] = [
 ];
 
 export const economyColors: Record<string, string> = {
-  agriculture: 'rgb(104,204,0)',
-  contraband: 'rgb(4,56,204)',
-  extraction: 'rgb(207,1,0)',
-  hightech: 'rgb(4,205,204)',
-  industrial: 'rgb(207, 205, 0)',
-  military: 'rgb(183,0,183)',
-  tourism: 'rgb(71, 15, 172)',
-  refinery: 'rgb(208,103,9)',
+  agriculture: 'rgb(128,255,0)',
+  contraband: 'rgb(0,69,255)',
+  service: 'rgb(0,69,255)',
+  extraction: 'rgb(255,0,0)',
+  hightech: 'rgb(0,255,255)',
+  industrial: 'rgb(255, 255, 0)',
+  military: 'rgb(229,0,229)',
+  tourism: 'rgb(102, 0, 229)',
+  refinery: 'rgb(255,128,0)',
+
+  terraforming: 'rgb(0, 153, 0)',
+  colony: 'rgb(51, 128, 255)',
+  none: 'rgb(102, 102, 102)',
 }
 
 
