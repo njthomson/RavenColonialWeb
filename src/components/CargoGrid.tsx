@@ -259,13 +259,15 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     let deltaTxt = delta.toLocaleString();
     if (!deltaTxt.startsWith('-') && deltaTxt !== '0') deltaTxt = '+' + deltaTxt;
 
+    const diff = 100 / need * sumFC;
+
     // prepare an element for the FC diff cell
     const fcSumTitle = delta > 0
-      ? `FCs have a surplus of: ${delta} ${displayName}`
-      : `FCs are short by: ${-delta} ${displayName}`;
+      ? `${diff.toFixed(0)}% - FCs have a surplus of: ${delta.toLocaleString()}`
+      : `${diff.toFixed(0)}% - FCs are short by: ${(-delta).toLocaleString()}`;
     let fcSumElement = <></>;
     if (need > 0 && delta === 0) {
-      fcSumElement = <Icon className='icon-inline' iconName='CheckMark' title={`FCs have enough ${displayName}`} style={{ cursor: 'Default', textAlign: 'center', width: '100%' }} />;
+      fcSumElement = <Icon className='icon-inline' iconName='CheckMark' title={`100% - FCs have enough ${displayName}`} style={{ cursor: 'Default', textAlign: 'center', width: '100%' }} />;
     } else if (need > 0 || delta > 0) {
       fcSumElement = <span title={fcSumTitle}>{deltaTxt}</span>;
     }

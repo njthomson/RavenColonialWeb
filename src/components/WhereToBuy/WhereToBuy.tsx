@@ -39,6 +39,7 @@ interface WhereToBuyState extends FindMarketsOptions {
   expandHighlights?: boolean;
   highlightHover?: string;
   highlights: Set<string>;
+  filterNoHighlights: boolean;
 
   sortColumn: string;
   sortAscending: boolean;
@@ -84,7 +85,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       expandMatches: expandMatches,
       highlights: new Set(),
       sortColumn: defaultSortColumn,
-      sortAscending: defaultSortAscending
+      sortAscending: defaultSortAscending,
+      filterNoHighlights: false,
     };
   }
 
@@ -380,7 +382,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderFoundMarkets() {
-    const { sortedRows, expandMatches, expandHighlights } = this.state;
+    const { sortedRows, expandMatches, expandHighlights, filterNoHighlights } = this.state;
 
     const allCollapsed = expandMatches.size === 0;
 
@@ -401,12 +403,23 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           }}
         />
 
-        <Toggle
-          onText='Expand highlights'
-          offText='Expand highlights'
-          checked={expandHighlights}
-          onChange={() => this.setState({ expandHighlights: !expandHighlights })}
-        />
+        <div title='Toggle this on to auto-expand any stations containing highlighted commodities'>
+          <Toggle
+            onText='Expand highlights'
+            offText='Expand highlights'
+            checked={expandHighlights}
+            onChange={() => this.setState({ expandHighlights: !expandHighlights })}
+          />
+        </div>
+
+        <div title='Toggle this on to hide stations that have none of the highlighted commodities'>
+          <Toggle
+            onText='Only highlights'
+            offText='Only highlights'
+            checked={filterNoHighlights}
+            onChange={() => this.setState({ filterNoHighlights: !filterNoHighlights })}
+          />
+        </div>
 
         <ActionButton
           iconProps={{ iconName: 'SearchAndApps' }}
@@ -558,7 +571,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderMarketSummary(market: MarketSummary, idx: number) {
-    const { expandMatches, highlights, expandHighlights } = this.state;
+    const { expandMatches, highlights, expandHighlights, filterNoHighlights } = this.state;
+
+    if (filterNoHighlights && highlights.size > 0 && !Object.keys(market.supplies).some(cargo => highlights.has(cargo))) {
+      return null;
+    }
 
     const isHighlightMatch = Object.keys(market.supplies).some(n => highlights.has(n));
     const isExpanded = expandMatches.has(market.stationName) || (expandHighlights && isHighlightMatch);

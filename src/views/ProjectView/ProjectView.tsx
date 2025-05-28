@@ -920,10 +920,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     let diffCargoFC = (sumCargoDiff).toLocaleString();
     if (!diffCargoFC.startsWith('-') && diffCargoFC !== '0') diffCargoFC = '+' + diffCargoFC;
 
+    const fcTotal = sumCargoDiff + need;
+    const diff = 100 / need * fcTotal;
+
     // prepare an element for the FC diff cell
     const fcSumTitle = sumCargoDiff > 0
-      ? `FCs have a surplus of: ${sumCargoDiff} ${displayName}`
-      : `FCs are short by: ${-sumCargoDiff} ${displayName}`;
+      ? `${diff.toFixed(0)}% - FCs have a surplus of: ${sumCargoDiff}`
+      : `${diff.toFixed(0)}% - FCs are short by: ${-sumCargoDiff}`;
     let fcSumElement = <></>;
     if (need > 0 && sumCargoDiff === 0) {
       fcSumElement = <Icon className='icon-inline' iconName='CheckMark' title={`FCs have enough ${displayName}`} style={{ cursor: 'Default', textAlign: 'center', width: '100%' }} />;
