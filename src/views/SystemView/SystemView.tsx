@@ -1,11 +1,11 @@
 import './SystemView.css';
 import { Component } from "react";
 import { ProjectRef } from "../../types";
-import { DefaultButton, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Stack, Toggle } from "@fluentui/react";
+import { DefaultButton, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Stack, Toggle } from "@fluentui/react";
 import { ProjectLink } from "../../components";
 import { appTheme, cn } from "../../theme";
 import { Chevrons, TierPoints } from "../../components/Chevrons";
-import { asPosNegTxt, delayFocus } from "../../util";
+import { asPosNegTxt, delayFocus, isMobile } from "../../util";
 import { BodyMap, buildSystemModel, SiteMap, SysMap, unknown } from "../../system-model";
 import { SysEffects, getSiteType, mapName, sysEffects } from "../../site-data";
 import { EconomyBlocks, MarketLinkBlocks, MarketLinks } from '../../components/MarketLinks/MarketLinks';
@@ -30,6 +30,7 @@ interface SystemViewState extends SysMap {
   editFieldHighlight?: string;
   useIncomplete: boolean;
   showFixMissingTypes?: boolean;
+  showBuildOrder?: boolean;
 }
 
 export class SystemView extends Component<SystemViewProps, SystemViewState> {
@@ -88,7 +89,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   render() {
-    const { allSites, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete } = this.state;
+    const { allSites, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete, showBuildOrder } = this.state;
     const showClearAllMocks = allSites.some(s => s.isMock);
 
     return <div className='half system-view'>
@@ -139,6 +140,12 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       </h3>
 
       <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }}>
+        <IconButton
+          iconProps={{ iconName: 'SortLines' }}
+          title='View the order of sites for calculations'
+          style={{ color: appTheme.palette.black, border: `1px solid ${appTheme.palette.black}` }}
+          onClick={() => this.setState({ showBuildOrder: true })}
+        />
 
         <DefaultButton
           iconProps={{ iconName: 'WebAppBuilderFragmentCreate' }}
@@ -172,6 +179,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       {!!showPortLinks && this.renderPortLinks(showPortLinks)}
       {!!editMockSite && this.renderEditMockSite()}
       {!!editRealSite && this.renderEditRealSite()}
+      {!!showBuildOrder && this.renderBuildOrder()}
     </div >;
   }
 
@@ -603,5 +611,78 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         });
       }}
     />;
+  }
+
+  renderBuildOrder() {
+    const { allSites, systemName } = this.state;
+
+    const rows = allSites.map((s, i) => <tr key={`bol${s.buildId}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined }}>
+      <td className={`cr ${cn.br}`}>{i + 1}</td>
+
+      <td className={`cl`}>
+        <ProjectLink proj={s} noSys noBold iconName={s.complete ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />
+      </td>
+
+      <td className={`c3 ${cn.br}`}>
+        <IconButton
+          className={`btn ${cn.btn}`}
+          iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
+          style={{ width: 14, height: 14, marginLeft: 4 }}
+          onClick={() => this.setState({ editRealSite: { ...s }, editFieldHighlight: 'timeCompleted' })}
+        />
+      </td>
+
+      <td className={`cr ${cn.br}`}>{s.bodyName?.replace(systemName, '')}</td>
+
+      <td className={`cr`}>{s.timeCompleted ? new Date(s.timeCompleted).toLocaleDateString() : <div style={{ textAlign: 'center', color: 'grey' }}>-</div>}</td>
+    </tr>);
+
+    return <>
+      <Panel
+        isOpen
+        isLightDismiss
+        className='build-order'
+        headerText='Order for calculations:'
+        allowTouchBodyScroll={isMobile()}
+        type={PanelType.medium}
+        styles={{
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        }}
+        onDismiss={(ev) => {
+          // closing  EditProject triggers this - so we'll ignore it if there is a site to be edited
+          if (!this.state.editRealSite) {
+            this.setState({ showBuildOrder: false });
+          }
+        }}
+      >
+        <div style={{ marginBottom: 8, color: appTheme.palette.themeDark }}>
+          Calculations are performed on sites ordered by their <b>Date Completed</b> value.
+          <br />
+          Change these dates to adjust the order of calculations.
+        </div>
+
+        <table cellPadding={0} cellSpacing={0}>
+          <colgroup>
+            <col width='5%' />
+            <col width='70%' />
+            <col width='5%' />
+            <col width='8%' />
+            <col width='12%' />
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th className={`cr ${cn.bb} ${cn.br}`}>#</th>
+              <th className={`cl ${cn.bb} ${cn.br}`} colSpan={2}>Site</th>
+              <th className={`${cn.bb} ${cn.br}`}>Body</th>
+              <th className={`${cn.bb}`}>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows}
+          </tbody>
+        </table>
+      </Panel>
+    </>;
   }
 }

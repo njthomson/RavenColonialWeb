@@ -13,3 +13,21 @@
 .system-view .removable .btn {
   display: none;
 }
+
+.build-order .cr {
+  text-align: right;
+}
+
+.build-order .cl {
+  text-align: left;
+}
+
+.build-order .cc {
+  text-align: center;
+}
+
+.build-order td,
+.build-order th {
+  padding: 0 4px;
+  vertical-align: top;
+}

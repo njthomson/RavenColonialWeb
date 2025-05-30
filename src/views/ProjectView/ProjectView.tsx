@@ -1376,7 +1376,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // success - navigate to home
       store.removeRecentProject(buildId);
-      window.location.assign(`#`);
+      const nextUrl = this.state.proj?.systemName
+        ? `#find=${this.state.proj?.systemName}`
+        : `#`;
+      window.location.assign(nextUrl);
       window.location.reload();
 
     } catch (err: any) {

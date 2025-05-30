@@ -178,7 +178,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
     return map;
   }, {} as Record<string, BodyMap>);
 
-  // sort by body name but force Unknown to be first in the list
+  // sort bodies name but force Unknown to be first in the list
   const sortedKeys = Object.keys(bodyMap)
     .filter(n => n !== unknown)
     .sort();
@@ -187,6 +187,12 @@ const initializeSysMap = (projects: ProjectRef[]) => {
   }
   const bodies: Record<string, BodyMap> = {};
   for (let key of sortedKeys) { bodies[key] = bodyMap[key]; }
+
+  // sort all sites and sites-per-body by timeCompleted, forcing unknown to be last
+  allSites = allSites.sort((a, b) => (a.timeCompleted ?? '9999')?.localeCompare(b.timeCompleted ?? '9999'));
+  for (let body of Object.values(bodies)) {
+    body.sites = body.sites.sort((a, b) => (a.timeCompleted ?? '9999')?.localeCompare(b.timeCompleted ?? '9999'));
+  }
 
   const countSites = projects.length;
   const sysMap = {
@@ -201,10 +207,8 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
   const sumEffects: SysEffects = {};
   const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
 
-  const orderedByAge = allSites.sort((a, b) => (a.timeCompleted ?? '')?.localeCompare(b.timeCompleted ?? ''));
-
   let taxCount = -2;
-  for (const site of orderedByAge) {
+  for (const site of allSites) {
     // skip mock sites, unless ...
     if (site.isMock && !useIncomplete) continue;
 
@@ -265,22 +269,20 @@ const getBodyPrimaryPort = (sites: SiteMap[], useIncomplete: boolean): SiteMap |
   if (!useIncomplete) {
     sites = sites.filter(s => s.complete);
   }
-  const orderedByAge = sites.sort((a, b) => (a.timeCompleted ?? '')?.localeCompare(b.timeCompleted ?? ''));
-
-  // do we have any Tier 3's ?
-  const t3s = orderedByAge.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
+    // do we have any Tier 3's ?
+  const t3s = sites.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
   if (t3s.length > 0) {
     return t3s[0];
   }
 
   // do we have any Tier 2's ?
-  const t2s = orderedByAge.filter(s => s.type.tier === 2 && canReceiveLinks(s.type));
+  const t2s = sites.filter(s => s.type.tier === 2 && canReceiveLinks(s.type));
   if (t2s.length > 0) {
     return t2s[0];
   }
 
   // do we have any Tier 1's ?
-  const t1s = orderedByAge.filter(s => s.type.tier === 1 && canReceiveLinks(s.type));
+  const t1s = sites.filter(s => s.type.tier === 1 && canReceiveLinks(s.type));
   if (t1s.length > 0) {
     return t1s[0];
   }

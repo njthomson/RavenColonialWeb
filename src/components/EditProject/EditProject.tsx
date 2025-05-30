@@ -1,6 +1,6 @@
 import './EditProject.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, DatePicker, DefaultButton, Dropdown, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, Checkbox, DatePicker, DefaultButton, Dropdown, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker, Toggle } from "@fluentui/react";
 import { Component } from "react";
 import { BodyFeature, CreateProject, mapBodyTypeNames, mapReserveLevel, Project, ProjectRef, SystemFeature } from "../../types";
 import { cn, appTheme } from "../../theme";
@@ -35,7 +35,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
     this.state = {
       editProject: props.proj,
-      showAdvanced: props.showAdvanced,
+      showAdvanced: props.showAdvanced || (props.fieldHighlight === 'timeCompleted' && !props.proj.complete),
       bodyFeatures: new Set<string>(props.proj.bodyFeatures),
       systemFeatures: new Set<string>(props.proj.systemFeatures),
     };
@@ -52,10 +52,11 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           ...this.state.editProject,
           systemAddress: response.id64,
         };
-
         this.setState({ editProject: updatedProj });
       });
     }
+
+    // TODO: Maybe auto-focus by: this.props.fieldHighlight ?
   }
 
   componentWillUnmount(): void {
@@ -76,6 +77,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
   render() {
     const { editProject, errorMsg, showAdvanced, bodyFeatures, systemFeatures } = this.state;
+    const disableSave = !editProject.buildName || !editProject.buildType;
 
     const dateCompletedHelpElement = <span>
       The <b>Date completed</b> value is needed for two important reasons:
@@ -85,10 +87,46 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
       - Should there be multiple Tier 2 or 3 ports on or around the same body, the oldest will receive strong links.
       <br />
       <br />
-      It is set automatically but may be missing on older projects. It does not need to be an accurate value necessarily,
+      It is set automatically but may be missing on older projects. It does not need to be an accurate value
       <br />
-      so long as the dates can be used to order large ports relative to each other.
+      necessarily, so long as the dates can be used to order large ports relative to each other.
+      <br />
+      <br />
+      It can also be set on incomplete projects as a means to adjust ordering for calculations. These values will be
+      <br />
+      overwritten when the project is marked complete.
     </span>;
+    const rowTimeCompleted = <tr>
+      <td>
+        <Label style={{ color: this.props.fieldHighlight === 'timeCompleted' ? appTheme.palette.yellowDark : undefined }}>
+          <span id='edit-date-completed'>Date completed:</span>
+          <CalloutMsg id='edit-date-completed' msg={dateCompletedHelpElement} marginLeft={4} />
+          {this.props.fieldHighlight === 'timeCompleted' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+        </Label>
+      </td>
+      <td>
+        <Stack horizontal tokens={{ childrenGap: 8 }}>
+          <DatePicker
+            placeholder='Choose a date'
+            allowTextInput
+            styles={{
+              callout: { border: '1px solid ' + appTheme.palette.themePrimary }
+            }}
+            value={editProject.timeCompleted ? new Date(editProject.timeCompleted) : undefined}
+            onSelectDate={(date) => {
+              if (date) { this.updateProjData('timeCompleted', date.toISOString()); }
+            }}
+          />
+          <TimePicker
+            style={{ width: 90 }}
+            value={editProject.timeCompleted ? new Date(editProject.timeCompleted) : undefined}
+            onChange={(ev, date) => {
+              if (date) { this.updateProjData('timeCompleted', date.toISOString()); }
+            }}
+          />
+        </Stack>
+      </td>
+    </tr>;
 
     return <Modal
       className='project-edit'
@@ -104,7 +142,6 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             <td style={{ alignContent: 'start' }}><Label required>Build name:</Label></td>
             <td>
               <input
-                autoFocus
                 className='tinput'
                 type='text'
                 value={editProject.buildName}
@@ -219,27 +256,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             <td><input className='tinput' type='text' value={editProject.discordLink ?? ''} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.black }} /></td>
           </tr>}
 
-          {editProject.complete && <tr>
-            <td>
-              <Label style={{ color: this.props.fieldHighlight === 'timeCompleted' ? appTheme.palette.yellowDark : undefined }}>
-                <span id='edit-date-completed'>Date completed:</span>
-                <CalloutMsg id='edit-date-completed' msg={dateCompletedHelpElement} marginLeft={4} />
-                {this.props.fieldHighlight === 'timeCompleted' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
-              </Label>
-            </td>
-            <td>
-              <DatePicker
-                placeholder='Select date'
-                styles={{
-                  callout: { border: '1px solid ' + appTheme.palette.themePrimary }
-                }}
-                value={editProject.timeCompleted ? new Date(editProject.timeCompleted) : undefined}
-                onSelectDate={(date) => {
-                  if (date) { this.updateProjData('timeCompleted', date.toISOString()); }
-                }}
-              />
-            </td>
-          </tr>}
+          {editProject.complete && rowTimeCompleted}
 
           <tr>
             <td></td>
@@ -255,6 +272,8 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           </tr>
 
           {showAdvanced && <>
+            {!editProject.complete && rowTimeCompleted}
+
             <tr>
               <td><Label>Body type:</Label></td>
               <td>
@@ -362,7 +381,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           label="Saving changes ..."
           labelPosition="right"
         />}
-        <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onSaveChanges} />
+        <PrimaryButton text='Save changes' iconProps={{ iconName: 'Save' }} onClick={this.onSaveChanges} disabled={disableSave} />
         <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.props.onChange()} />
       </Stack>
 

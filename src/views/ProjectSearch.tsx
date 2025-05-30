@@ -66,7 +66,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
       const matches = await api.project.findAllBySystem(systemName);
       this.setState({
         loading: false,
-        refs: matches,
+        refs: matches.reverse(),
       });
 
       // TODO: figure out why scroll bars appear when we're loading bodies JIT
@@ -214,6 +214,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
   async onExistingCreated(savedProj: Project) {
     await api.project.complete(savedProj.buildId);
+    savedProj.complete = true;
 
     const newRefs = [
       ...this.state.refs,
