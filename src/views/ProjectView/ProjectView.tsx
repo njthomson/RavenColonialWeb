@@ -437,15 +437,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
                 window.open(`https://inara.cz/elite/station/?search=${proj.buildName} [${proj.systemName}]`, 'Inara');
               },
             },
-            {
-              key: 'btn-open-spansh',
-              text: 'View on Spansh',
-              disabled: refreshing,
-              style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
-              onClick: () => {
-                window.open(`https://spansh.co.uk/station/${proj.marketId}`, 'Spansh');
-              },
-            }
+            // {
+            //   key: 'btn-open-spansh',
+            //   text: 'View on Spansh',
+            //   disabled: refreshing,
+            //   style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
+            //   onClick: () => {
+            //     window.open(`https://spansh.co.uk/station/${proj.marketId}`, 'Spansh');
+            //   },
+            // }
           ],
         },
       },
