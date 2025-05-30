@@ -93,14 +93,14 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
     return <div className='half system-view'>
       <h3 className={cn.h3}>
-        <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }} horizontalAlign='space-between'>
+        <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }}>
           <span>Summary: {countSites} sites</span>
           <span title='(ALT + C) Toggles inclusion of incomplete site in system calculations.'>
             <Toggle
               onText='Include incomplete projects'
               offText='Include incomplete projects'
-
               checked={useIncomplete}
+              style={{ marginLeft: 100 }}
               styles={{ container: { margin: 0 } }}
               onClick={this.toggleUseIncomplete}
             />

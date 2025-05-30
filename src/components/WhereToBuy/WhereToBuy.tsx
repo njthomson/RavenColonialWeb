@@ -490,7 +490,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const { expandTopBubbles, highlights, highlightHover, missedCargo } = this.state;
 
     const bubbleNames = expandTopBubbles
-      ? Object.keys(this.props.need)
+      ? Object.keys(this.props.need).filter(k => this.props.need[k] > 0)
       : Array.from(this.state.highlights);
 
     const bubbles = bubbleNames.map(cargo => {

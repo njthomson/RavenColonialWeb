@@ -205,28 +205,10 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
 
   let taxCount = -2;
   for (const site of orderedByAge) {
-    // skip incomplete sites, unless ...
-    if (!site.complete && !useIncomplete) continue;
-    // TODO: sites under construction have already spent the needed costs, keep those but skip the "gives"
+    // skip mock sites, unless ...
+    if (site.isMock && !useIncomplete) continue;
 
-    // calc total system economic influence
-    if (site.type.inf !== 'none') {
-      mapEconomies[site.type.inf] = (mapEconomies[site.type.inf] ?? 0) + 1;
-    }
-
-    // sum total system effects
-    for (const key of sysEffects) {
-      const effect = site.type.effects[key] ?? 0;
-      if (effect === 0) continue;
-      sumEffects[key] = (sumEffects[key] ?? 0) + effect;
-    }
-
-    // sum system tier points
-    if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
-      const tierName = site.type.gives.tier === 2 ? 'tier2' : 'tier3';
-      tierPoints[tierName] += site.type.gives.count;
-    }
-
+    // sum system tier points needed - these are already spent for projects in-progress
     if (!site.isPrimaryPort && site.type.needs.count > 0 && site.type.needs.tier > 1) {
       let needCount = site.type.needs.count;
       if (site.type.buildClass === 'starport' && site.type.tier > 1) {
@@ -242,6 +224,27 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
 
       const tierName = site.type.needs.tier === 2 ? 'tier2' : 'tier3';
       tierPoints[tierName] -= needCount;
+    }
+
+    // skip incomplete sites, unless ...
+    if (!site.complete && !useIncomplete) continue;
+
+    // calc total system economic influence
+    if (site.type.inf !== 'none') {
+      mapEconomies[site.type.inf] = (mapEconomies[site.type.inf] ?? 0) + 1;
+    }
+
+    // sum total system effects
+    for (const key of sysEffects) {
+      const effect = site.type.effects[key] ?? 0;
+      if (effect === 0) continue;
+      sumEffects[key] = (sumEffects[key] ?? 0) + effect;
+    }
+
+    // sum system tier points given
+    if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
+      const tierName = site.type.gives.tier === 2 ? 'tier2' : 'tier3';
+      tierPoints[tierName] += site.type.gives.count;
     }
   }
 
