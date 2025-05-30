@@ -54,8 +54,8 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
   return <div>
 
     <h3 className={cn.h3}>
-      Market links:
-      {props.showName && <>for: {props.site.buildName}</>}
+      {!props.showName && <>Market links:</>}
+      {props.showName && <>Market links for: {props.site.buildName}</>}
     </h3>
 
     <div style={{ margin: '12px 0 4px 0' }}>

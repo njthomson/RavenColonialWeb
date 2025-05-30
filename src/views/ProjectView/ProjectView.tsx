@@ -325,11 +325,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy } = this.state;
 
     if (loading) {
-      return <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
+      return <div className='project-view'>
+        <Spinner size={SpinnerSize.large} label={`Loading build project...`} />
+      </div>;
     }
 
     if (!proj) {
-      return <div>
+      return <div className='project-view'>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       </div>;
     }
@@ -1545,6 +1547,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     // roughly calculate progress by the curremt sum from the highest value known
     const approxProgress = proj.maxNeed - sumTotal;
     const percent = 100 / proj.maxNeed * approxProgress;
+
+    // TODO: unify "amount delivered" across deliveries and amount remaining
 
     const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
     return <div className='half'>

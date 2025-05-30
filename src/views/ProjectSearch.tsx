@@ -69,8 +69,11 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         refs: matches,
       });
 
+      // TODO: figure out why scroll bars appear when we're loading bodies JIT
+      // if (matches.some(m => !m.bodyName)) {
       ChooseBody.prepCache(systemName)
         .catch(err => console.error(err.stack));
+      // }
 
     } catch (err: any) {
       this.setState({ loading: false, errorMsg: err.message });

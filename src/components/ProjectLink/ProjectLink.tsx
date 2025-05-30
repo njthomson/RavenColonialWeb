@@ -8,6 +8,7 @@ interface ProjectLinkProps {
   proj: ProjectRefLite;
   noSys?: boolean;
   noBold?: boolean;
+  noType?: boolean;
   iconName?: string;
   greyIncomplete?: boolean;
 }
@@ -38,8 +39,10 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
       <Icon iconName={props.iconName || 'Manufacturing'} /> {props.proj.buildName}
     </Link>
 
-    &nbsp;- <BuildTypeDisplay buildType={props.proj.buildType} />
+    {!props.noType && <>
+      &nbsp;- <BuildTypeDisplay buildType={props.proj.buildType} />
 
-    {props.proj.isPrimaryPort && <Icon className='icon-inline' iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
+      {props.proj.isPrimaryPort && <Icon className='icon-inline' iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
+    </>}
   </span>;
 };

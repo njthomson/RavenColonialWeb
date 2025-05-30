@@ -1,24 +1,31 @@
 import './EditProject.css';
 import * as api from '../../api';
-import { ActionButton, DefaultButton, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, Checkbox, DatePicker, DefaultButton, Dropdown, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, Toggle } from "@fluentui/react";
 import { Component } from "react";
-import { CreateProject, Project, ProjectRef } from "../../types";
+import { BodyFeature, CreateProject, mapBodyTypeNames, mapReserveLevel, Project, ProjectRef, SystemFeature } from "../../types";
 import { cn, appTheme } from "../../theme";
 import { BuildType } from "../BuildType";
 import { ChooseBody } from "../ChooseBody";
 import { TimeRemaining } from "../TimeRemaining";
-import { delay } from '../../util';
+import { delay, isMobile } from '../../util';
+import { mapName } from '../../site-data';
+import { CalloutMsg } from '../CalloutMsg';
 
 
 interface ChooseEditProjectProps {
   proj: ProjectRef;
   onChange: (updatedProj?: Project) => void;
+  showAdvanced?: boolean;
+  fieldHighlight?: string;
 }
 
 interface ChooseEditProjectState {
   editProject: ProjectRef;
   submitting?: boolean;
   errorMsg?: string;
+  showAdvanced?: boolean;
+  bodyFeatures: Set<string>;
+  systemFeatures: Set<string>;
 }
 
 export class EditProject extends Component<ChooseEditProjectProps, ChooseEditProjectState> {
@@ -27,12 +34,16 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
     super(props);
 
     this.state = {
-      editProject: props.proj
+      editProject: props.proj,
+      showAdvanced: props.showAdvanced,
+      bodyFeatures: new Set<string>(props.proj.bodyFeatures),
+      systemFeatures: new Set<string>(props.proj.systemFeatures),
     };
   }
 
   componentDidMount(): void {
     const { editProject } = this.state;
+    window.addEventListener('keydown', this.onKeyPress);
 
     if (!editProject.buildId && !editProject.systemAddress && editProject.systemName) {
       // look-up systemAddress from systemName
@@ -43,9 +54,17 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
         };
 
         this.setState({ editProject: updatedProj });
-      })
+      });
     }
   }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('keydown', this.onKeyPress);
+  }
+
+  onKeyPress = (ev: { key: string }) => {
+    if (ev.key === 'Escape') { this.props.onChange(); }
+  };
 
   componentDidUpdate(prevProps: Readonly<ChooseEditProjectProps>, prevState: Readonly<ChooseEditProjectState>, snapshot?: any): void {
     if (prevProps.proj !== this.props.proj) {
@@ -56,12 +75,25 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
   }
 
   render() {
-    const { editProject, errorMsg } = this.state;
+    const { editProject, errorMsg, showAdvanced, bodyFeatures, systemFeatures } = this.state;
+
+    const dateCompletedHelpElement = <span>
+      The <b>Date completed</b> value is needed for two important reasons:
+      <br />
+      - To accurately scale Tier 2 and 3 points once there are 3+ large ports in the system.
+      <br />
+      - Should there be multiple Tier 2 or 3 ports on or around the same body, the oldest will receive strong links.
+      <br />
+      <br />
+      It is set automatically but may be missing on older projects. It does not need to be an accurate value necessarily,
+      <br />
+      so long as the dates can be used to order large ports relative to each other.
+    </span>;
 
     return <Modal
       className='project-edit'
       isOpen
-      allowTouchBodyScroll
+      allowTouchBodyScroll={isMobile()}
       onDismiss={() => this.setState({})}
     >
 
@@ -71,7 +103,19 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           <tr>
             <td style={{ alignContent: 'start' }}><Label required>Build name:</Label></td>
             <td>
-              <input className='tinput' type='text' value={editProject.buildName} onChange={(ev) => this.updateProjData('buildName', ev.target.value)} autoFocus style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />
+              <input
+                autoFocus
+                className='tinput'
+                type='text'
+                value={editProject.buildName}
+                onChange={(ev) => this.updateProjData('buildName', ev.target.value)}
+                style={{
+                  backgroundColor: appTheme.palette.white,
+                  color: appTheme.palette.black,
+                  border: '1px solid ' + appTheme.palette.black
+                }}
+                onKeyDown={(ev) => this.onKeyPress(ev)}
+              />
               <Toggle
                 onText='Primary port' offText='Primary port'
                 defaultChecked={editProject.isPrimaryPort}
@@ -83,7 +127,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
           <tr>
             <td><Label required>Build type:</Label></td>
-            <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
+            <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }} onKeyDown={(ev) => this.onKeyPress(ev)}>
               <BuildType buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
             </div>
             </td>
@@ -95,7 +139,12 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           </tr>
 
           <tr>
-            <td><Label>Body name:</Label></td>
+            <td>
+              <Label style={{ color: this.props.fieldHighlight === 'bodyName' ? appTheme.palette.yellowDark : undefined }}>
+                Body name:
+                {this.props.fieldHighlight === 'bodyName' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+              </Label>
+            </td>
             <td>
               {editProject && <div style={{ backgroundColor: appTheme.palette.purpleLight }}>
                 <ChooseBody systemName={editProject.systemName} bodyName={editProject.bodyName} onChange={(newName, newId) => {
@@ -113,7 +162,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           <tr>
             <td><Label>Architect:</Label></td>
             <td>
-              <input className='tinput' type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />
+              <input className='tinput' type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.black }} />
             </td>
           </tr>
 
@@ -136,7 +185,17 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           <tr>
             <td style={{ alignContent: 'start' }}><Label>Notes:</Label></td>
             <td>
-              <textarea className='notes' value={editProject.notes} onChange={(ev) => this.updateProjData('notes', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />
+              <textarea
+                className='notes'
+                value={editProject.notes}
+                onChange={(ev) => this.updateProjData('notes', ev.target.value)}
+                style={{
+                  backgroundColor: appTheme.palette.white,
+                  color: appTheme.palette.black,
+                  border: '1px solid ' + appTheme.palette.black,
+                  height: 36,
+                }}
+              />
             </td>
           </tr>
 
@@ -157,8 +216,140 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
                 />
               </Stack>
             </td>
-            <td><input className='tinput' type='text' value={editProject.discordLink ?? ''} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} /></td>
+            <td><input className='tinput' type='text' value={editProject.discordLink ?? ''} onChange={(ev) => this.updateProjData('discordLink', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.black }} /></td>
           </tr>}
+
+          {editProject.complete && <tr>
+            <td>
+              <Label style={{ color: this.props.fieldHighlight === 'timeCompleted' ? appTheme.palette.yellowDark : undefined }}>
+                <span id='edit-date-completed'>Date completed:</span>
+                <CalloutMsg id='edit-date-completed' msg={dateCompletedHelpElement} marginLeft={4} />
+                {this.props.fieldHighlight === 'timeCompleted' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+              </Label>
+            </td>
+            <td>
+              <DatePicker
+                placeholder='Select date'
+                styles={{
+                  callout: { border: '1px solid ' + appTheme.palette.themePrimary }
+                }}
+                value={editProject.timeCompleted ? new Date(editProject.timeCompleted) : undefined}
+                onSelectDate={(date) => {
+                  if (date) { this.updateProjData('timeCompleted', date.toISOString()); }
+                }}
+              />
+            </td>
+          </tr>}
+
+          <tr>
+            <td></td>
+            <td>
+              <ActionButton
+                className='small'
+                iconProps={{ iconName: showAdvanced ? 'ChevronDownSmall' : 'ChevronUpSmall', style: { fontSize: 8 } }}
+                text='Economy modelling fields'
+                style={{ height: 22, paddingLeft: 0, }}
+                onClick={() => this.setState({ showAdvanced: !showAdvanced })}
+              />
+            </td>
+          </tr>
+
+          {showAdvanced && <>
+            <tr>
+              <td><Label>Body type:</Label></td>
+              <td>
+                <Dropdown
+                  openOnKeyboardFocus
+                  placeholder='...'
+                  options={Object.entries(mapBodyTypeNames).map(([key, text]) => ({ key, text }))}
+                  selectedKey={this.state.editProject.bodyType}
+                  onChange={(_, o) => this.updateProjData('bodyType', o?.key)}
+                  styles={{
+                    title: { height: 22, lineHeight: 22 },
+                    caretDownWrapper: { height: 22, lineHeight: 22 },
+                    callout: { border: '1px solid ' + appTheme.palette.themePrimary }
+                  }}
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td style={{ alignContent: 'start' }}><Label>Body features:</Label></td>
+              <td>
+                <Stack
+                  horizontal wrap
+                  verticalAlign='center'
+                  tokens={{ childrenGap: '2px 8px' }}
+                  style={{ width: 340, padding: 0, marginBottom: 8, marginRight: 4 }}
+                >
+                  {Object.values(BodyFeature).map(f => <Checkbox
+                    key={`bf${f}`}
+                    checked={bodyFeatures.has(f)}
+                    label={mapName[f]}
+                    onChange={(_ev, checked) => {
+                      const { bodyFeatures } = this.state;
+                      if (checked) {
+                        bodyFeatures.add(f);
+                      } else {
+                        bodyFeatures.delete(f);
+                      }
+                      this.setState({ bodyFeatures });
+                    }}
+                  />)}
+                </Stack>
+              </td>
+            </tr>
+
+            <tr>
+              <td style={{ alignContent: 'start' }}><Label>System features:</Label></td>
+              <td>
+                <Stack
+                  horizontal wrap
+                  verticalAlign='center'
+                  tokens={{ childrenGap: '2px 8px' }}
+                  style={{ width: 340, padding: 0, marginBottom: 8, marginRight: 4 }}
+                >
+                  {Object.values(SystemFeature).map(f => <Checkbox
+                    key={`sf${f}`}
+                    checked={systemFeatures.has(f)}
+                    label={mapName[f]}
+                    onChange={(_ev, checked) => {
+                      const { systemFeatures } = this.state;
+                      if (checked) {
+                        systemFeatures.add(f);
+                      } else {
+                        systemFeatures.delete(f);
+                      }
+                      this.setState({ systemFeatures });
+                    }}
+                  />)}
+                </Stack>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Label style={{ color: this.props.fieldHighlight === 'reserveLevel' ? appTheme.palette.yellowDark : undefined }}>
+                  System reserves:
+                  {this.props.fieldHighlight === 'reserveLevel' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+                </Label>
+              </td>
+              <td>
+                <Dropdown
+                  openOnKeyboardFocus
+                  placeholder='...'
+                  options={Object.entries(mapReserveLevel).map(([key, text]) => ({ key, text }))}
+                  selectedKey={this.state.editProject.reserveLevel}
+                  onChange={(_, o) => this.updateProjData('reserveLevel', o?.key)}
+                  styles={{
+                    title: { height: 22, lineHeight: 22 },
+                    caretDownWrapper: { height: 22, lineHeight: 22 },
+                    callout: { border: '1px solid ' + appTheme.palette.themePrimary }
+                  }}
+                />
+              </td>
+            </tr>
+          </>}
 
         </tbody>
       </table>
@@ -204,7 +395,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
   }
 
   onSaveChanges = async () => {
-    const { editProject } = this.state;
+    const { editProject, bodyFeatures, systemFeatures } = this.state;
 
     if (!editProject.buildId) {
       return this.onCreateNew();
@@ -230,6 +421,18 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
       return map;
     }, {} as Record<string, any>)
     deltaProj.buildId = this.props.proj.buildId;
+
+    const newBodyFeatures = Array.from(bodyFeatures) ?? [];
+    const oldBodyFeatures = JSON.stringify(this.props.proj.bodyFeatures ?? []);
+    if (JSON.stringify(newBodyFeatures) !== oldBodyFeatures) {
+      deltaProj.bodyFeatures = newBodyFeatures;
+    }
+
+    const newSystemFeatures = Array.from(systemFeatures) ?? [];
+    const oldSystemFeatures = JSON.stringify(this.props.proj.systemFeatures ?? []);
+    if (JSON.stringify(newSystemFeatures) !== oldSystemFeatures) {
+      deltaProj.systemFeatures = newSystemFeatures;
+    }
 
     // stop here if nothing changed
     if (Object.keys(deltaProj).length === 1) {

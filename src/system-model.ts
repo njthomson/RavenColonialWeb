@@ -1,6 +1,6 @@
 import * as api from './api';
 import { canReceiveLinks, getSiteType, SiteType, SysEffects, sysEffects } from "./site-data";
-import { ProjectRef } from "./types";
+import { BodyFeature, ProjectRef, SystemFeature } from "./types";
 
 export const unknown = 'Unknown';
 
@@ -27,6 +27,7 @@ export const fetchSysMap = async (systemName: string): Promise<SysMap> => {
 
 export interface SysMap {
   systemName: string;
+  systemAddress: number;
   architect?: string;
   primaryPort?: ProjectRef;
   bodies: Record<string, BodyMap>;
@@ -58,11 +59,30 @@ export interface SiteMap extends ProjectRef {
   type: SiteType;
   links?: SiteLinks;
   parentLink?: SiteMap;
+  body?: BodyMap;
+}
+
+const colonyBuildTypes = [
+  "no_truss", "dual_truss", "quad_truss", "coriolis", "no truss", // T2 starports
+  "ocellus", "apollo", "artemis", // T3 starports
+  "plutus", "vesta" // T1 outposts
+];
+
+interface EconomyMap {
+  agriculture: number;
+  extraction: number;
+  hightech: number;
+  industrial: number;
+  military: number;
+  refinery: number;
+  terraforming: number;
+  tourism: number;
 }
 
 export interface SiteLinks {
   economies: Record<string, EconomyLink>
   strongSites: SiteMap[];
+  weakSites: SiteMap[];
 }
 
 export interface EconomyLink {
@@ -81,10 +101,24 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean,
   // calc sum effects from all sites
   const sumEffects = sumSystemEffects(sysMap.allSites, useIncomplete);
 
-  // per body, calc strong/weak links
+  // determine primary ports for each body
   const allBodies = Object.values(sysMap.bodies);
   for (const body of allBodies) {
+    // TODO: if we have a t3 on the surface - we need to funnel all surface links to that first
+    body.surfacePrimary = getBodyPrimaryPort(body.surface, useIncomplete);
+    body.orbitalPrimary = getBodyPrimaryPort(!!body.surfacePrimary ? body.orbital : body.sites, useIncomplete);
+  }
+
+  // per body, calc strong/weak links
+  for (const body of allBodies) {
     calcBodyLinks(allBodies, body, useIncomplete);
+  }
+
+  // not quite ready yet
+  if (Date.now() < 0) {
+    sysMap.allSites
+      .filter(s => colonyBuildTypes.includes(s.buildType))
+      .forEach(s => calcColonyTypeEconomy(s, useIncomplete));
   }
 
   const finalMap = {
@@ -96,12 +130,14 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean,
   if (!noCache) {
     sysMapCache[finalMap.systemName] = finalMap;
   }
-  return finalMap
+  return finalMap;
 };
 
 const initializeSysMap = (projects: ProjectRef[]) => {
 
-  let systemName = projects[0]?.systemName;
+  let systemName = projects.find(s => s.systemName?.length > 0)?.systemName!;
+  let systemAddress = projects.find(s => s.systemAddress > 0)?.systemAddress ?? 0;
+
   let architect = '';
   let primaryPort = undefined;
   let allSites: SiteMap[] = [];
@@ -118,7 +154,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
     }
 
     // create site entry and add to bodies surface/orbital collection
-    const site: SiteMap = { ...p, type: getSiteType(p.buildType) };
+    const site: SiteMap = { ...p, type: getSiteType(p.buildType), body };
     allSites.push(site);
     body.sites.push(site);
 
@@ -154,7 +190,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
 
   const countSites = projects.length;
   const sysMap = {
-    systemName, architect, bodies, primaryPort, allSites, countActive, countSites,
+    systemName, systemAddress, architect, bodies, primaryPort, allSites, countActive, countSites,
   };
   return sysMap;
 };
@@ -163,11 +199,15 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
 
   const mapEconomies: Record<string, number> = {};
   const sumEffects: SysEffects = {};
-  const tierPoints: [number, number] = [0, 0];
+  const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
 
-  for (const site of allSites!) {
+  const orderedByAge = allSites.sort((a, b) => (a.timeCompleted ?? '')?.localeCompare(b.timeCompleted ?? ''));
+
+  let taxCount = -2;
+  for (const site of orderedByAge) {
     // skip incomplete sites, unless ...
     if (!site.complete && !useIncomplete) continue;
+    // TODO: sites under construction have already spent the needed costs, keep those but skip the "gives"
 
     // calc total system economic influence
     if (site.type.inf !== 'none') {
@@ -178,16 +218,30 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
     for (const key of sysEffects) {
       const effect = site.type.effects[key] ?? 0;
       if (effect === 0) continue;
-
       sumEffects[key] = (sumEffects[key] ?? 0) + effect;
     }
 
     // sum system tier points
-    if (!site.isPrimaryPort && site.type.needs.count > 0 && site.type.needs.tier > 1) {
-      tierPoints[site.type.needs.tier - 2] -= site.type.needs.count
-    }
     if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
-      tierPoints[site.type.gives.tier - 2] += site.type.gives.count
+      const tierName = site.type.gives.tier === 2 ? 'tier2' : 'tier3';
+      tierPoints[tierName] += site.type.gives.count;
+    }
+
+    if (!site.isPrimaryPort && site.type.needs.count > 0 && site.type.needs.tier > 1) {
+      let needCount = site.type.needs.count;
+      if (site.type.buildClass === 'starport' && site.type.tier > 1) {
+        taxCount++;
+        if (taxCount > 0) {
+          if (site.type.tier === 3) {
+            needCount *= taxCount + 1;
+          } else {
+            needCount += 2 * taxCount;
+          }
+        }
+      }
+
+      const tierName = site.type.needs.tier === 2 ? 'tier2' : 'tier3';
+      tierPoints[tierName] -= needCount;
     }
   }
 
@@ -196,11 +250,10 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
   const economies: Record<string, number> = {};
   sorted.forEach(key => economies[key] = mapEconomies[key]);
 
-  const [tier2, tier3] = tierPoints;
   return {
     economies,
     sumEffects,
-    tierPoints: { tier2, tier3 }
+    tierPoints,
   };
 }
 
@@ -209,31 +262,23 @@ const getBodyPrimaryPort = (sites: SiteMap[], useIncomplete: boolean): SiteMap |
   if (!useIncomplete) {
     sites = sites.filter(s => s.complete);
   }
+  const orderedByAge = sites.sort((a, b) => (a.timeCompleted ?? '')?.localeCompare(b.timeCompleted ?? ''));
 
   // do we have any Tier 3's ?
-  const t3s = sites.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
-  if (t3s.length === 1) {
-    return t3s[0];
-  } else if (t3s.length > 1) {
-    console.warn('TODO: use the oldest T3');
+  const t3s = orderedByAge.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
+  if (t3s.length > 0) {
     return t3s[0];
   }
 
   // do we have any Tier 2's ?
-  const t2s = sites.filter(s => s.type.tier === 2 && canReceiveLinks(s.type));
-  if (t2s.length === 1) {
-    return t2s[0];
-  } else if (t2s.length > 1) {
-    console.warn('TODO: use the oldest T2');
+  const t2s = orderedByAge.filter(s => s.type.tier === 2 && canReceiveLinks(s.type));
+  if (t2s.length > 0) {
     return t2s[0];
   }
 
   // do we have any Tier 1's ?
-  const t1s = sites.filter(s => s.type.tier === 1 && canReceiveLinks(s.type));
-  if (t1s.length === 1) {
-    return t1s[0];
-  } else if (t1s.length > 1) {
-    console.warn('TODO: use the oldest T1');
+  const t1s = orderedByAge.filter(s => s.type.tier === 1 && canReceiveLinks(s.type));
+  if (t1s.length > 0) {
     return t1s[0];
   }
 
@@ -242,10 +287,6 @@ const getBodyPrimaryPort = (sites: SiteMap[], useIncomplete: boolean): SiteMap |
 }
 
 const calcBodyLinks = (allBodies: BodyMap[], body: BodyMap, useIncomplete: boolean) => {
-
-  // TODO: if we have a t3 on the surface - we need to funnel all surface links to that first
-  body.surfacePrimary = getBodyPrimaryPort(body.surface, useIncomplete);
-  body.orbitalPrimary = getBodyPrimaryPort(!!body.surfacePrimary ? body.orbital : body.sites, useIncomplete);
 
   // exit early if no primary port for this body
   if (!body.surfacePrimary && !body.orbitalPrimary) { return; }
@@ -281,16 +322,17 @@ const calcSiteLinks = (allBodies: BodyMap[], body: BodyMap, primarySite: SiteMap
     map[econ].strong += 1;
   }
 
-  // weak links are everything around any other body
-  Object.values(allBodies)
+  // weak links are everything around any other body, except the primary for that body?
+  const weakSites = Object.values(allBodies)
     .filter(b => b !== body)
     .flatMap(b => b.sites)
-    .filter(s => s.type.inf !== 'none' && (s.complete || useIncomplete))
-    .map(s => s.type.inf)
-    .forEach(econ => {
-      if (!map[econ]) { map[econ] = { strong: 0, weak: 0 }; }
-      map[econ].weak += 1;
-    });
+    .filter(s => s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (s.complete || useIncomplete));
+
+  for (const site of weakSites) {
+    const inf = site.type.inf;
+    if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
+    map[inf].weak += 1;
+  }
 
   // sort by strong, then weak count
   const sorted = Object.keys(map).sort((ka, kb) => {
@@ -302,12 +344,237 @@ const calcSiteLinks = (allBodies: BodyMap[], body: BodyMap, primarySite: SiteMap
       return b.strong - a.strong;
     }
   });
+
   const economies: Record<string, EconomyLink> = {};
   sorted.forEach(key => economies[key] = map[key]);
 
   primarySite.links = {
     economies,
     strongSites,
+    weakSites,
   };
 }
 
+const calcColonyTypeEconomy = (site: SiteMap, useIncomplete: boolean): void => {
+  if (!site.bodyType) { console.warn(`Site ${site.buildName} has no body type!`); return; }
+  // TODO: finish this ...
+  var foo = new ColonyEconomy(site, useIncomplete);
+  console.log(`** ${site.buildName}:\n`, foo);
+  console.log(`** ${site.buildName}:\n`, JSON.stringify(foo.getEconomies(), null, 2));
+}
+
+class ColonyEconomy {
+  useIncomplete: boolean;
+  site: SiteMap;
+
+  constructor(site: SiteMap, useIncomplete: boolean) {
+    this.site = site;
+    this.useIncomplete = useIncomplete;
+  }
+
+  public getEconomies(): EconomyMap {
+    const map = {
+      agriculture: 0,
+      extraction: 0,
+      hightech: 0,
+      industrial: 0,
+      military: 0,
+      refinery: 0,
+      terraforming: 0,
+      tourism: 0,
+    };
+
+    this.applyBodyType(map);
+    this.applyBodyFeatures(map);
+    this.applyStrongLinks(map);
+    this.applyBuffs(map);
+    this.applyWeakLinks(map);
+
+    return map;
+  }
+
+  private applyBodyType(map: EconomyMap) {
+    if (!this.site.bodyType) { return; }
+
+    switch (this.site.bodyType) {
+      case 'remnant':
+        map.hightech += 1;
+        map.tourism += 1;
+        break;
+      case 'star':
+        map.military += 1;
+        break;
+      case 'elw':
+        map.hightech += 1;
+        map.tourism += 1;
+        map.military += 1;
+        map.agriculture += 1;
+        break;
+      case 'ww':
+        map.tourism += 1;
+        map.agriculture += 1;
+        break;
+      case 'ammonia':
+        map.hightech += 1;
+        map.tourism += 1;
+        break;
+      case 'gg':
+        map.hightech += 1;
+        map.industrial += 1;
+        break;
+      case 'hmc':
+        map.extraction += 1;
+        break;
+      case 'rockyice':
+        map.industrial += 1;
+        map.refinery += 1;
+        break;
+      case 'rocky':
+        map.refinery += 1;
+        break;
+      case 'icy':
+        map.industrial += 1;
+        break;
+      // case 'asteroid':
+      //   // TODO ...
+      //   break;
+    }
+  }
+
+  private applyBodyFeatures(map: EconomyMap) {
+    if (!this.site.bodyFeatures) { return; }
+
+    // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
+    if (this.site.bodyFeatures.includes(BodyFeature.bio)) {
+      map.agriculture += 1;
+      map.terraforming += 1;
+    }
+    // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
+    if (this.site.bodyFeatures.includes(BodyFeature.geo)) {
+      map.industrial += 1;
+      map.extraction += 1;
+    }
+    // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
+    if (this.site.bodyFeatures.includes(BodyFeature.rings)) {
+      map.extraction += 1;
+      // TODO: asteroid belt?
+    }
+  }
+
+  private applyStrongLinks(map: EconomyMap) {
+    if (!this.site.links?.strongSites) { return; }
+
+    for (let site of this.site.links.strongSites) {
+      // skip incomplete sites ?
+      if (!site.complete && !this.useIncomplete) { continue; }
+      const inf = site.type.inf;
+      if (junkEconomies.includes(inf)) { continue; }
+
+      // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
+      if (site.type.tier === 2) {
+        if (site.type.inf in map) {
+          map[site.type.inf as keyof EconomyMap] += 0.8;
+        } else {
+          console.warn(`Unknown economy '${site.type.inf}' for site ${site.buildName}`);
+        }
+      }
+
+      // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
+      if (site.type.tier === 1) {
+        if (site.type.inf in map) {
+          map[site.type.inf as keyof EconomyMap] += 0.4;
+        } else {
+          console.warn(`Unknown economy '${site.type.inf}' for site ${site.buildName}`);
+        }
+      }
+    }
+  }
+
+  private applyBuffs(map: EconomyMap) {
+
+    // If the System has Major or Pristine Resources (+0.40) for Industrial, Extraction and Refinery
+    if (this.site.reserveLevel === 'major' || this.site.reserveLevel === 'pristine') {
+      if (map.industrial > 0) { map.industrial += 0.4; }
+      if (map.extraction > 0) { map.extraction += 0.4; }
+      if (map.refinery > 0) { map.refinery += 0.4; }
+    }
+
+    // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
+    if (this.site.systemFeatures?.some(sf => [SystemFeature.blackHole, SystemFeature.neutronStar, SystemFeature.whiteDwarf].includes(sf))) {
+      if (map.tourism > 0) { map.tourism += 0.4; }
+    }
+
+    // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
+    if (this.site.bodyFeatures?.includes(BodyFeature.bio)) {
+      if (map.hightech > 0) { map.hightech += 0.4; }
+      if (map.tourism > 0) { map.tourism += 0.4; }
+      if (map.agriculture > 0) { map.agriculture += 0.4; }
+    }
+    // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
+    if (this.site.bodyFeatures?.includes(BodyFeature.geo)) {
+      if (map.hightech > 0) { map.hightech += 0.4; }
+      if (map.tourism > 0) { map.tourism += 0.4; }
+    }
+    // If the Body is Terraformable (+0.40) for Agriculture
+    if (this.site.bodyFeatures?.includes(BodyFeature.terraformable)) {
+      if (map.agriculture > 0) { map.agriculture += 0.4; }
+    }
+    // If the Body has Volcanism (+0.40) for Extraction - the type of Volcanism doesn't matter
+    if (this.site.bodyFeatures?.includes(BodyFeature.volcanism)) {
+      if (map.extraction > 0) { map.extraction += 0.4; }
+    }
+    // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
+    if (this.site.bodyType === 'elw') {
+      if (map.hightech > 0) { map.hightech += 0.4; }
+      if (map.tourism > 0) { map.tourism += 0.4; }
+      if (map.agriculture > 0) { map.agriculture += 0.4; }
+    }
+    // If the Body is a Water World (+0.40) for Tourism and Agriculture
+    if (this.site.bodyType === 'ww') {
+      if (map.tourism > 0) { map.tourism += 0.4; }
+      if (map.agriculture > 0) { map.agriculture += 0.4; }
+    }
+    // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
+    if (this.site.bodyType === 'ammonia') {
+      if (map.hightech > 0) { map.hightech += 0.4; }
+      if (map.tourism > 0) { map.tourism += 0.4; }
+    }
+
+    // If the System has Low or Depleted Resources (-0.40) for Industrial, Extraction and Refinery
+    if (this.site.reserveLevel === 'low' || this.site.reserveLevel === 'depleted') {
+      if (map.industrial > 0) { map.industrial -= 0.4; }
+      if (map.extraction > 0) { map.extraction -= 0.4; }
+    }
+    // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
+    if (this.site.bodyType === 'icy') {
+      if (map.agriculture > 0) { map.agriculture -= 0.4; }
+    }
+    // If the Body is Tidally Locked (-0.40) for Agriculture
+    if (this.site.bodyFeatures?.includes(BodyFeature.tidal)) {
+      if (map.agriculture > 0) { map.agriculture -= 0.4; }
+    }
+  }
+
+  private applyWeakLinks(map: EconomyMap) {
+    if (!this.site.links?.weakSites) { return; }
+
+    for (let site of this.site.links.weakSites) {
+      // skip incomplete sites ?
+      if (!site.complete && !this.useIncomplete) { continue; }
+      // skip primary port from the other body
+      if (site === site.body?.orbitalPrimary) { continue; }
+
+      const inf = site.type.inf;
+      if (junkEconomies.includes(inf)) { continue; }
+
+      // For Every Facility that effects a given Economy within the System that hasn't already been counted above (+0.05) - These are Weak Links (the Tier does not matter)​
+      if (site.type.inf in map) {
+        map[site.type.inf as keyof EconomyMap] += 0.05;
+      } else {
+        console.warn(`Unknown economy '${site.type.inf}' for site ${site.buildName}`);
+      }
+    }
+  }
+}
+
+const junkEconomies = ['none'];

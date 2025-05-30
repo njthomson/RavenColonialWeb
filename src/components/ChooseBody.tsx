@@ -22,6 +22,9 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
   static cache: Record<string, ResponseEdsmSystemBodies> = {};
 
   static async prepCache(systemName: string) {
+    // no need to fetch if already cached
+    if (systemName in ChooseBody.cache) return;
+
     const system = await api.edsm.getSystemBodies(systemName);
     ChooseBody.cache[systemName] = system;
   }

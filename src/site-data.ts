@@ -112,6 +112,18 @@ export const mapName: Record<string, string> = {
   relay: 'a relay installation',
   settlementBio: 'a bio research settlement',
   settlementTourism: 'a tourism settlement',
+
+  // body and system feature names
+  bio: 'Bio signals',
+  geo: 'Geo signals',
+  rings: 'Rings',
+  volcanism: 'Volcanism',
+  terraformable: 'Terraformable',
+  tidal: 'Tidally locked',
+
+  blackHole: 'Black Hole',
+  whiteDwarf: 'White Dwarf',
+  neutronStar: 'Neutron Star',
 };
 
 export interface SysEffects {

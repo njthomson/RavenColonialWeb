@@ -14,6 +14,7 @@ import { ChooseBody } from '../../components/ChooseBody';
 import { EditProject } from '../../components/EditProject/EditProject';
 import { BuildEffects } from '../../components/BuildEffects';
 import { store } from '../../local-storage';
+import { FixFromCanonn } from '../../components/FixFromCanonn';
 
 interface SystemViewProps {
   systemName: string;
@@ -21,11 +22,14 @@ interface SystemViewProps {
 }
 
 interface SystemViewState extends SysMap {
+  systemAddress: number;
   showPortLinks?: SiteMap;
   showInlineMarketLinks?: boolean;
   editMockSite?: SiteMap;
   editRealSite?: SiteMap;
+  editFieldHighlight?: string;
   useIncomplete: boolean;
+  showFixMissingTypes?: boolean;
 }
 
 export class SystemView extends Component<SystemViewProps, SystemViewState> {
@@ -217,30 +221,76 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   }
 
   renderSystemValidationWarnings() {
-    const { tierPoints, bodies, primaryPort } = this.state;
+    const { tierPoints, bodies, primaryPort, allSites } = this.state;
 
     const validations = [];
+
+    const getMiniLink = (s: SiteMap, fieldHighlight: string) => {
+      return <div
+        style={{ marginLeft: 10 }}
+      >
+        <ProjectLink proj={s} noSys noBold noType iconName={s.complete ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />
+        <IconButton
+          className={`btn ${cn.btn}`}
+          iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
+          style={{ width: 14, height: 14, marginLeft: 4 }}
+          onClick={() => this.setState({ editRealSite: { ...s }, editFieldHighlight: fieldHighlight })}
+        />
+      </div>;
+    };
 
     if (!primaryPort) {
       validations.push(<div>No station has been marked as the system primary port <Icon className='icon-inline' iconName='CrownSolid' style={{ fontWeight: 'bold' }} /></div>);
     }
 
+    if (!allSites[0].reserveLevel) {
+      validations.push(<div>
+        » System reserve level unknown - set in <b>Advanced</b> on any site
+        <IconButton
+          className={`btn ${cn.btn}`}
+          iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
+          style={{ width: 14, height: 14, marginLeft: 4 }}
+          onClick={() => this.setState({ editRealSite: { ...allSites[0] }, editFieldHighlight: 'reserveLevel' })}
+        />
+      </div>);
+    }
+
     if (tierPoints.tier2 < 0) {
-      validations.push(<div>System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
+      validations.push(<div>» System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
     }
     if (tierPoints.tier3 < 0) {
-      validations.push(<div>System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
+      validations.push(<div>» System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
     }
 
     if (unknown in bodies) {
-      validations.push(<div>{bodies.Unknown.sites.length} sites on unknown body</div>);
+      validations.push(<div>
+        » There are {bodies.Unknown.sites.length} site(s) on unknown bodies:
+        <br />
+        {bodies.Unknown.sites.map(s => getMiniLink(s, 'bodyName'))}
+      </div>);
+    }
+
+    const countTaxable = allSites.filter(s => s.type.buildClass === 'starport' && s.type.tier > 1);
+    const taxableMissingDate = countTaxable.filter(s => !s.timeCompleted);
+    if (countTaxable.length > 3 && taxableMissingDate.length > 0) {
+      validations.push(<div>
+        » Set <b>Date Complete</b> on the following to ensure tier points are scaled correctly:
+        <br />
+        {taxableMissingDate.map(s => getMiniLink(s, 'timeCompleted'))}
+      </div>);
     }
 
     // TODO: check for missing preReq's?
 
-    if (validations.length === 0) return <br />;
+    // do we have any sites with body name but not type?
+    const missingType = this.state.allSites.filter(s => !s.bodyType && s.bodyName && !s.isMock);
+    const showFixMissingTypes = this.state.systemAddress > 0 && missingType.length > 0;
 
-    return <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0' } }}> {validations}</MessageBar >;
+    return <>
+      {showFixMissingTypes && <FixFromCanonn sites={this.state.allSites} />}
+      {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0', maxWidth: 600 } }}> {validations}</MessageBar>}
+      <br />
+    </>;
   }
 
   // renderSysEffects() {
@@ -293,14 +343,14 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       {!!body.orbital.length && body.orbital.map(site => this.renderSite(body, site))}
       {!body.orbital.length && <>
-        <span key={`b${body.name}-noo`} style={{ color: appTheme.palette.neutralTertiaryAlt }}><Icon iconName='ProgressRingDots' /> No orbital sites</span>
+        <span key={`b${body.name}-noo`} style={{ color: 'grey', fontSize: 12 }}><Icon iconName='ProgressRingDots' /> No orbital sites</span>
       </>}
 
       <div style={{ margin: '4px 40px 4px -10px', height: 1, borderBottom: `1px dashed ${appTheme.palette.neutralTertiaryAlt}` }}></div>
 
       {!!body.surface.length && body.surface.map(site => this.renderSite(body, site))}
       {!body.surface.length && <>
-        <span key={`b${body.name}-nos`} style={{ color: appTheme.palette.neutralTertiaryAlt }}><Icon iconName='GlobeFavorite' /> No surface sites</span>
+        <span key={`b${body.name}-nos`} style={{ color: 'grey', fontSize: 12 }}><Icon iconName='GlobeFavorite' /> No surface sites</span>
       </>}
 
     </li>;
@@ -376,6 +426,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       buildType: SystemView.lastBuildType,
       type: getSiteType(SystemView.lastBuildType),
+      timeCompleted: new Date().toISOString(),
       buildName: `New #${++SystemView.countNew}`,
       bodyName: this.lastBodyName,
 
@@ -522,22 +573,33 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   };
 
   renderEditRealSite() {
-    const { editRealSite, useIncomplete } = this.state;
+    const { editRealSite, useIncomplete, editFieldHighlight } = this.state;
     if (!editRealSite) return null;
+
+    const showAdvanced = editFieldHighlight === 'reserveLevel';
 
     return <EditProject
       proj={editRealSite}
+      showAdvanced={showAdvanced}
+      fieldHighlight={editFieldHighlight}
       onChange={updatedProj => {
 
         // remove old instance of the site, before adding it back
         const newAllSites: ProjectRef[] = this.state.allSites.filter(s => s.buildId !== updatedProj?.buildId);
         if (updatedProj) {
+          // and apply system level fields to all sites
+          newAllSites.forEach(s => {
+            s.systemFeatures = updatedProj.systemFeatures;
+            s.reserveLevel = updatedProj.reserveLevel;
+          });
+
           newAllSites.push(updatedProj);
         }
 
         this.setState({
           ...buildSystemModel(newAllSites, useIncomplete),
-          editRealSite: undefined
+          editRealSite: undefined,
+          editFieldHighlight: undefined,
         });
       }}
     />;

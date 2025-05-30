@@ -3,12 +3,13 @@ import { Callout, Icon } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme } from "../theme";
 
-export const CalloutMsg: FunctionComponent<{ id: string, msg: string; }> = (props) => {
+export const CalloutMsg: FunctionComponent<{ id: string, msg: string | JSX.Element; marginLeft?: number; }> = (props) => {
   const [showBubble, setShowBubble] = useState(false);
   return <>
     <Icon
       className='small'
       iconName='Info'
+      style={{ marginLeft: props.marginLeft }}
       onClick={() => setShowBubble(!showBubble)}
     />
 

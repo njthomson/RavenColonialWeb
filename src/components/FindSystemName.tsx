@@ -98,7 +98,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
           }}
           onKeyUp={(ev) => {
             if (ev.key === 'Enter' && this.state.matches?.length === 1) { this.props.onMatch(this.state.matches[0].text); }
-            if (ev.key === 'Escape') { this.setState({ searchText: '' }) }
+            if (ev.key === 'Escape') { this.setState({ searchText: '' }); }
           }}
         />
 

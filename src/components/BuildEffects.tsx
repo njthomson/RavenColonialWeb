@@ -33,12 +33,12 @@ export const BuildEffects: FunctionComponent<{ proj: ProjectRef, noTitle?: boole
       </tr>
     });
 
-  let needs = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
+  let needs = <span style={{ color: 'grey' }}>None</span>;
   if (st.needs.count > 0) {
     needs = <span><TierPoints tier={st.needs.tier} count={st.needs.count} /></span>;
   }
 
-  let gives = <span style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>;
+  let gives = <span style={{ color: 'grey' }}>None</span>;
   if (st.gives.count > 0) {
     gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
   }

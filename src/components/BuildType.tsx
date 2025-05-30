@@ -150,6 +150,9 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
         }}
         onDismiss={() => this.setState({ showList: false })}
+        onKeyDown={(ev) => {
+          if (ev.key === 'Escape') { this.setState({ showList: false }); }
+        }}
       >
         <Pivot
           selectedKey={orbital ? 'orbital' : 'surface'}

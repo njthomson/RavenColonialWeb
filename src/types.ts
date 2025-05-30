@@ -51,9 +51,66 @@ export interface ProjectRef extends ProjectRefComplete {
   factionName?: string;
   discordLink?: string;
   timeDue?: string;
+  timeCompleted?: string;
   maxNeed: number;
   notes?: string;
+
+  bodyType?: BodyType;
+  bodyFeatures?: BodyFeature[];
+  systemFeatures?: SystemFeature[];
+  reserveLevel?: string;
 }
+
+export enum BodyFeature {
+  bio = 'bio',
+  geo = 'geo',
+  volcanism = 'volcanism',
+  rings = 'rings',
+  terraformable = 'terraformable',
+  tidal = 'tidal',
+}
+
+export enum SystemFeature {
+  blackHole = 'blackHole',
+  whiteDwarf = 'whiteDwarf',
+  neutronStar = 'neutronStar',
+}
+
+export type BodyType =
+  | 'remnant'
+  | 'star'
+  | 'elw'
+  | 'ww'
+  | 'ammonia'
+  | 'gg'
+  | 'hmc' // 'High Metal Content' OR 'Metal Rich'
+  | 'rockyice'
+  | 'rocky'
+  | 'icy'
+  // | 'asteroid'
+  ;
+
+export const mapBodyTypeNames: Record<BodyType, string> = {
+  'remnant': 'Black hole, white dwarf or neutron star',
+  'star': 'Any other star type',
+  'elw': 'Earth-Like World',
+  'ww': 'Water World',
+  'ammonia': 'Ammonia World',
+  'gg': 'Gas Giant',
+  'hmc': 'High Metal Content or Metal-rich body',
+  'rockyice': 'Rocky Ice World',
+  'rocky': 'Rocky body',
+  'icy': 'Icy body',
+  // 'asteroid': 'Asteroid Belt',
+};
+
+export const mapReserveLevel: Record<string, string> = {
+  'depleted': 'Depleted',
+  'low': 'Low',
+  'common': 'Common',
+  'major': 'Major',
+  'pristine': 'Pristine',
+};
 
 export interface CreateProject extends ProjectRef {
   commodities: Record<string, number>;
