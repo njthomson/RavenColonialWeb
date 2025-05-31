@@ -229,7 +229,7 @@ export class App extends Component<AppProps, AppState> {
           Do you like this site? Fantastic!
           <br />
           <br />
-          If you would like to help with server costs or buying fresh coffee, donations may be made through <Link href='https://paypal.me/SrvSurvey' target='_blank'>PayPal</Link>.
+          If you would like to help with server costs or buying fresh coffee, donations may be made through <Link href='https://paypal.me/SrvSurvey' target='_blank'>PayPal</Link> or <Link href='https://www.patreon.com/SrvSurvey' target='_blank'>Patreon</Link>.
           <br />
           <br />
           Thank you 😎

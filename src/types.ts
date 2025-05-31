@@ -58,8 +58,10 @@ export interface ProjectRef extends ProjectRefComplete {
   bodyType?: BodyType;
   bodyFeatures?: BodyFeature[];
   systemFeatures?: SystemFeature[];
-  reserveLevel?: string;
+  reserveLevel?: ReserveLevel;
 }
+
+export type ReserveLevel = 'depleted' | 'low' | 'common' | 'major' | 'pristine';
 
 export enum BodyFeature {
   bio = 'bio',

@@ -1,4 +1,4 @@
-import { ResponseEdsmStations, ResponseEdsmSystem, ResponseEdsmSystemBodies, ResponseEdsmSystemFactions, ResponseEdsmTypeAhead } from "../types";
+import { ReserveLevel, ResponseEdsmStations, ResponseEdsmSystem, ResponseEdsmSystemBodies, ResponseEdsmSystemFactions, ResponseEdsmTypeAhead } from "../types";
 import { callSvcAPI } from "./api-util";
 
 /** Project APIs */
@@ -67,7 +67,7 @@ interface CanonnBioStatsResponseBody {
     signals: Record<string, number>;
     geology?: string[];
   };
-  reserveLevel?: string;
+  reserveLevel?: ReserveLevel;
   volcanismType?: string;
   rings?: {
     innerRadius: number;

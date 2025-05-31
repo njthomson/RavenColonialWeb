@@ -9,6 +9,8 @@ export type Economy =
   | 'none'
   | 'tourism'
   | 'refinery'
+  | 'colony'
+  | 'terraforming'
   ;
 
 export type BuildClass =
@@ -197,8 +199,8 @@ export const getBuildTypeDisplayName = (buildType: string | undefined) => {
 
 export const canReceiveLinks = (type: SiteType): boolean => {
 
-  // star ports and orbital outposts can receive links
-  if (type.buildClass === 'starport' || type.buildClass === 'planetary') {
+  // star ports and orbital outposts can receive links (but not Asteroid bases?)
+  if (type.buildClass === 'planetary' || (type.buildClass === 'starport' /*&& type.subTypes[0] !== 'asteroid'*/)) {
     return true;
   } else if (type.buildClass === 'outpost') {
     return true;
@@ -242,7 +244,7 @@ export const siteTypes: SiteType[] = [
     "orbital": true,
     "needs": { tier: 2, count: 3 },
     "gives": { tier: 3, count: 1 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 2, sol: 3, dev: 3 }
   },
   {
@@ -266,7 +268,7 @@ export const siteTypes: SiteType[] = [
     "orbital": true,
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 5, mpop: 1, sec: -3, wealth: 8, tech: 6, sol: 5, dev: 9 }
   },
   {
@@ -278,7 +280,7 @@ export const siteTypes: SiteType[] = [
     "orbital": true,
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 5, mpop: 1, sec: -3, wealth: 8, tech: 7, sol: 5, dev: 9 }
   },
   {
@@ -290,7 +292,7 @@ export const siteTypes: SiteType[] = [
     "orbital": true,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 3, tech: 0, sol: 5, dev: 0 }
   },
   {
@@ -326,7 +328,7 @@ export const siteTypes: SiteType[] = [
     "orbital": true,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 1, tech: 0, sol: 2, dev: 1 }
   },
   {
@@ -521,7 +523,7 @@ export const siteTypes: SiteType[] = [
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 2, mpop: 1, sec: -2, wealth: 0, tech: 0, sol: 3, dev: 0 }
   },
   {
@@ -557,7 +559,7 @@ export const siteTypes: SiteType[] = [
     "orbital": false,
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
-    "inf": "none",
+    "inf": "colony",
     "effects": { pop: 10, mpop: 10, sec: -3, wealth: 5, tech: 5, sol: 7, dev: 10 }
   },
   {
