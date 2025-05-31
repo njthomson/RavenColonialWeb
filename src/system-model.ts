@@ -97,9 +97,6 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean,
   // group sites by their bodies, extract system and architect names
   const sysMap = initializeSysMap(projects);
 
-  // calc sum effects from all sites
-  const sumEffects = sumSystemEffects(sysMap.allSites, useIncomplete);
-
   // determine primary ports for each body
   const allBodies = Object.values(sysMap.bodies);
   for (const body of allBodies) {
@@ -112,6 +109,9 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean,
   for (const body of allBodies) {
     calcBodyLinks(allBodies, body, useIncomplete);
   }
+
+  // calc sum effects from all sites
+  const sumEffects = sumSystemEffects(sysMap.allSites, useIncomplete);
 
   const finalMap = {
     ...sysMap,
@@ -226,8 +226,12 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
     if (!site.complete && !useIncomplete) continue;
 
     // calc total system economic influence
-    if (site.type.inf !== 'none') {
-      mapEconomies[site.type.inf] = (mapEconomies[site.type.inf] ?? 0) + 1;
+    let inf = site.type.inf;
+    if (inf === 'colony') {
+      inf = calculateColonyEconomies(site, useIncomplete);
+    }
+    if (inf !== 'none') {
+      mapEconomies[inf] = (mapEconomies[inf] ?? 0) + 1;
     }
 
     // sum total system effects
@@ -376,7 +380,12 @@ const calcSiteEconomies = (site: SiteMap, useIncomplete: boolean) => {
   }
 
   for (const s of site.links.weakSites) {
-    const inf = s.type.inf;
+    let inf = s.type.inf;
+    if (inf === 'colony') {
+      // we need to calculate what the economy actually is for these
+      inf = calculateColonyEconomies(s, useIncomplete);
+      // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
+    }
     if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
     map[inf].weak += 1;
   }

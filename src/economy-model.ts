@@ -14,33 +14,35 @@ export interface EconomyMap {
 }
 
 export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) => {
-  const map: EconomyMap = {
-    agriculture: 0,
-    extraction: 0,
-    hightech: 0,
-    industrial: 0,
-    military: 0,
-    refinery: 0,
-    terraforming: 0,
-    tourism: 0,
-  };
+  if (!site.economies || !site.primaryEconomy) {
+    const map: EconomyMap = {
+      agriculture: 0,
+      extraction: 0,
+      hightech: 0,
+      industrial: 0,
+      military: 0,
+      refinery: 0,
+      terraforming: 0,
+      tourism: 0,
+    };
 
-  applyBodyType(map, site);
-  applyBodyFeatures(map, site);
-  applyStrongLinks(map, site, useIncomplete);
-  applyBuffs(map, site);
-  applyWeakLinks(map, site, useIncomplete);
+    applyBodyType(map, site);
+    applyBodyFeatures(map, site);
+    applyStrongLinks(map, site, useIncomplete);
+    applyBuffs(map, site);
+    applyWeakLinks(map, site, useIncomplete);
 
-  // sort to get the primary
-  const primaryEconomy = Object.keys(map).sort((a, b) => {
-    return map[b as keyof EconomyMap] - map[a as keyof EconomyMap];
-  })[0] as Economy;
+    // sort to get the primary
+    const primaryEconomy = Object.keys(map).sort((a, b) => {
+      return map[b as keyof EconomyMap] - map[a as keyof EconomyMap];
+    })[0] as Economy;
 
-  // assign these to the given site
-  site.economies = map;
-  site.primaryEconomy = primaryEconomy;
+    // assign these to the given site
+    site.economies = map;
+    site.primaryEconomy = primaryEconomy;
+  }
 
-  return primaryEconomy;
+  return site.primaryEconomy;
 };
 
 const applyBodyType = (map: EconomyMap, site: SiteMap) => {

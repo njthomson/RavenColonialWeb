@@ -195,7 +195,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     // let max = Math.max(...Object.values(sysInf));
     let econTxt = Object.keys(economies)
       // .filter(k => sysInf[k] === max)
-      .map(k => `${mapName[k]}: ${economies[k]}`)
+      .map(k => `${mapName[k] ?? k}: ${economies[k]}`)
       .join(', ');
 
     return <>
