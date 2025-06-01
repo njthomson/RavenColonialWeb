@@ -242,7 +242,13 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
           className={`btn ${cn.btn}`}
           iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
           style={{ width: 14, height: 14, marginLeft: 4 }}
-          onClick={() => this.setState({ editRealSite: { ...s }, editFieldHighlight: fieldHighlight })}
+          onClick={() => {
+            if (s.isMock) {
+              this.setState({ editMockSite: { ...s } });
+            } else {
+              this.setState({ editRealSite: { ...s }, editFieldHighlight: 'timeCompleted' });
+            }
+          }}
         />
       </div>;
     };
@@ -254,7 +260,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     if (!allSites[0]?.reserveLevel) {
       validations.push(<div>
         » System reserve level unknown - set in <b>Advanced</b> on any site
-        {!!allSites[0] && <IconButton
+        {!!allSites[0] && !allSites[0].isMock && <IconButton
           className={`btn ${cn.btn}`}
           iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
           style={{ width: 14, height: 14, marginLeft: 4 }}
