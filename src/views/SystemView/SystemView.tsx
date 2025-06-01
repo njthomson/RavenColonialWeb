@@ -251,7 +251,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       validations.push(<div>No station has been marked as the system primary port <Icon className='icon-inline' iconName='CrownSolid' style={{ fontWeight: 'bold' }} /></div>);
     }
 
-    if (!allSites[0].reserveLevel) {
+    if (!allSites[0]?.reserveLevel) {
       validations.push(<div>
         » System reserve level unknown - set in <b>Advanced</b> on any site
         <IconButton
