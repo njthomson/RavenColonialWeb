@@ -181,9 +181,9 @@ const initializeSysMap = (projects: ProjectRef[]) => {
   for (let key of sortedKeys) { bodies[key] = bodyMap[key]; }
 
   // sort all sites and sites-per-body by timeCompleted, forcing unknown to be last
-  allSites = allSites.sort((a, b) => (a.timeCompleted ?? '9999')?.localeCompare(b.timeCompleted ?? '9999'));
+  allSites = allSites.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
   for (let body of Object.values(bodies)) {
-    body.sites = body.sites.sort((a, b) => (a.timeCompleted ?? '9999')?.localeCompare(b.timeCompleted ?? '9999'));
+    body.sites = body.sites.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
   }
 
   const countSites = projects.length;

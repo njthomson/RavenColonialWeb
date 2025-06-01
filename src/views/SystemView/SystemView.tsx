@@ -254,12 +254,12 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     if (!allSites[0]?.reserveLevel) {
       validations.push(<div>
         » System reserve level unknown - set in <b>Advanced</b> on any site
-        <IconButton
+        {!!allSites[0] && <IconButton
           className={`btn ${cn.btn}`}
           iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
           style={{ width: 14, height: 14, marginLeft: 4 }}
           onClick={() => this.setState({ editRealSite: { ...allSites[0] }, editFieldHighlight: 'reserveLevel' })}
-        />
+        />}
       </div>);
     }
 
@@ -434,7 +434,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       buildType: SystemView.lastBuildType,
       type: getSiteType(SystemView.lastBuildType),
-      timeCompleted: new Date().toISOString(),
+      timeCompleted: '9999' + new Date().toISOString().substring(4),
       buildName: `New #${++SystemView.countNew}`,
       bodyName: this.lastBodyName,
 
@@ -628,7 +628,13 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
           className={`btn ${cn.btn}`}
           iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
           style={{ width: 14, height: 14, marginLeft: 4 }}
-          onClick={() => this.setState({ editRealSite: { ...s }, editFieldHighlight: 'timeCompleted' })}
+          onClick={() => {
+            if (s.isMock) {
+              this.setState({ editMockSite: { ...s } });
+            } else {
+              this.setState({ editRealSite: { ...s }, editFieldHighlight: 'timeCompleted' });
+            }
+          }}
         />
       </td>
 
@@ -650,7 +656,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         }}
         onDismiss={(ev) => {
           // closing  EditProject triggers this - so we'll ignore it if there is a site to be edited
-          if (!this.state.editRealSite) {
+          if (!this.state.editRealSite && !this.state.editMockSite) {
             this.setState({ showBuildOrder: false });
           }
         }}
