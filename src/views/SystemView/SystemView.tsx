@@ -640,7 +640,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       <td className={`cr ${cn.br}`}>{s.bodyName?.replace(systemName, '')}</td>
 
-      <td className={`cr`}>{s.timeCompleted ? new Date(s.timeCompleted).toLocaleDateString() : <div style={{ textAlign: 'center', color: 'grey' }}>-</div>}</td>
+      <td className={`cr`}>{s.timeCompleted && !s.timeCompleted.startsWith('9999') ? new Date(s.timeCompleted).toLocaleDateString() : <div style={{ textAlign: 'center', color: 'grey' }}>-</div>}</td>
     </tr>);
 
     return <>
