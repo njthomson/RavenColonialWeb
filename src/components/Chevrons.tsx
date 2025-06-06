@@ -4,11 +4,11 @@ import { FunctionComponent } from "react";
 import { asPosNegTxt } from "../util";
 import { appTheme } from "../theme";
 
-export const Chevrons: FunctionComponent<{ name: string, count: number, extra?: number }> = (props) => {
-  const neg = props.count < 0;
+export const Chevrons: FunctionComponent<{ name: string, count: number | undefined, extra?: number, title?: string }> = (props) => {
+  const neg = props.count && props.count < 0;
   const rootKey = props.name + Date.now().toString();
 
-  const count = Math.abs(props.count);
+  const count = Math.abs(props.count ?? 0);
   const maxCount = count + (props.extra ?? 0);
   if (maxCount === 0) return null;
 
@@ -39,7 +39,7 @@ export const Chevrons: FunctionComponent<{ name: string, count: number, extra?: 
   }
 
   return <div
-    // title={`${props.name}: ${asPosNegTxt(props.count)}`}
+    title={props.title}
     style={{
       display: 'inline-block',
       width: (maxCount * w) + 5,

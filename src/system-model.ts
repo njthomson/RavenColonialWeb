@@ -406,3 +406,38 @@ const calcSiteEconomies = (site: SiteMap, useIncomplete: boolean) => {
     site.links.economies[key] = map[key];
   }
 };
+
+export const hasPreReq = (sysMap: SysMap, type: SiteType) => {
+  switch (type.preReq) {
+    case 'satellite':
+      return sysMap.allSites.some(s => ["hermes", "angelia", "eirene"].includes(s.buildType));
+
+    case 'comms':
+      return sysMap.allSites.some(s => ["pistis", "soter", "aletheia"].includes(s.buildType));
+
+    case 'settlementAgr':
+      return sysMap.allSites.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].includes(s.buildType));
+
+    case 'installationAgr':
+      return sysMap.allSites.some(s => ["demeter"].includes(s.buildType));
+
+    case 'installationMil':
+      return sysMap.allSites.some(s => ["vacuna", "alastor"].includes(s.buildType));
+
+    case 'outpostMining':
+      return sysMap.allSites.some(s => ["euthenia", "phorcys"].includes(s.buildType));
+
+    case 'relay':
+      return sysMap.allSites.some(s => ["enodia", "ichnaea"].includes(s.buildType));
+
+    case 'settlementBio':
+      return sysMap.allSites.some(s => ["phoebe", "asteria", "caerus", "chronos"].includes(s.buildType));
+
+    case 'settlementTourism':
+      return sysMap.allSites.some(s => ["aergia", "comus", "gelos", "fufluns"].includes(s.buildType));
+
+    default:
+      console.error(`Unexpected preReq: ${type.preReq}`)
+      return false;
+  }
+}

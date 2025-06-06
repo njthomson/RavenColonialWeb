@@ -5,7 +5,7 @@ import { store } from '../local-storage';
 import { CreateProject, StationEDSM } from '../types';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
 import { cn } from '../theme';
-import { BuildType } from './BuildType';
+import { BuildType } from './BuildType/BuildType';
 import { delay } from '../util';
 
 interface ProjectCreateProps {

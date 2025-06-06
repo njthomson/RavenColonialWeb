@@ -9,7 +9,7 @@ import { asPosNegTxt, delayFocus, isMobile } from "../../util";
 import { BodyMap, buildSystemModel, SiteMap, SysMap, unknown } from "../../system-model";
 import { SysEffects, getSiteType, mapName, sysEffects } from "../../site-data";
 import { EconomyBlocks, MarketLinkBlocks, MarketLinks } from '../../components/MarketLinks/MarketLinks';
-import { BuildType } from '../../components/BuildType';
+import { BuildType } from '../../components/BuildType/BuildType';
 import { ChooseBody } from '../../components/ChooseBody';
 import { EditProject } from '../../components/EditProject/EditProject';
 import { BuildEffects } from '../../components/BuildEffects';
@@ -527,6 +527,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         <div>
           <span style={{ fontWeight: 'bold' }}>
             <BuildType
+              sysMap={this.state}
               buildType={this.state.editMockSite?.buildType}
               onChange={(newBuildType) => {
                 const editMockSite = this.state.editMockSite;
@@ -594,6 +595,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
     return <EditProject
       proj={editRealSite}
+      sysMap={this.state}
       showAdvanced={showAdvanced}
       fieldHighlight={editFieldHighlight}
       onChange={updatedProj => {

@@ -20,6 +20,7 @@ enum Stored {
   findMarketsOptions = 'findMarketsOptions',
   foundMarkets = 'foundMarkets',
   notAgain = 'notAgain',
+  buildTypeGrid = 'buildTypeGrid',
 }
 
 interface CmdrData {
@@ -174,6 +175,9 @@ class LocalStorage {
 
   get notAgain(): string[] { return readValue(Stored.notAgain, [])!; }
   set notAgain(newValue: string[]) { writeValue(Stored.notAgain, newValue); }
+
+  get buildTypeGrid(): boolean { return readBoolean(Stored.buildTypeGrid, false); }
+  set buildTypeGrid(newValue: boolean) { writeValue(Stored.buildTypeGrid, newValue); }
 }
 
 export const store = new LocalStorage();

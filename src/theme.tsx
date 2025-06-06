@@ -201,10 +201,16 @@ export const cn = mergeStyleSets({
   },
   padSize: {
     cursor: 'default',
+    color: appTheme.palette.themeSecondary,
     backgroundColor: appTheme.palette.neutralLight,
     border: '1px solid ' + appTheme.palette.themeTertiary,
     fontSize: 10,
     textAlign: 'center',
+  },
+  trhi: {
+    ':hover': {
+      backgroundColor: appTheme.palette.themeLight + '!important',
+    }
   },
 });
 

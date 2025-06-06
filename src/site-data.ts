@@ -1,7 +1,7 @@
 
 export type Economy =
   | 'agriculture'
-  | 'contraband'
+  | 'service'
   | 'extraction'
   | 'hightech'
   | 'industrial'
@@ -34,11 +34,17 @@ export interface SiteType {
   /** Display name for group */
   displayName: string;
 
+  /** Display name for group in large grid */
+  displayName2: string;
+
   /** Subtypes, eg: vulcan, coriolis, consus */
   subTypes: string[];
 
   /** Alternative Subtypes, to match old typo's, etc*/
   altTypes?: string[];
+
+  /** Approx count of stuff to be hauled to build */
+  haul: number;
 
   /** Classification, eg: outpost, installation, settlement, port */
   buildClass: BuildClass;
@@ -108,8 +114,8 @@ export const mapName: Record<string, string> = {
   // pre-req explanations
   satellite: 'a satellite installation',
   comms: 'a communications installation',
-  settlementAgr: 'a satellite installation',
-  installationAgr: 'an agricultural settlement',
+  settlementAgr: 'an agricultural settlement',
+  installationAgr: 'a space farm',
   installationMil: 'a military installation',
   outpostMining: 'a mining outpost installation',
   relay: 'a relay installation',
@@ -225,7 +231,9 @@ export const sumEconomies = (economies: string[]): Record<string, number> => {
 export const siteTypes: SiteType[] = [
   {
     "displayName": "Unknown",
+    "displayName2": "Unknown",
     "subTypes": [''],
+    "haul": 0,
     "buildClass": "unknown",
     "tier": 1,
     "padSize": "none",
@@ -237,8 +245,10 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Coriolis",
+    "displayName2": "Coriolis Starport",
     "subTypes": ["no_truss", "dual_truss", "quad_truss"],
     "altTypes": ["no truss", "coriolis"],
+    "haul": 63001,
     "buildClass": "starport",
     "tier": 2,
     "padSize": "large",
@@ -250,7 +260,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Asteroid base",
+    "displayName2": "Asteroid Starport",
     "subTypes": ["asteroid"],
+    "haul": 53546,
     "buildClass": "starport",
     "tier": 2,
     "padSize": "large",
@@ -262,7 +274,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Ocellus",
+    "displayName2": "Ocellus Starport",
     "subTypes": ["ocellus"],
+    "haul": 219135,
     "buildClass": "starport",
     "tier": 3,
     "padSize": "large",
@@ -274,7 +288,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Orbis",
+    "displayName2": "Orbis Starport ",
     "subTypes": ["apollo", "artemis"],
+    "haul": 214878,
     "buildClass": "starport",
     "tier": 3,
     "padSize": "large",
@@ -286,7 +302,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Commercial",
+    "displayName2": "Commercial Outpost",
     "subTypes": ["plutus"],
+    "haul": 20480,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "medium",
@@ -298,7 +316,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Industrial",
+    "displayName2": "Industrial Outpost",
     "subTypes": ["vulcan"],
+    "haul": 21181,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "medium",
@@ -310,19 +330,23 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Pirate",
+    "displayName2": "Pirate Outpost",
     "subTypes": ["dysnomia"],
+    "haul": 21797,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "medium",
     "orbital": true,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
-    "inf": "contraband",
+    "inf": "service",
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 0, sol: 0, dev: 0 }
   },
   {
     "displayName": "Civilian",
+    "displayName2": "Civilian Outpost",
     "subTypes": ["vesta"],
+    "haul": 21624,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "medium",
@@ -334,7 +358,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Scientific",
+    "displayName2": "Scientific Outpost",
     "subTypes": ["prometheus"],
+    "haul": 20827,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "medium",
@@ -346,7 +372,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Military",
+    "displayName2": "Military Outpost",
     "subTypes": ["nemesis"],
+    "haul": 20952,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "medium",
@@ -358,7 +386,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Satellite",
+    "displayName2": "Satellite Installation",
     "subTypes": ["hermes", "angelia", "eirene"],
+    "haul": 7274,
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
@@ -370,7 +400,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Communication",
+    "displayName2": "Communication Installation",
     "subTypes": ["pistis", "soter", "aletheia"],
+    "haul": 6695,
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
@@ -381,8 +413,10 @@ export const siteTypes: SiteType[] = [
     "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 3, sol: 0, dev: 0 }
   },
   {
-    "displayName": "Agricultural",
+    "displayName": "Space Farm",
+    "displayName2": "Space Farm",
     "subTypes": ["demeter"],
+    "haul": 6709,
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
@@ -394,19 +428,23 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Pirate Base",
+    "displayName2": "Pirate Base Installation",
     "subTypes": ["apate", "laverna"],
+    "haul": 14088,
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
     "orbital": true,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
-    "inf": "contraband",
+    "inf": "service",
     "effects": { pop: 0, mpop: 0, sec: -4, wealth: 4, tech: 0, sol: 0, dev: 0 }
   },
   {
     "displayName": "Mining",
+    "displayName2": "Mining/Industrial Installation",
     "subTypes": ["euthenia", "phorcys"],
+    "haul": 11352,
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
@@ -418,7 +456,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Relay",
+    "displayName2": "Relay Installation",
     "subTypes": ["enodia", "ichnaea"],
+    "haul": 6855,
     "buildClass": "installation",
     "tier": 1,
     "padSize": "none",
@@ -430,7 +470,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Military",
+    "displayName2": "Military Installation ",
     "subTypes": ["vacuna", "alastor"],
+    "haul": 10130,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -442,7 +484,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Security",
+    "displayName2": "Security Installation",
     "subTypes": ["dicaeosyne", "poena", "eunomia", "nomos"],
+    "haul": 10089,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -455,7 +499,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Government",
+    "displayName2": "Government Installation",
     "subTypes": ["harmonia"],
+    "haul": 10035,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -467,7 +513,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medical",
+    "displayName2": "Medical Installation",
     "subTypes": ["asclepius", "eupraxia"],
+    "haul": 10081,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -479,7 +527,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Research",
+    "displayName2": "Research Installation",
     "subTypes": ["astraeus", "coeus", "dodona", "dione"],
+    "haul": 10010,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -492,7 +542,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Tourist",
+    "displayName2": "Tourist Installation",
     "subTypes": ["hedone", "opora", "pasithea"],
+    "haul": 10100,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -505,7 +557,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Bar",
+    "displayName2": "Space Bar Installation",
     "subTypes": ["dionysus", "bacchus"],
+    "haul": 10092,
     "buildClass": "installation",
     "tier": 2,
     "padSize": "none",
@@ -517,7 +571,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Civilian",
+    "displayName2": "Civilian Surface Outpost",
     "subTypes": ["hestia", "decima", "atropos", "nona", "lachesis", "clotho"],
+    "haul": 35950,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "large",
@@ -529,7 +585,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Industrial",
+    "displayName2": "Industrial Surface Outpost",
     "subTypes": ["hephaestus", "opis", "ponos", "tethys", "bia", "mefitis"],
+    "haul": 36443,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "large",
@@ -541,7 +599,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Scientific",
+    "displayName2": "Scientific Surface Outpost",
     "subTypes": ["necessitas", "ananke", "fauna", "providentia", "antevorta", "porrima"],
+    "haul": 36902,
     "buildClass": "outpost",
     "tier": 1,
     "padSize": "large",
@@ -553,7 +613,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Planetary port",
+    "displayName2": "Large Planetary Port",
     "subTypes": ["zeus", "hera", "poseidon", "aphrodite"],
+    "haul": 215597,
     "buildClass": "planetary",
     "tier": 3,
     "padSize": "large",
@@ -565,7 +627,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Small Agriculture",
+    "displayName2": "Agriculture Settlement: Small",
     "subTypes": ["consus"],
+    "haul": 2834,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "small",
@@ -577,7 +641,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Agriculture",
+    "displayName2": "Agriculture Settlement: Medium",
     "subTypes": ["picumnus", "annona"],
+    "haul": 5697,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "large",
@@ -589,7 +655,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Large Agriculture",
+    "displayName2": "Agriculture Settlement: Large",
     "subTypes": ["ceres", "fornax"],
+    "haul": 8517,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "large",
@@ -601,9 +669,11 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Small Mining",
+    "displayName2": "Mining Settlement: Small",
     "subTypes": ["ourea"],
+    "haul": 2837,
     "buildClass": "settlement",
-    "tier": 2,
+    "tier": 1,
     "padSize": "small",
     "orbital": false,
     "needs": { tier: 0, count: 0 },
@@ -613,7 +683,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Mining",
+    "displayName2": "Mining Settlement: Medium",
     "subTypes": ["mantus", "orcus"],
+    "haul": 5638,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "medium",
@@ -625,7 +697,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Large Mining",
+    "displayName2": "Mining Settlement: Large",
     "subTypes": ["erebus", "aerecura"],
+    "haul": 8760,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "large",
@@ -637,7 +711,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Small Industrial",
+    "displayName2": "Industrial Settlement: Small",
     "subTypes": ["fontus"],
+    "haul": 2828,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "small",
@@ -649,7 +725,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Industrial",
+    "displayName2": "Industrial Settlement: Medium",
     "subTypes": ["meteope", "palici", "minthe"],
+    "haul": 5656,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "none",
@@ -661,7 +739,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Large Industrial",
+    "displayName2": "Industrial Settlement: Large",
     "subTypes": ["gaea"],
+    "haul": 8481,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "large",
@@ -673,7 +753,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Small Military",
+    "displayName2": "Military Settlement: Small",
     "subTypes": ["ioke"],
+    "haul": 3553,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "medium",
@@ -685,7 +767,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Military",
+    "displayName2": "Military Settlement: Medium",
     "subTypes": ["bellona", "enyo", "polemos"],
+    "haul": 5629,
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "small",
@@ -697,7 +781,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Large Military",
+    "displayName2": "Military Settlement: Large",
     "subTypes": ["minerva"],
+    "haul": 8554,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "large",
@@ -709,7 +795,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Small Bio",
+    "displayName2": "Bio Settlement: Small",
     "subTypes": ["pheobe"],
+    "haul": 2897,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "small",
@@ -721,7 +809,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Bio",
+    "displayName2": "Bio Settlement: Medium",
     "subTypes": ["asteria", "caerus"],
+    "haul": 5681,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "small",
@@ -733,7 +823,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Large Bio",
+    "displayName2": "Bio Settlement: Large",
     "subTypes": ["chronos"],
+    "haul": 8537,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "large",
@@ -745,7 +837,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Small Tourist",
+    "displayName2": "Tourist Settlement: Small",
     "subTypes": ["aergia"],
+    "haul": 2895,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "medium",
@@ -758,8 +852,10 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Medium Tourist",
+    "displayName2": "Tourist Settlement: Medium",
     "subTypes": ["comus", "gelos"],
     "altTypes": ["comos"],
+    "haul": 5671,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "none",
@@ -772,7 +868,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Large Tourist",
+    "displayName2": "Tourist Settlement: Large",
     "subTypes": ["fufluns"],
+    "haul": 8568,
     "buildClass": "settlement",
     "tier": 2,
     "padSize": "large",
@@ -785,7 +883,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Extraction",
+    "displayName2": "Extraction Hub",
     "subTypes": ["tartarus"],
+    "haul": 9996,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -797,7 +897,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Civilian",
+    "displayName2": "Civilian Hub",
     "subTypes": ["aegle"],
+    "haul": 9890,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -810,7 +912,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Exploration",
+    "displayName2": "Exploration Hub",
     "subTypes": ["tellus_e"],
+    "haul": 9960,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -823,7 +927,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Outpost",
+    "displayName2": "Outpost Hub",
     "subTypes": ["io"],
+    "haul": 9945,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -836,7 +942,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Scientific",
+    "displayName2": "Scientific Hub",
     "subTypes": ["athena", "caelus"],
+    "haul": 9958,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -848,7 +956,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Military",
+    "displayName2": "Military Hub",
     "subTypes": ["alala", "ares"],
+    "haul": 10089,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -861,7 +971,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Refinery",
+    "displayName2": "Refinery Hub",
     "subTypes": ["silenus"],
+    "haul": 9957,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -873,7 +985,9 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "High Tech",
+    "displayName2": "High Tech Hub",
     "subTypes": ["janus"],
+    "haul": 9881,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",
@@ -885,8 +999,10 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Industrial",
+    "displayName2": "Industrial Hub",
     "subTypes": ["molae", "tellus_i", "eunostus"],
     "altTypes": ["tellus"],
+    "haul": 9950,
     "buildClass": "hub",
     "tier": 2,
     "padSize": "none",

@@ -4,7 +4,7 @@ import { Cargo, CreateProject, ProjectRef, ResponseEdsmSystemBodies, StationEDSM
 import { appTheme, cn } from '../theme';
 import { buildSystemModel, SysMap } from '../system-model';
 import { Checkbox, DefaultButton, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, Stack } from '@fluentui/react';
-import { BuildType } from './BuildType';
+import { BuildType } from './BuildType/BuildType';
 import { ChooseBody } from './ChooseBody';
 import { getSiteType } from '../site-data';
 

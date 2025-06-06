@@ -2,6 +2,7 @@ import { FunctionComponent } from "react";
 import { cn } from "../theme";
 
 export const PadSize: FunctionComponent<{ size: string }> = (props) => {
+  if (!props.size || props.size === 'none') return <></>;
 
   // assume large and reduce as needed
   let w = 20;

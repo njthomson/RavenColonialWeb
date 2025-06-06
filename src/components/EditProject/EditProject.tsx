@@ -4,12 +4,13 @@ import { ActionButton, Checkbox, DatePicker, DefaultButton, Dropdown, Icon, Icon
 import { Component } from "react";
 import { BodyFeature, CreateProject, mapBodyTypeNames, mapReserveLevel, Project, ProjectRef, SystemFeature } from "../../types";
 import { cn, appTheme } from "../../theme";
-import { BuildType } from "../BuildType";
+import { BuildType } from "../BuildType/BuildType";
 import { ChooseBody } from "../ChooseBody";
 import { TimeRemaining } from "../TimeRemaining";
 import { delay, isMobile } from '../../util';
 import { mapName } from '../../site-data';
 import { CalloutMsg } from '../CalloutMsg';
+import { SysMap } from '../../system-model';
 
 
 interface ChooseEditProjectProps {
@@ -17,6 +18,7 @@ interface ChooseEditProjectProps {
   onChange: (updatedProj?: Project) => void;
   showAdvanced?: boolean;
   fieldHighlight?: string;
+  sysMap?: SysMap;
 }
 
 interface ChooseEditProjectState {
@@ -165,7 +167,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
           <tr>
             <td><Label required>Build type:</Label></td>
             <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }} onKeyDown={(ev) => this.onKeyPress(ev)}>
-              <BuildType buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
+              <BuildType sysMap={this.props.sysMap} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
             </div>
             </td>
           </tr>
