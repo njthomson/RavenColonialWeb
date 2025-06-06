@@ -386,7 +386,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
       <table cellPadding={0} cellSpacing={0}>
         <colgroup>
-          <col width='235px' />
+          <col width='300px' />
           <col width='15px' />
           {/* <col width='66px' /> */}
           {this.props.sysMap && <col width='44px' />}

@@ -9,6 +9,7 @@ export enum TopPivot {
   buildAll = 'buildAll',
   cmdr = 'cmdr',
   about = 'about',
+  vis = 'vis',
 }
 
 export class RequestError extends Error {

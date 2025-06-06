@@ -9,6 +9,7 @@ import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
 import { ViewAll } from './views/ViewAll/ViewAll';
+import { VisualIdentify } from './components/VisualIdentify';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -96,6 +97,8 @@ export class App extends Component<AppProps, AppState> {
     } else if (params.has('about')) {
       // viewing help content
       nextState.pivot = TopPivot.about;
+    } else if (params.has('vis')) {
+      nextState.pivot = TopPivot.vis;
     } else if (params.has('cmdr')) {
       // Cmdr specific data
       nextState.pivot = TopPivot.cmdr;
@@ -128,6 +131,8 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.about, pivotArg];
     } else if (params.has('cmdr')) {
       return [TopPivot.cmdr, pivotArg];
+    } else if (params.has('vis')) {
+      return [TopPivot.vis, pivotArg];
     } else {
       return [TopPivot.home, pivotArg];
     }
@@ -252,6 +257,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.buildAll: return <ViewAll />;
       case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
+      case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
     }
   }
 
