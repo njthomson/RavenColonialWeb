@@ -282,7 +282,6 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          cursor: 'pointer',
         }}
       >
         <span
@@ -310,6 +309,22 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
           {supportedTypes[zoom].location}
         </span>}
 
+        <IconButton
+          title='View full size in another tab'
+          iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10 } }}
+          style={{
+            position: 'absolute',
+            right: 2,
+            top: 2,
+            color: 'wheat',
+            padding: 0,
+            margin: 0,
+            width: 16,
+            height: 16,
+          }}
+          href={`https://njthomson.github.io/SrvSurvey/colony/${zoom}.jpg`}
+          target='visZoom'
+        />
       </div>
     </div>;
   }
