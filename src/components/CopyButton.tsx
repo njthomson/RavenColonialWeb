@@ -8,7 +8,7 @@ export const CopyButton: FunctionComponent<{ text: string | ClipboardItem, title
     className={`icon-btn ${cn.btn}`}
     iconName='Copy'
     title={props.title ?? `Copy: "${props.text.toString()}"`}
-    style={{ fontSize: props.fontSize }}
+    style={{ fontSize: props.fontSize, userSelect: 'none' }}
     onClick={(ev) => {
       ev.stopPropagation();
       if (typeof props.text === 'string') {

@@ -540,7 +540,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
               }}
             />
           </span>
-          <BuildEffects proj={editMockSite} noTitle />
+          <BuildEffects buildType={editMockSite.buildType} noTitle />
         </div>
 
       </div>

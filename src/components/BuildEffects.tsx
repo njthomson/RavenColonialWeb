@@ -2,15 +2,14 @@
 import { FunctionComponent } from "react";
 import { appTheme, cn } from "../theme";
 import { getSiteType, SysEffects, mapName } from "../site-data";
-import { ProjectRef } from "../types";
 import { asPosNegTxt } from "../util";
 import { Chevrons, TierPoints } from "./Chevrons";
 import { Icon } from "@fluentui/react";
 
-export const BuildEffects: FunctionComponent<{ proj: ProjectRef, noTitle?: boolean }> = (props) => {
+export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: boolean }> = (props) => {
   const paddingTop = 2;
 
-  const st = getSiteType(props.proj.buildType);
+  const st = getSiteType(props.buildType);
   const effectRows = Object.keys(st.effects)
     .map(key => {
       if (!st.effects[key as keyof SysEffects]) return null;
@@ -47,8 +46,12 @@ export const BuildEffects: FunctionComponent<{ proj: ProjectRef, noTitle?: boole
   return <>
     {!props.noTitle && <h3 className={cn.h3}>System effects:</h3>}
 
-    <table className="foo" style={{ fontSize: '14px' }} cellPadding={0} cellSpacing={0}>
+    <table style={{ fontSize: '14px' }} cellPadding={0} cellSpacing={0}>
       <tbody>
+
+        <tr>
+          <td colSpan={4} style={{ paddingTop }}>{st.displayName2}</td>
+        </tr>
 
         {st.inf !== 'none' && <tr>
           <td style={{ paddingTop }}>Economy:</td>

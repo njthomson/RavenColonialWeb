@@ -1056,7 +1056,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </table>
         {this.renderCommanders()}
         {this.renderLinkedFC()}
-        {!proj.complete && <BuildEffects proj={proj} />}
+        {!proj.complete && <BuildEffects buildType={proj.buildType} />}
       </div>
     </div>;
   };
@@ -1742,7 +1742,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <div className='half'>
       {site && sysMap && <MarketLinks site={site} />}
 
-      {<BuildEffects proj={proj} />}
+      {<BuildEffects buildType={proj.buildType} />}
     </div>;
   }
 }
