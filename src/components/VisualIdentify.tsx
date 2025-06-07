@@ -34,6 +34,8 @@ const supportedTypes: Record<string, ImageData> = {
   'pistis': { cmdr: 'Disnaematter', location: `Pogue Terminal, Synuefe EM-M c23-8` },
   'plutus': { cmdr: 'grinning2001', location: `Rahman Town, IC 2391 Sector EL-Y c9, B 10, A 3` },
   'polemos': { cmdr: 'grinning2001', location: `Faiers Command Garrison, IC 2391 Sector LH-V b2-5, B 3 a` },
+  'prometheus': { cmdr: 'Abe Andet', location: `Fuller Depot, Arietis Sector PJ-Q B5-5` },
+  'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point, Pegasi Sector MS-T b3-5` },
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway, IC 2391 Sector LH-V b2-5, A 3` },
 };
 
@@ -69,6 +71,11 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
     };
   }
 
+  componentDidMount(): void {
+    // force an initial sort + filter
+    this.setFilter('');
+  }
+
   componentDidUpdate(prevProps: Readonly<VisualIdentifyProps>, prevState: Readonly<VisualIdentifyState>, snapshot?: any): void {
     if (prevProps.buildType !== this.props.buildType) {
       this.setZoom(this.props.buildType ?? '');
@@ -78,7 +85,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   render() {
     const { zoom } = this.state;
 
-    return <div style={{ marginTop: 20, width: 1000, padding: 10, fontSize: 12 }}>
+    return <div style={{ padding: 10, fontSize: 12 }}>
       {!zoom && this.renderGrid()}
       {zoom && this.renderZoom()}
     </div>;
@@ -103,7 +110,10 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
       if (toggleName === 'showSurface') { showOrbital = true }
     }
 
-    const typeNames = Object.keys(supportedTypes).filter(key => typeTypes[key].orbital === showOrbital || typeTypes[key].orbital !== showSurface);
+    const typeNames = Object.keys(supportedTypes)
+      .sort()
+      .filter(key => typeTypes[key].orbital === showOrbital || typeTypes[key].orbital !== showSurface);
+
     this.setState({
       showOrbital: showOrbital,
       showSurface: showSurface,
@@ -220,8 +230,10 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
       'text/html': new Blob([`<a href='${`${origin}/#vis=${zoom}`}'>${type.displayName2}: ${zoom}</a>`], { type: 'text/html' }),
     });
 
+    const sz = window.innerHeight - 250;
+
     return <div>
-      <Stack horizontal horizontalAlign='end' verticalAlign='center' tokens={{ padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>
+      <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>
 
         <div style={{ width: 120, textAlign: 'right' }} onClick={() => this.setZoom(namePrev)}>
           <ActionButton
@@ -262,8 +274,8 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
       <div
         style={{
           position: 'relative',
-          width: 1000,
-          height: window.innerHeight - 200,
+          width: sz * 1.5,
+          height: sz,
           border: `2px solid ${appTheme.palette.themePrimary}`,
           background: 'black',
           backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${zoom}.jpg)`,
@@ -277,7 +289,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
           style={{
             position: 'absolute',
             padding: '0 4px',
-            right: 4,
+            right: 0,
             bottom: 0,
             backgroundColor: 'black',
             color: 'wheat'
