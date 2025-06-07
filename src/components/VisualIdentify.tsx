@@ -29,6 +29,8 @@ const supportedTypes: Record<string, ImageData> = {
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach, Synuefe EM-M c23-8` },
   'hermes': { cmdr: 'grinning2001' },
   'minerva': { cmdr: 'kekosummer', location: `Ponomarenko hold, Col 285 Sector GL-X c1-11, A 1` },
+  'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport, Pegasi Sector DL-y D60` },
+  'nona': { cmdr: 'Abe Andet', location: `Anderson Vision, Pegasi Sector MS-T b3-5` },
   'pheobe': { cmdr: 'kekosummer', location: `Vytrebenko biochemical centre, Col 285 Sector GL-X c1-11, B 4` },
   'picumnus': { cmdr: 'kekosummer', location: `Orellana botanical nursery, Col 285 Sector GL-X c1-11, A 4` },
   'pistis': { cmdr: 'Disnaematter', location: `Pogue Terminal, Synuefe EM-M c23-8` },
@@ -36,6 +38,7 @@ const supportedTypes: Record<string, ImageData> = {
   'polemos': { cmdr: 'grinning2001', location: `Faiers Command Garrison, IC 2391 Sector LH-V b2-5, B 3 a` },
   'prometheus': { cmdr: 'Abe Andet', location: `Fuller Depot, Arietis Sector PJ-Q B5-5` },
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point, Pegasi Sector MS-T b3-5` },
+  'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon, Synuefe EM-M c23-8` },
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway, IC 2391 Sector LH-V b2-5, A 3` },
 };
 
@@ -294,7 +297,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
             color: 'wheat'
           }}
         >
-          credit: {supportedTypes[zoom].cmdr}
+          Cmdr {supportedTypes[zoom].cmdr}
         </span>
 
         {supportedTypes[zoom].location && <span
