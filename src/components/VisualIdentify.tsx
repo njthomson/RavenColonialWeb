@@ -31,6 +31,7 @@ const supportedTypes: Record<string, ImageData> = {
   'gelos': { cmdr: 'kekosummer', location: `Burn tourist resort, Col 285 Sector GL-X c1-11, A 1` },
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach, Synuefe EM-M c23-8` },
   'hermes': { cmdr: 'grinning2001' },
+  'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub, Synuefe FI-Z b46-1` },
   'minerva': { cmdr: 'kekosummer', location: `Ponomarenko hold, Col 285 Sector GL-X c1-11, A 1` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport, Pegasi Sector DL-y D60` },
   'nona': { cmdr: 'Abe Andet', location: `Anderson Vision, Pegasi Sector MS-T b3-5` },
