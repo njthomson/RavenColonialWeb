@@ -407,6 +407,24 @@ const calcSiteEconomies = (site: SiteMap, useIncomplete: boolean) => {
   }
 };
 
+export const isTypeValid = (sysMap: SysMap, type: SiteType) => {
+
+  // unless we don't have enough tier points?
+  if (type.needs.tier === 2 && sysMap.tierPoints.tier2 < type.needs.count) {
+    return false;
+  }
+
+  if (type.needs.tier === 3 && sysMap.tierPoints.tier3 < type.needs.count) {
+    return false;
+  }
+
+  if (type.preReq) {
+    return hasPreReq(sysMap, type);
+  }
+
+  return true;
+}
+
 export const hasPreReq = (sysMap: SysMap, type: SiteType) => {
   switch (type.preReq) {
     case 'satellite':

@@ -50,13 +50,13 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
       <tbody>
 
         <tr>
-          <td colSpan={4} style={{ paddingTop }}>{st.displayName2}</td>
+          <td style={{ paddingTop }}>Type:</td>
+          <td colSpan={3} style={{ paddingTop }}><div className='grey'>{st.displayName2}</div></td>
         </tr>
 
         {st.inf !== 'none' && <tr>
-          <td style={{ paddingTop }}>Economy:</td>
-          <td colSpan={3} style={{ paddingTop }}><div className='grey'>{mapName[st.inf]}</div>
-          </td>
+          <td style={{ paddingTop }}>Economic inf:</td>
+          <td colSpan={3} style={{ paddingTop }}><div className='grey'>{mapName[st.inf]}</div></td>
         </tr>}
 
         {effectRows}

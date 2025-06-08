@@ -9,7 +9,7 @@ import { EconomyBlock } from '../EconomyBlock';
 import { FilterDescendingIcon } from '@fluentui/react-icons-mdl2';
 import { CalloutMsg } from '../CalloutMsg';
 import { PadSize } from '../PadSize';
-import { hasPreReq, SysMap } from '../../system-model';
+import { isTypeValid, SysMap } from '../../system-model';
 import { store } from '../../local-storage';
 
 registerIcons({
@@ -261,6 +261,26 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
     let parts: string[] = [];
 
+    if (filterColumns.has('valid')) {
+      if (filterColumns.has('valid:true')) {
+        parts.push(`Valid`)
+      } else if (filterColumns.has('valid:false')) {
+        parts.push(`Not valid`)
+      }
+    }
+
+    if (filterColumns.has('pad')) {
+      if (filterColumns.has('pad:large')) {
+        parts.push(`Large pads`)
+      } else if (filterColumns.has('pad:medium')) {
+        parts.push(`Medium pads`)
+      } else if (filterColumns.has('pad:small')) {
+        parts.push(`Small pads`)
+      } else if (filterColumns.has('pad:none')) {
+        parts.push(`No pads`)
+      }
+    }
+
     if (filterColumns.has('env')) {
       if (filterColumns.has('orbital')) {
         parts.push(`Orbital`)
@@ -309,14 +329,29 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
       }
     }
 
-    if (parts.length === 0) { parts.push('None'); }
+    return <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 0 }}
+      style={{
+        padding: 8,
+        color: appTheme.palette.yellowDark
+      }}>
+      <div>Filter:&nbsp;</div>
+      {parts.length > 0 && <>
+        {parts.join(', ')}
 
-    return <div style={{
-      padding: 8,
-      color: appTheme.palette.yellowDark
-    }}>
-      Filter: {parts.join(', ')}
-    </div>;
+        <IconButton
+          iconProps={{
+            iconName: 'Delete',
+            style: { fontSize: 14 }
+          }}
+          style={{ width: 20, height: 16 }}
+          onClick={() => {
+            filterColumns.clear();
+            this.setState({ filterColumns });
+          }}
+        />
+      </>}
+      {parts.length === 0 && <div>None</div>}
+    </Stack>;
   }
 
   renderLarge() {
@@ -386,17 +421,17 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
       <table cellPadding={0} cellSpacing={0}>
         <colgroup>
-          <col width='300px' />
+          <col width='250px' />
           <col width='15px' />
           {/* <col width='66px' /> */}
-          {this.props.sysMap && <col width='44px' />}
+          {this.props.sysMap && <col width='60px' />}
           <col width='44px' />
-          <col width='44px' />
+          <col width='55px' />
           <col width='80px' />
           <col width='80px' />
           <col width='80px' />
           <col width='80px' />
-          <col width='110px' />
+          <col width='120px' />
           <col width='75px' />
           <col width='75px' />
           <col width='80px' />
@@ -411,9 +446,9 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
             {this.renderLargeColumnHeader('buildType', `${cn.bb}`)}
             <th className={`${cn.bb} ${cn.br}`}></th>
             {/* {this.renderLargeColumnHeader('layouts', `${cn.bb} ${cn.br}`)} */}
-            {this.props.sysMap && this.renderLargeColumnHeader('valid', `cc ${cn.bb} ${cn.br}`)}
+            {this.props.sysMap && this.renderLargeColumnHeader('valid', `cc ${cn.bb} ${cn.br} btn`)}
             {this.renderLargeColumnHeader('haul', `cc ${cn.bb} ${cn.br}`)}
-            {this.renderLargeColumnHeader('pad', `cc ${cn.bb} ${cn.br}`)}
+            {this.renderLargeColumnHeader('pad', `cc ${cn.bb} ${cn.br} btn`)}
             {this.renderLargeColumnHeader('env', `cc ${cn.bb} ${cn.br} btn`)}
             {this.renderLargeColumnHeader('tier', `${cn.bb} ${cn.br} btn`)}
             {this.renderLargeColumnHeader('needs', `${cn.bb} ${cn.br}`)}
@@ -454,6 +489,8 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
             return false;
           }
         }
+        if (filterColumns.has('valid') && this.props.sysMap && !filterColumns.has(`valid:${isTypeValid(this.props.sysMap, t)}`)) { return false; }
+        if (filterColumns.has('pad') && !filterColumns.has(`pad:${t.padSize}`)) { return false; }
         if (filterColumns.has('tier') && !filterColumns.has(`tier${t.tier}`)) { return false; }
         if (filterColumns.has('env') && !filterColumns.has(t.orbital ? 'orbital' : 'planetary')) { return false; }
         if (filterColumns.has('needs') && !filterColumns.has(`needT${t.needs.tier}`)) { return false; }
@@ -639,22 +676,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     if (!this.props.sysMap) return null;
 
     // assume we can build it
-    let isValid = true;
-
-    // unless we don't have enough tier points?
-    if (type.needs.tier === 2 && this.props.sysMap.tierPoints.tier2 < type.needs.count) {
-      isValid = false;
-      // iconName = 'StatusCircleErrorX'
-    }
-    if (type.needs.tier === 3 && this.props.sysMap.tierPoints.tier3 < type.needs.count) {
-      isValid = false;
-      // iconName = 'Remove'
-      // return null;
-    }
-
-    if (type.preReq) {
-      isValid = hasPreReq(this.props.sysMap, type);
-    }
+    let isValid = isTypeValid(this.props.sysMap, type);
 
     return isValid
       ? <Icon iconName='SkypeCheck' />
@@ -754,6 +776,8 @@ Click to filter positive impacts.`,
 
 
 const mapCyclicFilters: Record<string, string[]> = {
+  'valid': ['valid:true', 'valid:false'],
+  'pad': ['pad:none', 'pad:large', 'pad:medium', 'pad:small'],
   'tier': ['tier1', 'tier2', 'tier3'],
   'env': ['orbital', 'planetary'],
   'needs': ['needT2', 'needT3'],

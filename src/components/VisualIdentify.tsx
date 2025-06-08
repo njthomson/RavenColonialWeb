@@ -42,6 +42,7 @@ const supportedTypes: Record<string, ImageData> = {
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point, Pegasi Sector MS-T b3-5` },
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon, Synuefe EM-M c23-8` },
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway, IC 2391 Sector LH-V b2-5, A 3` },
+  'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise, Pegasi Sector MS-T b3-5` },
 };
 
 const origin = window.location.origin;
