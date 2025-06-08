@@ -15,7 +15,9 @@ const supportedTypes: Record<string, ImageData> = {
   'aergia': { cmdr: 'kekosummer', location: `Mahama's club, Col 285 Sector GL-X c1-11` },
   'angelia': { cmdr: 'grinning2001', location: `Samos Gateway, IC 2391 Sector LH-V b2-5, A 8` },
   'annona': { cmdr: 'kekosummer', location: `Zabuzhko botanical garden, Col 285 Sector GL-X c1-11, A 4` },
+  'asteroid': { cmdr: 'grinning2001', location: `Fairey Mines, Synuefe AN-H d11-120` },
   'ceres': { cmdr: 'kekosummer', location: `Doroshenko nutrition biome, Col 285 Sector GL-X c1-11, A 4` },
+  'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise, Pegasi Sector MS-T b3-5` },
   'consus': { cmdr: 'kekosummer', location: `Tersoo cultivation collection, Col 285 Sector GL-X c1-11, A 4` },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons, Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'grinning2001', location: `Acton's Pride, IC 2391 Sector LH-V b2-5, A 2` },
@@ -38,11 +40,11 @@ const supportedTypes: Record<string, ImageData> = {
   'plutus': { cmdr: 'grinning2001', location: `Rahman Town, IC 2391 Sector EL-Y c9, B 10, A 3` },
   'polemos': { cmdr: 'grinning2001', location: `Faiers Command Garrison, IC 2391 Sector LH-V b2-5, B 3 a` },
   'prometheus': { cmdr: 'Abe Andet', location: `Fuller Depot, Arietis Sector PJ-Q B5-5` },
+  'quad_truss': { cmdr: 'grinning2001', location: `Crowley Gateway, Synuefe DL-N c23-20` },
   'silenus': { cmdr: 'grinning2001', location: `Hornby Vista, IC 2391 Sector LH-V b2-5, A 3` },
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point, Pegasi Sector MS-T b3-5` },
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon, Synuefe EM-M c23-8` },
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway, IC 2391 Sector LH-V b2-5, A 3` },
-  'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise, Pegasi Sector MS-T b3-5` },
 };
 
 const origin = window.location.origin;
