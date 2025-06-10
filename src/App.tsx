@@ -51,7 +51,7 @@ export class App extends Component<AppProps, AppState> {
   clickNearItem = (item: IContextualMenuItem | undefined): boolean | void => {
     if (!item) { return; }
 
-    const newHash = `#${item.key}`;
+    const newHash = `/#${item.key}`;
     if (!window.location.hash.startsWith(newHash) || newHash !== '#find') {
       window.location.assign(newHash);
     }
@@ -121,6 +121,10 @@ export class App extends Component<AppProps, AppState> {
   getPivotFromHash(): [TopPivot, string | undefined] {
     const params = new URLSearchParams(window.location.hash?.substring(1));
     const pivotArg = params.values().next().value;
+
+    if (window.location.pathname === '/vis') {
+      window.location.replace('#vis');
+    }
 
     if (params.has('find')) {
       // searching for build projects

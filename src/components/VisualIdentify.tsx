@@ -15,11 +15,12 @@ const supportedTypes: Record<string, ImageData> = {
   'aergia': { cmdr: 'kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
   'angelia': { cmdr: 'grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
   'annona': { cmdr: 'kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4` },
+  'artemis': { cmdr: 'Alora Anophis', location: `Besonders Reach - Pru Euq XO-Z d13-11, 2 a` },
   'asteroid': { cmdr: 'grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
   'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8` },
   'ceres': { cmdr: 'kekosummer', location: `Doroshenko Nutrition Biome - Col 285 Sector GL-X c1-11, A 4` },
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
-  'comus': { cmdr: 'kekosummer', location: `Vynnychenko Entertainment Zone - Col 285 Sector GL-X c1-11, B5a` },
+  'comus': { cmdr: 'kekosummer', location: `Vynnychenko Entertainment Zone - Col 285 Sector GL-X c1-11, B 5 a` },
   'consus': { cmdr: 'kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
@@ -106,9 +107,9 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   setZoom = (newZoom: string) => {
     this.setState({ zoom: newZoom });
     if (newZoom) {
-      window.location.assign(`#vis=${newZoom}`);
+      window.location.assign(`/#vis=${newZoom}`);
     } else {
-      window.location.assign(`#vis`);
+      window.location.assign(`/#vis`);
     }
   };
 
