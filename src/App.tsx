@@ -97,7 +97,7 @@ export class App extends Component<AppProps, AppState> {
     } else if (params.has('about')) {
       // viewing help content
       nextState.pivot = TopPivot.about;
-    } else if (params.has('vis')) {
+    } else if (params.has('vis') || window.location.pathname === '/vis') {
       nextState.pivot = TopPivot.vis;
     } else if (params.has('cmdr')) {
       // Cmdr specific data
@@ -131,7 +131,7 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.about, pivotArg];
     } else if (params.has('cmdr')) {
       return [TopPivot.cmdr, pivotArg];
-    } else if (params.has('vis')) {
+    } else if (params.has('vis') || window.location.pathname === '/vis') {
       return [TopPivot.vis, pivotArg];
     } else {
       return [TopPivot.home, pivotArg];
