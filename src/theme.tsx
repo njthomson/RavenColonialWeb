@@ -131,6 +131,40 @@ const readTheme = (): Theme => {
       }
     });
 
+    case 'dark/green': return createTheme({
+      palette: {
+        themePrimary: '#d1d93b',
+        themeLighterAlt: '#080902',
+        themeLighter: '#212309',
+        themeLight: '#3f4112',
+        themeTertiary: '#7d8223',
+        themeSecondary: '#b8bf33',
+        themeDarkAlt: '#d5dd4c',
+        themeDark: '#dce265',
+        themeDarker: '#e5ea8a',
+        neutralLighterAlt: '#325250',
+        neutralLighter: '#385957',
+        neutralLight: '#426462',
+        neutralQuaternaryAlt: '#486b6a',
+        neutralQuaternary: '#4e716f',
+        neutralTertiaryAlt: '#658987',
+        neutralTertiary: '#c8c8c8',
+        neutralSecondary: '#d0d0d0',
+        neutralSecondaryAlt: '#d0d0d0',
+        neutralPrimaryAlt: '#dadada',
+        neutralPrimary: '#ffffff',
+        neutralDark: '#f4f4f4',
+        black: '#f8f8f8',
+        white: 'rgb(30, 53, 51)',
+
+        // hand edited
+        greenLight: '#00CC00', // abused for background colour in bubbles
+        teal: '#143607', // abused for foreground colour in bubbles (white)
+        purple: 'rgb(60, 130, 35, 0.5)', // fade
+        purpleLight: 'rgb(50, 87, 82)', // greyer
+        purpleDark: 'rgb(131, 163, 119)', // grey + lines
+      }
+    });
   }
 };
 

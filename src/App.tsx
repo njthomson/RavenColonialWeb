@@ -208,6 +208,7 @@ export class App extends Component<AppProps, AppState> {
             { key: 'dark/blue', text: 'Blue (dark)', },
             { key: 'dark/orange', text: 'Orange (dark)', },
             { key: 'white/green', text: 'Green (light)', },
+            { key: 'dark/green', text: 'Green (dark)', },
           ]}
           onItemClick={(e, i) => {
             const newTheme = i?.key.toString() ?? '';
