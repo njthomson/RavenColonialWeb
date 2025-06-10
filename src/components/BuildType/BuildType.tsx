@@ -490,13 +490,20 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           }
         }
         if (filterColumns.has('valid') && this.props.sysMap && !filterColumns.has(`valid:${isTypeValid(this.props.sysMap, t)}`)) { return false; }
-        if (filterColumns.has('pad') && !filterColumns.has(`pad:${t.padSize}`)) { return false; }
         if (filterColumns.has('tier') && !filterColumns.has(`tier${t.tier}`)) { return false; }
         if (filterColumns.has('env') && !filterColumns.has(t.orbital ? 'orbital' : 'planetary')) { return false; }
         if (filterColumns.has('needs') && !filterColumns.has(`needT${t.needs.tier}`)) { return false; }
         if (filterColumns.has('gives') && !filterColumns.has(`giveT${t.gives.tier}`)) { return false; }
-
         if (filterColumns.has('inf') && !filterColumns.has(t.inf)) { return false; }
+        if (filterColumns.has('pad')) {
+          if (t.padMap) {
+            // check any padMap entry
+            if (!Object.values(t.padMap).some(sz => filterColumns.has(`pad:${sz}`))) { return false; }
+          } else {
+            // compare against the default size
+            if (!filterColumns.has(`pad:${t.padSize}`)) { return false; }
+          }
+        }
 
         return true;
       });
@@ -563,11 +570,24 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
   }
 
   renderLargeRow(type: SiteType, flip: boolean) {
-    const { selection } = this.state;
+    const { selection, filterColumns } = this.state;
 
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
     const cid = `lr-${type.subTypes[0]}`;
     const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection));
+
+    let padSize = type.padSize;
+    let subTypes = type.subTypes;
+    // adjust these if we have a padMap
+    if (type.padMap && filterColumns.has('pad')) {
+      for (const sz of ['small', 'medium', 'large']) {
+        if (filterColumns.has(`pad:${sz}`)) {
+          padSize = sz as any;
+          subTypes = Object.keys(type.padMap).filter(bt => type.padMap && type.padMap[bt] === sz)
+        }
+      }
+    }
+
     return <tr
       className={`${cn.trhi}`}
       key={`btr${type.subTypes}1`}
@@ -591,7 +611,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           </Link> */}
 
         <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
-          {type.subTypes.map(st => (<ActionButton
+          {subTypes.map(st => (<ActionButton
             id={`st-${st}`}
             style={{
               color: selection === st ? appTheme.palette.black : undefined,
@@ -641,7 +661,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
       <td className={`${cn.br}`}>{this.renderHaulSize(type.haul)}</td>
 
-      <td className={`${cn.br}`}><PadSize size={type.padSize} /> </td>
+      <td className={`${cn.br}`}><PadSize size={padSize} /></td>
 
       <td className={`${cn.br}`}>
         <Icon iconName={type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />

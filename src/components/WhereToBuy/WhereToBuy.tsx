@@ -577,7 +577,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       return null;
     }
 
-    const isHighlightMatch = Object.keys(market.supplies).some(n => highlights.has(n));
+    const isHighlightMatch = !filterNoHighlights && Object.keys(market.supplies).some(n => highlights.has(n));
     const isExpanded = expandMatches.has(market.stationName) || (expandHighlights && isHighlightMatch);
 
     // fleet carriers need to use their ident, not display name

@@ -55,6 +55,9 @@ export interface SiteType {
   /** Largest pad size */
   padSize: PadSize;
 
+  /** Specific pad sizes mapped to subTypes */
+  padMap?: Record<string, PadSize>;
+
   /** Is an orbital or surface site */
   orbital: boolean;
 
@@ -647,6 +650,7 @@ export const siteTypes: SiteType[] = [
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "large",
+    "padMap": { picumnus: 'large', annona: 'small' },
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
@@ -688,7 +692,8 @@ export const siteTypes: SiteType[] = [
     "haul": 5638,
     "buildClass": "settlement",
     "tier": 1,
-    "padSize": "medium",
+    "padSize": "large",
+    "padMap": { mantus: 'medium', orcus: 'large' },
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
@@ -730,7 +735,8 @@ export const siteTypes: SiteType[] = [
     "haul": 5656,
     "buildClass": "settlement",
     "tier": 1,
-    "padSize": "none",
+    "padSize": "large",
+    "padMap": { meteope: 'large', palici: 'large', minthe: 'medium' },
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
@@ -772,7 +778,8 @@ export const siteTypes: SiteType[] = [
     "haul": 5629,
     "buildClass": "settlement",
     "tier": 1,
-    "padSize": "small",
+    "padSize": "medium",
+    "padMap": { bellona: 'small', enyo: 'medium', polemos: 'medium' },
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
@@ -858,7 +865,8 @@ export const siteTypes: SiteType[] = [
     "haul": 5671,
     "buildClass": "settlement",
     "tier": 2,
-    "padSize": "none",
+    "padSize": "large",
+    "padMap": { comus: 'small', gelos: 'large' },
     "orbital": false,
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
