@@ -1,6 +1,6 @@
 import './ProjectView.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, Coachmark, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TeachingBubbleContent, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenu, ContextualMenuItemType, DefaultButton, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
@@ -18,6 +18,7 @@ import { BuildEffects } from '../../components/BuildEffects';
 import { WhereToBuy } from '../../components/WhereToBuy/WhereToBuy';
 import { mapName } from '../../site-data';
 import { EconomyBlock } from '../../components/EconomyBlock';
+import { ShowCoachingMarks } from '../../components/ShowCoachingMarks';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -524,7 +525,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {mode === Mode.view && !!proj.maxNeed && this.renderStats()}
       </div>
 
-      {this.renderCoachMarks()}
+      <ShowCoachingMarks id='whereToShop' target='#btnWhereToBuy' />
 
       <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
         <div className='center'>
@@ -761,56 +762,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
       </div>}
     </>
-  }
-
-  renderCoachMarks() {
-    const { notAgain } = this.state;
-
-    return <>
-      {!notAgain.includes('market1') && <Coachmark
-        target='#btnWhereToBuy'
-        delayBeforeCoachmarkAnimation={100}
-        positioningContainerProps={{ directionalHint: DirectionalHint.rightCenter }}
-      >
-        <TeachingBubbleContent
-          headline="Search for markets (new!)"
-          target='#btnWhereToBuy'
-          styles={{
-            bodyContent: {
-              backgroundColor: appTheme.palette.white,
-              border: '1px solid ' + appTheme.palette.accent,
-            },
-            headline: { color: appTheme.palette.black }
-          }}
-        >
-          <div style={{ color: appTheme.palette.black }}>
-            <div>Use button <Icon iconName='ShoppingCart' className='icon-inline' /> to find markets near the construction site with the commodities you need.</div>
-            <br />
-            <LinkSrvSurvey href='#about=markets' text='Learn more?' title='Learn more on the About page' />
-            <br />
-            <br />
-
-            <Checkbox
-              label='Do not show me this again'
-              onChange={(_, checked) => {
-                this.setState({ notAgainPending: checked ? 'market1' : undefined });
-              }}
-            />
-            <Stack horizontal horizontalAlign='end'>
-              <PrimaryButton text='Okay' onClick={() => {
-                const { notAgainPending } = this.state;
-                if (!!notAgainPending) {
-                  store.notAgain = [...store.notAgain, notAgainPending];
-                }
-                this.setState({ notAgain: [...this.state.notAgain, 'market1'] });
-              }} />
-
-            </Stack>
-          </div>
-
-        </TeachingBubbleContent>
-      </Coachmark>}
-    </>;
   }
 
   getCargoFCHeaders() {

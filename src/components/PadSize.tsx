@@ -8,7 +8,7 @@ export const PadSize: FunctionComponent<{ size: string }> = (props) => {
   let w = 20;
   let t = 'L';
   if (props.size === 'medium') {
-    w = 14;
+    w = 13;
     t = 'M';
   } else if (props.size === 'small') {
     w = 7;

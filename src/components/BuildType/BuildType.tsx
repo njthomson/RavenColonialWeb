@@ -1,5 +1,5 @@
 import './BuildType.css';
-import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, INavLink, INavLinkGroup, Link, Nav, Panel, PanelType, Pivot, PivotItem, registerIcons, Stack } from "@fluentui/react";
+import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, INavLink, INavLinkGroup, Nav, Panel, PanelType, Pivot, PivotItem, registerIcons, Stack } from "@fluentui/react";
 import { Component } from "react";
 import { getBuildTypeDisplayName, getSiteType, isOrbital, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
@@ -11,6 +11,7 @@ import { CalloutMsg } from '../CalloutMsg';
 import { PadSize } from '../PadSize';
 import { isTypeValid, SysMap } from '../../system-model';
 import { store } from '../../local-storage';
+import { ShowCoachingMarks } from '../ShowCoachingMarks';
 
 registerIcons({
   icons: {
@@ -189,10 +190,11 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         onRenderHeader={() => {
           return <div style={{ width: '90%', margin: '10px 40px' }}>
             <IconButton
+              id='go-large'
               iconProps={{
                 iconName: isLarge ? 'DoubleChevronRight' : 'DoubleChevronLeft',
                 style: {
-                  color: appTheme.palette.white, // .neutralDark, TODO: make it visible again
+                  color: appTheme.palette.neutralDark,
                   fontSize: 12
                 }
               }}
@@ -205,11 +207,8 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
             />
             <h3 style={{ fontSize: 20 }}>
               Choose a type:
-              &nbsp;
-              {isLarge && <span className='small' style={{ fontWeight: 'normal' }}>
-                Work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
-              </span>}
             </h3>
+            <ShowCoachingMarks target='#go-large' id='largeBuildType' />
           </div>;
         }}
       >
@@ -427,7 +426,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           {this.props.sysMap && <col width='60px' />}
           <col width='44px' />
           <col width='55px' />
-          <col width='80px' />
+          <col width='85px' />
           <col width='80px' />
           <col width='80px' />
           <col width='80px' />
@@ -442,26 +441,26 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         </colgroup>
 
         <thead>
-          <tr style={{ backgroundColor: appTheme.palette.white, position: 'sticky', zIndex: 1, top: 64 }}>
+          <tr style={{ backgroundColor: appTheme.palette.white, position: 'sticky', zIndex: 1, top: isMobile() ? 0 : 64 }}>
             {this.renderLargeColumnHeader('buildType', `${cn.bb}`)}
             <th className={`${cn.bb} ${cn.br}`}></th>
             {/* {this.renderLargeColumnHeader('layouts', `${cn.bb} ${cn.br}`)} */}
-            {this.props.sysMap && this.renderLargeColumnHeader('valid', `cc ${cn.bb} ${cn.br} btn`)}
+            {this.props.sysMap && this.renderLargeColumnHeader('valid', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('haul', `cc ${cn.bb} ${cn.br}`)}
-            {this.renderLargeColumnHeader('pad', `cc ${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('env', `cc ${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('tier', `${cn.bb} ${cn.br} btn`)}
+            {this.renderLargeColumnHeader('pad', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('env', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('tier', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('needs', `${cn.bb} ${cn.br}`)}
             {this.renderLargeColumnHeader('gives', `${cn.bb} ${cn.br}`)}
 
-            {this.renderLargeColumnHeader('inf', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('pop', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('mpop', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('sec', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('wealth', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('tech', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('sol', `${cn.bb} ${cn.br} btn`)}
-            {this.renderLargeColumnHeader('dev', `${cn.bb} btn`)}
+            {this.renderLargeColumnHeader('inf', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('pop', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('mpop', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('sec', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('wealth', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('tech', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('sol', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('dev', `${cn.bb} ${cn.trh} btn`)}
           </tr>
         </thead>
         <tbody>
@@ -589,8 +588,8 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     }
 
     return <tr
-      className={`${cn.trhi}`}
       key={`btr${type.subTypes}1`}
+      className={`${cn.trhi}`}
       style={{ backgroundColor: flip ? appTheme.palette.neutralLighter : undefined }}
     >
 
@@ -612,6 +611,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
         <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
           {subTypes.map(st => (<ActionButton
+            key={`st-${st}`}
             id={`st-${st}`}
             style={{
               color: selection === st ? appTheme.palette.black : undefined,
@@ -699,11 +699,10 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     let isValid = isTypeValid(this.props.sysMap, type);
 
     return isValid
-      ? <Icon iconName='SkypeCheck' />
-      : <Icon iconName='StatusCircleErrorX' style={{ color: 'red' }} />;
+      ? <Icon iconName='SkypeCheck' style={{ color: appTheme.palette.greenLight }} />
+      : <Icon iconName='Cancel' style={{ color: appTheme.palette.red, fontWeight: 'bold' }} />;
     // : <span style={{ color: 'grey' }}>-</span>;
   }
-
 
   renderHaulSize(haul: number) {
 

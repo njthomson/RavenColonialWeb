@@ -254,11 +254,11 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     };
 
     if (!primaryPort) {
-      validations.push(<div>No station has been marked as the system primary port <Icon className='icon-inline' iconName='CrownSolid' style={{ fontWeight: 'bold' }} /></div>);
+      validations.push(<div key={`valNoPrimary`}>No station has been marked as the system primary port <Icon className='icon-inline' iconName='CrownSolid' style={{ fontWeight: 'bold' }} /></div>);
     }
 
     if (!allSites[0]?.reserveLevel) {
-      validations.push(<div>
+      validations.push(<div key={`valNoReserve`}>
         » System reserve level unknown - set in <b>Advanced</b> on any site
         {!!allSites[0] && !allSites[0].isMock && <IconButton
           className={`btn ${cn.btn}`}
@@ -270,14 +270,14 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     }
 
     if (tierPoints.tier2 < 0) {
-      validations.push(<div>» System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
+      validations.push(<div key={`valTier2`}>» System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
     }
     if (tierPoints.tier3 < 0) {
-      validations.push(<div>» System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
+      validations.push(<div key={`valTier3`}>» System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
     }
 
     if (unknown in bodies) {
-      validations.push(<div>
+      validations.push(<div key={`valNoBody`}>
         » There are {bodies.Unknown.sites.length} site(s) on unknown bodies:
         <br />
         {bodies.Unknown.sites.map(s => getMiniLink(s, 'bodyName', `noBody${s.buildName}`))}
@@ -287,7 +287,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     const countTaxable = allSites.filter(s => s.type.buildClass === 'starport' && s.type.tier > 1);
     const taxableMissingDate = countTaxable.filter(s => !s.timeCompleted);
     if (countTaxable.length > 3 && taxableMissingDate.length > 0) {
-      validations.push(<div>
+      validations.push(<div key={`valShouldSetDates`}>
         » Set <b>Date Complete</b> on the following to ensure tier points are scaled correctly:
         <br />
         {taxableMissingDate.map(s => getMiniLink(s, 'timeCompleted', `noDate${s.buildName}`))}
@@ -466,9 +466,8 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       if (editMockSite.buildType === original?.buildType) deficit -= needs.count;
 
       if (deficit > 0) {
-        validations.push(<div>System needs <TierPoints tier={needs.tier} count={deficit} /></div>);
+        validations.push(<div key={`valTierPoints`}>System needs <TierPoints tier={needs.tier} count={deficit} /></div>);
       }
-
     }
 
     return <Modal
