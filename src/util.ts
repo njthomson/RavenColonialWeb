@@ -196,7 +196,7 @@ export const isSurfaceSite = (buildType: string): boolean => {
 
 export const asPosNegTxt = (n: number): string => {
   if (n > 0)
-    return `+${n}`;
+    return `+${n.toLocaleString()}`;
   else
-    return `${n}`
+    return `${n.toLocaleString()}`
 }

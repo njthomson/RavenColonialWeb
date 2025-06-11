@@ -214,17 +214,16 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       const actual = sumEffects[key as keyof SysEffects] ?? 0;
       if (key === 'pop' || key === 'mpop') return null;
 
-
-      return <>
-        <div key={`se${key}1`}>{mapName[key]}:</div>
-        <div key={`se${key}2`}>
+      return [
+        <div key={`se${key}1`}>{mapName[key]}:</div>,
+        <div key={`se${key}2`}>,
           {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} />}
-        </div>
-        <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>
-        <div key={`se${key}4`}>
+        </div>,
+        <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
+        <div key={`se${key}4`}>,
           {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} />}
-        </div>
-      </>
+        </div>,
+      ]
     });
   }
 
@@ -233,8 +232,9 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
     const validations = [];
 
-    const getMiniLink = (s: SiteMap, fieldHighlight: string) => {
+    const getMiniLink = (s: SiteMap, fieldHighlight: string, key: string) => {
       return <div
+        key={key}
         style={{ marginLeft: 10 }}
       >
         <ProjectLink proj={s} noSys noBold noType iconName={s.complete ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />
@@ -246,7 +246,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
             if (s.isMock) {
               this.setState({ editMockSite: { ...s } });
             } else {
-              this.setState({ editRealSite: { ...s }, editFieldHighlight: 'timeCompleted' });
+              this.setState({ editRealSite: { ...s }, editFieldHighlight: fieldHighlight });
             }
           }}
         />
@@ -280,7 +280,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       validations.push(<div>
         » There are {bodies.Unknown.sites.length} site(s) on unknown bodies:
         <br />
-        {bodies.Unknown.sites.map(s => getMiniLink(s, 'bodyName'))}
+        {bodies.Unknown.sites.map(s => getMiniLink(s, 'bodyName', `noBody${s.buildName}`))}
       </div>);
     }
 
@@ -290,7 +290,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       validations.push(<div>
         » Set <b>Date Complete</b> on the following to ensure tier points are scaled correctly:
         <br />
-        {taxableMissingDate.map(s => getMiniLink(s, 'timeCompleted'))}
+        {taxableMissingDate.map(s => getMiniLink(s, 'timeCompleted', `noDate${s.buildName}`))}
       </div>);
     }
 
@@ -353,7 +353,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
   renderBody(body: BodyMap) {
     return <li key={`li${body.name}`} style={{ marginBottom: 8 }}>
-      <Label>{body.name}</Label>
+      <Label style={{ fontSize: 18 }}>{body.name}</Label>
 
       {!!body.orbital.length && body.orbital.map(site => this.renderSite(body, site))}
       {!body.orbital.length && <>
@@ -382,7 +382,10 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       onClick={() => this.setState({ showPortLinks: site })}
     />;
 
-    return <div className={`removable ${cn.removable}`} >
+    return <div
+      key={`li${body.name}${site.buildName}`}
+      className={`removable ${cn.removable}`}
+    >
       <Stack key={site.buildId} horizontal verticalAlign='center' style={{ height: 22 }}>
         <ProjectLink proj={site} noSys noBold iconName={site.complete ? (site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} greyIncomplete={!useIncomplete} />
 

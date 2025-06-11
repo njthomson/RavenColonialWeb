@@ -67,16 +67,7 @@ export interface SiteMap extends ProjectRef {
   body?: BodyMap;
 }
 
-interface EconomyMap {
-  agriculture: number;
-  extraction: number;
-  hightech: number;
-  industrial: number;
-  military: number;
-  refinery: number;
-  terraforming: number;
-  tourism: number;
-}
+export type EconomyMap = Record<Exclude<Economy, 'colony' | 'none'>, number>;
 
 export interface SiteLinks {
   economies: Record<string, EconomyLink>
@@ -126,6 +117,15 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean,
 };
 
 const initializeSysMap = (projects: ProjectRef[]) => {
+  projects.forEach(p => {
+    const m = p as SiteMap;
+    // remove everything we're going to set below
+    delete m.links;
+    delete m.economies;
+    delete m.primaryEconomy;
+    delete m.parentLink;
+    delete m.body;
+  })
 
   let systemName = projects.find(s => s.systemName?.length > 0)?.systemName!;
   let systemAddress = projects.find(s => s.systemAddress > 0)?.systemAddress ?? 0;
@@ -226,10 +226,11 @@ const sumSystemEffects = (allSites: SiteMap[], useIncomplete: boolean) => {
     if (!site.complete && !useIncomplete) continue;
 
     // calc total system economic influence
-    let inf = site.type.inf;
-    if (inf === 'colony') {
-      inf = calculateColonyEconomies(site, useIncomplete);
-    }
+    calculateColonyEconomies(site, useIncomplete);
+    const inf = site.type.inf === 'colony' && site.primaryEconomy
+      ? site.primaryEconomy
+      : site.type.inf;
+
     if (inf !== 'none') {
       mapEconomies[inf] = (mapEconomies[inf] ?? 0) + 1;
     }

@@ -7,6 +7,7 @@ import { LinkSrvSurvey } from './LinkSrvSurvey';
 import { cn } from '../theme';
 import { BuildType } from './BuildType/BuildType';
 import { delay } from '../util';
+import { CopyButton } from './CopyButton';
 
 interface ProjectCreateProps {
   systemName?: string;
@@ -103,7 +104,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           >
             <div>The <code className={cn.navy}>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
             <ul>
-              <li>Open folder: <code className={cn.navy}>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code></li>
+              <li>Open folder: <code className={cn.navy}>%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous</code> <CopyButton text='%HomeDrive%%HomePath%\Saved Games\Frontier Developments\Elite Dangerous' /></li>
               <li>Find the file named with today's date. Something like: <code className={cn.navy}>Journal.{new Date().toISOString().substring(0, 10)}T102030.01.log</code></li>
               <li>Scroll to the bottom and look for the line with <code className={cn.navy}>"event":"Docked"</code></li>
               <li>On that line, copy the value of <code className={cn.navy}>MarketID</code></li>

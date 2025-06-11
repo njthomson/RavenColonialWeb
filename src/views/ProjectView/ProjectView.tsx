@@ -491,7 +491,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           onClose={() => this.setState({ showWhereToBuy: false })}
         />}
 
-        {!!editCommodities && this.renderEditCommodities()}
+        {!!editCommodities && !proj.complete && this.renderEditCommodities()}
 
         {mode === Mode.view && this.renderProjectDetails(proj)}
 

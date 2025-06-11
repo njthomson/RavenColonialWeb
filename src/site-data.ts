@@ -61,8 +61,11 @@ export interface SiteType {
   /** Is an orbital or surface site */
   orbital: boolean;
 
-  /** System influence */
+  /** System ecomomic influence */
   inf: Economy;
+
+  /** Fixed/specialized station economy */
+  fixed?: Economy;
 
   /** Needed to start construction */
   needs: {
@@ -273,6 +276,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 3 },
     "gives": { tier: 3, count: 1 },
     "inf": "extraction",
+    "fixed": "extraction",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 5, tech: 3, sol: -4, dev: 7 }
   },
   {
@@ -329,6 +333,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "industrial",
+    "fixed": "industrial",
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 3 }
   },
   {
@@ -343,6 +348,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "service",
+    "fixed": "service",
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -371,6 +377,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
+    "fixed": "hightech",
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 0 }
   },
   {
@@ -385,6 +392,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "military",
+    "fixed": "military",
     "effects": { pop: 1, mpop: 1, sec: 2, wealth: 0, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -598,6 +606,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "industrial",
+    "fixed": "industrial",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 3, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -612,6 +621,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
+    "fixed": "hightech",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 5, sol: 0, dev: 1 }
   },
   {

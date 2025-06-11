@@ -1,0 +1,15 @@
+
+.economy-ratios th {
+  font-size:10px;
+  text-align: center;
+    padding: 0 8px;
+}
+
+.economy-ratios td {
+  text-align: right;
+  padding: 0 8px;
+}
+
+.economy-ratios .cl {
+  text-align: left;
+}

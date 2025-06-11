@@ -1,21 +1,10 @@
 import { Economy } from "./site-data";
-import { SiteMap } from "./system-model";
+import { EconomyMap, SiteMap } from "./system-model";
 import { BodyFeature, SystemFeature } from "./types";
-
-export interface EconomyMap {
-  agriculture: number;
-  extraction: number;
-  hightech: number;
-  industrial: number;
-  military: number;
-  refinery: number;
-  terraforming: number;
-  tourism: number;
-}
 
 export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) => {
   if (!site.economies || !site.primaryEconomy) {
-    const map: EconomyMap = {
+    const map = {
       agriculture: 0,
       extraction: 0,
       hightech: 0,
@@ -24,7 +13,8 @@ export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) 
       refinery: 0,
       terraforming: 0,
       tourism: 0,
-    };
+      service: 0,
+    } as EconomyMap;
 
     applyBodyType(map, site);
     applyBodyFeatures(map, site);
@@ -48,6 +38,20 @@ export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) 
 const applyBodyType = (map: EconomyMap, site: SiteMap) => {
   if (!site.bodyType) { return; }
 
+  // While more research is necessary on this topic, specialized ports appear to be:
+  //  - Assigned a baseline economic strength value of 0.5 (several planetary versions) or 1.0 (several orbital versions) for their applicable economy type
+  if (site.type.fixed && site.type.fixed !== 'none' && site.type.fixed !== 'colony') {
+    if (site.type.orbital) {
+      map[site.type.fixed] += 1.0;
+    } else {
+      map[site.type.fixed] += 0.5;
+    }
+    //  - NOT affected by the base inheritable economy of the local body
+    return;
+  }
+
+  // Colony-type ports acquire their economy type(s) as follows:
+  // - The “Base Inheritable Economy” type of the local body they are on or orbit is assessed
   switch (site.bodyType) {
     case 'remnant':
       map.hightech += 1;
@@ -57,14 +61,14 @@ const applyBodyType = (map: EconomyMap, site: SiteMap) => {
       map.military += 1;
       break;
     case 'elw':
-      map.hightech += 1;
-      map.tourism += 1;
-      map.military += 1;
       map.agriculture += 1;
+      map.hightech += 1;
+      map.military += 1;
+      map.tourism += 1;
       break;
     case 'ww':
-      map.tourism += 1;
       map.agriculture += 1;
+      map.tourism += 1;
       break;
     case 'ammonia':
       map.hightech += 1;
@@ -96,6 +100,11 @@ const applyBodyType = (map: EconomyMap, site: SiteMap) => {
 const applyBodyFeatures = (map: EconomyMap, site: SiteMap) => {
   if (!site.bodyFeatures) { return; }
 
+  // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
+  if (site.bodyFeatures.includes(BodyFeature.rings)) {
+    map.extraction += 1;
+    // TODO: asteroid belt?
+  }
   // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
   if (site.bodyFeatures.includes(BodyFeature.bio)) {
     map.agriculture += 1;
@@ -103,13 +112,8 @@ const applyBodyFeatures = (map: EconomyMap, site: SiteMap) => {
   }
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.bodyFeatures.includes(BodyFeature.geo)) {
+    map.extraction += 1;
     map.industrial += 1;
-    map.extraction += 1;
-  }
-  // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
-  if (site.bodyFeatures.includes(BodyFeature.rings)) {
-    map.extraction += 1;
-    // TODO: asteroid belt?
   }
 };
 
