@@ -4,7 +4,7 @@ import { appTheme, cn } from "../../theme";
 import { economyColors, mapName } from "../../site-data";
 import { EconomyMap, SiteMap } from "../../system-model";
 import { ProjectLink } from "../ProjectLink/ProjectLink";
-import { Icon, IconButton, Link, Stack } from "@fluentui/react";
+import { DefaultButton, Icon, IconButton, Link, Stack } from "@fluentui/react";
 import { asPosNegTxt } from "../../util";
 import { CopyButton } from '../CopyButton';
 import { EconomyBlock } from '../EconomyBlock';
@@ -281,13 +281,19 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
             <input
               type="file"
               multiple
+              id='browse-files'
               name="Journal*.log"
-              style={{ margin: 4, fontSize: 10, width: 75 }}
+              style={{ display: 'none' }}
               onChange={(ev) => {
                 parseJournalFiles(ev.target.files!, props.site)
                   .then(map => setJournalMap(map))
                   .finally(() => setShowUpload(false));
-              }} />
+              }}
+            />
+            <DefaultButton
+              onClick={() => document.getElementById('browse-files')?.click()}
+              text='Choose file(s)'
+            />
           </div>
         </div>
       </div>}
