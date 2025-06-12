@@ -2,7 +2,7 @@ import './SystemView.css';
 import * as api from '../../api';
 import { Component } from "react";
 import { ProjectRef } from "../../types";
-import { DefaultButton, Dialog, DialogFooter, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Stack, Toggle } from "@fluentui/react";
+import { ContextualMenu, DefaultButton, Dialog, DialogFooter, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Stack, Toggle } from "@fluentui/react";
 import { ProjectLink } from "../../components";
 import { appTheme, cn } from "../../theme";
 import { Chevrons, TierPoints } from "../../components/Chevrons";
@@ -490,6 +490,14 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   renderPortLinks(site: SiteMap) {
     return <Modal
       isOpen
+      allowTouchBodyScroll={isMobile()}
+      dragOptions={{
+        moveMenuItemText: 'Move',
+        closeMenuItemText: 'Close',
+        menu: ContextualMenu,
+        keepInBounds: false,
+        dragHandleSelector: '#market-links',
+      }}
       onDismiss={() => this.setState({ showPortLinks: undefined })}
     >
       <IconButton

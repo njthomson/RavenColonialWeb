@@ -194,7 +194,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
   let flip = false;
   return <div>
 
-    <h3 className={cn.h3}>
+    <h3 id='market-links' className={cn.h3} style={{ cursor: props.showName ? 'move' : undefined }}>
       {!props.showName && <>Market links:</>}
       {props.showName && <>Market links for: {props.site.buildName}</>}
     </h3>
