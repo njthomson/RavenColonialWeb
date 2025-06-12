@@ -34,7 +34,7 @@ const parseJournalEntry = (json: string) => {
     for (const economy of entry.StationEconomies as StationEconomies[]) {
       let key = economy.Name.slice(9, -1).toLowerCase();
       if (key === 'agri') { key = 'agriculture' }
-      map[key as keyof EconomyMap] = economy.Proportion;
+      map[key as keyof EconomyMap] = Math.round(economy.Proportion * 100) / 100;
     }
 
     return map;
@@ -133,12 +133,12 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
       .filter(([key, val]) => val > 0 || (journalMap && journalMap[key] > 0))
       .sort((a, b) => b[1] - a[1])
       .map(([key, val]) => {
-        val = Math.trunc(val * 100);
+        val = Math.round(val * 100);
 
         // if we have entries from journal files to compare ...
         let journalMapElements: JSX.Element[] = [];
         if (journalMap) {
-          const journalMapVal = journalMap && journalMap[key] * 100;
+          const journalMapVal = Math.round(journalMap && journalMap[key] * 100);
           const greyDash = <td className={cn.bl} style={{ textAlign: 'center', color: 'grey' }}>-</td>;
           const redX = <td className={cn.bl} style={{ textAlign: 'center' }}>
             <Icon className='icon-inline' iconName='Cancel' style={{ cursor: 'Default', textAlign: 'center', width: '100%', color: appTheme.palette.red, fontWeight: 'bold' }} />
@@ -166,7 +166,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
 
             // diff
             if (journalMapVal && journalMapVal !== val && val > 0) {
-              const diff = journalMapVal - val;
+              const diff = val - journalMapVal;
               journalMapDiff = <span style={{ color: appTheme.palette.yellow }}>{asPosNegTxt(diff)} %</span>;
               journalMapElements.push(<td >{journalMapDiff}</td>);
             }

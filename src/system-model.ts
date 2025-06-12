@@ -20,7 +20,7 @@ export const fetchSysMap = async (systemName: string): Promise<SysMap> => {
     return sysMapCache[systemName];
   }
 
-  const projects = await api.project.findAllBySystem(systemName);
+  const projects = await api.system.findAllBySystem(systemName);
   const sysMap = buildSystemModel(projects, true);
   return sysMap;
 }

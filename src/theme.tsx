@@ -246,6 +246,12 @@ export const cn = mergeStyleSets({
       backgroundColor: appTheme.palette.themeLight + '!important',
     }
   },
+  dibi: {
+    color: appTheme.palette.neutralPrimary,
+    ':hover': {
+      color: appTheme.palette.black,
+    },
+  },
 });
 
 
@@ -307,8 +313,8 @@ export const getThemedIconSolidFC = (outer: string, inner?: string, fill: string
 registerIcons({
   icons: {
     'fleetCarrier': getThemedIconFC(appTheme.palette.themeDarkAlt),
-    'fleetCarrierBlack': getThemedIconFC(appTheme.palette.black),
+    'fleetCarrierBlack': getThemedIconFC(appTheme.palette.neutralPrimary),
     'fleetCarrierSolid': getThemedIconSolidFC(appTheme.palette.themeDarkAlt, appTheme.palette.white, appTheme.palette.themeDarkAlt),
-    'fleetCarrierBlackSolid': getThemedIconSolidFC(appTheme.palette.black, appTheme.palette.white, appTheme.palette.black),
+    'fleetCarrierBlackSolid': getThemedIconSolidFC(appTheme.palette.neutralPrimary, appTheme.palette.white, appTheme.palette.neutralPrimary),
   }
 });

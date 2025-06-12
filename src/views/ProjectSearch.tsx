@@ -63,7 +63,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
     window.location.assign(`#find=${systemName}`);
 
     try {
-      const matches = await api.project.findAllBySystem(systemName);
+      const matches = await api.system.findAllBySystem(systemName);
       this.setState({
         loading: false,
         refs: matches.reverse(),

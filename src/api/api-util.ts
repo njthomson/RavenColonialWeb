@@ -1,3 +1,4 @@
+import { store } from "../local-storage";
 import { RequestError } from "../types";
 
 export const apiSvcUrl = //'https://localhost:7007'; /*
@@ -14,12 +15,20 @@ export const callSvcAPI = async <T>(url: URL, method: string = 'GET', body?: str
   // optionally log the call we are making
   if (logApiCalls) { console.log(`calling: (${method}) ${url}`); }
 
+  const headers: HeadersInit = url.origin === apiSvcUrl && store.cmdrName
+    ? { 'Rcc-Cmdr': store.cmdrName }
+    : {};
+
   const response = !body
-    ? await fetch(url, { method })
+    ? await fetch(url, { method, headers },)
     : await fetch(url, {
       method,
       body,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...headers,
+      }
     });
 
   if (method === 'HEAD') {

@@ -1,6 +1,7 @@
 import { Economy } from "./site-data";
 import { EconomyMap, SiteMap } from "./system-model";
 import { BodyFeature, SystemFeature } from "./types";
+import { asPosNegTxt } from "./util";
 
 export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) => {
   if (!site.economies || !site.primaryEconomy) {
@@ -27,9 +28,16 @@ export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) 
       return map[b as keyof EconomyMap] - map[a as keyof EconomyMap];
     })[0] as Economy;
 
+    // round values (why do we get values of "2.2499999999999996"?)
+    for (const key in map) {
+      map[key as keyof EconomyMap] = Math.round(map[key as keyof EconomyMap] * 100) / 100;
+    }
+
     // assign these to the given site
     site.economies = map;
     site.primaryEconomy = primaryEconomy;
+
+    // console.warn(`*** ${site.buildName} (${site.buildType}) ***\n${JSON.stringify(map, null, 2)}`)
   }
 
   return site.primaryEconomy;
@@ -91,9 +99,6 @@ const applyBodyType = (map: EconomyMap, site: SiteMap) => {
     case 'icy':
       map.industrial += 1;
       break;
-    // case 'asteroid':
-    //   // TODO ...
-    //   break;
   }
 };
 
@@ -103,7 +108,7 @@ const applyBodyFeatures = (map: EconomyMap, site: SiteMap) => {
   // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
   if (site.bodyFeatures.includes(BodyFeature.rings)) {
     map.extraction += 1;
-    // TODO: asteroid belt?
+    // TODO: asteroid belt around stars
   }
   // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
   if (site.bodyFeatures.includes(BodyFeature.bio)) {
@@ -120,6 +125,7 @@ const applyBodyFeatures = (map: EconomyMap, site: SiteMap) => {
 const applyStrongLinks = (map: EconomyMap, site: SiteMap, useIncomplete: boolean) => {
   if (!site.links?.strongSites) { return; }
 
+  const strongInf = new Set<keyof EconomyMap>();
   for (let s of site.links.strongSites) {
     // skip incomplete sites ?
     if (!s.complete && !useIncomplete) { continue; }
@@ -133,6 +139,11 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap, useIncomplete: boolean
       } else {
         inf = s.primaryEconomy;
       }
+    }
+
+    // Track which economy types are providing a strong link (unless we have a fixed/specialized economy?)
+    if (!site.type.fixed) {
+      strongInf.add(inf as keyof EconomyMap);
     }
 
     // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
@@ -153,7 +164,48 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap, useIncomplete: boolean
       }
     }
   }
+
+  // Strong Links are subject to modifiers which affect them depending on specific characteristics of the local body
+  for (const inf of Array.from(strongInf)) {
+    const linkBoost = getStrongLinkBoost(inf, site);
+    map[inf] += linkBoost;
+    console.log(`*** ${site.buildName} *** linkBoost: ${inf} => ${asPosNegTxt(linkBoost)}\n${JSON.stringify(map)}`)
+  }
 };
+
+const getStrongLinkBoost = (inf: Economy, site: SiteMap) => {
+  switch (inf) {
+    default: return 0;
+
+    case 'agriculture':
+      if (matches(['elw', 'ww'], site.bodyType) || matches([BodyFeature.bio, BodyFeature.terraformable], site.bodyFeatures)) { return +0.4; }
+      if (matches(['icy'], site.bodyType) || matches([BodyFeature.tidal], site.bodyFeatures)) {
+        // TODO: Need to support: "On or orbiting a moon that is tidally locked to its planet and its subsequent parent planet(s) are tidally locked to the star"
+        // Ideally ... just make those bodies have: BodyFeature.tidal
+        return -0.4;
+      }
+      return 0;
+
+    case 'extraction':
+      if (matches(["major", "pristine"], site.reserveLevel) || matches([BodyFeature.volcanism], site.bodyFeatures)) { return +0.4; }
+      if (matches(["depleted", "low"], site.reserveLevel)) { return -0.4; }
+      return 0;
+
+    case 'hightech':
+      if (matches(['aw', 'elw', 'ww'], site.bodyType) || matches([BodyFeature.bio, BodyFeature.geo], site.bodyFeatures)) { return +0.4; }
+      return 0;
+
+    case 'industrial':
+    case 'refinery':
+      if (matches(["major", "pristine"], site.reserveLevel)) { return +0.4; }
+      if (matches(["depleted", "low"], site.reserveLevel)) { return -0.4; }
+      return 0;
+
+    case 'tourism':
+      if (matches(['aw', 'elw', 'ww'], site.bodyType) || matches([BodyFeature.bio, BodyFeature.geo], site.bodyFeatures) || matches([SystemFeature.blackHole, SystemFeature.neutronStar, SystemFeature.whiteDwarf], site.systemFeatures)) { return +0.4; }
+      return 0;
+  }
+}
 
 const applyBuffs = (map: EconomyMap, site: SiteMap) => {
 
@@ -248,3 +300,13 @@ const applyWeakLinks = (map: EconomyMap, site: SiteMap, useIncomplete: boolean) 
     }
   }
 };
+
+const matches = <T>(listRequired: T[], check: T | T[] | undefined) => {
+  if (check) {
+    const listCheck = Array.isArray(check) ? check : [check];
+    return listRequired.some(item => listCheck.includes(item));
+  }
+  else {
+    return false;
+  }
+}

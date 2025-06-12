@@ -48,7 +48,7 @@ const updatedSitesFromCanonn = async (sites: SiteMap[], setMsg: React.Dispatch<R
     // fetch from Canonn (assuming we have a system address)
     let systemAddress = sites.find(s => s.systemAddress > 0)?.systemAddress ?? 0;
     if (!systemAddress) return;
-    const canonnResponse = await api.edsm.getCanonnBioStats(systemAddress);
+    const canonnResponse = await api.canonn.getCanonnBioStats(systemAddress);
 
     const deltas = [];
 

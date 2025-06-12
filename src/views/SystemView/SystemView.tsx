@@ -1,7 +1,8 @@
 import './SystemView.css';
+import * as api from '../../api';
 import { Component } from "react";
 import { ProjectRef } from "../../types";
-import { DefaultButton, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Stack, Toggle } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogFooter, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Stack, Toggle } from "@fluentui/react";
 import { ProjectLink } from "../../components";
 import { appTheme, cn } from "../../theme";
 import { Chevrons, TierPoints } from "../../components/Chevrons";
@@ -15,6 +16,7 @@ import { EditProject } from '../../components/EditProject/EditProject';
 import { BuildEffects } from '../../components/BuildEffects';
 import { store } from '../../local-storage';
 import { FixFromCanonn } from '../../components/FixFromCanonn';
+import { MockMin } from '../../api/system';
 
 interface SystemViewProps {
   systemName: string;
@@ -31,6 +33,11 @@ interface SystemViewState extends SysMap {
   useIncomplete: boolean;
   showFixMissingTypes?: boolean;
   showBuildOrder?: boolean;
+
+  networking?: boolean;
+  etagMocks?: string;
+  showLoadMocksDialog?: boolean;
+  saveConflict?: boolean;
 }
 
 export class SystemView extends Component<SystemViewProps, SystemViewState> {
@@ -88,9 +95,99 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     }
   }
 
+  loadMocks = async (resolution?: 'merge' | 'replace' | undefined) => {
+    try {
+      // warn before loading?
+      if (!resolution && this.state.allSites.some(s => s.isMock)) {
+        this.setState({ showLoadMocksDialog: true });
+        return;
+      } else {
+        this.setState({ showLoadMocksDialog: false, networking: true })
+      }
+
+      // request the mocks
+      const payload = await api.system.loadMocks(this.state.systemName);
+
+      // rehydrate ...
+      const newMockProjects = payload.mocks.map(mock => {
+        return {
+          // use what we are given
+          ...mock,
+          // plus default values
+          architectName: this.state.architect!,
+          systemAddress: this.state.systemAddress,
+          systemName: this.state.systemName,
+          starPos: [0, 0, 0],
+          marketId: 0,
+          maxNeed: 0,
+          complete: false,
+          isMock: true,
+        } as SiteMap;
+      });
+
+      // remove all mocks or only those that collide?
+      const newAllSites = resolution === 'replace'
+        ? this.state.allSites.filter(s => !s.isMock)
+        : this.state.allSites.filter(s => !newMockProjects.some(m => m.buildId === s.buildId));
+      newAllSites.push(...newMockProjects);
+
+      this.setState({
+        ...buildSystemModel(newAllSites, this.state.useIncomplete),
+        etagMocks: payload.etag,
+        networking: false,
+      });
+    } catch (err: any) {
+      console.error(`loadMocks failed:`, err);
+      this.setState({ networking: false });
+    }
+  };
+
+  saveMocks = async (force: boolean = false) => {
+    try {
+      this.setState({ networking: true, saveConflict: false });
+
+      const fieldsToSave = [
+        'buildId',
+        'buildType',
+        'buildName',
+        'bodyName',
+        'timeCompleted',
+        'isPrimaryPort',
+      ];
+
+      // reduce mocks to minimal fields
+      const minMocks = this.state.allSites
+        .filter(s => s.isMock)
+        .map(s => {
+          const mock: any = {};
+          for (const key of fieldsToSave) {
+            mock[key] = s[key as keyof SiteMap];
+          }
+          return mock as MockMin;
+        });
+
+      const etag = await api.system.saveMocks(this.state.systemName, {
+        etag: force ? "*" : this.state.etagMocks ?? '',
+        mocks: minMocks,
+      });
+      this.setState({
+        networking: false,
+        etagMocks: etag,
+      });
+    } catch (err: any) {
+      if (err.statusCode === 409) {
+        this.setState({ networking: false, saveConflict: true });
+      } else {
+        console.error(`saveMocks failed:`, err);
+        this.setState({ networking: false });
+      }
+    }
+  };
+
   render() {
-    const { allSites, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete, showBuildOrder } = this.state;
+    const { allSites, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete, showBuildOrder, networking, showLoadMocksDialog, saveConflict } = this.state;
     const showClearAllMocks = allSites.some(s => s.isMock);
+    const canLoadSaveMocks = !!store.cmdrName;
 
     return <div className='half system-view'>
       <h3 className={cn.h3}>
@@ -141,9 +238,10 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 8 }}>
         <IconButton
-          iconProps={{ iconName: 'SortLines' }}
+          iconProps={{ iconName: 'SortLines', className: cn.dibi }}
           title='View the order of sites for calculations'
           style={{ color: appTheme.palette.black, border: `1px solid ${appTheme.palette.black}` }}
+          disabled={networking}
           onClick={() => this.setState({ showBuildOrder: true })}
         />
 
@@ -151,24 +249,44 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
           iconProps={{ iconName: 'WebAppBuilderFragmentCreate' }}
           text='What if ... ?'
           style={{ height: 22, }}
+          disabled={networking}
           onClick={() => {
             this.setState({ editMockSite: this.createMockSite(this.props.projects[0]) });
             delayFocus('mock-site-name-input');
           }}
         />
 
-        {showClearAllMocks && <DefaultButton
-          iconProps={{ iconName: 'RecycleBin' }}
-          text='Reset...'
-          style={{ height: 22 }}
-          onClick={() => {
-            // remove all mocks
-            const newAllSites: ProjectRef[] = this.state.allSites.filter(s => !s.isMock);
-            this.setState({
-              ...buildSystemModel(newAllSites, useIncomplete),
-            });
-          }}
+        {canLoadSaveMocks && <IconButton
+          title='Load saved mock "What if" sites'
+          iconProps={{ iconName: 'OpenFolderHorizontal', className: cn.dibi }}
+          style={{ color: appTheme.palette.black, border: `1px solid ${appTheme.palette.black}` }}
+          disabled={networking}
+          onClick={() => this.loadMocks()}
         />}
+
+        {showClearAllMocks && <>
+          {canLoadSaveMocks && <IconButton
+            title='Save mock "What if" sites for a future session'
+            iconProps={{ iconName: 'Save', className: cn.dibi }}
+            style={{ color: appTheme.palette.black, border: `1px solid ${appTheme.palette.black}` }}
+            disabled={networking}
+            onClick={() => this.saveMocks()}
+          />}
+
+          <DefaultButton
+            iconProps={{ iconName: 'RecycleBin' }}
+            text='Reset...'
+            style={{ height: 22 }}
+            disabled={networking}
+            onClick={() => {
+              // remove all mocks
+              const newAllSites: ProjectRef[] = this.state.allSites.filter(s => !s.isMock);
+              this.setState({
+                ...buildSystemModel(newAllSites, useIncomplete),
+              });
+            }}
+          />
+        </>}
       </Stack>
 
       <ul>
@@ -180,6 +298,38 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       {!!editMockSite && this.renderEditMockSite()}
       {!!editRealSite && this.renderEditRealSite()}
       {!!showBuildOrder && this.renderBuildOrder()}
+
+      {canLoadSaveMocks && <>
+        {!!showLoadMocksDialog && <Dialog
+          hidden={false}
+          dialogContentProps={{ title: 'Load mock sites' }}
+          minWidth={420}
+        >
+          You already have some mock "What if" sites. Would you like to replace or merge with them?
+          <DialogFooter>
+            <PrimaryButton text="Merge" iconProps={{ iconName: 'Merge' }} onClick={() => this.loadMocks('merge')} />
+            <DefaultButton text="Replace" iconProps={{ iconName: 'Warning' }} onClick={() => this.loadMocks('replace')} />
+            <DefaultButton text="Cancel" iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showLoadMocksDialog: false })} />
+          </DialogFooter>
+        </Dialog>}
+
+
+        {!!saveConflict && <Dialog
+          hidden={false}
+          dialogContentProps={{ title: 'Caution' }}
+          minWidth={420}
+        >
+          <Icon iconName='Warning' style={{ fontSize: 40, float: 'left', marginRight: 10 }} />
+          <div>
+            This system already has saved mock "What if" sites.
+            Do you want to overwrite them?
+          </div>
+          <DialogFooter>
+            <PrimaryButton text="Yes" iconProps={{ iconName: 'CheckMark' }} onClick={() => this.saveMocks(true)} />
+            <DefaultButton text="No" iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ saveConflict: false })} />
+          </DialogFooter>
+        </Dialog>}
+      </>}
     </div >;
   }
 
@@ -549,11 +699,11 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning}>{validations}</MessageBar>}
 
-      <div className='small' style={{ color: appTheme.palette.themeSecondary, margin: '8px 0' }}>These are temporary and will not be saved for future sessions</div>
+      <div className='small' style={{ color: appTheme.palette.themeSecondary, margin: '8px 0' }}>These are temporary unless explicitly saved for future sessions</div>
 
       <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} horizontalAlign='end' verticalAlign='baseline' >
         <PrimaryButton
-          text='Save'
+          text='Okay'
           iconProps={{ iconName: 'WebAppBuilderFragmentCreate' }}
           onClick={() => this.onApplyMockSite(this.state.editMockSite)}
         />
