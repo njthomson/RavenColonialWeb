@@ -4,8 +4,8 @@ import { appTheme, cn } from "../../theme";
 import { economyColors, mapName } from "../../site-data";
 import { EconomyMap, SiteMap } from "../../system-model";
 import { ProjectLink } from "../ProjectLink/ProjectLink";
-import { DefaultButton, Icon, IconButton, Link, Stack } from "@fluentui/react";
-import { asPosNegTxt } from "../../util";
+import { DefaultButton, Icon, IconButton, Link, Panel, PanelType, Stack } from "@fluentui/react";
+import { asPosNegTxt, asPosNegTxt2, isMobile } from "../../util";
 import { CopyButton } from '../CopyButton';
 import { EconomyBlock } from '../EconomyBlock';
 
@@ -81,6 +81,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
   const [journalMap, setJournalMap] = useState<EconomyMap | undefined>(journalEconomiesCache[cacheKey]?.map);
   const [showUpload, setShowUpload] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
 
   if (!props.site) return null;
 
@@ -190,6 +191,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
       });
   }
 
+  let flip = false;
   return <div>
 
     <h3 className={cn.h3}>
@@ -223,15 +225,67 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
     {props.site.economies && <div style={{ position: 'relative' }}>
       <h3 className={cn.h3}>
         Economy Ratios:
-        &nbsp;
-        <Link
-          title='Compare estimated values with real values from your journal files'
-          style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}
-          onClick={() => { setShowUpload(true); setDragOver(false); }}
-        >
-          Compare?
-        </Link>
+        <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}>
+          <Link
+            title='Compare estimated values with real values from your journal files'
+            onClick={() => { setShowUpload(true); setDragOver(false); }}
+          >
+            Compare?
+          </Link>
+          &nbsp;
+          {!!props.site.economyAudit && <Link
+            title='See a breakdown of economy calculations'
+            onClick={() => { setShowAudit(true); }}
+          >
+            Audit?
+          </Link>}
+        </div>
       </h3>
+
+      {props.site.economyAudit && showAudit && <Panel
+        isLightDismiss
+        isOpen
+        type={PanelType.medium}
+        headerText={`Economy calculations audit:`}
+        allowTouchBodyScroll={isMobile()}
+        styles={{
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        }}
+        onDismiss={() => setShowAudit(false)}
+      >
+        <div className='audit' >
+          <div style={{ padding: 8, marginBottom: 10, color: appTheme.palette.themePrimary }}>
+
+            <div>Body type:&nbsp;{props.site.bodyType?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} ({props.site.bodyName ?? <span style={{ color: 'grey' }}>unknown</span>})</div>
+            <div>Body features:&nbsp;{props.site.bodyFeatures?.join(', ').toUpperCase() ?? <span style={{ color: 'grey' }}>none</span>}</div>
+            <div>System features:&nbsp;{props.site.systemFeatures?.join(', ').toUpperCase() ?? <span style={{ color: 'grey' }}>none</span>}</div>
+            <div>Reserve level:&nbsp;{props.site.reserveLevel?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
+          </div>
+
+          <table cellPadding={0} cellSpacing={0}>
+            <colgroup>
+              <col width='5%' />
+              <col width='15%' />
+              <col width='12%' />
+              <col width='70%' />
+            </colgroup>
+            <tbody>
+              {props.site.economyAudit!.map((x, i) => {
+                // flip the background color?
+                const newPrev = x.inf !== props.site.economyAudit![i - 1]?.inf;
+                const newNext = x.inf !== props.site.economyAudit![i + 1]?.inf;
+                if (newPrev) { flip = !flip; }
+                return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>
+                  <td style={{ textTransform: 'capitalize' }}>{newPrev ? x.inf : ''}</td>
+                  <td>{x.before.toFixed(2)} {asPosNegTxt2(x.delta)}</td>
+                  <td className='cl'>= {x.after.toFixed(2)}</td>
+                  <td className='cl' style={{ paddingBottom: newNext ? 8 : 0 }} >{x.reason}</td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Panel>}
 
 
       {showUpload && <div style={{

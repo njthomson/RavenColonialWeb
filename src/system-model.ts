@@ -56,11 +56,20 @@ export interface BodyMap {
   orbitalPrimary?: SiteMap;
 }
 
+interface AuditEconomy {
+  inf: string;
+  delta: number;
+  reason: string;
+  before: number;
+  after: number;
+}
+
 export interface SiteMap extends ProjectRef {
   type: SiteType;
   links?: SiteLinks;
   /** Economies generated for Colony types */
   economies?: EconomyMap;
+  economyAudit?: AuditEconomy[];
   /** Top generated economy generated for Colony types */
   primaryEconomy?: Economy;
   parentLink?: SiteMap;

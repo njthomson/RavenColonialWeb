@@ -200,3 +200,10 @@ export const asPosNegTxt = (n: number): string => {
   else
     return `${n.toLocaleString()}`
 }
+
+export const asPosNegTxt2 = (n: number): string => {
+  if (n > 0)
+    return `+ ${n.toFixed(2)}`;
+  else
+    return `- ${Math.abs(n).toFixed(2)}`
+}

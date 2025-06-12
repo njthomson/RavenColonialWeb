@@ -13,3 +13,17 @@
 .economy-ratios .cl {
   text-align: left;
 }
+
+.audit {
+  font-size: 12px;
+}
+
+.audit table td {
+  vertical-align: top;
+  text-align: right;
+  padding: 0 8px;
+}
+
+.audit .cl {
+  text-align: left;
+}
