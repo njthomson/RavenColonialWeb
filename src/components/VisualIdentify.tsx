@@ -26,6 +26,7 @@ const supportedTypes: Record<string, ImageData> = {
   'dicaeosyne': { cmdr: 'grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
   'eirene': { cmdr: 'Abe Andet', location: `Gibbs Point - Arietis Sector PJ-Q B5-5` },
   'enodia': { cmdr: 'grinning2001', location: `Katzenstein Legacy - IC 2391 Sector LH-V b2-5, B 10` },
+  'enyo': { cmdr: 'Abe Andet', location: ` Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5` },
   'eupraxia': { cmdr: 'Abe Andet', location: `Hooper Vison - Arietis Sector PJ-Q B5-5` },
   'fontus': { cmdr: 'kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6` },
   'fornax': { cmdr: 'kekosummer', location: `Hakimi Horticultural Centre - Col 285 Sector GL-X c1-11, A 6` },
