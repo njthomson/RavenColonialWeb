@@ -42,7 +42,6 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
     gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
   }
 
-
   return <>
     {!props.noTitle && <h3 className={cn.h3}>System effects:</h3>}
 

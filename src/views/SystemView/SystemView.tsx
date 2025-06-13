@@ -17,6 +17,7 @@ import { BuildEffects } from '../../components/BuildEffects';
 import { store } from '../../local-storage';
 import { FixFromCanonn } from '../../components/FixFromCanonn';
 import { MockMin } from '../../api/system';
+import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
 
 interface SystemViewProps {
   systemName: string;
@@ -488,6 +489,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
   // }
 
   renderPortLinks(site: SiteMap) {
+    const { useIncomplete } = this.state;
     return <Modal
       isOpen
       allowTouchBodyScroll={isMobile()}
@@ -506,6 +508,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
         onClick={() => this.setState({ showPortLinks: undefined })}
       />
       <MarketLinks site={site} showName />
+      {(site.complete || useIncomplete) && <EconomyTable site={site} />}
     </Modal>;
   }
 

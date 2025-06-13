@@ -19,6 +19,7 @@ import { WhereToBuy } from '../../components/WhereToBuy/WhereToBuy';
 import { mapName } from '../../site-data';
 import { EconomyBlock } from '../../components/EconomyBlock';
 import { ShowCoachingMarks } from '../../components/ShowCoachingMarks';
+import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -1691,7 +1692,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const site = sysMap?.allSites.find(s => s.buildId === proj.buildId);
 
     return <div className='half'>
-      {site && sysMap && <MarketLinks site={site} />}
+      {site && sysMap && <>
+        <MarketLinks site={site} />
+        {site.complete && <EconomyTable site={site} />}
+      </>}
 
       {<BuildEffects buildType={proj.buildType} />}
     </div>;

@@ -39,6 +39,7 @@ const supportedTypes: Record<string, ImageData> = {
   'hestia': { cmdr: 'Abe Andet', location: ` Farias Berth - Pegasi Sector MS-T b3-5` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
   'minerva': { cmdr: 'kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
+  'nemesis': { cmdr: 'grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport - Pegasi Sector DL-y D60` },
   'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5` },
   'pheobe': { cmdr: 'kekosummer', location: `Vytrebenko Biochemical Centre - Col 285 Sector GL-X c1-11, B 4` },

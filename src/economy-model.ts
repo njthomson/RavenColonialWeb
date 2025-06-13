@@ -3,7 +3,7 @@ import { EconomyMap, SiteMap } from "./system-model";
 import { BodyFeature, SystemFeature } from "./types";
 import { asPosNegTxt2 } from "./util";
 
-export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) => {
+export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean): Economy => {
   if (!site.economies || !site.primaryEconomy) {
     site.economyAudit = [];
     const map = {
@@ -18,12 +18,22 @@ export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean) 
       service: 0,
     } as EconomyMap;
 
-    applyBodyType(map, site);
-    applyBodyFeatures(map, site);
-    applyStrongLinks(map, site, useIncomplete);
-    applyBuffs(map, site);
-    applyWeakLinks(map, site, useIncomplete);
+    if (site.type.padSize === 'none') {
+      // skip anything we cannot land at
+      return 'none';
+    }
 
+    if (site.type.buildClass === 'settlement') {
+      // Odyssey settlements have only 1 fixed economy
+      adjust(site.type.inf, +1.0, 'Odyssey settlement fixed economy', map, site);
+    } else {
+      // calculate everything else
+      applyBodyType(map, site);
+      applyBodyFeatures(map, site);
+      applyStrongLinks(map, site, useIncomplete);
+      applyBuffs(map, site);
+      applyWeakLinks(map, site, useIncomplete);
+    }
     // sort to get the primary
     const primaryEconomy = Object.keys(map).sort((a, b) => {
       return map[b as keyof EconomyMap] - map[a as keyof EconomyMap];
@@ -66,7 +76,6 @@ const adjust = (inf: string, delta: number, reason: string, map: EconomyMap, sit
 };
 
 const applyBodyType = (map: EconomyMap, site: SiteMap) => {
-  if (!site.bodyType) { return; }
 
   // While more research is necessary on this topic, specialized ports appear to be:
   //  - Assigned a baseline economic strength value of 0.5 (several planetary versions) or 1.0 (several orbital versions) for their applicable economy type
@@ -79,6 +88,8 @@ const applyBodyType = (map: EconomyMap, site: SiteMap) => {
     //  - NOT affected by the base inheritable economy of the local body
     return;
   }
+
+  if (!site.bodyType) { return; }
 
   // Colony-type ports acquire their economy type(s) as follows:
   // - The “Base Inheritable Economy” type of the local body they are on or orbit is assessed
