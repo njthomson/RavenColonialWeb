@@ -13,6 +13,7 @@ interface ImageData {
 
 const supportedTypes: Record<string, ImageData> = {
   'aergia': { cmdr: 'kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
+  'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
   'angelia': { cmdr: 'grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
   'annona': { cmdr: 'kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4` },
   'artemis': { cmdr: 'Alora Anophis', location: `Besonders Reach - Pru Euq XO-Z d13-11, 2 a` },
