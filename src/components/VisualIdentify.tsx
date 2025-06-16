@@ -25,6 +25,7 @@ const supportedTypes: Record<string, ImageData> = {
   'consus': { cmdr: 'kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
+  'dual_truss': { cmdr: 'Abe Andet', location: `McCulley Gateway - Pegasi Sector IM-S a5-0` },
   'eirene': { cmdr: 'Abe Andet', location: `Gibbs Point - Arietis Sector PJ-Q B5-5` },
   'enodia': { cmdr: 'grinning2001', location: `Katzenstein Legacy - IC 2391 Sector LH-V b2-5, B 10` },
   'enyo': { cmdr: 'Abe Andet', location: ` Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5` },
@@ -37,6 +38,7 @@ const supportedTypes: Record<string, ImageData> = {
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach - Synuefe EM-M c23-8` },
   'hermes': { cmdr: 'grinning2001' },
   'hestia': { cmdr: 'Abe Andet', location: ` Farias Berth - Pegasi Sector MS-T b3-5` },
+  'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
   'minerva': { cmdr: 'kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
   'nemesis': { cmdr: 'grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
@@ -55,8 +57,6 @@ const supportedTypes: Record<string, ImageData> = {
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon - Synuefe EM-M c23-8` },
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
 };
-
-const origin = window.location.origin;
 
 const typeTypes = Object.keys(supportedTypes).reduce((map, key) => {
   map[key] = siteTypes.find(st => st.subTypes.includes(key))!;
@@ -243,8 +243,8 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
     const nameNext = typeNames[idx + 1] ?? typeNames[0];
 
     var copyLink = new ClipboardItem({
-      'text/plain': `${origin}/#vis=${zoom}`,
-      'text/html': new Blob([`<a href='${`${origin}/#vis=${zoom}`}'>${type.displayName2}: ${zoom}</a>`], { type: 'text/html' }),
+      'text/plain': `${window.location.origin}/#vis=${zoom}`,
+      'text/html': new Blob([`<a href='${`${window.location.origin}/#vis=${zoom}`}'>${type.displayName2}: ${zoom}</a>`], { type: 'text/html' }),
     });
 
     const sz = window.innerHeight - 250;

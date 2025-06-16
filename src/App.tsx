@@ -184,6 +184,13 @@ export class App extends Component<AppProps, AppState> {
           ]}
           farItems={[
             {
+              id: 'view-vis', key: 'vis',
+              iconProps: { iconName: 'View' },
+              iconOnly: true,
+              title: 'Site visual identification guide',
+              onClick: () => window.open('/#vis', 'vis'),
+            },
+            {
               id: 'set-theme', key: 'theme',
               iconProps: { iconName: 'Contrast' },
               iconOnly: true,
