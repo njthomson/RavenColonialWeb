@@ -1,6 +1,5 @@
 import { FunctionComponent } from "react";
 import { TierPoints, Chevrons } from "../../components/Chevrons";
-import { EconomyBlocks } from "../../components/MarketLinks/MarketLinks";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
 import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
@@ -10,10 +9,10 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
   const { sysMap } = props;
 
   // let max = Math.max(...Object.values(sysInf));
-  let econTxt = Object.keys(sysMap.economies)
-    // .filter(k => sysInf[k] === max)
-    .map(k => `${mapName[k] ?? k}: ${sysMap.economies[k]}`)
-    .join(', ');
+  // let econTxt = Object.keys(sysMap.economies)
+  //   // .filter(k => sysInf[k] === max)
+  //   .map(k => `${mapName[k] ?? k}: ${sysMap.economies[k]}`)
+  //   .join(', ');
 
 
   return <div style={{
@@ -41,7 +40,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
       <div>{econTxt}</div>
       <EconomyBlocks economies={sysMap.economies} width={200} height={10} />
     </div>
- */}
+    */}
 
     {sysEffects.map(key => {
       const actual = sysMap.sumEffects[key as keyof SysEffects] ?? 0;
