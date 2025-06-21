@@ -184,7 +184,7 @@ export const isOrbital = (buildType: string | undefined): boolean => {
 };
 
 export const getSiteType = (buildType: string, noThrow?: boolean): SiteType => {
-  const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType));
+  const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType) || buildType === st.subTypes[0] + '?');
   if (!match) {
     console.error(`No SiteType match found for: '${buildType}'`);
     if (noThrow) return undefined!;

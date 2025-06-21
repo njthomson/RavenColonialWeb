@@ -114,7 +114,11 @@ export const flattenObj = (obj: Record<string, string[]>): string[] => {
 };
 
 export const delayFocus = (target: string, delay = 10): void => {
-  setTimeout(() => document.getElementById(target)?.focus(), delay);
+  setTimeout(() => {
+    const element = document.getElementById(target);
+    // console.log(`delayFocus: ${target}, found: ${!!element}`)
+    element?.focus();
+  }, delay);
 }
 
 export const fcFullName = (name: string, displayName: string) => {

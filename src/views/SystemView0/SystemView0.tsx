@@ -1,4 +1,4 @@
-import './SystemView.css';
+import './SystemView0.css';
 import * as api from '../../api';
 import { Component } from "react";
 import { ProjectRef } from "../../types";
@@ -19,12 +19,12 @@ import { FixFromCanonn } from '../../components/FixFromCanonn';
 import { MockMin } from '../../api/system';
 import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
 
-interface SystemViewProps {
+interface SystemView0Props {
   systemName: string;
   projects: ProjectRef[]
 }
 
-interface SystemViewState extends SysMap {
+interface SystemView0State extends SysMap {
   systemAddress: number;
   showPortLinks?: SiteMap;
   showInlineMarketLinks?: boolean;
@@ -41,12 +41,12 @@ interface SystemViewState extends SysMap {
   saveConflict?: boolean;
 }
 
-export class SystemView extends Component<SystemViewProps, SystemViewState> {
+export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   static countNew = 0;
   static lastBuildType = 'vulcan';
   lastBodyName = '';
 
-  constructor(props: SystemViewProps) {
+  constructor(props: SystemView0Props) {
     super(props);
 
     const useIncomplete = store.useIncomplete;
@@ -88,7 +88,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
     });
   };
 
-  componentDidUpdate(prevProps: Readonly<SystemViewProps>, prevState: Readonly<SystemViewState>, snapshot?: any): void {
+  componentDidUpdate(prevProps: Readonly<SystemView0Props>, prevState: Readonly<SystemView0State>, snapshot?: any): void {
     if (prevProps.projects !== this.props.projects) {
       this.setState({
         ...buildSystemModel(this.props.projects, this.state.useIncomplete)
@@ -367,11 +367,11 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
 
       return [
         <div key={`se${key}1`}>{mapName[key]}:</div>,
-        <div key={`se${key}2`}>,
+        <div key={`se${key}2`}>
           {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} />}
         </div>,
         <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
-        <div key={`se${key}4`}>,
+        <div key={`se${key}4`}>
           {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} />}
         </div>,
       ]
@@ -602,10 +602,10 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
       complete: false,
       isPrimaryPort: false,
 
-      buildType: SystemView.lastBuildType,
-      type: getSiteType(SystemView.lastBuildType),
+      buildType: SystemView0.lastBuildType,
+      type: getSiteType(SystemView0.lastBuildType),
       timeCompleted: '9999' + new Date().toISOString().substring(4),
-      buildName: `New #${++SystemView.countNew}`,
+      buildName: `New #${++SystemView0.countNew}`,
       bodyName: this.lastBodyName,
 
       buildId: Date.now().toString(),
@@ -695,7 +695,7 @@ export class SystemView extends Component<SystemViewProps, SystemViewState> {
               onChange={(newBuildType) => {
                 const editMockSite = this.state.editMockSite;
                 if (editMockSite) {
-                  SystemView.lastBuildType = newBuildType;
+                  SystemView0.lastBuildType = newBuildType;
                   editMockSite.buildType = newBuildType;
                   editMockSite.type = getSiteType(newBuildType);
                   this.setState({ editMockSite: editMockSite });

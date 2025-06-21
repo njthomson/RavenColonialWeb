@@ -10,6 +10,7 @@ export enum TopPivot {
   cmdr = 'cmdr',
   about = 'about',
   vis = 'vis',
+  sys = 'sys',
 }
 
 export class RequestError extends Error {

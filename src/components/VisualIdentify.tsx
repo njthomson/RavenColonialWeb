@@ -20,8 +20,11 @@ const supportedTypes: Record<string, ImageData> = {
   'asteria': { cmdr: 'kekosummer', location: `Enju genetics laboratory - Col 285 Sector GL-X c1-11, B 4` },
   'asteroid': { cmdr: 'grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
   'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8` },
+  'bacchus': { cmdr: 'Abe Andet', location: `Galouye Vista - Arietis Sector PJ-Q B5-5` },
   'caerus': { cmdr: 'kekosummer', location: `Pozandr astrophysics site - Col 285 Sector GL-X c1-11, B 4` },
   'ceres': { cmdr: 'kekosummer', location: `Doroshenko Nutrition Biome - Col 285 Sector GL-X c1-11, A 4` },
+  'chronos': { cmdr: 'kekosummer', location: `Neborak Astrophysics Enterprise - Col 285 Sector GL-X c1-11, B 4` },
+  'clotho': { cmdr: 'Abe Andet', location: `Morelli Gateway - Arietis Sector PJ-Q B5-5` },
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
   'comus': { cmdr: 'kekosummer', location: `Vynnychenko Entertainment Zone - Col 285 Sector GL-X c1-11, B 5 a` },
   'consus': { cmdr: 'kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
@@ -33,6 +36,7 @@ const supportedTypes: Record<string, ImageData> = {
   'enodia': { cmdr: 'grinning2001', location: `Katzenstein Legacy - IC 2391 Sector LH-V b2-5, B 10` },
   'enyo': { cmdr: 'Abe Andet', location: ` Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5` },
   'eupraxia': { cmdr: 'Abe Andet', location: `Hooper Vison - Arietis Sector PJ-Q B5-5` },
+  'euthenia': { cmdr: 'Disnaematter', location: ` McMullen's Progress - Synuefe EM-M c23-8` },
   'fontus': { cmdr: 'kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6` },
   'fornax': { cmdr: 'kekosummer', location: `Hakimi Horticultural Centre - Col 285 Sector GL-X c1-11, A 6` },
   'fufluns': { cmdr: 'kekosummer', location: `Oliveira Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
@@ -48,6 +52,8 @@ const supportedTypes: Record<string, ImageData> = {
   'nemesis': { cmdr: 'grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport - Pegasi Sector DL-y D60` },
   'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5` },
+  'opis': { cmdr: 'kekosummer', location: `Morgan Base - LTT 1873, B 2` },
+  'palici': { cmdr: 'kekosummer', location: `Tolmie - Col 285 Sector GL-X c1-11, A 6` },
   'pheobe': { cmdr: 'kekosummer', location: `Vytrebenko Biochemical Centre - Col 285 Sector GL-X c1-11, B 4` },
   'picumnus': { cmdr: 'kekosummer', location: `Orellana Botanical Nursery - Col 285 Sector GL-X c1-11, A 4` },
   'pistis': { cmdr: 'Disnaematter', location: `Pogue Terminal - Synuefe EM-M c23-8` },
@@ -165,7 +171,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
       />
     </div>));
 
-    return <div style={{ width: 880 }}>
+    return <div style={{ maxWidth: 880 }}>
       <Stack horizontal horizontalAlign='space-between'>
 
         <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ childrenGap: 10, padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>

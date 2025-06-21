@@ -1,0 +1,22 @@
+
+.sub-site {
+  color: grey;
+}
+
+.build-type .ms-Button--action {
+  height: 24px;
+  text-transform: capitalize;
+}
+
+.build-type .list {
+  cursor: default;
+}
+
+.system-view .ms-Button--icon {
+  width: 22px;
+  height: 22px;
+}
+
+th {
+  user-select: none;
+}

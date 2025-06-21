@@ -5,7 +5,7 @@ import { FindSystemName, ProjectCreate, ProjectLink } from '../components';
 import { Cargo, Project, ProjectRef } from '../types';
 import { EditProject } from '../components/EditProject/EditProject';
 import { delayFocus } from '../util';
-import { SystemView } from './SystemView/SystemView';
+import { SystemView0 } from './SystemView0/SystemView0';
 import { CopyButton } from '../components/CopyButton';
 import { ImportStationsFromEDSM } from '../components/ImportStationsFromEDSM';
 import { ChooseBody } from '../components/ChooseBody';
@@ -143,7 +143,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
             />
           </Stack>
 
-          {systemName && <SystemView systemName={systemName} projects={refs} />}
+          {systemName && <SystemView0 systemName={systemName} projects={refs} />}
         </div>}
 
       </div>

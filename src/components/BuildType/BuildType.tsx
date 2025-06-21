@@ -22,13 +22,15 @@ registerIcons({
 interface ChooseBuildTypeProps {
   buildType: string | undefined,
   onChange: (value: string) => void
+  onClose?: () => void;
   sysMap?: SysMap;
+  tableOnly?: boolean;
 }
 
 interface ChooseBuildTypeState {
   showList: boolean;
   panelType: PanelType;
-  orbital: boolean;
+  location: string;
   selection: string | undefined;
   groups: INavLinkGroup[];
   filterColumns: Set<string>;
@@ -44,11 +46,11 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     const orbital = isOrbital(props.buildType);
 
     this.state = {
-      showList: false,
-      panelType: store.buildTypeGrid ? PanelType.large : PanelType.smallFixedFar,
-      orbital: orbital,
+      showList: props.tableOnly ?? false,
+      panelType: store.buildTypeGrid || props.tableOnly ? PanelType.large : PanelType.smallFixedFar,
+      location: orbital ? 'orbital' : 'surface',
       selection: props.buildType,
-      groups: this.getFilteredOptions2(props.buildType, orbital),
+      groups: this.getFilteredOptions2(props.buildType, orbital ? 'orbital' : 'surface'),
       filterColumns: new Set<string>(),
       headerContextOptions: [],
     };
@@ -63,17 +65,19 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
   componentDidUpdate(prevProps: Readonly<ChooseBuildTypeProps>, prevState: Readonly<ChooseBuildTypeState>, snapshot?: any): void {
 
     if (prevProps.buildType !== this.props.buildType) {
-      const orbital = isOrbital(this.props.buildType);
+      const location = isOrbital(this.props.buildType) ? 'orbital' : 'surface';
       this.setState({
         selection: this.props.buildType,
-        orbital: orbital,
-        groups: this.getFilteredOptions2(this.props.buildType, orbital),
+        location: location,
+        groups: this.getFilteredOptions2(this.props.buildType, location),
       });
     }
   }
 
-  getFilteredOptions2(selection: string | undefined, orbital: boolean): INavLinkGroup[] {
+  getFilteredOptions2(selection: string | undefined, location: string | undefined): INavLinkGroup[] {
     const targetTier = selection ? getSiteType(selection).tier : 0;
+
+    const orbital = location === 'orbital';
 
     let groups: INavLinkGroup[] = [
       {
@@ -160,7 +164,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     const isLarge = panelType === PanelType.large;
 
     return <div style={{ display: 'inline-block' }}>
-      <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="center">
+      {!this.props.tableOnly && <Stack horizontal tokens={{ childrenGap: 10 }} verticalAlign="center">
         <div className="hint">{displayText}</div>
 
         <ActionButton
@@ -173,7 +177,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         >
           Change
         </ActionButton>
-      </Stack>
+      </Stack>}
 
       {showList && <Panel
         isOpen={true}
@@ -182,14 +186,17 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         styles={{
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
         }}
-        onDismiss={() => this.setState({ showList: false })}
+        onDismiss={() => {
+          this.setState({ showList: false });
+          this.props.onClose && this.props.onClose();
+        }}
         onKeyDown={(ev) => {
           if (ev.key === 'Escape') { this.setState({ showList: false }); }
         }}
 
         onRenderHeader={() => {
           return <div style={{ width: '90%', margin: '10px 40px' }}>
-            <IconButton
+            {!this.props.tableOnly && <IconButton
               id='go-large'
               iconProps={{
                 iconName: isLarge ? 'DoubleChevronRight' : 'DoubleChevronLeft',
@@ -204,7 +211,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
                 this.setState({ panelType: isLarge ? PanelType.smallFixedFar : PanelType.large });
                 if (this.state.selection && !isLarge) { delayFocus(`st-${this.state.selection}`); }
               }}
-            />
+            />}
             <h3 style={{ fontSize: 20 }}>
               Choose a type:
             </h3>
@@ -221,24 +228,30 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
   }
 
   renderNarrow() {
-    const { selection, orbital, groups } = this.state;
+    const { selection, location, groups } = this.state;
 
     return <>
       <Pivot
-        selectedKey={orbital ? 'orbital' : 'surface'}
+        selectedKey={location}
+        style={{
+          position: 'sticky',
+          zIndex: 1,
+          top: 69,
+          backgroundColor: appTheme.palette.white,
+        }}
         onLinkClick={(item) => {
-          const orbital = item?.props.itemKey !== 'surface';
           this.setState({
-            orbital: orbital,
-            groups: this.getFilteredOptions2(selection, orbital)
+            location: item?.props.itemKey ?? 'orbital',
+            groups: this.getFilteredOptions2(selection, item?.props.itemKey)
           });
         }}
       >
         <PivotItem headerText="Orbital" itemKey='orbital' />
         <PivotItem headerText="Surface" itemKey='surface' />
+        <PivotItem headerText="Both" itemKey='both' />
       </Pivot>
 
-      <Nav
+      {false && location !== 'both' && <Nav
         initialSelectedKey={selection}
         selectedKey={selection}
         styles={{ link: { textTransform: 'capitalize' } }}
@@ -251,8 +264,67 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           }
         }}
         groups={groups}
-      />
+      />}
+
+      {this.renderBoth()}
+      {/* {location === 'both' && this.renderBoth()} */}
     </>;
+  }
+
+  renderBoth() {
+    const { location, selection } = this.state;
+
+    const rows = siteTypes
+      .slice(1)
+      .filter(type => location === 'both' || location === (type.orbital ? 'orbital' : 'surface'))
+      .map((type, idx) => {
+        const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
+
+        return <div
+          className='build-type'
+          key={`bbt-${type.displayName2}`}
+          style={{
+            backgroundColor: idx % 2 ? appTheme.palette.neutralLighter : undefined,
+            borderLeft: isCurrentSelection ? `4px solid ${appTheme.palette.accent}` : undefined,
+            fontWeight: isCurrentSelection ? 'bold' : undefined,
+            paddingLeft: isCurrentSelection ? 4 : undefined,
+          }}
+        >
+          <span style={{ fontSize: 10, float: 'right', color: appTheme.palette.themeSecondary }}>Tier: {type.tier}</span>
+          <div style={{ color: appTheme.palette.themePrimary }}>{type.displayName2}</div>
+
+          <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
+            {type.subTypes.map((st, i) => {
+              const isSelected = selection === st
+                || (i === 0 && type.altTypes?.includes(selection!));
+
+              return <ActionButton
+                key={`st-${st}`}
+                id={`st-${st}`}
+                style={{
+                  color: isSelected ? appTheme.palette.black : undefined,
+                  backgroundColor: isSelected ? appTheme.palette.neutralLighter : undefined,
+                  // fontWeight: selection === st ? 'bold' : undefined,
+                  fontSize: 12,
+                  height: 16,
+                  padding: '0 0 2px 0',
+                  margin: 1,
+                  border: `1px solid ${isSelected ? appTheme.palette.themePrimary : 'grey'}`,
+                }}
+                onClick={() => {
+                  this.props.onChange(st);
+                  this.setState({ showList: false });
+                }}
+              >
+                {st.replace('_i', '').replace('_e', '')}
+              </ActionButton>;
+            })}
+          </Stack>
+        </div>;
+      })
+    return <div className='both'>
+      {rows}
+    </div>;
   }
 
   renderFilterText() {
@@ -573,7 +645,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
     const cid = `lr-${type.subTypes[0]}`;
-    const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection));
+    const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
 
     let padSize = type.padSize;
     let subTypes = type.subTypes;
@@ -610,27 +682,32 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           </Link> */}
 
         <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
-          {subTypes.map(st => (<ActionButton
-            key={`st-${st}`}
-            id={`st-${st}`}
-            style={{
-              color: selection === st ? appTheme.palette.black : undefined,
-              backgroundColor: selection === st ? appTheme.palette.neutralLighter : undefined,
-              // fontWeight: selection === st ? 'bold' : undefined,
-              fontSize: 12,
-              height: 16,
-              padding: '0 0 2px 0',
-              margin: 1,
-              border: `1px solid ${selection === st ? appTheme.palette.themePrimary : 'grey'}`,
+          {subTypes.map((st, i) => {
+            const isSelected = selection === st
+              || (i === 0 && type.altTypes?.includes(selection!));
 
-            }}
-            onClick={() => {
-              this.props.onChange(st);
-              this.setState({ showList: false });
-            }}
-          >
-            {st.replace('_i', '').replace('_e', '')}
-          </ActionButton>))}
+            return <ActionButton
+              key={`st-${st}`}
+              id={`st-${st}`}
+              style={{
+                color: isSelected ? appTheme.palette.black : undefined,
+                backgroundColor: isSelected ? appTheme.palette.neutralLighter : undefined,
+                // fontWeight: isSelected ? 'bold' : undefined,
+                fontSize: 12,
+                height: 16,
+                padding: '0 0 2px 0',
+                margin: 1,
+                border: `1px solid ${isSelected ? appTheme.palette.themePrimary : 'grey'}`,
+
+              }}
+              onClick={() => {
+                this.props.onChange(st);
+                this.setState({ showList: false });
+              }}
+            >
+              {st.replace('_i', '').replace('_e', '')}
+            </ActionButton>;
+          })}
         </Stack>
       </td>
 

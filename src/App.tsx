@@ -10,6 +10,7 @@ import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
 import { ViewAll } from './views/ViewAll/ViewAll';
 import { VisualIdentify } from './components/VisualIdentify';
+import { SystemView2 } from './views/SystemView2/SystemView2';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -28,6 +29,7 @@ interface AppState {
 }
 
 export class App extends Component<AppProps, AppState> {
+  public static scrollBarWidth = 0;
 
   constructor(props: AppProps) {
     super(props);
@@ -66,6 +68,24 @@ export class App extends Component<AppProps, AppState> {
     if ((store.commoditySort as any) === 'Group by type') { store.commoditySort = SortMode.group; }
     store.migrateLinkedFCs()
       .catch(err => console.error(err));
+
+    App.scrollBarWidth = this.calcScrollBarWidth();
+  }
+
+  calcScrollBarWidth() {
+    // Create a temporary div
+    const scrollDiv = document.createElement('div');
+    scrollDiv.style.opacity = '0'; // ensure not visible
+    scrollDiv.style.width = '100px';
+    scrollDiv.style.height = '100px';
+    scrollDiv.style.overflow = 'scroll';
+    scrollDiv.style.position = 'absolute';
+
+    document.body.appendChild(scrollDiv);
+    // The scrollbar width is the difference between offsetWidth and clientWidth
+    const scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+    document.body.removeChild(scrollDiv);
+    return scrollbarWidth;
   }
 
   componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
@@ -91,6 +111,9 @@ export class App extends Component<AppProps, AppState> {
     if (params.has('find')) {
       // searching for build projects
       nextState.pivot = TopPivot.find;
+    } else if (params.has('sys')) {
+      // viewing a whole system
+      nextState.pivot = TopPivot.sys;
     } else if (params.has('build') || params.has('edit')) {
       // viewing a build project
       nextState.pivot = window.location.hash === '#build' ? TopPivot.buildAll : TopPivot.build;
@@ -127,8 +150,9 @@ export class App extends Component<AppProps, AppState> {
     }
 
     if (params.has('find')) {
-      // searching for build projects
       return [TopPivot.find, pivotArg];
+    } else if (params.has('sys')) {
+      return [TopPivot.sys, pivotArg];
     } else if (params.has('build')) {
       return window.location.hash === '#build' ? [TopPivot.buildAll, pivotArg] : [TopPivot.build, pivotArg];
     } else if (params.has('about')) {
@@ -270,6 +294,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
+      case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />
     }
   }
 

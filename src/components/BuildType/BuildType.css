@@ -30,3 +30,11 @@
 .build-type table .tc {
    text-transform: capitalize;
 }
+
+.build-type .both .ms-Button--action {
+  height: 24px;
+  text-transform: capitalize;
+}
+.build-type .both {
+  cursor: default;
+}
