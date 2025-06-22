@@ -16,6 +16,10 @@ export const systemV2 = {
   saveSites: async (id64OrName: string, data: SitesPut): Promise<Site[]> => {
     return await callAPI<Site[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/sites`, 'PUT', JSON.stringify(data));
   },
+
+  import: async (systemName: string): Promise<Sys> => {
+    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import`, 'POST');
+  },
 };
 
 export interface SitesPut {

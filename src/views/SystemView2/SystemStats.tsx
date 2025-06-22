@@ -3,6 +3,7 @@ import { TierPoints, Chevrons } from "../../components/Chevrons";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
 import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
+import { appTheme } from "../../theme";
 
 
 export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
@@ -29,10 +30,14 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
     <div style={{ gridColumn: '2 / span 3' }}>
       &nbsp;
       &nbsp;
-
-      <TierPoints tier={2} count={sysMap.tierPoints.tier2} />
+      <span style={{ color: sysMap.tierPoints.tier2 < 0 ? appTheme.palette.red : undefined }}>
+        <TierPoints tier={2} count={sysMap.tierPoints.tier2} />
+      </span>
       &nbsp;
-      <TierPoints tier={3} count={sysMap.tierPoints.tier3} />
+      <span style={{ color: sysMap.tierPoints.tier3 < 0 ? appTheme.palette.red : undefined }}>
+        <TierPoints tier={3} count={sysMap.tierPoints.tier3} />
+      </span>
+
     </div>
 
     {/* <div>Economies:</div>

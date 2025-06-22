@@ -3,20 +3,29 @@
   color: grey;
 }
 
-.build-type .ms-Button--action {
+.build-type .ms-Button--action,
+.system-view2 .ms-Button--action {
   height: 24px;
   text-transform: capitalize;
+}
+
+.system-view2 h2 {
+  margin: 0;
 }
 
 .build-type .list {
   cursor: default;
 }
 
-.system-view .ms-Button--icon {
-  width: 22px;
-  height: 22px;
+.system-view2 .ms-Button--icon {
+  width: 20px;
+  height: 20px;
 }
 
 th {
   user-select: none;
+}
+
+.view-site h2 {
+  margin: 0;
 }

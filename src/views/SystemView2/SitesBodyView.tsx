@@ -1,8 +1,13 @@
 import { Component, FunctionComponent } from "react";
-import { Bod, BodyType, Site } from "../../types2";
-import { Stack, Toggle } from "@fluentui/react";
+import { Bod, BodyType } from "../../types2";
+import { Icon, IconButton, Link, Stack, Toggle } from "@fluentui/react";
 import { appTheme } from "../../theme";
-import { BodyMap2, SysMap2 } from "../../system-model2";
+import { BodyMap2, SiteMap2, SysMap2 } from "../../system-model2";
+import { SitesViewProps, SystemView2 } from "./SystemView2";
+import { getSiteType } from "../../site-data";
+import { EconomyBlock } from "../../components/EconomyBlock";
+import { MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
+import { SiteCard } from "./SiteCard";
 
 let nnn = 0;
 const indent = 20;
@@ -16,24 +21,6 @@ const rootBC = {
   subType: 'barycentre',
   type: 'bc',
 } as Bod;
-
-
-interface SitesBodyViewProps {
-  systemName: string;
-  sysMap: SysMap2;
-  selectedId?: string;
-  onSelect: (site: Site) => void;
-  onChange: (site: Site) => void;
-  onRemove: (id: string) => void;
-}
-
-interface SitesBodyViewState {
-  dropDown: boolean;
-  location: string;
-  showTable: boolean;
-  bodyTree: BodyMapTree;
-  hideEmpties: boolean;
-}
 
 class BodyMapTreeNode {
   body: Bod;
@@ -56,9 +43,18 @@ class BodyMapTreeNode {
 
 type BodyMapTree = Record<string, BodyMapTreeNode>;
 
-export class SitesBodyView extends Component<SitesBodyViewProps, SitesBodyViewState> {
+interface SitesBodyViewState {
+  dropDown: boolean;
+  location: string;
+  showTable: boolean;
+  bodyTree: BodyMapTree;
+  hideEmpties: boolean;
+  lastSiteId?: string;
+}
 
-  constructor(props: SitesBodyViewProps) {
+export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState> {
+
+  constructor(props: SitesViewProps) {
     super(props);
 
     const defaultHideEmpties = true;
@@ -72,11 +68,15 @@ export class SitesBodyView extends Component<SitesBodyViewProps, SitesBodyViewSt
     };
   }
 
-  componentDidUpdate(prevProps: Readonly<SitesBodyViewProps>, prevState: Readonly<SitesBodyViewState>, snapshot?: any): void {
+  componentDidUpdate(prevProps: Readonly<SitesViewProps>, prevState: Readonly<SitesBodyViewState>, snapshot?: any): void {
     if (prevProps.sysMap !== this.props.sysMap) {
       this.setState({
         bodyTree: this.prepBodyTree(this.props.sysMap, this.state.hideEmpties),
       })
+    }
+
+    if (prevProps.selectedSite !== this.props.selectedSite) {
+      this.setState({ lastSiteId: this.props.selectedSite?.id });
     }
   }
 
@@ -235,18 +235,31 @@ export class SitesBodyView extends Component<SitesBodyViewProps, SitesBodyViewSt
     return undefined;
   }
 
+  selectSite(id?: string) {
+    // this.props.onSelect(id);
+    this.setState({ lastSiteId: id });
+  }
+
   render() {
     const { bodyTree, hideEmpties } = this.state;
 
     const topNodes = Object.values(bodyTree); //.filter(n => Object.keys(n.children).length > 0);
 
-    return <div>
-      <div style={{ float: 'right' }}>
+    return <div style={{}}>
+      <div style={{
+        float: 'right',
+        marginTop: 8,
+        position: 'sticky',
+        zIndex: 1,
+        top: 54,
+      }}>
         <Toggle
-          onText='Hiding empties'
-          offText='Show empties'
+          onText='Hide empty bodies'
+          offText='Hide empty bodies'
           checked={hideEmpties}
-          styles={{ root: { marginTop: 8 } }}
+          styles={{
+            text: { fontSize: 12 }
+          }}
           onChange={(ev, checked) => {
             this.setState({
               bodyTree: this.prepBodyTree(this.props.sysMap, !!checked),
@@ -361,15 +374,18 @@ export class SitesBodyView extends Component<SitesBodyViewProps, SitesBodyViewSt
     return {
       hasSites: hasSites || !!node.map?.sites.length,
       element: <BBody
+        sysView={this.props.sysView}
         key={`body-${node.body.name}${idx}`}
         node={node}
         name={name}
         title={node.body.subType}
         children={childElements.length ? childElements : undefined}
-        // up={idx > 0 || !parentIsBaryCentre}
         root={!node.parent}
         up={node.parent && (idx > 0 || !parentIsBaryCentre)}
         down={!isLast && siblings.length > 1}
+        onSelect={id => {
+          this.setState({ lastSiteId: id });
+        }}
       />
     };
   }
@@ -443,12 +459,14 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
 }
 
 interface BodyBlockProps {
-  node?: BodyMapTreeNode;
+  sysView: SystemView2;
+  onSelect: (id: string) => void;
+  node: BodyMapTreeNode;
   root?: boolean;
   name?: string,
   title?: string;
-  orbitals?: string[];
-  surfaces?: string[];
+  // orbitals?: string[];
+  // surfaces?: string[];
   up?: boolean;
   down?: boolean;
 }
@@ -456,19 +474,16 @@ interface BodyBlockProps {
 let flip = false;
 
 export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
-  let { orbitals, surfaces } = props;
-  let { name, up, down, root, title } = props;
+  // let { orbitals, surfaces } = props;
+  let { node, name, up, down, root, title } = props;
 
   const { c1, c2 } = getBodyColour(props.node?.body.type);
 
   const sz = getBodySize(props.node?.body.type);
 
-  const node = props.node;
-  if (node) {
-    // root = !node.parent;
-    orbitals = node.map?.orbital.map(s => s.name);
-    surfaces = node.map?.surface.map(s => s.name);
-  }
+
+  let orbitals = node.map?.orbital; //.map(s => s.name);
+  let surfaces = node.map?.surface; //.map(s => s.name);
 
   const hasSites = !!orbitals?.length || !!surfaces?.length;
   const innerBorders = hasSites ? `2px dashed ${appTheme.palette.themeTertiary}` : undefined;
@@ -515,13 +530,17 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           marginBottom: bottomGap,
         }}>
           <div style={{ fontSize: 14, padding: '2px 8px', borderBottom: innerBorders }}>
-            {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} >none</div>}
-            {orbitals && orbitals.map(t => (<div key={`orbitalsite${t}${++nnn}`}>{t}</div>))}
+            {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
+            {orbitals && orbitals.map(s => (<div key={`orbitalsite${s.id}${++nnn}`}>
+              <BSiteBlock site={s} sysView={props.sysView} />
+            </div>))}
           </div>
 
           <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px' }}>
-            {!surfaces?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} >none</div>}
-            {surfaces && surfaces.map(t => (<div key={`surfacesite${t}${++nnn}`}>{t}</div>))}
+            {!surfaces?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='GlobeFavorite' /> No surface sites</div>}
+            {surfaces && surfaces.map(s => (<div key={`surfacesite${s.id}${++nnn}`}>
+              <BSiteBlock site={s} sysView={props.sysView} />
+            </div>))}
           </div>
         </div>}
 
@@ -605,8 +624,10 @@ const getBodyColour = (bodyType?: BodyType) => {
 
     case 'ww':
     case 'wg':
+      return { c1: 'rgb(51, 191, 216)', c2: 'rgb(8, 108, 148)' };
+
     case 'elw':
-      return { c1: 'rgb(91, 224, 169)', c2: 'rgb(255, 255, 255)' };
+      return { c1: 'rgb(23, 212, 16)', c2: 'rgb(4, 127, 241)' };
 
     case 'aw':
       return { c1: 'rgb(202, 108, 31)', c2: 'rgb(255, 255, 255)' };
@@ -672,3 +693,56 @@ const getBodySize = (bodyType?: BodyType) => {
       return 10;
   }
 };
+
+
+export const BSiteBlock: FunctionComponent<{ site: SiteMap2, sysView: SystemView2 }> = (props) => {
+  const s = props.site;
+  const isCurrent = props.sysView.state.selectedSite?.id === s.id;
+  const isPinned = props.sysView.state.pinnedSite?.id === s.id;
+
+  const id = `site-${s.id.replace('&', '')}`;
+
+  return <div
+    style={{ cursor: 'default' }}
+    onMouseUp={(ev) => {
+      if (!ev.defaultPrevented) {
+        props.sysView.siteSelected(s.original);
+      }
+    }}
+  >
+    <div>
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+
+        {s.primaryEconomy && <EconomyBlock economy={s.primaryEconomy} size='10px' />}
+
+        <span id={id} style={{ position: 'absolute', left: 80 }} />
+
+        {<Link style={{ color: 'unset' }}>
+          <span style={{ color: appTheme.palette.themePrimary }}>{s.name}</span>
+          &nbsp;
+          {getSiteType(s.buildType).displayName2}
+        </Link>}
+
+        {isPinned && !s.links && <Icon iconName='PinnedSolid' style={{ marginLeft: 8, color: appTheme.palette.accent }} />}
+
+      </Stack>
+      {/* {!isCurrent && <>{s.name}</>} */}
+      {/* {isCurrent && <SiteLink site={s} noSys noBold iconName={s.status === 'complete' ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />} */}
+
+      {s.links && <Stack horizontal>
+        <MarketLinkBlocks site={s as any} width={200} height={10} />
+        <IconButton
+          iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
+          onMouseUp={(ev) => {
+            ev.preventDefault();
+            props.sysView.sitePinned(s.id);
+          }}
+        />
+      </Stack>}
+    </div>
+
+    {isCurrent && <SiteCard targetId={id} site={s} sysView={props.sysView} onClose={() => props.sysView.siteSelected(undefined)} />}
+
+  </div>;
+}
+

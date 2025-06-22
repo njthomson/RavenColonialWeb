@@ -58,6 +58,7 @@ interface AuditEconomy {
 }
 
 export interface SiteMap2 extends Site {
+  original: Site;
   sys: SysMap2;
   type: SiteType;
   links?: SiteLinks2;
@@ -108,7 +109,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   // calc sum effects from all sites
   const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete);
 
-  sys.bodies.sort((a, b) => a.name.localeCompare(b.name));
+  sys.bodies.sort((a, b) => a.num - b.num);
 
   const finalMap = Object.assign(sys, {
     ...sysMap,
@@ -171,6 +172,7 @@ const initializeSysMap = (sys: Sys) => {
     // create site entry and add to bodies surface/orbital collection
     const site: SiteMap2 = {
       ...s,
+      original: s,
       sys: sys as SysMap2,
       body: body as BodyMap2,
       type: getSiteType(s.buildType),

@@ -14,6 +14,7 @@ import { SitesTableView } from './SitesTableView';
 import { Site, Sys } from '../../types2';
 import { SitesPut } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
+import { SiteCard } from './SiteCard';
 
 interface SystemView2Props {
   systemName: string;
@@ -27,9 +28,9 @@ interface SystemView2State {
   sysOriginal: Sys;
   sysMap: SysMap2;
   showBuildOrder?: boolean;
+  pinnedSite?: Site;
   selectedSite?: Site;
-  // sysMap: SysMap;
-
+  invalidSite?: Site;
   dirtySites: Record<string, Site>;
   deletedIDs: string[];
   viewType: string;
@@ -55,7 +56,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       sysOriginal: undefined!,
       dirtySites: {},
       deletedIDs: [],
-      viewType: viewTypes[0],
+      viewType: viewTypes[1], // TODO: make this a setting
     };
   }
 
@@ -89,13 +90,38 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         });
       })
       .catch(err => {
+        if (err.statusCode === 404) {
+          console.error(`No data for: ${this.props.systemName} ... trying import ...`);
+          this.doImport();
+        } else {
+          console.error(err.message);
+          this.setState({ errorMsg: err?.message ?? 'Something failed' });
+        }
+      });
+  };
+
+  doImport = () => {
+    this.setState({ loading: true, errorMsg: '' });
+
+    api.systemV2.import(this.props.systemName)
+      .then(sys => {
+        const sysMap = buildSystemModel2(sys, this.state.useIncomplete);
+        this.setState({
+          sysOriginal: sys,
+          sysMap: sysMap,
+          dirtySites: {},
+          deletedIDs: [],
+          loading: false,
+        });
+      })
+      .catch(err => {
         console.error(err.message);
         this.setState({ errorMsg: err?.message ?? 'Something failed' });
       });
-  }
+  };
 
   saveData = () => {
-    this.setState({ saving: true, errorMsg: '', });
+    this.setState({ saving: true, errorMsg: '' });
 
     api.systemV2.saveSites(
       this.state.sysMap.id64.toString(),
@@ -136,7 +162,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const newSite = {
       id: `x${Date.now()}`,
       status: 'plan',
-      bodyNum: SystemView2.lastBodyNum ?? -1,
+      bodyNum: -1, //SystemView2.lastBodyNum ?? -1,
       name: `New #${++SystemView2.countNew}`,
       buildType: SystemView2.lastBuildType ?? '',
     } as Site;
@@ -155,10 +181,12 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     this.setState({
       dirtySites,
       sysMap: newSysMap,
+      selectedSite: newSite,
     });
   };
 
   siteChanged = (site: Site) => {
+    // console.log(`siteChanged: ${site.name} (${site.buildType} on body #${site.bodyNum} / ${site.id})`);
     SystemView2.lastBodyNum = site.bodyNum;
     SystemView2.lastBuildType = site.buildType;
 
@@ -190,8 +218,23 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     this.setState({
       deletedIDs,
       sysMap: newSysMap,
+      pinnedSite: this.state.pinnedSite?.id === id ? undefined : this.state.pinnedSite,
+      selectedSite: this.state.selectedSite?.id === id ? undefined : this.state.selectedSite,
     });
   };
+
+  sitePinned = (id?: string) => {
+    if (!id || this.state.pinnedSite?.id === id) {
+      this.setState({ pinnedSite: undefined });
+    } else {
+      const pinnedSite = this.state.sysMap.sites.find(s => s.id === id);
+      this.setState({ pinnedSite });
+    }
+  }
+
+  siteSelected = (selectedSite?: Site) => {
+    this.setState({ selectedSite });
+  }
 
   render() {
     if (!this.props.systemName) { return <h1>Why no system name?</h1> }
@@ -234,9 +277,19 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           />
           {sysMap && <>
             <span style={{ width: 20 }} />
-            <TierPoints tier={2} count={sysMap.tierPoints.tier2} />
+            <span
+              className='bubble'
+              style={sysMap.tierPoints.tier2 < 0 ? { color: appTheme.palette.red, border: `2px dashed ${appTheme.palette.redDark}` } : undefined}
+            >
+              <TierPoints tier={2} count={sysMap.tierPoints.tier2} />
+            </span>
             <span style={{ width: 4 }} />
-            <TierPoints tier={3} count={sysMap.tierPoints.tier3} />
+            <span
+              className='bubble'
+              style={sysMap.tierPoints.tier3 < 0 ? { color: appTheme.palette.red, border: `2px dashed ${appTheme.palette.redDark}` } : undefined}
+            >
+              <TierPoints tier={3} count={sysMap.tierPoints.tier3} />
+            </span>
           </>}
         </Stack>
 
@@ -271,25 +324,25 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                   iconProps: { iconName: 'WebAppBuilderFragmentCreate' },
                   onClick: () => this.createNewSite(),
                 },
-                {
-                  key: 'sys-add2',
-                  text: 'Start building a site',
-                  iconProps: { iconName: 'Manufacturing' },
-                },
-                {
-                  key: 'sys-add3',
-                  text: 'Add a completed site',
-                  iconProps: { iconName: 'CityNext2' },
-                },
+                // {
+                //   key: 'sys-add2',
+                //   text: 'Start building a site',
+                //   iconProps: { iconName: 'Manufacturing' },
+                // },
+                // {
+                //   key: 'sys-add3',
+                //   text: 'Add a completed site',
+                //   iconProps: { iconName: 'CityNext2' },
+                // },
                 {
                   key: 'sys-add4',
                   itemType: ContextualMenuItemType.Divider,
                 },
                 {
                   key: 'sys-add5',
-                  text: 'Import ...',
-                  disabled: true,
+                  text: 'Re-import from Spansh',
                   iconProps: { iconName: 'CityNext' },
+                  onClick: () => this.doImport(),
                 }
               ]
             }
@@ -374,21 +427,25 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSys() {
-    const { sysMap, selectedSite, viewType } = this.state;
+    const { sysMap, pinnedSite, viewType } = this.state;
 
-    const siteMap = selectedSite && sysMap.siteMaps.find(s => s.id === selectedSite?.id);
-
-    return <div className='system-view'>
+    return <div className='system-view2'>
       <Stack horizontal wrap>
         {viewType === 'table' && this.renderBasicTable()}
         {viewType === 'body' && this.renderByBody()}
 
-        {siteMap && <RightSide>
-          <ViewSite site={siteMap} />
+        {pinnedSite && <RightSide>
+          <ViewSite
+            site={pinnedSite}
+            sysMap={sysMap}
+            onChange={site => this.siteChanged(site)}
+            onClose={() => this.sitePinned()}
+          />
         </RightSide>}
 
         <RightSide>
           <SystemStats sysMap={this.state.sysMap} />
+          {this.renderSystemValidationWarnings()}
         </RightSide>
 
       </Stack>
@@ -401,23 +458,23 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const validations = [];
 
     const getMiniLink = (s: SiteMap2, fieldHighlight: string, key: string) => {
+      const isTarget = this.state.invalidSite?.id === s.id;
+      const id = `invalid-${s.id.replace('&', '')}`;
       return <div
         key={key}
         style={{ marginLeft: 10 }}
       >
         <SiteLink site={s} noSys noBold noType iconName={s.status === 'complete' ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />
         <IconButton
+          id={id}
           className={`btn ${cn.btn}`}
           iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
           style={{ width: 14, height: 14, marginLeft: 4 }}
           onClick={() => {
-            // if (s.isMock) {
-            //   this.setState({ editMockSite: { ...s } });
-            // } else {
-            //   this.setState({ editRealSite: { ...s }, editFieldHighlight: fieldHighlight });
-            // }
+            this.setState({ invalidSite: s });
           }}
         />
+        {isTarget && <SiteCard targetId={id} site={s} sysView={this} onClose={() => this.setState({ invalidSite: undefined })} />}
       </div>;
     };
 
@@ -476,7 +533,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderBasicTable() {
-    const { sysMap, selectedSite } = this.state;
+    const { sysMap, pinnedSite } = this.state;
 
     return <div
       style={{
@@ -485,14 +542,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       <SitesTableView
         systemName={this.props.systemName}
         sysMap={sysMap}
-        selectedId={selectedSite?.id}
-        onSelect={selectedSite => {
-          if (this.state.selectedSite?.id !== selectedSite.id) {
-            this.setState({ selectedSite });
-          } else {
-            this.setState({ selectedSite: undefined });
-          }
-        }}
+        sysView={this}
+        pinnedId={pinnedSite?.id}
+        onPin={id => this.sitePinned(id)}
         onChange={site => this.siteChanged(site)}
         onRemove={id => this.siteDeleted(id)}
       />
@@ -506,7 +558,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderByBody() {
-    const { sysMap, selectedSite } = this.state;
+    const { sysMap, pinnedSite } = this.state;
 
     return <div
       style={{
@@ -515,14 +567,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       <SitesBodyView
         systemName={this.props.systemName}
         sysMap={sysMap}
-        selectedId={selectedSite?.id}
-        onSelect={selectedSite => {
-          if (this.state.selectedSite?.id !== selectedSite.id) {
-            this.setState({ selectedSite });
-          } else {
-            this.setState({ selectedSite: undefined });
-          }
-        }}
+        sysView={this}
+        pinnedId={pinnedSite?.id}
+        selectedSite={this.state.selectedSite}
+        onPin={id => this.sitePinned(id)}
         onChange={site => this.siteChanged(site)}
         onRemove={id => this.siteDeleted(id)}
       />
@@ -532,12 +580,29 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 }
 
 export const RightSide: FunctionComponent<{ foo?: string }> = (props) => {
-  return <div style={{
-    // border: '1px solid green',
-    // backgroundColor: 'darkslategrey',
-    height: 400,
-    width: 400,
-  }}>
-    {props.children}
+  return <div style={{ position: 'relative' }}>
+    <div style={{
+      border: `1px solid ${appTheme.palette.themeDarker}`,
+      backgroundColor: appTheme.palette.themeLighter,
+      padding: 4,
+      width: 400,
+      position: 'sticky',
+      top: 46,
+      zIndex: 1,
+      overflow: 'hidden',
+    }}>
+      {props.children}
+    </div>
   </div>;
+}
+
+export interface SitesViewProps {
+  systemName: string;
+  sysMap: SysMap2;
+  sysView: SystemView2;
+  pinnedId?: string;
+  selectedSite?: Site;
+  onPin: (id?: string) => void;
+  onChange: (site: Site) => void;
+  onRemove: (id: string) => void;
 }

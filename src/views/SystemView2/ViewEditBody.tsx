@@ -4,14 +4,17 @@ import { appTheme, cn } from "../../theme";
 import { Bod } from "../../types2";
 import { SysMap2 } from "../../system-model2";
 
-export const ViewEditBody: FunctionComponent<{ bodyNum: number, sysMap: SysMap2, onChange: (num: number) => void }> = (props) => {
+export const ViewEditBody: FunctionComponent<{ bodyNum: number, sysMap: SysMap2, onChange: (num: number) => void, shortName?: boolean }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
 
   const id = Date.now().toString();
 
-  const bodyName = props.sysMap.bodies
+  let bodyName = props.sysMap.bodies
     .find(b => b.num === props.bodyNum)?.name
-    .replace(`${props.sysMap.name}`, '');
+    ?? '?';
+  if (props.shortName) {
+    bodyName = bodyName.replace(`${props.sysMap.name} `, '');
+  }
 
   const items = props.sysMap.bodies.filter(b => b.type !== 'bc').map(b => ({ key: `bd-${b.num}`, text: b.name, data: b })) as IContextualMenuItem[];
   items.unshift(...[{
@@ -19,7 +22,7 @@ export const ViewEditBody: FunctionComponent<{ bodyNum: number, sysMap: SysMap2,
     text: 'Both',
   }]);
 
-  return <div style={{ textAlign: 'end' }}>
+  return <div>
     <ActionButton
       id={`body-${id}`}
       style={{ paddingRight: 10 }}
@@ -28,7 +31,7 @@ export const ViewEditBody: FunctionComponent<{ bodyNum: number, sysMap: SysMap2,
         setDropDown(true);
       }}
     >
-      {bodyName ?? '?'}
+      {bodyName}
       <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
     </ActionButton>
 
@@ -39,6 +42,7 @@ export const ViewEditBody: FunctionComponent<{ bodyNum: number, sysMap: SysMap2,
       target={`#body-${id}`}
       directionalHint={DirectionalHint.rightTopEdge}
       styles={{
+        root: { width: 250 },
         container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, cursor: 'pointer' }
       }}
       onDismiss={(ev) => {

@@ -1,80 +1,77 @@
-import { FunctionComponent, useState } from 'react';
-import { SiteMap2 } from '../../system-model2';
-import { BuildType } from '../../components/BuildType/BuildType';
-import { ContextualMenu, IconButton, Stack } from '@fluentui/react';
-import { appTheme, cn } from '../../theme';
-import { Bod } from '../../types2';
+import { FunctionComponent } from 'react';
+import { SysMap2 } from '../../system-model2';
+import { Site } from '../../types2';
 import { BuildEffects } from '../../components/BuildEffects';
 import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
 import { SiteMap } from '../../system-model';
+import { ViewEditName } from './ViewEditName';
+import { ViewEditBuildType } from './ViewEditBuildType';
+import { ViewEditBody } from './ViewEditBody';
+import { IconButton } from '@fluentui/react';
+import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 
-export const ViewSite: FunctionComponent<{ site: SiteMap2 }> = (props) => {
+export const ViewSite: FunctionComponent<{ site: Site, sysMap: SysMap2, onChange: (site: Site) => void, onClose: () => void }> = (props) => {
   const { site } = props;
 
-  const [dropBodies, setDropBodies] = useState(false);
-  console.warn(site.sys.bodies);
+  // const [dropBodies, setDropBodies] = useState(false);
+  const siteMap = site && props.sysMap.siteMaps.find(s => s.id === site.id);
+  // console.warn(site.sys.bodies);
 
-  return <div className='view-site'>
+  return <div className='view-site' style={{ position: 'relative' }}>
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'max-content max-content',
       gap: '2px 10px',
       fontSize: '14px',
-      backgroundColor: 'black'
+      marginBottom: 10,
     }}>
 
       <div>Site:</div>
-      <div>{site.name}</div>
+      <h2>
+        <ViewEditName
+          name={site.name}
+          onChange={newName => {
+            site.name = newName;
+            props.onChange(site);
+          }}
+        />
+      </h2>
 
       <div>Build type:</div>
-      <BuildType
+      <ViewEditBuildType
         buildType={site.buildType}
-        onChange={() => {
-          // TODO: change the build type...
+        onChange={(newType) => {
+          site.buildType = newType;
+          props.onChange(site);
         }}
       />
 
       <div>Body:</div>
-      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }}>
-        <div id={`body-${site.id.substring(1)}`}>{site.body?.name}</div>
-        <IconButton
-          iconProps={{ iconName: 'Edit' }}
-          style={{ width: 20, height: 20 }}
-          onClick={() => setDropBodies(true)}
-        />
-        {dropBodies && <ContextualMenu
-          target={`#body-${site.id.substring(1)}`}
-          styles={{
-            container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, cursor: 'pointer' }
-          }}
-          onDismiss={() => setDropBodies(false)}
+      <ViewEditBody
+        bodyNum={site.bodyNum}
+        sysMap={props.sysMap}
+        onChange={newNum => {
+          site.bodyNum = newNum;
+          props.onChange(site);
+        }}
+      />
 
-          items={site.sys.bodies.filter(b => b.type !== 'bc').map(b => ({ key: `bd-${site.sys.id64}-${b.num}`, text: b.name, data: b }))}
-
-          onRenderContextualMenuItem={(item) => {
-            const body = item?.data as Bod;
-            const sites = site.sys.bodyMap[body.name]?.sites;
-            return <div
-              key={`bdd-${site.sys.id64}-${body.num}`}
-              className={cn.trh}
-              style={{ padding: 1 }}
-              onClick={() => {
-                // TODO: change the body ...
-                setDropBodies(false);
-              }}
-            >
-              <div style={{ fontWeight: 'bold' }}>{item?.text}</div>
-              <div style={{ color: appTheme.palette.themeSecondary }}>
-                {body.subType} ~{Math.round(body.distLS).toLocaleString()}ls
-              </div>
-              {!!sites && <Stack>{sites.map(s => <div key={`bdd-${site.sys.id64}-${body.num}-${s.id}`} className='sub-site'>&nbsp;»&nbsp;{s.name}</div>)}</Stack>}
-            </div>;
-          }}
-        />}
-      </Stack>
 
     </div>
-    <EconomyTable site={site as any as SiteMap} />
+    <EconomyTable site={siteMap as any as SiteMap} />
+    {siteMap?.links && <MarketLinks site={siteMap as any} />}
     <BuildEffects buildType={site.buildType} />
+
+    <IconButton
+      iconProps={{ iconName: 'StatusCircleErrorX' }}
+      style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 20,
+        height: 20,
+      }}
+      onClick={() => props.onClose()}
+    />
   </div>;
 }

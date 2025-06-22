@@ -1,22 +1,13 @@
 import { FunctionComponent, useState } from "react";
-import { SysMap2 } from "../../system-model2";
 import { Site } from "../../types2";
 import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ActionButton, Icon, IconButton } from "@fluentui/react";
 import { ViewEditName } from "./ViewEditName";
 import { appTheme, cn } from "../../theme";
+import { SitesViewProps } from "./SystemView2";
 
-export interface SitesTableViewProps {
-  systemName: string;
-  sysMap: SysMap2;
-  selectedId?: string;
-  onSelect: (site: Site) => void;
-  onChange: (site: Site) => void;
-  onRemove: (id: string) => void;
-}
-
-export const SitesTableView: FunctionComponent<SitesTableViewProps> = (props) => {
+export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const { sysMap } = props;
   const [sortColumn, setSortColumn] = useState('bodyNum');
   const [sortOrder, setSortOrder] = useState(true);
@@ -97,13 +88,15 @@ export const SitesTableView: FunctionComponent<SitesTableViewProps> = (props) =>
           return <tr
             key={`r${props.sysMap.id64}${s.id}`}
             className={cn.trhi}
-            onClick={(ev) => { if (!ev.defaultPrevented) { props.onSelect(s); } }}
+            onClick={(ev) => { if (!ev.defaultPrevented) { props.onPin(s.id); } }}
             style={{ backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined }}
           >
-            <td>{props.selectedId === s.id && <Icon iconName='PinnedSolid' />}</td>
+            <td style={{ paddingLeft: 10 }}
+            >{props.pinnedId === s.id && <Icon iconName='PinnedSolid' />}</td>
 
-            <td>
+            <td style={{ textAlign: 'end' }}>
               <ViewEditBody
+                shortName
                 bodyNum={s.bodyNum}
                 sysMap={sysMap}
                 onChange={newNum => {
@@ -153,7 +146,7 @@ export const SitesTableView: FunctionComponent<SitesTableViewProps> = (props) =>
   </div >;
 }
 
-const mapStatus = {
+export const mapStatus = {
   plan: 'Planning',
   build: 'Building',
   complete: 'Complete',

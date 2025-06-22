@@ -45,7 +45,7 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
   return <>
     {!props.noTitle && <h3 className={cn.h3}>System effects:</h3>}
 
-    <table style={{ fontSize: '14px' }} cellPadding={0} cellSpacing={0}>
+    <table style={{ fontSize: 14 }} cellPadding={0} cellSpacing={0}>
       <tbody>
 
         <tr>

@@ -191,6 +191,7 @@ export const cn = mergeStyleSets({
     borderLeft: appTheme.palette.purpleDark + ' 1px solid',
   },
   footer: {
+    zIndex: 10,
     borderTop: appTheme.palette.purpleDark + ' 1px solid',
     boxShadow: '0 -0.1rem 2rem 0px ' + appTheme.palette.purple,
     backgroundColor: appTheme.palette.white,

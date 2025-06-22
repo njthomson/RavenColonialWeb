@@ -4,7 +4,13 @@ import { appTheme } from "../../theme";
 
 export const ViewEditName: FunctionComponent<{ name: string, onChange: (newName: string) => void }> = (props) => {
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(props.name);
+  const [name, setName] = useState(props.name);
+  const [editName, setEditName] = useState('');
+
+  if (name !== props.name) {
+    setName(props.name);
+    setEditing(false);
+  }
 
   const id = `ed-${Date.now()}`;
   return <div>
@@ -16,8 +22,8 @@ export const ViewEditName: FunctionComponent<{ name: string, onChange: (newName:
         style={{ marginLeft: 4 }}
         onClick={(ev) => {
           ev.preventDefault();
+          setEditName(props.name);
           setEditing(true);
-          // delayFocus(id);
         }}
       />
       <span style={{ cursor: 'default', marginLeft: 4 }}>{props.name}</span>
@@ -30,6 +36,7 @@ export const ViewEditName: FunctionComponent<{ name: string, onChange: (newName:
         autoFocus
         value={editName}
         style={{
+          width: 200,
           color: appTheme.palette.black,
           backgroundColor: appTheme.palette.white,
         }}
