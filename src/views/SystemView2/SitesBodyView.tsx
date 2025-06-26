@@ -5,7 +5,7 @@ import { appTheme } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
 import { SitesViewProps, SystemView2 } from "./SystemView2";
 import { store } from "../../local-storage";
-import { mapBodyFeature } from "../../types";
+import { BodyFeature, mapBodyFeature } from "../../types";
 import { SiteLink } from "./SiteLink";
 
 let nnn = 0;
@@ -261,8 +261,6 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
   render() {
     const { bodyTree, hideEmpties } = this.state;
 
-    const topNodes = Object.values(bodyTree); //.filter(n => Object.keys(n.children).length > 0);
-
     return <div style={{}}>
       <div style={{
         float: 'right',
@@ -289,67 +287,8 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       </div>
       <br />
       <div style={{ marginLeft: bodyTree[rootBC.name] ? indent : 0 }}>
-        {topNodes.map((n, i) => this.renderBody(n, i).element)}
+        {Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element)}
       </div>
-      {/* <>
-        <hr />
-        {true && <BBaryCentre
-          orbitals={['x1', 'x2', 'x3']}
-          bodyA={<BBody name="HIP 90297 A" orbitals={['x1']} down >
-            <BBody name="Body 1 a" up orbitals={['x1', 'x1']} surfaces={['x9']} />
-          </BBody>}
-          bodyB={<BBody name="HIP 90297 B" up >
-
-          </BBody>}
-        />}
-        <hr />
-        {false && <><BBaryCentre
-          bodyA={<BBody name="HIP 90297 A" down />}
-          bodyB={<BBody name="HIP 90297 B" up />}
-        />
-          <hr />
-        </>}
-        {true && <BBody name="Main star" root >
-          <BBody name="Body 1" orbitals={['x1', 'x1', 'x1']} surfaces={['x9']} up down>
-            <BBody name="Body 1 a" orbitals={['x1', 'x1']} surfaces={['x9']} up />
-          </BBody>
-
-          <BBody name="Body 2" up down >
-
-            <BBody name="Body 2 a" up down />
-            <BBaryCentre
-              hasParent
-              orbitals={['x1', 'x2']}
-              bodyA={<BBody name="Body 2 b" down orbitals={['x1']} surfaces={['x9', 'x9']} />}
-              bodyB={<BBody name="Body 2 c" up orbitals={['x1', 'x1', 'x1']} surfaces={['x9']} />}
-            />
-
-          </BBody>
-
-          <BBody name="Body 3" up orbitals={['x1', 'x1', 'x1']} surfaces={['x9', 'x9', 'x9']} />
-
-        </BBody>}
-        <hr />
-        {false && <BBody name="_root BC" root>
-          <BBody name="HIP 90297 A" down >
-
-            <BBody name="A 1" orbitals={['abc', 'def', 'ghi']} surfaces={['mno', 'qqq']} up down>
-              <BBody name="A 1 a" up />
-              <BBody name="A 1 b" up />
-            </BBody>
-
-            <BBody name="A 2" surfaces={['z 99', 'z88']} up>
-              <BBody name="A 2 a" orbitals={['a11', 'a22']} surfaces={['aa a', 'bb bb bb', 'cc', 'aa a', 'bb bb bb', 'cc']} up down />
-              <BBody name="A 2 b" orbitals={['yy']} up down />
-              <BBody name="A 2 c" orbitals={['x1']} surfaces={['x 99']} up down />
-              <BBody name="A 2 d" surfaces={['z 99']} up />
-            </BBody>
-
-          </BBody>
-          <BBody name="HIP 90297 B" up />
-        </BBody>}
-        <hr />
-      </> */}
     </div >;
   }
 
@@ -361,10 +300,6 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     const siblings = Object.keys(node.parent?.children ?? {});
     const parentIsBaryCentre = node.parent?.body.type === 'bc';
-
-    // if (node.body.name === 'DM99 54.2 AB 1') { //'DM99 54.2 B') {
-    //   console.log(idx, node);
-    // }
 
     if (node.body.type === 'bc') {
       const childElements = childParts.length < 3 ? undefined : childParts.slice(2).map(cp => cp.element);
@@ -380,6 +315,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           down={siblings.length > 1 && idx !== siblings.length - 1}
         />
       };
+
     } else {
 
       const name = ['bh', 'ns', 'wd', 'st'].includes(node.body.type)
@@ -487,36 +423,22 @@ interface BodyBlockProps {
   node: BodyMapTreeNode;
   root?: boolean;
   name?: string,
-  // orbitals?: string[];
-  // surfaces?: string[];
   up?: boolean;
   down?: boolean;
   leftDotted?: boolean;
 }
 
-let flip = false;
-
 export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
-  // let { orbitals, surfaces } = props;
-  let { node, name, up, down, leftDotted, root } = props;
+  const { node, name, up, down, leftDotted, root } = props;
 
-  const { c1, c2 } = getBodyColour(props.node?.body.type);
-
-  const sz = getBodySize(props.node?.body.type);
-
-
-  let orbitals = node.map?.orbital; //.map(s => s.name);
-  let surfaces = node.map?.surface; //.map(s => s.name);
-
+  const orbitals = node.map?.orbital;
+  const surfaces = node.map?.surface;
   const hasSites = !!orbitals?.length || !!surfaces?.length;
   const innerBorders = hasSites ? `2px dashed ${appTheme.palette.themeTertiary}` : undefined;
   const bottomGap = 10;
-  flip = !flip;
 
   let bodyTitle = `${node.body.name}\n${node.body.subType}\n` + node.body.features.map(f => '» ' + mapBodyFeature[f]).join('\n');
-  if (node.body.landable) {
-    bodyTitle += `\n» Landable`;
-  }
+  const isLandable = node.body.features.includes(BodyFeature.landable);
 
   const featureIcons = <Stack
     horizontal
@@ -527,7 +449,9 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     {node.body.features.map(f => <Icon key={`bfi-${node.body.num}${f}`} iconName={mapBodyFeatureIcon[f]} title={mapBodyFeature[f]} />)}
   </Stack>;
 
-  const canHaveBodySites = node.body.landable || (node.map?.surface && node.map.surface.length > 0);
+  const canHaveBodySites = isLandable || (node.map?.surface && node.map.surface.length > 0);
+  const { c1, c2 } = getBodyColour(props.node?.body.type);
+  const sz = getBodySize(props.node?.body.type);
 
   return <div
     style={{
@@ -625,19 +549,6 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
         }} />
       </>}
 
-      <>
-        {/* Join LEFT to vertical bars */}
-        {/* <div style={{
-          position: 'absolute',
-          borderLeft: `2px solid red`,
-          borderBottom: `2px solid red`,
-          zIndex: 10,
-          left: 0,
-          width: 10 + sz,
-          top: sz + 0.4,
-          height: 0,
-        }} /> */}
-      </>
 
       {down && !leftDotted && <>
         {/* Join Down to later siblings */}
@@ -657,20 +568,13 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
 };
 
 const mapBodyFeatureIcon = {
-  // Body feature icons: Freezing
-  // Bio: BugSolid Cotton ClassroomLogo
-  // Geo: MountainClimbing FocalPoint D365BusinessCentral Dataverse Diamond FlameSolid
-  // Rings: Location BullseyeTarget
-  // Tidal: Video360Generic Encryption CircleHalfFull Contrast 
-  // Terraformable: World
-  // Volcanism: DefectSolid FocalPoint PieDouble ProcessAdvisor
-
   bio: 'ClassroomLogo',
   geo: 'DefectSolid',
   volcanism: 'FlameSolid',
   rings: 'Location',
   terraformable: 'World',
   tidal: 'Contrast',
+  landable: 'DrillDownSolid',
 };
 
 const getBodyColour = (bodyType?: BodyType) => {
@@ -762,64 +666,3 @@ const getBodySize = (bodyType?: BodyType) => {
       return 10;
   }
 };
-
-
-// const BSiteBlock: FunctionComponent<{ site: SiteMap2, sysView: SystemView2 }> = (props) => {
-//   const s = props.site;
-//   const isCurrent = props.sysView.state.selectedSite?.id === s.id;
-//   const isPinned = props.sysView.state.pinnedSite?.id === s.id;
-
-//   const id = `site-${s.id.replace('&', '')}`;
-//   let nameColor = props.site.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary;
-//   if (!props.sysView.state.useIncomplete && props.site.status !== 'complete') {
-//     nameColor = 'grey';
-//   }
-
-//   return <div
-//     style={{ cursor: 'default' }}
-//     onMouseUp={(ev) => {
-//       if (!ev.defaultPrevented) {
-//         props.sysView.siteSelected(s.original);
-//       }
-//     }}
-//   >
-//     <div>
-//       <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
-
-//         {s.primaryEconomy && <EconomyBlock economy={s.primaryEconomy} size='10px' />}
-
-//         <span id={id} style={{ position: 'absolute', left: 80 }} />
-
-//         {<Link style={{ color: 'unset', fontStyle: s.status === 'plan' ? 'italic' : undefined }}>
-//           <span style={{ color: nameColor }}>{s.name}</span>
-//           &nbsp;
-//           {getSiteType(s.buildType).displayName2}
-
-//           {s.sys.primaryPortId === s.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} className='icon-inline' title='Primary port' />}
-//           {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
-//           {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
-//         </Link>}
-
-//         {isPinned && !s.links && <Icon iconName='PinnedSolid' style={{ marginLeft: 8, color: appTheme.palette.accent }} />}
-
-//       </Stack>
-//       {/* {!isCurrent && <>{s.name}</>} */}
-//       {/* {isCurrent && <SiteLink site={s} noSys noBold iconName={s.status === 'complete' ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />} */}
-
-//       {s.links && <Stack horizontal>
-//         <MarketLinkBlocks site={s as any} width={200} height={10} />
-//         <IconButton
-//           iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
-//           onMouseUp={(ev) => {
-//             ev.preventDefault();
-//             props.sysView.sitePinned(s.id);
-//           }}
-//         />
-//       </Stack>}
-//     </div>
-
-//     {isCurrent && <SiteCard targetId={id} site={s} sysView={props.sysView} onClose={() => props.sysView.siteSelected(undefined)} />}
-
-//   </div>;
-// }
-

@@ -20,7 +20,6 @@ export interface Bod {
   parents: number[];
   type: BodyType;
   subType: string;
-  landable?: boolean;
   features: BodyFeature[];
 }
 

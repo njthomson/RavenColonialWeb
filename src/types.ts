@@ -72,6 +72,7 @@ export enum BodyFeature {
   rings = 'rings',
   terraformable = 'terraformable',
   tidal = 'tidal',
+  landable = 'landable',
 }
 
 export const mapBodyFeature = {
@@ -81,6 +82,7 @@ export const mapBodyFeature = {
   rings: 'Rings',
   terraformable: 'Terraformable',
   tidal: 'Tidally locked',
+  landable: 'Landable',
 }
 
 export enum SystemFeature {

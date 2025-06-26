@@ -164,5 +164,4 @@ export const mapStatus = {
   plan: 'Planning',
   build: 'Building',
   complete: 'Complete',
-  // skip: 'Skip',
 }

@@ -4,6 +4,7 @@ import { appTheme, cn } from "../../theme";
 import { Bod } from "../../types2";
 import { BodyMap2 } from "../../system-model2";
 import { App } from "../../App";
+import { BodyFeature } from "../../types";
 
 interface ViewEditBodyProps {
   onChange: (num: number) => void;
@@ -118,6 +119,8 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
           if (!body) return null;
 
           const sites = bodyMap[body.name]?.sites;
+          const isLandable = body.features.includes(BodyFeature.landable);
+
           return <div
             key={`bdd-${systemName}-${body.num}`}
             className={cn.trh}
@@ -134,14 +137,13 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
 
             <div style={{ color: appTheme.palette.themeSecondary }}>
               {body.subType} ~{Math.round(body.distLS).toLocaleString()}ls
-              {body.landable && <Icon iconName='GlobeFavorite' className='icon-inline' style={{ marginLeft: 8, paddingTop: 0 }} title='Landable body' />}
+              {isLandable && <Icon iconName='GlobeFavorite' className='icon-inline' style={{ marginLeft: 8, paddingTop: 0 }} title='Landable body' />}
             </div>
             {!!sites && <Stack>{sites.map(s => <div
               key={`bdd-${systemName}-${body.num}-${s.id}`}
               className='sub-site'
               style={{
                 color: pinnedSiteId === s.id ? appTheme.palette.yellowDark : undefined,
-                // fontWeight: pinnedSiteId === s.id ? 'bold' : undefined
               }}
             >
               <span>&nbsp;»&nbsp;{s.name}</span>

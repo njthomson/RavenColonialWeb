@@ -18,7 +18,7 @@ import { SiteCard } from './SiteCard';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName } from '../../components';
-import { delayFocus } from '../../util';
+import { createRandomPhoneticName, delayFocus } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 
 interface SystemView2Props {
@@ -27,8 +27,7 @@ interface SystemView2Props {
 
 interface SystemView2State {
   errorMsg?: string;
-  loading: boolean;
-  saving?: boolean;
+  processingMsg?: string;
   useIncomplete: boolean;
   sysOriginal: Sys;
   sysMap: SysMap2;
@@ -62,7 +61,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     super(props);
 
     this.state = {
-      loading: true,
+      processingMsg: 'Loading ...',
       useIncomplete: store.useIncomplete,
       sysMap: undefined!,
       sysOriginal: undefined!,
@@ -101,8 +100,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     window.document.title = 'Sys: ?';
     this.setState({
       errorMsg: '',
-      loading: false,
-      saving: false,
+      processingMsg: undefined,
       sysOriginal: undefined!,
       sysMap: undefined!,
       showBuildOrder: false,
@@ -119,7 +117,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   loadData = (reset?: boolean) => {
     this.setState({
-      loading: true,
+      processingMsg: 'Loading ...',
       errorMsg: '',
       sysMap: reset ? undefined! : this.state.sysMap,
     });
@@ -130,13 +128,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         const sysMap = buildSystemModel2(sys, this.state.useIncomplete);
         const orderIDs = sysMap.sites.map(s => s.id);
         this.setState({
+          processingMsg: undefined,
           sysOriginal: sys,
           sysMap: sysMap,
           dirtySites: {},
           deletedIDs: [],
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
-          loading: false,
         });
       })
       .catch(err => {
@@ -151,18 +149,18 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   doImport = () => {
-    this.setState({ loading: true, errorMsg: '' });
+    this.setState({ processingMsg: 'Importing ...', errorMsg: '' });
 
     api.systemV2.import(this.props.systemName)
       .then(sys => {
         const newSysMap = buildSystemModel2(sys, this.state.useIncomplete);
         this.setState({
+          processingMsg: undefined,
           sysOriginal: sys,
           sysMap: newSysMap,
           dirtySites: {},
           deletedIDs: [],
           orderIDs: newSysMap.sites.map(s => s.id),
-          loading: false,
         });
       })
       .catch(err => {
@@ -172,7 +170,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   saveData = () => {
-    this.setState({ saving: true, errorMsg: '' });
+    this.setState({ processingMsg: 'Saving ...', errorMsg: '' });
 
     const payload = {
       update: Object.values(this.state.dirtySites),
@@ -192,11 +190,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       .then(sys => {
         const newSysMap = buildSystemModel2(sys, this.state.useIncomplete);
         this.setState({
+          processingMsg: undefined,
           sysOriginal: sys,
           sysMap: newSysMap,
           dirtySites: {},
           deletedIDs: [],
-          saving: false,
         });
       })
       .catch(err => {
@@ -218,7 +216,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       id: `x${Date.now()}`,
       status: 'plan',
       bodyNum: SystemView2.lastBodyNum ?? -1,
-      name: `New #${++SystemView2.countNew}`,
+      name: createRandomPhoneticName(),
       buildType: SystemView2.lastBuildType ?? '',
     } as Site;
 
@@ -226,7 +224,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     // make sure we don't reuse a name
     while (sysMap.sites.some(s => s.name === newSite.name)) {
-      newSite.name = `New #${++SystemView2.countNew}`;
+      newSite.name = createRandomPhoneticName();
     }
 
     sysMap.sites.push(newSite);
@@ -318,14 +316,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return this.renderFindSystem();
     }
 
-    const { errorMsg, loading, sysMap, showBuildOrder } = this.state;
+    const { errorMsg, sysMap, processingMsg, showBuildOrder } = this.state;
 
     return <div className='sys'>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
       {this.renderTitleAndCommands()}
 
-      {!sysMap && loading && <Spinner size={SpinnerSize.large} label='Loading ...' style={{ marginTop: 20 }} />}
+      {!sysMap && processingMsg?.includes('Loading') && <Spinner size={SpinnerSize.large} label={processingMsg} style={{ marginTop: 20 }} />}
 
       {sysMap && this.renderSys()}
 
@@ -370,7 +368,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   renderTitleAndCommands() {
     const { systemName } = this.props;
-    const { loading, saving, sysMap, useIncomplete, showEditSys } = this.state;
+    const { processingMsg, sysMap, useIncomplete, showEditSys } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${systemName}`;
@@ -579,11 +577,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Networking ...',
             iconProps: { iconName: 'Nav2DMapView' },
             onRender: () => {
-              return !loading && !saving ? null : <div>
+              return !processingMsg ? null : <div>
                 <Spinner
                   size={SpinnerSize.medium}
                   labelPosition='right'
-                  label={saving ? 'Saving ...' : 'Loading ...'}
+                  label={processingMsg}
                   style={{ marginTop: 12, cursor: 'default' }}
                 />
               </div>
@@ -601,15 +599,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSys() {
-    const { sysMap, pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot } = this.state;
+    const { pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot } = this.state;
 
     const pinnedSitePanel = pinnedSite && <div ref={this.snapshotRef}>
       <ViewSite
         site={pinnedSite}
         sysView={this}
-        sysMap={sysMap}
         onChange={site => this.siteChanged(site)}
-        onClose={() => this.sitePinned()}
       />
     </div>;
 

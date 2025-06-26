@@ -10,12 +10,6 @@ import { appTheme } from "../../theme";
 export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean }> = (props) => {
   const { sysMap } = props;
 
-  // let max = Math.max(...Object.values(sysInf));
-  // let econTxt = Object.keys(sysMap.economies)
-  //   // .filter(k => sysInf[k] === max)
-  //   .map(k => `${mapName[k] ?? k}: ${sysMap.economies[k]}`)
-  //   .join(', ');
-
   return <div
     style={{
       display: 'grid',
@@ -45,16 +39,8 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
 
     </div>
 
-    {/* <div>Economies:</div>
-    <div style={{ gridColumn: '2 / span 3' }}>
-      <div>{econTxt}</div>
-      <EconomyBlocks economies={sysMap.economies} width={200} height={10} />
-    </div>
-    */}
-
     {sysEffects.map(key => {
       const actual = sysMap.sumEffects[key as keyof SysEffects] ?? 0;
-      // if (key === 'pop' || key === 'mpop') return null;
 
       return [
         <div key={`se${key}1`}>{mapName[key]}:</div>,

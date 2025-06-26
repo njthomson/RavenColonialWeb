@@ -65,7 +65,6 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
       </div>
 
       {<ContextualMenu
-        // id={`cm${id}`}
         hidden={!dropDown}
         alignTargetEdge={false}
         target={`#drop-reserve-level`}

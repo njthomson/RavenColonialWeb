@@ -48,8 +48,6 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
         {isPinned && !site.links && <Icon iconName='PinnedSolid' style={{ marginLeft: 8, color: appTheme.palette.accent }} />}
 
       </Stack>
-      {/* {!isCurrent && <>{s.name}</>} */}
-      {/* {isCurrent && <SiteLink site={s} noSys noBold iconName={s.status === 'complete' ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />} */}
 
       {site.links && <Stack horizontal>
         <MarketLinkBlocks site={site as any} width={200} height={10} />

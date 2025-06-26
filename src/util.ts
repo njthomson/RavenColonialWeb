@@ -211,3 +211,19 @@ export const asPosNegTxt2 = (n: number): string => {
   else
     return `- ${Math.abs(n).toFixed(2)}`
 }
+
+const phonetics = [
+  "Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot",
+  "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima",
+  "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo",
+  "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "Xray",
+  "Yankee", "Zulu"
+];
+
+export const createRandomPhoneticName = () => {
+  const n1 = Math.round(Math.random() * 25);
+  const n2 = Math.round(Math.random() * 25);
+
+  const name = phonetics[n1] + ' ' + phonetics[n2];
+  return name;
+}

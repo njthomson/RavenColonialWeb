@@ -98,14 +98,6 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             onClick={() => props.sysView.siteDeleted(s.id)}
           />
 
-          {/* <IconButton
-            iconProps={{ iconName: 'Blocked2' }}
-            text='Ignore'
-            title='Exclude from calculations'
-            onClick={() => {
-              // TODO: ...
-            }}
-          /> */}
         </Stack>
       </div>
     </Callout>

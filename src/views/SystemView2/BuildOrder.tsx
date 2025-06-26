@@ -19,19 +19,18 @@ interface BuildOrderState {
 }
 
 export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
-  private mouseInside: boolean = false;
 
   constructor(props: BuildOrderProps) {
     super(props);
 
-    const map = props.sysMap.siteMaps.reduce((map, site) => {
-      map[site.id] = site;
-      return map;
+    const map = props.sysMap.siteMaps.reduce((m, site) => {
+      m[site.id] = site;
+      return m;
     }, {} as Record<string, SiteMap2>);
 
     this.state = {
       map: map,
-      sortedIDs: props.orderIDs,
+      sortedIDs: [...props.orderIDs],
       dragging: false,
     };
   }
@@ -76,33 +75,10 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         }}
         onMouseEnter={ev => {
           ev.preventDefault();
-          // if (!dragId) {            this.setState({ dragId: id });          }
           if (ev.buttons > 0 && dragId && id !== dragId) {
             this.shiftRow(dragId, id);
           }
         }}
-      // draggable={true}
-      // onDragStart={ev => {
-      //   ev.dataTransfer.setData('text/plain', id);
-      //   ev.dataTransfer.effectAllowed = 'copy';
-      //   const img = new Image();
-      //   img.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=";
-      //   ev.dataTransfer.setDragImage(img, 0, 0);
-      //   this.setState({ dragId: id });
-      // }}
-      // onDrop={ev => {
-      //   ev.preventDefault();
-      //   this.setState({ dragId: undefined });
-      // }}
-      // onDragOver={ev => {
-      //   ev.preventDefault();
-      //   // ev.dataTransfer.dropEffect = 'move';
-      //   ev.dataTransfer.dropEffect = 'copy';
-
-      //   if (dragId && id !== dragId) {
-      //     this.shiftRow(dragId, id);
-      //   }
-      // }}
       >
         <td className={`cr ${cn.br}`}>{i + 1}</td>
 
@@ -111,13 +87,13 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           <span style={{ color: s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.accent, marginRight: 8 }}>
             <Icon iconName={s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
             &nbsp;
-            {s.name}</span>
+            {s.name}
+          </span>
 
           <span style={{ fontSize: 12 }}>{getSiteType(s.buildType).displayName2} ({s.buildType})</span>
           {i === 0 && <Icon iconName='CrownSolid' style={{ marginLeft: 8 }} />}
           {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
           {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
-          {/* <SiteLink site={s} noSys noBold iconName={s.status === 'complete' ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} /> */}
         </td>
 
         <td className={`c3 ${cn.br}`}>
@@ -126,33 +102,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
               iconName={dragId === id ? 'GripperBarHorizontal' : 'GripperDotsVertical'}
               style={{ cursor: 'row-resize', }}
             />}
-            {/* <IconButton
-              className={`btn ${cn.btn}`}
-              disabled={i === 0}
-              iconProps={{ iconName: 'CaretSolidUp', style: { fontSize: 12 } }}
-              style={{ width: 14, height: 14, marginLeft: 4 }}
-              onClick={() => {
-                const z = sortedIDs[i];
-                sortedIDs[i] = sortedIDs[i - 1]
-                sortedIDs[i - 1] = z;
-                this.setState({ sortedIDs });
-              }}
-            />
-            <IconButton
-              className={`btn ${cn.btn}`}
-              disabled={i === sortedIDs.length - 1}
-              iconProps={{ iconName: 'CaretSolidDown', style: { fontSize: 12 } }}
-              style={{ width: 14, height: 14, marginLeft: 4 }}
-              onClick={() => {
-                const { sortedIDs } = this.state;
-                console.log('A', sortedIDs);
-                const z = sortedIDs[i];
-                sortedIDs[i] = sortedIDs[i + 1]
-                sortedIDs[i + 1] = z;
-                console.log('B', sortedIDs);
-                this.setState({ sortedIDs });
-              }}
-            /> */}
+
           </Stack>
         </td>
 
