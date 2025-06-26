@@ -14,12 +14,14 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
   const isPinned = sysView.state.pinnedSite?.id === site.id;
 
   const id = `id-${props.prefix}-${site.id.replace('&', '')}`;
+
   const isNotUsed = !sysView.state.useIncomplete && site.status !== 'complete';
   let nameColor = isNotUsed
     ? 'grey'
     : (site.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);
 
   return <div
+    id={id + '-div'}
     style={{ cursor: 'default' }}
     onMouseUp={() => setIsCurrent(!isCurrent)}
   >

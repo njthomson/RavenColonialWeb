@@ -7,6 +7,7 @@ export const CopyButton: FunctionComponent<{ text: string | ClipboardItem, title
   return <Icon
     className={`icon-btn ${cn.btn}`}
     iconName='Copy'
+    role='button'
     title={props.title ?? `Copy: "${props.text.toString()}"`}
     style={{ fontSize: props.fontSize, userSelect: 'none' }}
     onClick={(ev) => {

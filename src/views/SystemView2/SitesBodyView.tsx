@@ -507,16 +507,12 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
         }}>
           <div style={{ fontSize: 14, padding: '2px 8px', borderBottom: innerBorders }}>
             {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
-            {orbitals && orbitals.map(s => (<div key={`orbitalsite${s.id}${++nnn}`}>
-              <SiteLink site={s} sysView={props.sysView} prefix='sbv' />
-            </div>))}
+            {orbitals && orbitals.map(s => <SiteLink key={`orbitalsite${s.id}${++nnn}`} site={s} sysView={props.sysView} prefix='sbv' />)}
           </div>
 
           {canHaveBodySites && <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px' }}>
             {!surfaces?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='GlobeFavorite' /> No surface sites</div>}
-            {surfaces && surfaces.map(s => (<div key={`surfacesite${s.id}${++nnn}`}>
-              <SiteLink site={s} sysView={props.sysView} prefix='sbv' />
-            </div>))}
+            {surfaces && surfaces.map(s => <SiteLink key={`surfacesite${s.id}${++nnn}`} site={s} sysView={props.sysView} prefix='sbv' />)}
           </div>}
         </div>}
 

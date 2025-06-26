@@ -1,6 +1,6 @@
 import './SystemView2.css';
 import * as api from '../../api';
-import { ActionButton, CommandBar, IconButton, Link, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ActionButton, CommandBar, DefaultButton, Dialog, DialogFooter, Icon, IconButton, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
@@ -43,6 +43,7 @@ interface SystemView2State {
   orderIDs: string[];
   originalSiteIDs: string[];
   showEditSys?: boolean;
+  showConfirmAction?: () => void;
 }
 
 const viewTypes = [
@@ -118,6 +119,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   loadData = (reset?: boolean) => {
     this.setState({
       processingMsg: 'Loading ...',
+      showConfirmAction: undefined,
       errorMsg: '',
       sysMap: reset ? undefined! : this.state.sysMap,
     });
@@ -237,6 +239,28 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       selectedSite: newSite,
       orderIDs: [...this.state.orderIDs, newSite.id],
     });
+
+    const id = `id-sbv-${newSite.id}-div`;
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        // start scrolling
+        element.parentElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+
+        // then make the card appear
+        setTimeout(() => {
+          element.dispatchEvent(new MouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          }));
+        }, 500);
+      }
+
+    }, 100);
   };
 
   siteChanged = (site: Site) => {
@@ -368,33 +392,21 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   renderTitleAndCommands() {
     const { systemName } = this.props;
-    const { processingMsg, sysMap, useIncomplete, showEditSys } = this.state;
+    const { processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${systemName}`;
 
-    const enableSave = this.isDirty();
+    const enableSave = this.isDirty() && !processingMsg;
 
     return <>
       <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>
       <h2 style={{ margin: 10, height: 32 }}>
-        <Stack horizontal verticalAlign='center'>
+        <Stack horizontal verticalAlign='baseline'>
           <CopyButton text={systemName} fontSize={16} />
           <Link href={pageLink} style={{ marginLeft: 4 }}>{systemName}</Link>
 
-          <IconButton
-            title='Search for a different system'
-            iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
-            onClick={() => {
-              // if needed, prompt to save first
-              const proceed = !this.isDirty() || window.confirm('Are you sure? You have unsaved changes.');
-              if (proceed) {
-                window.location.assign('/#sys');
-              }
-            }}
-          />
-
-          {<div style={{ color: sysMap ? undefined : 'grey' }}>
+          <div style={{ marginLeft: 10, color: sysMap ? undefined : 'grey' }}>
             <span style={{ width: 20 }} />
             <span
               className='bubble'
@@ -409,7 +421,22 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             >
               <TierPoints tier={3} count={sysMap?.tierPoints.tier3} disabled={!sysMap} />
             </span>
-          </div>}
+          </div>
+
+          <IconButton
+            title='Search for a different system'
+            iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
+            style={{ marginLeft: 10 }}
+            onClick={() => {
+              // if needed, prompt to save first
+              if (this.isDirty()) {
+                this.setState({ showConfirmAction: () => window.location.assign('/#sys') });
+              } else {
+                window.location.assign('/#sys')
+              }
+            }}
+          />
+
         </Stack>
       </h2>
 
@@ -431,6 +458,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: 'Add',
             iconProps: { iconName: 'Add' },
             split: true,
+            disabled: !!processingMsg,
             onClick: () => this.createNewSite(),
 
             subMenuProps: {
@@ -482,6 +510,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Change view type',
             text: this.state.viewType === 'body' ? 'Map' : 'Table',
             iconProps: { iconName: this.state.viewType === 'body' ? 'Nav2DMapView' : 'GridViewSmall' },
+            disabled: !!processingMsg,
             onClick: () => {
               const nextView = viewTypes[viewTypes.indexOf(this.state.viewType) + 1] ?? viewTypes[0];
               this.setState({ viewType: nextView });
@@ -493,8 +522,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-save',
             title: 'Save changes to this system',
             text: 'Save',
-            disabled: !enableSave,
             iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
+            disabled: !enableSave,
             onClick: this.saveData,
           },
 
@@ -503,9 +532,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Abandon your current changes and reload',
             text: 'Load',
             iconProps: { iconName: 'OpenFolderHorizontal' },
+            disabled: !!processingMsg,
             onClick: () => {
-              const proceed = !this.isDirty() || window.confirm('Are you sure? You have unsaved changes.');
-              if (proceed) {
+              if (this.isDirty()) {
+                this.setState({ showConfirmAction: () => this.loadData() });
+              } else {
                 this.loadData();
               }
             },
@@ -516,6 +547,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Adjust order of site calculations',
             text: 'Order',
             iconProps: { iconName: 'SortLines' },
+            disabled: !!processingMsg,
             onClick: () => this.setState({ showBuildOrder: true }),
           },
 
@@ -524,6 +556,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Include incomplete sites in calculations?',
             // text: 'Include all',
             iconProps: { iconName: useIncomplete ? 'TestBeakerSolid' : 'TestBeaker' },
+            disabled: !!processingMsg,
             onClick: () => {
               const sysMap = buildSystemModel2(this.state.sysMap, !this.state.useIncomplete);
               this.setState({
@@ -539,6 +572,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-edit',
             title: 'Edit system data',
             iconProps: { iconName: 'Edit' },
+            disabled: !!processingMsg,
             onClick: () => {
               this.setState({ showEditSys: !showEditSys });
             }
@@ -547,6 +581,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           {
             key: 'open-in',
             iconProps: { iconName: 'OpenInNewWindow' },
+            disabled: !!processingMsg,
             subMenuProps: {
               calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
               items: [
@@ -589,12 +624,31 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
         ]}
       />
+
       {showEditSys && <SystemCard targetId='sys-card-target' sysView={this} onClose={() => {
         this.setState({
           showEditSys: false,
           sysMap: { ...this.state.sysMap }
         });
       }} />}
+
+      {!!showConfirmAction && <Dialog
+        hidden={false}
+        dialogContentProps={{ title: 'Caution' }}
+        minWidth={420}
+      >
+        <Icon iconName='Warning' style={{ fontSize: 40, float: 'left', marginRight: 10 }} />
+        <div>
+          You have unsaved changed.
+          <br />
+          Are you sure you want to proceed?
+        </div>
+        <DialogFooter>
+          <DefaultButton text="Yes" iconProps={{ iconName: 'CheckMark' }} onClick={() => showConfirmAction()} />
+          <PrimaryButton text="No" iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showConfirmAction: undefined })} />
+        </DialogFooter>
+      </Dialog>}
+
     </>;
   }
 

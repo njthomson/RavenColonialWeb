@@ -470,7 +470,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
-          <span style={{ fontSize: 16 }}><CopyButton text={proj.systemName} /></span>
+          <CopyButton text={proj.systemName} fontSize={16} />
           <Link href={`#find=${proj.systemName}`}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
           <span style={{ fontSize: 16 }}><CopyButton text={copyLink} title='Copy a link to this page' /></span>
         </h2>

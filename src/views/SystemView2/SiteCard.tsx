@@ -94,7 +94,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <IconButton
             iconProps={{ iconName: 'Delete' }}
             text='Delete'
-            title='Remove from this system'
+            title='Remove this site'
             onClick={() => props.sysView.siteDeleted(s.id)}
           />
 

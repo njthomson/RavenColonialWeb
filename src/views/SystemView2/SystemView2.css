@@ -29,3 +29,7 @@ th {
 .view-site h2 {
   margin: 0;
 }
+
+.basic-table th {
+ cursor: pointer;
+}

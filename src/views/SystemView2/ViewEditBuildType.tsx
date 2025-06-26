@@ -225,7 +225,6 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
             border: `1px solid ${selection === st ? appTheme.palette.themePrimary : 'grey'}`,
           }}
           onClick={(ev) => {
-            console.log(`BB: ${st}`);
             typeJustSet = st;
             ev.preventDefault();
             this.props.onChange(st);
