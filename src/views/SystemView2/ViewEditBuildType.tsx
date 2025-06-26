@@ -528,6 +528,10 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
     }
   }
 
+  componentWillUnmount(): void {
+    App.resumePageScroll();
+  }
+
   render() {
     const { dropDown, location, showTable } = this.state;
 
@@ -579,17 +583,11 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
           }}
           onMouseEnter={() => {
             this.mouseInside = true;
-            if (document.body.clientHeight < document.body.scrollHeight) {
-              App.fakeScroll.style.display = 'block';
-              document.body.style.marginRight = `${App.scrollBarWidth}px`;
-              document.body.style.overflow = 'hidden';
-            }
+            App.suspendPageScroll();
           }}
           onMouseLeave={() => {
             this.mouseInside = false;
-            App.fakeScroll.style.display = 'none';
-            document.body.style.overflow = 'auto';
-            document.body.style.marginRight = '0';
+            App.resumePageScroll();
           }}
         >
           <Stack

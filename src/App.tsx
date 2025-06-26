@@ -29,8 +29,22 @@ interface AppState {
 }
 
 export class App extends Component<AppProps, AppState> {
-  public static scrollBarWidth = 0;
-  public static fakeScroll: HTMLDivElement;
+  private static scrollBarWidth = 0;
+  private static fakeScroll: HTMLDivElement;
+
+  public static suspendPageScroll() {
+    if (document.body.clientHeight < document.body.scrollHeight) {
+      App.fakeScroll.style.display = 'block';
+      document.body.style.marginRight = `${App.scrollBarWidth}px`;
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  public static resumePageScroll() {
+    App.fakeScroll.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    document.body.style.marginRight = '0';
+  }
 
   constructor(props: AppProps) {
     super(props);

@@ -35,6 +35,7 @@ interface SystemView2State {
   showBuildOrder?: boolean;
   pinnedSite?: Site;
   pinnedSnapshot?: string;
+  sysStatsSnapshot?: string;
   selectedSite?: Site;
   invalidSite?: Site;
   dirtySites: Record<string, Site>;
@@ -55,6 +56,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   static lastBuildType?: string;
   static lastBodyNum?: number;
   private snapshotRef = createRef<HTMLDivElement>();
+  private sysStatsRef = createRef<HTMLDivElement>();
 
   constructor(props: SystemView2Props) {
     super(props);
@@ -599,7 +601,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSys() {
-    const { sysMap, pinnedSite, viewType, pinnedSnapshot } = this.state;
+    const { sysMap, pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot } = this.state;
 
     const pinnedSitePanel = pinnedSite && <div ref={this.snapshotRef}>
       <ViewSite
@@ -609,6 +611,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         onChange={site => this.siteChanged(site)}
         onClose={() => this.sitePinned()}
       />
+    </div>;
+
+    const sysStatsPanel = <div ref={this.sysStatsRef}>
+      <SystemStats sysMap={this.state.sysMap} useIncomplete={this.state.useIncomplete} />
+      {this.renderSystemValidationWarnings()}
     </div>;
 
     return <div className='system-view2' style={{ position: 'relative' }}>
@@ -622,11 +629,22 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             iconProps={{ iconName: 'Camera' }}
             style={{
               position: 'absolute', zIndex: 1,
-              top: 10, right: 10, width: 32, height: 32,
+              top: 44, right: 10, width: 32, height: 32,
               backgroundColor: appTheme.palette.white,
               border: `1px solid ${appTheme.palette.themePrimary}`
             }}
             onClick={() => this.setState({ pinnedSnapshot: this.snapshotRef.current?.outerHTML })}
+          />
+          <IconButton
+            title='Remove this panel'
+            iconProps={{ iconName: 'Clear' }}
+            style={{
+              position: 'absolute', zIndex: 1,
+              top: 10, right: 10, width: 32, height: 32,
+              backgroundColor: appTheme.palette.white,
+              border: `1px solid ${appTheme.palette.themePrimary}`
+            }}
+            onClick={() => this.setState({ pinnedSite: undefined })}
           />
           {pinnedSitePanel}
         </RightSide>}
@@ -669,9 +687,56 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         </RightSide>}
 
         <RightSide>
-          <SystemStats sysMap={this.state.sysMap} useIncomplete={this.state.useIncomplete} />
-          {this.renderSystemValidationWarnings()}
+          <IconButton
+            title='Make a comparison snapshot of this panel'
+            iconProps={{ iconName: 'Camera' }}
+            style={{
+              position: 'absolute', zIndex: 1,
+              top: 10, right: 10, width: 32, height: 32,
+              backgroundColor: appTheme.palette.white,
+              border: `1px solid ${appTheme.palette.themePrimary}`
+            }}
+            onClick={() => this.setState({ sysStatsSnapshot: this.sysStatsRef.current?.outerHTML })}
+          />
+          {sysStatsPanel}
         </RightSide>
+
+        {sysStatsSnapshot && <RightSide>
+          <IconButton
+            title='Remove this snapshot'
+            iconProps={{ iconName: 'Clear' }}
+            style={{
+              position: 'absolute', zIndex: 1,
+              top: 10, right: 10, width: 32, height: 32,
+              backgroundColor: appTheme.palette.white,
+              border: `1px solid ${appTheme.palette.themePrimary}`
+            }}
+            onClick={() => this.setState({ sysStatsSnapshot: undefined, })}
+          />
+
+          <div style={{ position: 'relative', color: 'grey' }}>
+            <div dangerouslySetInnerHTML={{ __html: sysStatsSnapshot }} />
+
+            <div
+              style={{
+                backgroundColor: 'rgb(255,255,255,0.1)',
+                position: 'absolute',
+                left: -4, top: -4, right: -4, bottom: -4,
+              }}
+            >
+              <span style={{
+                fontSize: 36, fontWeight: 'bolder',
+                position: 'absolute', rotate: '45deg',
+                top: 40, right: -15,
+                color: appTheme.palette.white,
+                textShadow: `${appTheme.palette.black} 0 0 10px`,
+              }}
+              >
+                snap shot
+              </span>
+            </div>
+          </div>
+        </RightSide>}
 
       </Stack>
     </div>;
