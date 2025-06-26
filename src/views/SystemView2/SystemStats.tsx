@@ -1,12 +1,13 @@
 import { FunctionComponent } from "react";
-import { TierPoints, Chevrons } from "../../components/Chevrons";
+import { Chevrons } from "../../components/Chevrons";
+import { TierPoints } from "../../components/TierPoints";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
 import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
 import { appTheme } from "../../theme";
 
 
-export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
+export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean }> = (props) => {
   const { sysMap } = props;
 
   // let max = Math.max(...Object.values(sysInf));
@@ -15,13 +16,17 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
   //   .map(k => `${mapName[k] ?? k}: ${sysMap.economies[k]}`)
   //   .join(', ');
 
+  return <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: 'max-content min-content min-content auto',
+      gap: '2px 10px',
+      fontSize: '14px',
+    }}
+  >
 
-  return <div style={{
-    display: 'grid',
-    gridTemplateColumns: 'max-content min-content min-content auto',
-    gap: '2px 10px',
-    fontSize: '14px',
-  }}>
+    <div>Calculated:</div>
+    <div style={{ gridColumn: '2 / span 3' }}>{props.useIncomplete ? 'All sites' : 'Completed sites only'}</div>
 
     <div>System architect:</div>
     <div style={{ gridColumn: '2 / span 3' }}>{sysMap.architect}</div>
@@ -62,5 +67,5 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
         </div>,
       ]
     })}
-  </div>
+  </div>;
 }

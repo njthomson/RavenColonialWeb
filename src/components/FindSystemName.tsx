@@ -8,6 +8,7 @@ interface FindSystemNameProps {
   text?: string;
   errorMsg?: string;
   match?: boolean;
+  noLabel?: boolean;
 }
 
 interface FindSystemNameState {
@@ -45,7 +46,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
     const { searchText, matches, errorMsg, searching } = this.state;
 
     return <>
-      <Label>System name:</Label>
+      {!this.props.noLabel && <Label>System name:</Label>}
 
       <Stack horizontal>
         <ComboBox

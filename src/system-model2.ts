@@ -85,6 +85,13 @@ export interface EconomyLink {
 }
 
 export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: boolean): SysMap2 => {
+  // const orderIDs = sys.sites.map(s => s.id); // necessary?
+
+  // the primary port is always the first site
+  sys.primaryPortId = sys.sites?.length > 0
+    ? sys.sites[0].id
+    : undefined;
+
   sys = { ...sys };
 
   // Read:
@@ -109,6 +116,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   // calc sum effects from all sites
   const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete);
 
+  // re-sort bodies by their num value
   sys.bodies.sort((a, b) => a.num - b.num);
 
   const finalMap = Object.assign(sys, {
@@ -132,7 +140,7 @@ export const getUnknownBody = (): Bod => {
     parents: [],
     subType: 'Unknown',
     type: 'un',
-    landable: false,
+    landable: true,
   };
 }
 

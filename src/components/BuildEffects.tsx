@@ -3,8 +3,9 @@ import { FunctionComponent } from "react";
 import { appTheme, cn } from "../theme";
 import { getSiteType, SysEffects, mapName } from "../site-data";
 import { asPosNegTxt } from "../util";
-import { Chevrons, TierPoints } from "./Chevrons";
+import { Chevrons } from "./Chevrons";
 import { Icon } from "@fluentui/react";
+import { TierPoints } from "./TierPoints";
 
 export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: boolean }> = (props) => {
   const paddingTop = 2;
@@ -53,7 +54,7 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
           <td colSpan={3} style={{ paddingTop }}><div className='grey'>{st.displayName2}</div></td>
         </tr>
 
-        {st.inf !== 'none' && <tr>
+        {st.inf !== 'none' && st.inf !== 'colony' && <tr>
           <td style={{ paddingTop }}>Economic inf:</td>
           <td colSpan={3} style={{ paddingTop }}><div className='grey'>{mapName[st.inf]}</div></td>
         </tr>}

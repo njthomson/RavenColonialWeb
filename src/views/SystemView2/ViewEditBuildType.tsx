@@ -4,6 +4,8 @@ import { appTheme } from "../../theme";
 import { getSiteType, SiteType, siteTypes } from "../../site-data";
 import { delayFocus } from "../../util";
 import { BuildType } from "../../components/BuildType/BuildType";
+import { store } from "../../local-storage";
+import { App } from "../../App";
 
 // const getItems = (location: string) => {
 //   const items = siteTypes
@@ -511,7 +513,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
     this.state = {
       dropDown: false,
-      location: 'both',
+      location: store.viewEditBuiltTypeTab ?? 'both',
       showTable: false,
     };
   }
@@ -577,17 +579,17 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
           }}
           onMouseEnter={() => {
             this.mouseInside = true;
-            // if (document.body.scrollHeight < document.body.clientHeight) {
-            //   document.body.style.overflow = 'hidden';
-            //   document.body.style.marginRight = `${App.scrollBarWidth}px`;
-            // }
+            if (document.body.clientHeight < document.body.scrollHeight) {
+              App.fakeScroll.style.display = 'block';
+              document.body.style.marginRight = `${App.scrollBarWidth}px`;
+              document.body.style.overflow = 'hidden';
+            }
           }}
           onMouseLeave={() => {
             this.mouseInside = false;
-            // if (document.body.scrollHeight < document.body.clientHeight) {
-            //   document.body.style.overflow = 'auto';
-            //   document.body.style.marginRight = '0';
-            // }
+            App.fakeScroll.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.body.style.marginRight = '0';
           }}
         >
           <Stack
@@ -671,6 +673,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
               location: targetLocation,
               dropDown: true,
             });
+            store.viewEditBuiltTypeTab = targetLocation;
           }, 5);
         }}
       />

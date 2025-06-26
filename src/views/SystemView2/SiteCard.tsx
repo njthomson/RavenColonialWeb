@@ -30,10 +30,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
         }
       }}
       role="dialog"
-
-      onDismiss={() => {
-        props.onClose();
-      }}
+      onDismiss={() => props.onClose()}
       dismissOnTargetClick={true}
     >
       <div className='system-view2' style={{ position: 'relative', padding: 10 }}>
@@ -69,7 +66,10 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <div>Body:</div>
           <ViewEditBody
             bodyNum={s.bodyNum}
-            sysMap={props.sysView.state.sysMap}
+            systemName={props.sysView.state.sysMap.name}
+            bodies={props.sysView.state.sysMap.bodies}
+            bodyMap={props.sysView.state.sysMap.bodyMap}
+            pinnedSiteId={props.sysView.state.pinnedSite?.id}
             onChange={newNum => {
               s.original.bodyNum = newNum;
               props.sysView.siteChanged(s.original);
@@ -85,17 +85,27 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <IconButton
             iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
             text='Pin?'
+            title='Pin this site'
             onClick={() => {
               props.sysView.sitePinned(s.id);
-              // props.sysView.siteSelected(undefined);
             }}
           />
 
           <IconButton
             iconProps={{ iconName: 'Delete' }}
             text='Delete'
+            title='Remove from this system'
             onClick={() => props.sysView.siteDeleted(s.id)}
           />
+
+          {/* <IconButton
+            iconProps={{ iconName: 'Blocked2' }}
+            text='Ignore'
+            title='Exclude from calculations'
+            onClick={() => {
+              // TODO: ...
+            }}
+          /> */}
         </Stack>
       </div>
     </Callout>

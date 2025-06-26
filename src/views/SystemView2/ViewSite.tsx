@@ -2,19 +2,18 @@ import { FunctionComponent } from 'react';
 import { SysMap2 } from '../../system-model2';
 import { Site } from '../../types2';
 import { BuildEffects } from '../../components/BuildEffects';
-import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
-import { SiteMap } from '../../system-model';
+import { EconomyTable2 } from '../../components/MarketLinks/EconomyTable';
 import { ViewEditName } from './ViewEditName';
 import { ViewEditBuildType } from './ViewEditBuildType';
 import { ViewEditBody } from './ViewEditBody';
-import { IconButton } from '@fluentui/react';
 import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
+import { SystemView2 } from './SystemView2';
 
-export const ViewSite: FunctionComponent<{ site: Site, sysMap: SysMap2, onChange: (site: Site) => void, onClose: () => void }> = (props) => {
+export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, sysMap: SysMap2, onChange: (site: Site) => void, onClose: () => void }> = (props) => {
   const { site } = props;
 
   // const [dropBodies, setDropBodies] = useState(false);
-  const siteMap = site && props.sysMap.siteMaps.find(s => s.id === site.id);
+  const siteMap = site && props.sysMap.siteMaps.find(s => s.id === site.id)!;
   // console.warn(site.sys.bodies);
 
   return <div className='view-site' style={{ position: 'relative' }}>
@@ -49,7 +48,10 @@ export const ViewSite: FunctionComponent<{ site: Site, sysMap: SysMap2, onChange
       <div>Body:</div>
       <ViewEditBody
         bodyNum={site.bodyNum}
-        sysMap={props.sysMap}
+        systemName={props.sysMap.name}
+        bodies={props.sysMap.bodies}
+        bodyMap={props.sysMap.bodyMap}
+        pinnedSiteId={props.sysView.state.pinnedSite?.id}
         onChange={newNum => {
           site.bodyNum = newNum;
           props.onChange(site);
@@ -58,11 +60,11 @@ export const ViewSite: FunctionComponent<{ site: Site, sysMap: SysMap2, onChange
 
 
     </div>
-    <EconomyTable site={siteMap as any as SiteMap} />
-    {siteMap?.links && <MarketLinks site={siteMap as any} />}
+    <EconomyTable2 site={siteMap} noCompare />
+    {siteMap?.links && <MarketLinks site={siteMap as any} sysView={props.sysView} />}
     <BuildEffects buildType={site.buildType} />
 
-    <IconButton
+    {/* <IconButton
       iconProps={{ iconName: 'StatusCircleErrorX' }}
       style={{
         position: 'absolute',
@@ -72,6 +74,6 @@ export const ViewSite: FunctionComponent<{ site: Site, sysMap: SysMap2, onChange
         height: 20,
       }}
       onClick={() => props.onClose()}
-    />
+    /> */}
   </div>;
 }

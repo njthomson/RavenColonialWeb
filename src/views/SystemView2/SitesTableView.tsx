@@ -1,8 +1,7 @@
 import { FunctionComponent, useState } from "react";
-import { Site } from "../../types2";
 import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
-import { ActionButton, Icon, IconButton } from "@fluentui/react";
+import { ActionButton, Icon, IconButton, Stack } from "@fluentui/react";
 import { ViewEditName } from "./ViewEditName";
 import { appTheme, cn } from "../../theme";
 import { SitesViewProps } from "./SystemView2";
@@ -11,11 +10,6 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const { sysMap } = props;
   const [sortColumn, setSortColumn] = useState('bodyNum');
   const [sortOrder, setSortOrder] = useState(true);
-
-  const idMap = sysMap.sites.reduce((map, site) => {
-    map[site.id] = site;
-    return map;
-  }, {} as Record<string, Site>);
 
   let sortedSites = [...sysMap.siteMaps]
     .sort((a, b) => {
@@ -48,6 +42,15 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
 
   return <div className='basic-table'>
     <table cellPadding={0} cellSpacing={0}>
+      <colgroup>
+        <col width='5%' />
+        <col width='5%' />
+        <col width='45%' />
+        <col width='40%' />
+        <col width='10%' />
+        <col width='5%' />
+      </colgroup>
+
       <thead>
         <tr>
           <th><Icon iconName='Pinned' /></th>
@@ -84,56 +87,67 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
 
       <tbody>
         {sortedSites.map((sm, i) => {
-          const s = idMap[sm.id];
           return <tr
-            key={`r${props.sysMap.id64}${s.id}`}
+            key={`r${props.sysMap.id64}${sm.id}`}
             className={cn.trhi}
-            onClick={(ev) => { if (!ev.defaultPrevented) { props.onPin(s.id); } }}
-            style={{ backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined }}
+            onClick={(ev) => { if (!ev.defaultPrevented) { props.onPin(sm.id); } }}
+            style={{
+              backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined,
+              color: sm.status === 'complete' ? undefined : (!props.sysView.state.useIncomplete ? 'grey' : appTheme.palette.yellowDark),
+              fontStyle: sm.status === 'plan' ? 'italic' : undefined,
+            }}
           >
             <td style={{ paddingLeft: 10 }}
-            >{props.pinnedId === s.id && <Icon iconName='PinnedSolid' />}</td>
+            >{props.pinnedId === sm.id && <Icon iconName='PinnedSolid' />}</td>
 
             <td style={{ textAlign: 'end' }}>
               <ViewEditBody
                 shortName
-                bodyNum={s.bodyNum}
-                sysMap={sysMap}
+                bodyNum={sm.bodyNum}
+                systemName={sysMap.name}
+                bodies={sysMap.bodies}
+                bodyMap={sysMap.bodyMap}
+                pinnedSiteId={props.sysView.state.pinnedSite?.id}
                 onChange={newNum => {
-                  s.bodyNum = newNum;
-                  props.onChange(s);
+                  sm.original.bodyNum = newNum;
+                  props.onChange(sm.original);
                 }}
               />
             </td>
 
             <td>
-              <ViewEditName
-                name={s.name}
-                onChange={newName => {
-                  s.name = newName;
-                  props.onChange(s);
-                }}
-              />
+              <Stack horizontal>
+                <ViewEditName
+                  name={sm.name}
+                  onChange={newName => {
+                    sm.original.name = newName;
+                    props.onChange(sm.original);
+                  }}
+                />
+                {sm.sys.primaryPortId === sm.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} className='icon-inline' />}
+                {sm.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' />}
+                {sm.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' />}
+              </Stack>
             </td>
 
             <td>
               <ViewEditBuildType
-                buildType={s.buildType}
+                buildType={sm.buildType}
                 onChange={(newType) => {
-                  s.buildType = newType;
-                  props.onChange(s);
+                  sm.original.buildType = newType;
+                  props.onChange(sm.original);
                 }}
               />
             </td>
 
-            <td>{mapStatus[s.status]}</td>
-            <td>
+            <td>{mapStatus[sm.status]}</td>
+            <td style={{ paddingRight: 4 }}>
               <IconButton
                 title='Delete this site'
                 iconProps={{ iconName: 'Delete' }}
                 onClick={(ev) => {
                   ev.preventDefault();
-                  props.onRemove(s.id);
+                  props.onRemove(sm.id);
                 }}
               />
             </td>
@@ -150,4 +164,5 @@ export const mapStatus = {
   plan: 'Planning',
   build: 'Building',
   complete: 'Complete',
+  // skip: 'Skip',
 }

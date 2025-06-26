@@ -1,4 +1,5 @@
 
+import { ReserveLevel } from "../types";
 import { Site, Sys } from "../types2";
 import { callAPI } from "./api-util";
 
@@ -13,8 +14,8 @@ export const systemV2 = {
     return await callAPI<Site>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`);
   },
 
-  saveSites: async (id64OrName: string, data: SitesPut): Promise<Site[]> => {
-    return await callAPI<Site[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/sites`, 'PUT', JSON.stringify(data));
+  saveSites: async (id64OrName: string, data: SitesPut): Promise<Sys> => {
+    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(id64OrName)}/sites`, 'PUT', JSON.stringify(data));
   },
 
   import: async (systemName: string): Promise<Sys> => {
@@ -25,4 +26,7 @@ export const systemV2 = {
 export interface SitesPut {
   update: Site[];
   delete: string[];
+  orderIDs: string[];
+  architect?: string;
+  reserveLevel?: ReserveLevel;
 }

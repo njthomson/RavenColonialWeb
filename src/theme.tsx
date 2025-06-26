@@ -253,6 +253,17 @@ export const cn = mergeStyleSets({
       color: appTheme.palette.black,
     },
   },
+  bodyScroll: {
+    // "::-webkit-scrollbar": {
+    //   width: 10,
+    //   background: appTheme.palette.neutralQuaternaryAlt,
+    // },
+    // "::-webkit-scrollbar-thumb": {
+    //   background: 'red', //appTheme.palette.themeTertiary,
+    // },
+    scrollbarWidth: 10,
+    scrollbarColor: appTheme.palette.themeTertiary + ' ' + appTheme.palette.neutralQuaternaryAlt,
+  }
 });
 
 

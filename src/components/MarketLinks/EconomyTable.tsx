@@ -6,6 +6,8 @@ import { cn, appTheme } from "../../theme";
 import { asPosNegTxt, isMobile, asPosNegTxt2 } from "../../util";
 import { CopyButton } from "../CopyButton";
 import { EconomyBlock } from "../EconomyBlock";
+import { SiteMap2 } from "../../system-model2";
+import { mapBodyTypeNames } from "../../types2";
 
 const journalEconomiesCache: Record<string, { timestamp: string; map: EconomyMap }> = {};
 type StationEconomies = { Name: string, Name_Localised: string, Proportion: number };
@@ -291,6 +293,174 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
             <th className={`${cn.bb} ${cn.br}`}>Economy</th>
             <th className={`${cn.bb}`}>Estimate</th>
             {!!journalMap && <th className={`${cn.bb} ${cn.bl}`} colSpan={3}>From journals</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {economyRatioRows}
+        </tbody>
+      </table>
+
+    </div>
+    }
+
+    <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
+      Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+    </div>
+  </div>;
+};
+
+
+export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boolean; noCompare?: boolean; }> = (props) => {
+  const cacheKey = `${props.site.sys.name}/${props.site.name}`;
+
+  const [journalMap] = useState<EconomyMap | undefined>(journalEconomiesCache[cacheKey]?.map);
+  const [showAudit, setShowAudit] = useState(false);
+
+  // exit early if the site is not complete it cannot be landed at
+  if (!props.site || props.site.type.padSize === 'none') return null;
+
+  let economyRatioRows: JSX.Element[] = [];
+  if (props.site.economies) {
+    const economyRatioKeys = Array.from(new Set([...Object.keys(props.site.economies ?? {}), ...Object.keys(journalMap ?? {})]));
+    economyRatioRows = economyRatioKeys
+      .map(key => ([key, props.site.economies![key as keyof EconomyMap] ?? 0]) as [keyof EconomyMap, number])
+      .filter(([, val]) => val > 0 /*|| (journalMap && journalMap[key] > 0)*/)
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, val]) => {
+        val = Math.round(val * 100);
+
+        // if we have entries from journal files to compare ...
+        /*
+        let journalMapElements: JSX.Element[] = [];
+        if (journalMap) {
+          const journalMapVal = Math.round(journalMap && journalMap[key] * 100);
+          const greyDash = <td className={cn.bl} style={{ textAlign: 'center', color: 'grey' }}>-</td>;
+          const redX = <td className={cn.bl} style={{ textAlign: 'center' }}>
+            <Icon className='icon-inline' iconName='Cancel' style={{ cursor: 'Default', textAlign: 'center', width: '100%', color: appTheme.palette.red, fontWeight: 'bold' }} />
+          </td>;
+
+          if (journalMapVal) {
+            // value from journal
+            journalMapElements.push(<td className={cn.bl}>{journalMapVal.toFixed(0)} %</td>);
+
+            // match?
+            const match = journalMapVal === val;
+            let journalMapDiff = <Icon
+              className='icon-inline'
+              iconName={match ? 'CheckMark' : 'Cancel'}
+              style={{
+                cursor: 'Default',
+                textAlign: 'center',
+                width: '100%',
+                color: match ? appTheme.palette.greenLight : appTheme.palette.red,
+                fontWeight: 'bold'
+
+              }}
+            />;
+            journalMapElements.push(<td className={cn.bl}>{journalMapDiff}</td>);
+
+            // diff
+            if (journalMapVal && journalMapVal !== val && val > 0) {
+              const diff = val - journalMapVal;
+              journalMapDiff = <span style={{ color: appTheme.palette.yellow }}>{asPosNegTxt(diff)} %</span>;
+              journalMapElements.push(<td >{journalMapDiff}</td>);
+            }
+          } else {
+            // no value from journal?
+            journalMapElements.push(greyDash);
+            journalMapElements.push(redX);
+          }
+        }
+        */
+
+        return <tr key={`link${props.site.buildId}econ${key}`}>
+          <td className={`cl ${cn.br}`} >
+            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+              <EconomyBlock economy={key} size='10px' />
+              <span>{mapName[key]}</span>
+            </Stack>
+          </td>
+          {val ? <td className='cr'>{val.toFixed(0)} %</td> : <td className='cr' style={{ textAlign: 'center', color: 'grey' }}>-</td>}
+          {/* {journalMapElements} */}
+        </tr>;
+      });
+  }
+
+  const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => ['bh', 'ns', 'wd'].includes(b.type)).map(b => b.type)));
+  const systemFeatures = systemFeatureStarTypes.map(t => mapBodyTypeNames[t]).join(', ').toUpperCase();
+  let flip = false;
+  return <div>
+
+    {props.site.economies && <div style={{ position: 'relative' }}>
+      <h3 className={cn.h3}>
+        Economy Ratios:
+        <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}>
+          {!!props.site.economyAudit && <Link
+            title='See a breakdown of economy calculations'
+            onClick={() => { setShowAudit(true); }}
+          >
+            Audit?
+          </Link>}
+        </div>
+      </h3>
+
+      {showAudit && props.site.economyAudit && <Panel
+        isLightDismiss
+        isOpen
+        type={PanelType.medium}
+        headerText={`Economy audit: ${props.site.name}`}
+        allowTouchBodyScroll={isMobile()}
+        styles={{
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        }}
+        onDismiss={() => setShowAudit(false)}
+      >
+        <div className='audit' >
+          <div style={{ padding: 8, marginBottom: 10, color: appTheme.palette.themePrimary }}>
+
+            <div>Body type:&nbsp;{props.site.body?.type?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
+            <div>Body features:&nbsp;{props.site.body?.features?.join(', ').toUpperCase() || <span style={{ color: 'grey' }}>none</span>}</div>
+            <div>System features:&nbsp;{systemFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
+            <div>Reserve level:&nbsp;
+              {props.site.sys.reserveLevel?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>}
+            </div>
+          </div>
+
+          <table cellPadding={0} cellSpacing={0}>
+            <colgroup>
+              <col width='5%' />
+              <col width='15%' />
+              <col width='12%' />
+              <col width='70%' />
+            </colgroup>
+            <tbody>
+              {props.site.economyAudit!.map((x, i) => {
+                // flip the background color?
+                const newPrev = x.inf !== props.site.economyAudit![i - 1]?.inf;
+                const newNext = x.inf !== props.site.economyAudit![i + 1]?.inf;
+                if (newPrev) { flip = !flip; }
+                return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>
+                  <td style={{ textTransform: 'capitalize' }}>{newPrev ? x.inf : ''}</td>
+                  <td>{x.before.toFixed(2)} {asPosNegTxt2(x.delta)}</td>
+                  <td className='cl'>= {x.after.toFixed(2)}</td>
+                  <td className='cl' style={{ paddingBottom: newNext ? 8 : 0 }} >{x.reason}</td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+
+          <div className='small' style={{ marginTop: 16, marginBottom: 8 }}>
+            Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+          </div>
+        </div>
+      </Panel>}
+
+      <table className='economy-ratios' cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
+        <thead>
+          <tr>
+            <th className={`${cn.bb} ${cn.br}`}>Economy</th>
+            <th className={`${cn.bb}`}>Estimate</th>
+            {/* {!!journalMap && <th className={`${cn.bb} ${cn.bl}`} colSpan={3}>From journals</th>} */}
           </tr>
         </thead>
         <tbody>

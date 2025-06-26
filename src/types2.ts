@@ -44,6 +44,26 @@ export type BodyType =
   | 'bc'// Barycentre
   ;
 
+export const mapBodyTypeNames: Record<BodyType, string> = {
+  'bh': 'Black hole',
+  'ns': 'Neutron star',
+  'wd': 'White dwarf',
+  'st': 'A star',
+  'aw': 'Ammonia World',
+  'elw': 'Earth Like Body',
+  'gg': 'Gas Giant',
+  'hmc': 'High Metal Content Body',
+  'ib': 'Icy Body',
+  'mrb': 'Metal Rich Body',
+  'rb': 'Rock Body',
+  'ri': 'Rocky Ice Body',
+  'wg': 'Water Giant',
+  'ww': 'Water World',
+  'ac': 'Asteroid cluster',
+  'bc': 'Barycentre',
+  'un': 'Unknown',
+};
+
 /** Represents a station in a system */
 export interface Site {
   id: string;
@@ -55,7 +75,7 @@ export interface Site {
   status: BuildStatus
 }
 
-export type BuildStatus = 'plan' | 'build' | 'complete';
+export type BuildStatus = 'plan' | 'build' | 'complete'; // | 'skip';
 
 
 

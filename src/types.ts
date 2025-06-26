@@ -74,6 +74,15 @@ export enum BodyFeature {
   tidal = 'tidal',
 }
 
+export const mapBodyFeature = {
+  bio: 'Bio signals',
+  geo: 'Geo signals',
+  volcanism: 'Volcanism',
+  rings: 'Rings',
+  terraformable: 'Terraformable',
+  tidal: 'Tidally locked',
+}
+
 export enum SystemFeature {
   blackHole = 'blackHole',
   whiteDwarf = 'whiteDwarf',

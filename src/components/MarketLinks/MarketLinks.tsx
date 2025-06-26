@@ -4,8 +4,11 @@ import { cn } from "../../theme";
 import { economyColors, mapName } from "../../site-data";
 import { SiteMap } from "../../system-model";
 import { ProjectLink } from "../ProjectLink/ProjectLink";
+import { SiteMap2 } from '../../system-model2';
+import { SystemView2 } from '../../views/SystemView2/SystemView2';
+import { SiteLink } from '../../views/SystemView2/SiteLink';
 
-export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean }> = (props) => {
+export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean, sysView?: SystemView2 }> = (props) => {
   if (!props.site) return null;
 
   // exit early if this port does not have links
@@ -46,8 +49,14 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean 
     </tr>);
   };
 
+  // TODO: Split this component into 2?
   // list of strong linked sites
-  const siteRows = props.site.links.strongSites.map(s => <div key={`link${props.site.buildId}${s.buildId}`} style={{ marginLeft: 8 }}><ProjectLink proj={s} noSys noBold /></div>)
+  const siteRows = props.site.links.strongSites.map(s => {
+    return <div key={`link${props.site.buildId}${s.buildId}`} style={{ marginLeft: 8 }}>
+      {!props.sysView && <ProjectLink proj={s} noSys noBold />}
+      {props.sysView && <SiteLink prefix='ml' site={s as any as SiteMap2} sysView={props.sysView} />}
+    </div>;
+  });
 
   return <div>
 

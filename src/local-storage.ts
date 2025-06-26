@@ -21,6 +21,9 @@ enum Stored {
   foundMarkets = 'foundMarkets',
   notAgain = 'notAgain',
   buildTypeGrid = 'buildTypeGrid',
+  sysView2View = 'sysView2View',
+  sysViewHideEmpties = 'sysViewHideEmpties',
+  viewEditBuiltTypeTab = 'viewEditBuiltTypeTab',
 }
 
 interface CmdrData {
@@ -37,7 +40,7 @@ const writeValue = (key: Stored, newValue: unknown) => {
   }
 };
 
-const readString = (key: Stored): string => window.localStorage.getItem(key) ?? '';
+const readString = (key: Stored, defaultValue: string = ''): string => window.localStorage.getItem(key) ?? defaultValue;
 
 const readValue = <T>(key: Stored, defaultValue?: T): T | undefined => {
   const json = window.localStorage.getItem(key);
@@ -156,7 +159,7 @@ class LocalStorage {
   set globalStats(newValue: GlobalStats | undefined) { writeValue(Stored.globalStats, newValue); }
 
   get theme(): string { return readString(Stored.theme); }
-  set theme(newTheme: string) { writeValue(Stored.theme, newTheme); }
+  set theme(newValue: string) { writeValue(Stored.theme, newValue); }
 
   get hideShipTrips(): boolean { return readBoolean(Stored.hideShipTrips); }
   set hideShipTrips(newValue: boolean) { writeValue(Stored.hideShipTrips, newValue); }
@@ -178,6 +181,16 @@ class LocalStorage {
 
   get buildTypeGrid(): boolean { return readBoolean(Stored.buildTypeGrid, false); }
   set buildTypeGrid(newValue: boolean) { writeValue(Stored.buildTypeGrid, newValue); }
+
+  get sysViewView(): string { return readString(Stored.sysView2View); }
+  set sysViewView(newValue: string) { writeValue(Stored.sysView2View, newValue); }
+
+  get sysViewHideEmpties(): boolean { return readBoolean(Stored.sysViewHideEmpties); }
+  set sysViewHideEmpties(newValue: boolean) { writeValue(Stored.sysViewHideEmpties, newValue); }
+
+  get viewEditBuiltTypeTab(): string { return readString(Stored.viewEditBuiltTypeTab, 'both'); }
+  set viewEditBuiltTypeTab(newValue: string) { writeValue(Stored.viewEditBuiltTypeTab, newValue); }
+
 }
 
 export const store = new LocalStorage();

@@ -1,7 +1,6 @@
 
-import { Icon, Stack } from "@fluentui/react";
+import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
-import { asPosNegTxt } from "../util";
 import { appTheme } from "../theme";
 
 export const Chevrons: FunctionComponent<{ name: string, count: number | undefined, extra?: number, title?: string }> = (props) => {
@@ -46,29 +45,4 @@ export const Chevrons: FunctionComponent<{ name: string, count: number | undefin
     }}>
     {chevrons}
   </div>;
-};
-
-export const TierPoints: FunctionComponent<{ tier: number, count: number }> = (props) => {
-  if (props.tier !== 2 && props.tier !== 3) return null;
-
-  const title = `${asPosNegTxt(props.count)} Tier ${props.tier} points`;
-
-  return <Stack
-    title={title}
-    horizontal
-    verticalAlign='center'
-    tokens={{ childrenGap: 8 }}
-    style={{ display: 'inline-block', cursor: 'default' }}
-  >
-    <span>
-      {asPosNegTxt(props.count)}
-      &nbsp;
-      <Icon
-        className="icon-inline"
-        iconName={props.tier === 2 ? 'Product' : 'ProductVariant'}
-        style={{
-          color: props.tier === 2 ? appTheme.palette.yellow : appTheme.palette.green
-        }} />
-    </span>
-  </Stack>;
 };

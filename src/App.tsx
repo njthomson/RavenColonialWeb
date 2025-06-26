@@ -30,6 +30,7 @@ interface AppState {
 
 export class App extends Component<AppProps, AppState> {
   public static scrollBarWidth = 0;
+  public static fakeScroll: HTMLDivElement;
 
   constructor(props: AppProps) {
     super(props);
@@ -69,7 +70,22 @@ export class App extends Component<AppProps, AppState> {
     store.migrateLinkedFCs()
       .catch(err => console.error(err));
 
+    // style scrollbars
     App.scrollBarWidth = this.calcScrollBarWidth();
+    const docBody = document.getElementsByTagName('html')[0];
+    docBody.className = cn.bodyScroll;
+
+    // inject an element to proxy for the scrollbar when it is hidden
+    App.fakeScroll = document.createElement('div');
+    App.fakeScroll.style.backgroundColor = appTheme.palette.neutralQuaternaryAlt;
+    App.fakeScroll.style.zIndex = '10';
+    App.fakeScroll.style.position = 'fixed';
+    App.fakeScroll.style.top = '0';
+    App.fakeScroll.style.right = '0';
+    App.fakeScroll.style.bottom = '0';
+    App.fakeScroll.style.width = `${App.scrollBarWidth}px`;
+    App.fakeScroll.style.display = 'none';
+    docBody.appendChild(App.fakeScroll);
   }
 
   calcScrollBarWidth() {

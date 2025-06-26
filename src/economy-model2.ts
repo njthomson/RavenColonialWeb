@@ -199,10 +199,17 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolea
 
     // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
     if (s.type.tier === 1) {
-      if (s.type.inf in map) {
+      let inf = s.type.inf;
+      // use generated primary economy if "colony"
+      if (s.type.inf === 'colony' && s.primaryEconomy) {
+        console.warn(`TODO: Is this right? Using generated economy '${s.primaryEconomy}' for for site '${s.name}', generating for: ${site.name}`);
+        inf = s.primaryEconomy;
+      }
+
+      if (inf in map) {
         adjust(s.type.inf, +0.4, `Apply strong link from: ${s.name} (Tier 1)`, map, site);
       } else {
-        console.warn(`Unknown economy '${s.type.inf}' for site '${s.name}', generating for: ${site.name}`);
+        console.warn(`Unknown economy '${inf}' for site '${s.name}', generating for: ${site.name}`);
       }
     }
   }
@@ -214,6 +221,10 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolea
 };
 
 const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => {
+
+  // assume reserveLevel of PRISTINE if not set
+  const reserveLevel = site.sys.reserveLevel ?? 'pristine';
+
   switch (inf) {
     default: return 0;
 
@@ -229,10 +240,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
       break;
 
     case 'extraction':
-      if (matches(["major", "pristine"], site.sys.reserveLevel) || matches([BodyFeature.volcanism], site.body?.features)) {
+      if (matches(["major", "pristine"], reserveLevel) || matches([BodyFeature.volcanism], site.body?.features)) {
         return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR or PRISTINE || Body has VOLCANISM', map, site);
       }
-      if (matches(["depleted", "low"], site.sys.reserveLevel)) {
+      if (matches(["depleted", "low"], reserveLevel)) {
         return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
@@ -245,10 +256,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
 
     case 'industrial':
     case 'refinery':
-      if (matches(["major", "pristine"], site.sys.reserveLevel)) {
+      if (matches(["major", "pristine"], reserveLevel)) {
         return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR or PRISTINE', map, site);
       }
-      if (matches(["depleted", "low"], site.sys.reserveLevel)) {
+      if (matches(["depleted", "low"], reserveLevel)) {
         return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
@@ -263,8 +274,11 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
 
 const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
 
+  // assume reserveLevel of PRISTINE if not set
+  const reserveLevel = site.sys.reserveLevel ?? 'pristine';
+
   // If the System has Major or Pristine Resources (+0.40) for Industrial, Extraction and Refinery
-  if (site.sys.reserveLevel === 'major' || site.sys.reserveLevel === 'pristine') {
+  if (reserveLevel === 'major' || reserveLevel === 'pristine') {
     if (map.industrial > 0) { adjust('industrial', +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site); }
     if (map.extraction > 0) { adjust('extraction', +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site); }
     if (map.refinery > 0) { adjust('refinery', +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site); }
@@ -312,7 +326,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
   }
 
   // If the System has Low or Depleted Resources (-0.40) for Industrial, Extraction and Refinery
-  if (site.sys.reserveLevel === 'low' || site.sys.reserveLevel === 'depleted') {
+  if (reserveLevel === 'low' || reserveLevel === 'depleted') {
     if (map.industrial > 0) { adjust('industrial', -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site); }
     if (map.extraction > 0) { adjust('extraction', -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site); }
     if (map.refinery > 0) { adjust('refinery', -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site); }
