@@ -446,11 +446,16 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     tokens={{ childrenGap: 1 }}
     style={{ fontSize: 10, paddingTop: 0, color: hasSites ? appTheme.palette.themeTertiary : appTheme.palette.themeTertiary }}
   >
-    {node.body.features.map(f => <Icon key={`bfi-${node.body.num}${f}`} iconName={mapBodyFeatureIcon[f]} title={mapBodyFeature[f]} />)}
+    {node.body.features.map(f => <Icon
+      key={`bfi-${node.body.num}${f}`}
+      title={mapBodyFeature[f]}
+      iconName={mapBodyFeatureIcon[f]}
+      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.5)' }}
+    />)}
   </Stack>;
 
   const canHaveBodySites = isLandable || (node.map?.surface && node.map.surface.length > 0);
-  const { c1, c2 } = getBodyColour(props.node?.body.type);
+  const { c1, c2 } = getBodyColour(props.node?.body.type, props.node?.body.subType);
   const sz = getBodySize(props.node?.body.type);
 
   return <div
@@ -573,50 +578,64 @@ const mapBodyFeatureIcon = {
   landable: 'DrillDownSolid',
 };
 
-const getBodyColour = (bodyType?: BodyType) => {
+const mapBodyFeatureColor = {
+  bio: appTheme.isInverted ? 'rgb(100,255,100)' : 'rgb(0,30,0)',
+  geo: 'rgb(255,100,100)',
+  volcanism: 'rgb(255,0,0)',
+  rings: appTheme.isInverted ? 'rgb(240,240,0)' : 'rgb(30,30,0)',
+  terraformable: 'rgb(100,200,200)',
+  tidal: appTheme.isInverted ? 'rgb(170,170,255)' : 'rgb(50,50,255)',
+  landable: 'rgb(200,150,100)',
+};
+
+// c1 is fill / c2 is stroke
+const getBodyColour = (bodyType?: BodyType, subType?: string) => {
   switch (bodyType) {
     default:
       return { c1: 'brown', c2: 'rgb(255, 255, 255)' };
-
     case 'bh':// Black Hole
       return { c1: 'rgb(38, 0, 43)', c2: 'rgb(255, 255, 255)' };
     case 'ns':// Neutron Star
       return { c1: 'rgb(185, 255, 255)', c2: 'rgb(255, 255, 255)' };
     case 'wd':// White Dwarf
       return { c1: 'rgb(255, 255, 255)', c2: 'rgb(255, 255, 255)' };
-
-    case 'st': // some kind of star
-      return { c1: 'rgb(252, 237, 105)', c2: 'rgb(251, 255, 0)' };
-
     case 'gg':
-      return { c1: 'rgb(233, 73, 99)', c2: 'rgb(207, 136, 136)' };
-
+      return { c1: 'rgb(233, 73, 121)', c2: 'rgb(173, 97, 117)' };
     case 'ww':
     case 'wg':
-      return { c1: 'rgb(51, 191, 216)', c2: 'rgb(8, 108, 148)' };
-
+      return { c1: 'rgb(25, 64, 236)', c2: 'rgb(10, 47, 126)' };
     case 'elw':
-      return { c1: 'rgb(23, 212, 16)', c2: 'rgb(4, 127, 241)' };
-
+      return { c1: 'rgb(23, 212, 16)', c2: 'rgb(34, 138, 13)' };
     case 'aw':
       return { c1: 'rgb(202, 108, 31)', c2: 'rgb(255, 255, 255)' };
-
     case 'hmc':
+      return { c1: 'rgb(119, 117, 115)', c2: 'rgb(87, 72, 59)' };
     case 'mrb':
-      return { c1: 'rgb(148, 88, 32)', c2: 'rgb(100, 62, 31)' };
-
+      return { c1: 'rgb(150, 110, 73)', c2: 'rgb(73, 45, 22)' };
     case 'rb':
-      return { c1: 'rgb(129, 82, 44)', c2: 'rgb(63, 42, 25)' };
-
+      return { c1: 'rgb(94, 69, 48)', c2: 'rgb(75, 61, 49)' };
     case 'ib':
+      return { c1: 'rgb(126, 213, 219)', c2: 'rgb(207, 218, 219)' };
     case 'ri':
-      return { c1: 'rgb(137, 228, 235)', c2: 'rgb(170, 229, 233)' };
-
+      return { c1: 'rgb(114, 145, 146)', c2: 'rgb(134, 166, 168)' };
     case 'un':
-      return { c1: 'rgb(75, 74, 72)', c2: 'rgb(43, 40, 35)' };
-
+      return { c1: 'rgb(46, 46, 45)', c2: 'rgb(70, 69, 67)' };
     case 'ac':
-      return { c1: 'rgb(139, 139, 138)', c2: 'rgb(255, 255, 255)' };
+      return { c1: 'rgb(139, 139, 138)', c2: 'rgb(95, 83, 83)' };
+    case 'st': // some kind of star
+      if (subType?.includes('Blue')) {
+        return { c1: 'rgb(167, 227, 245)', c2: 'rgb(176, 241, 243)' };
+      } else if (subType?.includes('Yellow-Orange')) {
+        return { c1: 'rgb(252, 237, 105)', c2: 'rgb(251, 255, 0)' };
+      } else if (subType?.includes('Orange')) {
+        return { c1: 'rgb(247, 194, 50)', c2: 'rgb(255, 223, 79)' };
+      } else if (subType?.includes('Red')) {
+        return { c1: 'rgb(247, 178, 50)', c2: 'rgb(255, 193, 79)' };
+      } else if (subType?.includes('Brown')) {
+        return { c1: 'rgb(236, 113, 31)', c2: 'rgb(207, 112, 67)' };
+      } else {
+        return { c1: 'rgb(252, 237, 105)', c2: 'rgb(251, 255, 0)' };
+      }
   }
 };
 
@@ -636,21 +655,24 @@ const getBodySize = (bodyType?: BodyType) => {
     case 'gg':
       return 22;
 
-    case 'ww':
     case 'wg':
+      return 18;
+
+    case 'ww':
     case 'elw':
     case 'aw':
       return 15;
 
     case 'hmc':
+      return 14;
     case 'mrb':
-      return 15;
+      return 13;
 
     case 'rb':
-      return 15;
+      return 12;
 
     case 'ri':
-      return 8;
+      return 9;
 
     case 'ib':
       return 6;

@@ -133,6 +133,7 @@ const readTheme = (): Theme => {
     });
 
     case 'dark/green': return createTheme({
+      isInverted: true,
       palette: {
         themePrimary: '#d1d93b',
         themeLighterAlt: '#080902',
