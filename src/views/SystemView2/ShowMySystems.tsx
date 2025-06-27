@@ -1,6 +1,6 @@
 import * as api from '../../api';
 import { FunctionComponent, useEffect, useState } from "react";
-import { ActionButton, DefaultButton, Link, PrimaryButton, Spinner, Stack } from "@fluentui/react";
+import { ActionButton, DefaultButton, Link, Spinner, Stack } from "@fluentui/react";
 import { store } from '../../local-storage';
 import { appTheme } from '../../theme';
 
