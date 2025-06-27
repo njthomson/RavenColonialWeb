@@ -74,9 +74,13 @@ export interface Site {
   status: BuildStatus
 }
 
-export type BuildStatus = 'plan' | 'build' | 'complete'; // | 'skip';
+export type BuildStatus = 'plan' | 'build' | 'complete';
 
-
+export const mapStatus = {
+  plan: 'Planning',
+  build: 'Building',
+  complete: 'Complete',
+}
 
 // type BodyType = keyof typeof bodyTypes;
 // const bodyTypes = [

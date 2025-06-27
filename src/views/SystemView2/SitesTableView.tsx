@@ -7,6 +7,7 @@ import { appTheme, cn } from "../../theme";
 import { SitesViewProps } from "./SystemView2";
 import { SiteMap2 } from "../../system-model2";
 import { MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
+import { ViewEditBuildStatus } from "./ViewEditStatus";
 
 export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const { sysMap, pinnedId } = props;
@@ -118,7 +119,15 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
         </div>
       </td>
 
-      <td>{mapStatus[site.status]}</td>
+      <td>
+        <ViewEditBuildStatus
+          status={site.status}
+          onChange={newStatus => {
+            site.original.status = newStatus;
+            props.sysView.siteChanged(site.original);
+          }}
+        />
+      </td>
 
       <td style={{ paddingRight: 4 }}>
         <IconButton
@@ -180,10 +189,4 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
     </table>
 
   </div >;
-}
-
-export const mapStatus = {
-  plan: 'Planning',
-  build: 'Building',
-  complete: 'Complete',
 }

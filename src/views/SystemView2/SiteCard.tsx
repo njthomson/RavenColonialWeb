@@ -2,11 +2,11 @@ import { Stack, IconButton, Callout, DirectionalHint } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { SiteMap2 } from "../../system-model2";
 import { appTheme } from "../../theme";
-import { mapStatus } from "./SitesTableView";
 import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
+import { ViewEditBuildStatus } from "./ViewEditStatus";
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
   const s = props.site;
@@ -43,6 +43,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           gap: '2px 10px',
           fontSize: '14px',
           marginBottom: 10,
+          alignItems: 'center'
         }}>
 
           <div>Site:</div>
@@ -79,7 +80,13 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           />
 
           <div>Status:</div>
-          <div>{mapStatus[s.status]}</div>
+          <ViewEditBuildStatus
+            status={s.status}
+            onChange={newStatus => {
+              s.original.status = newStatus;
+              props.sysView.siteChanged(s.original);
+            }}
+          />
 
         </div>
 

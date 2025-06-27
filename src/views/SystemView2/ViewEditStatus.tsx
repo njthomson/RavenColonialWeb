@@ -1,0 +1,51 @@
+import { DirectionalHint, ActionButton, Icon, ContextualMenu, IContextualMenuItem } from "@fluentui/react";
+import { FunctionComponent, useState } from "react";
+import { appTheme } from "../../theme";
+import { BuildStatus, mapStatus } from "../../types2";
+
+export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onChange: (status: BuildStatus) => void }> = (props) => {
+  const [dropDown, setDropDown] = useState(false);
+  const id = `view-edit-status-${Date.now()}`;
+
+  return <div>
+    <ActionButton
+      id={id}
+      style={{ justifyContent: 'left' }}
+      onClick={(ev) => {
+        ev.preventDefault();
+        setDropDown(!dropDown);
+      }}
+    >
+      {props.status}
+      <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
+    </ActionButton>
+
+    <ContextualMenu
+      hidden={!dropDown}
+      alignTargetEdge={false}
+      target={`#${id}`}
+      directionalHint={DirectionalHint.bottomLeftEdge}
+      styles={{
+        container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, cursor: 'pointer' }
+      }}
+      onDismiss={(ev) => {
+        ev?.preventDefault();
+        setDropDown(false);
+      }}
+      onItemClick={(ev, item) => {
+        props.onChange(item?.key.replace('status-', '') as BuildStatus);
+      }}
+      items={Object.entries(mapStatus).map(([key, name]) => ({
+        iconProps: { iconName: mapStatusIcon[key] },
+        key: `status-${key}`,
+        text: name,
+      } as IContextualMenuItem))}
+    />
+  </div>;
+}
+
+const mapStatusIcon: Record<string, string> = {
+  plan: 'Preview',
+  build: 'ConstructionCone',
+  complete: 'CityNext2',
+}

@@ -293,7 +293,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
-    "effects": { pop: 5, mpop: 1, sec: -3, wealth: 8, tech: 6, sol: 5, dev: 9 }
+    "effects": { pop: 5, mpop: 1, sec: -3, wealth: 8, tech: 7, sol: 5, dev: 9 }
   },
   {
     "displayName": "Orbis",
