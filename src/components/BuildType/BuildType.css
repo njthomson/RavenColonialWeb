@@ -1,40 +1,14 @@
 
-.build-type table {
-  width: 100%;
-}
-
-.build-type table td, table, th{
-  padding: 0 4px;
-}
-
-.build-type table th {
-  user-select: none;
-}
-
 .build-type table .btn {
   cursor: pointer;
   color: darkgoldenrod;
-}
-
-.build-type table td {
-  text-align: center;
-  height: 25px;
-}
-.build-type table .cr {
-  text-align: right;
-}
-.build-type table .cl {
-  text-align: left;
-}
-
-.build-type table .tc {
-   text-transform: capitalize;
 }
 
 .build-type .both .ms-Button--action {
   height: 24px;
   text-transform: capitalize;
 }
+
 .build-type .both {
   cursor: default;
 }

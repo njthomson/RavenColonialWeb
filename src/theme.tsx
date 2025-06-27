@@ -1,5 +1,6 @@
 import { createTheme, mergeStyleSets, registerIcons, Theme } from "@fluentui/react";
 import { store } from "./local-storage";
+import { FilterDescendingIcon } from "@fluentui/react-icons-mdl2";
 
 // https://fluentuipr.z22.web.core.windows.net/heads/master/theming-designer/index.html
 
@@ -328,5 +329,6 @@ registerIcons({
     'fleetCarrierBlack': getThemedIconFC(appTheme.palette.neutralPrimary),
     'fleetCarrierSolid': getThemedIconSolidFC(appTheme.palette.themeDarkAlt, appTheme.palette.white, appTheme.palette.themeDarkAlt),
     'fleetCarrierBlackSolid': getThemedIconSolidFC(appTheme.palette.neutralPrimary, appTheme.palette.white, appTheme.palette.neutralPrimary),
+    FilterDescending: <FilterDescendingIcon />,
   }
 });

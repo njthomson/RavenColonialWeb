@@ -11,6 +11,7 @@ import { LinkSrvSurvey } from './components/LinkSrvSurvey';
 import { ViewAll } from './views/ViewAll/ViewAll';
 import { VisualIdentify } from './components/VisualIdentify';
 import { SystemView2 } from './views/SystemView2/SystemView2';
+import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -152,6 +153,8 @@ export class App extends Component<AppProps, AppState> {
       nextState.pivot = TopPivot.about;
     } else if (params.has('vis') || window.location.pathname === '/vis') {
       nextState.pivot = TopPivot.vis;
+    } else if (params.has('table') || window.location.pathname === '/table') {
+      nextState.pivot = TopPivot.table;
     } else if (params.has('cmdr')) {
       // Cmdr specific data
       nextState.pivot = TopPivot.cmdr;
@@ -175,8 +178,9 @@ export class App extends Component<AppProps, AppState> {
     const params = new URLSearchParams(window.location.hash?.substring(1));
     const pivotArg = params.values().next().value;
 
-    if (window.location.pathname === '/vis') {
-      window.location.replace('#vis');
+    // auto switch urls to hash based anchors
+    if (window.location.pathname.length > 1) {
+      window.location.assign('/#' + window.location.pathname.slice(1));
     }
 
     if (params.has('find')) {
@@ -191,6 +195,8 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.cmdr, pivotArg];
     } else if (params.has('vis') || window.location.pathname === '/vis') {
       return [TopPivot.vis, pivotArg];
+    } else if (params.has('table') || window.location.pathname === '/table') {
+      return [TopPivot.table, pivotArg];
     } else {
       return [TopPivot.home, pivotArg];
     }
@@ -324,7 +330,8 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
-      case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />
+      case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />;
+      case TopPivot.table: return <BigSiteTablePage />;
     }
   }
 

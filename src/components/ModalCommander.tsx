@@ -1,4 +1,4 @@
-import { ActionButton, Checkbox, DefaultButton, Icon, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
@@ -28,7 +28,6 @@ interface ModalCommanderState {
   hideShipTrips: boolean
   useNativeDiscord: boolean;
 }
-
 
 export class ModalCommander extends Component<ModalCommanderProps, ModalCommanderState> {
   private static first = true;
@@ -198,9 +197,20 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         </div>
 
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }} horizontalAlign='end'>
-          <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} />
-          <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.onClear} />
-          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} />
+          <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} title='Save changes' />
+          <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.onClear} title='Clear your Commander details' />
+          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} title='Discard changes' />
+
+          <IconButton
+            title='Reset "Do not show me this again" prompts'
+            iconProps={{ iconName: 'ReportWarning' }}
+            onClick={() => {
+              if (window.confirm('This will restore "Do not show me this again" prompts and reload the page.\nDo you wish to continue?')) {
+                store.notAgain = [];
+                window.location.reload();
+              }
+            }}
+          />
         </Stack>
       </div>
 

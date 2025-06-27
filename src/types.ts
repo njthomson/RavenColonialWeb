@@ -11,6 +11,8 @@ export enum TopPivot {
   about = 'about',
   vis = 'vis',
   sys = 'sys',
+  /** Big Site Table */
+  table = 'bst',
 }
 
 export class RequestError extends Error {

@@ -273,7 +273,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   siteChanged = (site: Site) => {
     // console.log(`siteChanged: ${site.name} (${site.buildType} on body #${site.bodyNum} / ${site.id})`);
-    SystemView2.lastBodyNum = site.bodyNum;
+    SystemView2.lastBodyNum = -1; //site.bodyNum;
     SystemView2.lastBuildType = site.buildType;
 
     // track which sites have changed

@@ -1,0 +1,47 @@
+
+.bst {
+  position: relative;
+}
+
+.bst table {
+  width: auto;
+}
+
+.bst table td, table, th{
+  padding: 0 4px;
+}
+
+.bst .not-filter {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+}
+.bst table th {
+  user-select: none;
+}
+
+.bst table td {
+  cursor: default;
+  text-align: center;
+  height: 25px;
+}
+.bst table .cr {
+  text-align: right;
+}
+.bst table .cl {
+  text-align: left;
+}
+
+.bst table .tc {
+   text-transform: capitalize;
+}
+
+.bst .both .ms-Button--action {
+  height: 24px;
+  text-transform: capitalize;
+}
+.bst .both {
+  cursor: default;
+}
