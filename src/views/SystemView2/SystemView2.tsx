@@ -173,6 +173,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   saveData = () => {
+
+    if (!store.cmdrName) {
+      window.alert('You need to sign-in to Raven Colonial to save data.\n(temporary message)');
+      document.getElementById('current-cmdr')?.click();
+      return;
+    }
+
     this.setState({ processingMsg: 'Saving ...', errorMsg: '' });
 
     const payload = {
