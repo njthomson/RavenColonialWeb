@@ -1,6 +1,6 @@
 import * as api from '../../api';
 import { FunctionComponent, useEffect, useState } from "react";
-import { ActionButton, Link, Spinner, Stack } from "@fluentui/react";
+import { ActionButton, DefaultButton, Link, PrimaryButton, Spinner, Stack } from "@fluentui/react";
 import { store } from '../../local-storage';
 import { appTheme } from '../../theme';
 
@@ -37,6 +37,7 @@ export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
     }
   }, [showList, systems]);
 
+  const entries = Object.entries(systems ?? {});
   return <div style={{ fontSize: 14 }}>
     <ActionButton
       iconProps={{ iconName: showList ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
@@ -48,16 +49,26 @@ export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
     {showList && <div style={{ justifyContent: 'left' }}>
       <div style={{ marginBottom: 10, color: appTheme.palette.themeSecondary }}>Systems where you have contributed to a project site:</div>
       {loading && <Stack horizontal><Spinner labelPosition='right' label='Loading ...' /></Stack>}
-      {systems && Object.keys(systems).length > 0 && <div>
-        <ul>
-          {Object.entries(systems).map(([name, count]) => (<li key={`s${name}`}>
-            <Link onClick={() => window.location.replace(`/#sys=${name}`)}>
-              {name}
-              <span style={{ color: 'grey' }}> - {count} sites</span>
-            </Link>
-          </li>))}
-        </ul>
-      </div>}
+      {systems && <>
+        {entries.length > 0 && <div>
+          <ul>
+            {entries.map(([name, count]) => (<li key={`s${name}`}>
+              <Link onClick={() => window.location.replace(`/#sys=${name}`)}>
+                {name}
+                <span style={{ color: 'grey' }}> - {count} sites</span>
+              </Link>
+            </li>))}
+          </ul>
+        </div>}
+
+        {entries.length === 0 && <Stack horizontal verticalAlign='center'>
+          <span style={{ marginRight: 20 }}>Have you not contributed to any Raven Colonial projects?</span>
+          <DefaultButton text='Find or start a project ...' onClick={() => {
+            window.location.assign("#find");
+            window.location.reload();
+          }} />
+        </Stack>}
+      </>}
     </div>}
   </div>;
 }

@@ -182,7 +182,7 @@ class LocalStorage {
   get buildTypeGrid(): boolean { return readBoolean(Stored.buildTypeGrid, false); }
   set buildTypeGrid(newValue: boolean) { writeValue(Stored.buildTypeGrid, newValue); }
 
-  get sysViewView(): string { return readString(Stored.sysView2View); }
+  get sysViewView(): string { return readString(Stored.sysView2View, 'body'); }
   set sysViewView(newValue: string) { writeValue(Stored.sysView2View, newValue); }
 
   get sysViewHideEmpties(): boolean { return readBoolean(Stored.sysViewHideEmpties); }

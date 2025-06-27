@@ -1,55 +1,89 @@
 import { FunctionComponent, useState } from "react";
 import { appTheme } from "../theme";
-import { Coachmark, DirectionalHint, TeachingBubbleContent, Icon, Checkbox, Stack, PrimaryButton } from "@fluentui/react";
+import { Coachmark, DirectionalHint, TeachingBubbleContent, Icon, Checkbox, Link } from "@fluentui/react";
 import { store } from "../local-storage";
 import { LinkSrvSurvey } from "./LinkSrvSurvey";
 
-export const ShowCoachingMarks: FunctionComponent<{ target: string, id: string }> = (props) => {
+export const ShowManyCoachingMarks: FunctionComponent<{ targets: string[] }> = (props) => {
+  const [targets, setTargets] = useState(props.targets);
+  const [openId, setOpenId] = useState('');
+
+  return <>
+    {targets.map(id => {
+      if (!openId || openId === id) {
+        return <ShowCoachingMarks
+          key={id}
+          target={`#${id}`}
+          id={id}
+          onOpen={id => {
+            setOpenId(id);
+          }}
+          onDismiss={id => {
+            setTargets(targets.filter(i => i !== id));
+            setOpenId('');
+          }}
+        />;
+      } else {
+        return null;
+      }
+    })}
+  </>;
+}
+
+export const ShowCoachingMarks: FunctionComponent<{ target: string, id: string, onOpen?: (id: string) => void, onDismiss?: (id: string) => void }> = (props) => {
   const [show, setShow] = useState(!store.notAgain.includes(props.id));
   const [notAgainPending, setNotAgainPending] = useState(false);
 
-  const foo = coachingContent[props.id]!;
+  const match = coachingContent[props.id]!;
   return <>
     {show && <Coachmark
       target={props.target}
+      onAnimationOpenStart={() => {
+        if (props.onOpen) { props.onOpen(props.id); }
+      }}
       delayBeforeCoachmarkAnimation={100}
-      positioningContainerProps={{ directionalHint: foo.directionalHint }}
+      positioningContainerProps={{ directionalHint: match.directionalHint }}
+      persistentBeak
     >
       <TeachingBubbleContent
-        headline={foo.headline}
+        headline={match.headline}
         target={props.target}
         isWide
         styles={{
           bodyContent: {
+            zIndex: 3,
             backgroundColor: appTheme.palette.white,
             border: '1px solid ' + appTheme.palette.accent,
           },
           headline: { color: appTheme.palette.black }
         }}
+        primaryButtonProps={{
+          primary: true,
+          text: 'Okay',
+          onClick: () => {
+            setShow(false);
+            if (!!notAgainPending) {
+              store.notAgain = [...store.notAgain, props.id];
+            }
+            if (props.onDismiss) {
+              props.onDismiss(props.id);
+            }
+          }
+        }}
       >
         <div style={{ color: appTheme.palette.black }}>
           <div style={{ marginBlock: 10 }}>
-            {foo.body}
+            {match.body}
           </div>
-
           <Checkbox
             label='Do not show me this again'
-            onChange={(_, checked) => {
-              setNotAgainPending(!!checked);
+            styles={{
+              checkbox: { borderColor: appTheme.palette.themeTertiary },
+              text: { color: appTheme.palette.themeTertiary },
             }}
+            onChange={(_, checked) => setNotAgainPending(!!checked)}
           />
-          <Stack horizontal horizontalAlign='end'>
-
-            <PrimaryButton text='Okay' onClick={() => {
-              setShow(false);
-              if (!!notAgainPending) {
-                store.notAgain = [...store.notAgain, props.id];
-              }
-            }} />
-
-          </Stack>
         </div>
-
       </TeachingBubbleContent>
     </Coachmark>}
   </>;
@@ -79,5 +113,93 @@ const coachingContent: Record<string, {
       <div>Expand this panel for an interactive table, showing all relevant criteria for build types. Filter by tier, location, economy, pad size, security, wealth or any other aspect.</div>
       <br />
     </div>,
-  }
+  },
+
+  sysView2_AddSaveLoad: {
+    headline: 'Add to your system ...',
+    directionalHint: DirectionalHint.bottomLeftEdge,
+    body: <div>
+      <div>
+        When first viewing a system, existing stations and bodies are automatically imported using data from <Link href='https://spansh.co.uk' target='spansh'>spansh.co.uk</Link>.
+      </div>
+      <div style={{ margin: '8px 0', display: 'flex' }}>
+        <Icon iconName="Add" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Use the add button to create new planned or "what if" sites.
+      </div>
+      <div>
+        <Icon iconName="Save" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        You'll need to explicitly save your changes if you want them in future sessions or different computers.
+      </div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="OpenFolderHorizontal" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        You can re-load at any time, helpful if you want to undo changes.
+      </div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="Build" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Choose import from the submenu should completed station or body information need to be updated.
+      </div>
+    </div>,
+  },
+
+  sysView2_MapType: {
+    headline: 'View as a table or a map?',
+    directionalHint: DirectionalHint.bottomLeftEdge,
+    body: <div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="GridViewSmall" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        The table is best for quickly editing or adding many sites. Click columns to adjust sorting.
+      </div>
+      <div>
+        <Icon iconName="Nav2DMapView" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        The map shows all bodies and how your sites are spread across this system.
+      </div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="Pinned" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Click any site to pin it, showing the result of calculations in a side panel.
+      </div>
+    </div>,
+  },
+
+  sysView2_UseIncomplete: {
+    headline: 'Control the calculations',
+    directionalHint: DirectionalHint.bottomLeftEdge,
+    body: <div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="TestBeaker" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Choose if calculations should use only completed systems or all planned and in-progress ones too.
+      </div>
+      <div>
+        <Icon iconName="SortLines" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Calculations are sensitive to the order sites are built. Use this to view and adjust the order sites are processed.
+      </div>
+    </div>,
+  },
+
+  sysView2_Snapshot: {
+    headline: 'Compare as you make changes...',
+    directionalHint: DirectionalHint.leftTopEdge,
+    body: <div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="Pinned" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Pin sites in the map, or table, to see the result of calculations.
+      </div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="Camera" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Take a snap shot of a panel, then make changes to various sites and observe the differences.
+      </div>
+    </div>,
+  },
+
+  sysView2_SearchNew: {
+    headline: 'More systems to plan?',
+    directionalHint: DirectionalHint.rightTopEdge,
+    body: <div>
+      <div>Use this button to navigate to other systems.</div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon iconName="Save" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Don't forget to save your progress first.
+      </div>
+    </div>,
+  },
 }
+

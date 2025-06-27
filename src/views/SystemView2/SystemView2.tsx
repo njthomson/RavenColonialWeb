@@ -20,6 +20,7 @@ import { SystemCard } from './SystemCard';
 import { FindSystemName } from '../../components';
 import { createRandomPhoneticName, delayFocus } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
+import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 
 interface SystemView2Props {
   systemName: string;
@@ -47,8 +48,8 @@ interface SystemView2State {
 }
 
 const viewTypes = [
-  'table',
   'body',
+  'table',
 ];
 
 export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
@@ -70,7 +71,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       dirtySites: {},
       deletedIDs: [],
       orderIDs: [],
-      viewType: store.sysViewView || viewTypes[1],
+      viewType: store.sysViewView,
     };
   }
 
@@ -367,6 +368,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           }}
         />
       </>}
+
+      {this.renderCoachmarks()}
     </div>;
   }
 
@@ -424,6 +427,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           </div>
 
           <IconButton
+            id='sysView2_SearchNew'
             title='Search for a different system'
             iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
             style={{ marginLeft: 10 }}
@@ -455,6 +459,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         items={[
           {
             key: 'sys-add1',
+            title: 'Add a planned or "what if" site',
             text: 'Add',
             iconProps: { iconName: 'Add' },
             split: true,
@@ -486,8 +491,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 // },
                 {
                   key: 'sys-add5',
-                  title: 'Re-import bodies and stations from Spansh.',
-                  text: 'Import from Spansh',
+                  text: 'Import existing bodies and stations',
                   iconProps: { iconName: 'Build' },
                   onClick: () => this.doImport(),
                   style: { height: 60 },
@@ -497,7 +501,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                         {d.renderItemIcon(p)}
                         {d.renderItemName(p)}
                       </span>
-                      <div style={{ color: appTheme.palette.themeSecondary }}>Use to update bodies and new stations.</div>
+                      <div style={{ color: appTheme.palette.themeSecondary }}>Use to update bodies and new stations from Spansh and RavenColonial</div>
                     </div>;
                   })
                 }
@@ -506,28 +510,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
-            key: 'sys-change-view',
-            title: 'Change view type',
-            text: this.state.viewType === 'body' ? 'Map' : 'Table',
-            iconProps: { iconName: this.state.viewType === 'body' ? 'Nav2DMapView' : 'GridViewSmall' },
-            disabled: !!processingMsg,
-            onClick: () => {
-              const nextView = viewTypes[viewTypes.indexOf(this.state.viewType) + 1] ?? viewTypes[0];
-              this.setState({ viewType: nextView });
-              store.sysViewView = nextView;
-            }
-          },
-
-          {
-            key: 'sys-save',
-            title: 'Save changes to this system',
-            text: 'Save',
-            iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
-            disabled: !enableSave,
-            onClick: this.saveData,
-          },
-
-          {
+            id: 'sysView2_AddSaveLoad',
             key: 'sys-load',
             title: 'Abandon your current changes and reload',
             text: 'Load',
@@ -543,6 +526,30 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
+            key: 'sys-save',
+            title: 'Save changes to this system',
+            text: 'Save',
+            iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
+            disabled: !enableSave,
+            onClick: this.saveData,
+          },
+
+          {
+            id: 'sysView2_MapType',
+            key: 'sys-change-view',
+            title: 'Toggle view between a table or a map',
+            text: this.state.viewType === 'body' ? 'Map' : 'Table',
+            iconProps: { iconName: this.state.viewType === 'body' ? 'Nav2DMapView' : 'GridViewSmall' },
+            disabled: !!processingMsg,
+            onClick: () => {
+              const nextView = viewTypes[viewTypes.indexOf(this.state.viewType) + 1] ?? viewTypes[0];
+              this.setState({ viewType: nextView });
+              store.sysViewView = nextView;
+            }
+          },
+
+
+          {
             key: 'sys-build-order',
             title: 'Adjust order of site calculations',
             text: 'Order',
@@ -552,6 +559,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
+            id: 'sysView2_UseIncomplete',
             key: 'toggle-use-incomplete',
             title: 'Include incomplete sites in calculations?',
             // text: 'Include all',
@@ -580,6 +588,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
           {
             key: 'open-in',
+            title: 'View this site in other websites',
             iconProps: { iconName: 'OpenInNewWindow' },
             disabled: !!processingMsg,
             subMenuProps: {
@@ -738,6 +747,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
         <RightSide>
           <IconButton
+            id='sysView2_Snapshot'
             title='Make a comparison snapshot of this panel'
             iconProps={{ iconName: 'Camera' }}
             style={{
@@ -920,6 +930,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </div>;
   }
 
+  renderCoachmarks() {
+    return <ShowManyCoachingMarks targets={[
+      'sysView2_AddSaveLoad',
+      'sysView2_MapType',
+      'sysView2_UseIncomplete',
+      'sysView2_Snapshot',
+      'sysView2_SearchNew',
+    ]} />;
+  }
 }
 
 export const RightSide: FunctionComponent<{ foo?: string }> = (props) => {

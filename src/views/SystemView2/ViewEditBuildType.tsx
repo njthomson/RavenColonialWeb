@@ -34,6 +34,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
   componentDidUpdate(prevProps: Readonly<ViewEditBuildTypeProps>, prevState: Readonly<ViewEditBuildTypeState>, snapshot?: any): void {
     if (!this.state.dropDown || prevState.dropDown) {
       this.mouseInside = false;
+      App.resumePageScroll();
     }
   }
 
@@ -82,7 +83,9 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
           }
           return this.mouseInside;
         }}
-        onDismiss={() => this.setState({ dropDown: false })}
+        onDismiss={() => {
+          this.setState({ dropDown: false });
+        }}
       >
         <div
           className='build-type'

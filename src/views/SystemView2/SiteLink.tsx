@@ -8,9 +8,9 @@ import { appTheme } from "../../theme";
 import { SiteCard } from "./SiteCard";
 import { SystemView2 } from "./SystemView2";
 
-export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2, prefix: string }> = (props) => {
+export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2, prefix: string, doSelect?: boolean }> = (props) => {
   const { site, sysView } = props;
-  const [isCurrent, setIsCurrent] = useState(false);
+  const [isCurrent, setIsCurrent] = useState(sysView.state.selectedSite?.id === site.id);
   const isPinned = sysView.state.pinnedSite?.id === site.id;
 
   const id = `id-${props.prefix}-${site.id.replace('&', '')}`;
@@ -23,7 +23,13 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
   return <div
     id={id + '-div'}
     style={{ cursor: 'default' }}
-    onMouseUp={() => setIsCurrent(!isCurrent)}
+    onMouseUp={() => {
+      if (props.doSelect) {
+        sysView.siteSelected(site);
+      } else {
+        setIsCurrent(!isCurrent);
+      }
+    }}
   >
     <div>
       <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
@@ -63,7 +69,12 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
       </Stack>}
     </div>
 
-    {isCurrent && <SiteCard targetId={id} site={site} sysView={sysView} onClose={() => setIsCurrent(false)} />}
+    {isCurrent && <SiteCard
+      targetId={id}
+      site={site}
+      sysView={sysView}
+      onClose={() => setIsCurrent(false)}
+    />}
 
   </div>;
 }

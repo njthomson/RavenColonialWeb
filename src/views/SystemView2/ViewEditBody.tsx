@@ -90,12 +90,11 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
         }}
         onDismiss={(ev) => {
           this.setState({ dropDown: false });
+          App.resumePageScroll();
         }}
         calloutProps={{
           setInitialFocus: true,
           className: cn.bodyScroll,
-          style: { width: 270, },
-          // dismissOnTargetClick: true,
           preventDismissOnEvent: (ev) => {
             if (this.mouseInside) {
               ev.preventDefault();
