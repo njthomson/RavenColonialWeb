@@ -183,7 +183,7 @@ const initializeSysMap = (sys: Sys) => {
       original: s,
       sys: sys as SysMap2,
       body: body as BodyMap2,
-      type: getSiteType(s.buildType),
+      type: getSiteType(s.buildType, true),
     };
     siteMaps.push(site);
     body.sites.push(site);

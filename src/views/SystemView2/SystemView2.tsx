@@ -441,6 +441,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             }}
           />
 
+          <Stack horizontal verticalAlign='center' style={{ marginLeft: 40, fontWeight: 'normal', width: 240, color: 'grey' }}>
+            <Icon iconName='ProcessMetaTask' style={{ fontSize: 20 }} />
+            <div style={{ marginLeft: 8, fontSize: 12, }}>
+              This page and calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+            </div>
+          </Stack>
+
         </Stack>
       </h2>
 

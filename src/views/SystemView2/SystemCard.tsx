@@ -35,6 +35,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
           gridTemplateColumns: 'max-content max-content',
           gap: '2px 10px',
           fontSize: '14px',
+          alignItems: 'baseline'
         }}>
 
           <div>Architect:</div>

@@ -30,7 +30,9 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
         }
       }}
       role="dialog"
-      onDismiss={() => props.onClose()}
+      onDismiss={() => {
+        props.onClose();
+      }}
       dismissOnTargetClick={true}
     >
       <div className='system-view2' style={{ position: 'relative', padding: 10 }}>
