@@ -450,7 +450,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
       key={`bfi-${node.body.num}${f}`}
       title={mapBodyFeature[f]}
       iconName={mapBodyFeatureIcon[f]}
-      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.5)' }}
+      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.3)' }}
     />)}
   </Stack>;
 
