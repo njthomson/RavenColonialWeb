@@ -1,4 +1,4 @@
-import { Stack, IconButton, Callout, DirectionalHint } from "@fluentui/react";
+import { Stack, IconButton, Callout, DirectionalHint, ActionButton, Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { SiteMap2 } from "../../system-model2";
 import { appTheme } from "../../theme";
@@ -6,11 +6,11 @@ import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
-import { ViewEditBuildStatus } from "./ViewEditStatus";
+import { mapStatusIcon, ViewEditBuildStatus } from "./ViewEditStatus";
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
-  const s = props.site;
-  const isPinned = props.sysView.state.pinnedSite?.id === s.id;
+  const site = props.site;
+  const isPinned = props.sysView.state.pinnedSite?.id === site.id;
 
   return <div>
 
@@ -49,65 +49,86 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <div>Site:</div>
           <h2>
             <ViewEditName
-              name={s.name}
+              name={site.name}
               onChange={newName => {
-                s.original.name = newName;
-                props.sysView.siteChanged(s.original);
+                site.original.name = newName;
+                props.sysView.siteChanged(site.original);
               }}
             />
           </h2>
 
           <div>Type:</div>
           <ViewEditBuildType
-            buildType={s.buildType}
+            buildType={site.buildType}
             onChange={(newType) => {
-              s.original.buildType = newType;
-              props.sysView.siteChanged(s.original);
+              site.original.buildType = newType;
+              props.sysView.siteChanged(site.original);
             }}
           />
 
           <div>Body:</div>
           <ViewEditBody
-            bodyNum={s.bodyNum}
+            bodyNum={site.bodyNum}
             systemName={props.sysView.state.sysMap.name}
             bodies={props.sysView.state.sysMap.bodies}
             bodyMap={props.sysView.state.sysMap.bodyMap}
             pinnedSiteId={props.sysView.state.pinnedSite?.id}
             onChange={newNum => {
-              s.original.bodyNum = newNum;
-              props.sysView.siteChanged(s.original);
+              site.original.bodyNum = newNum;
+              props.sysView.siteChanged(site.original);
             }}
           />
 
           <div>Status:</div>
-          <ViewEditBuildStatus
-            status={s.status}
-            onChange={newStatus => {
-              s.original.status = newStatus;
-              props.sysView.siteChanged(s.original);
-            }}
-          />
+          <Stack horizontal verticalAlign='center' style={{ alignItems: 'center' }}>
+            <ViewEditBuildStatus
+              status={site.status}
+              onChange={newStatus => {
+                site.original.status = newStatus;
+                props.sysView.siteChanged(site.original);
+              }}
+            />
+            {site.status === 'build' && !!site.buildId && <ActionButton
+              iconProps={{ iconName: mapStatusIcon[site.status] }}
+              title='Open project page'
+              href={`${window.location.origin}/#build=${site.buildId}`}
+              target='build'
+            >
+              <span style={{ backgroundColor: 'grey', color: 'black' }}>&nbsp;TODO: Completion chart&nbsp;</span>
+              &nbsp; ??%
+              <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
+
+            </ActionButton>}
+            {site.status === 'complete' && !!site.buildId && <ActionButton
+              iconProps={{ iconName: mapStatusIcon[site.status] }}
+              title='Open project page'
+              href={`${window.location.origin}/#build=${site.buildId}`}
+              target='build'
+            >
+              View project
+              <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
+            </ActionButton>}
+          </Stack>
 
         </div>
 
-        <Stack horizontal tokens={{ childrenGap: 10 }}>
+        <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 10 }}>
           <IconButton
             iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
-            text='Pin?'
             title='Pin this site'
             onClick={() => {
-              props.sysView.sitePinned(s.id);
+              props.sysView.sitePinned(site.id);
             }}
           />
 
           <IconButton
             iconProps={{ iconName: 'Delete' }}
-            text='Delete'
             title='Remove this site'
-            onClick={() => props.sysView.siteDeleted(s.id)}
+            onClick={() => props.sysView.siteDeleted(site.id)}
           />
 
         </Stack>
+
       </div>
     </Callout>
 

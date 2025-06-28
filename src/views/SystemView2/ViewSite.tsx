@@ -7,6 +7,8 @@ import { ViewEditBuildType } from './ViewEditBuildType';
 import { ViewEditBody } from './ViewEditBody';
 import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { SystemView2 } from './SystemView2';
+import { mapStatusIcon, ViewEditBuildStatus } from './ViewEditStatus';
+import { ActionButton, Icon, Stack } from '@fluentui/react';
 
 export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onChange: (site: Site) => void }> = (props) => {
   const { site, sysView } = props;
@@ -21,6 +23,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       gap: '2px 10px',
       fontSize: '14px',
       marginBottom: 10,
+      alignItems: 'center',
     }}>
 
       <div>Site:</div>
@@ -55,6 +58,37 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
           props.onChange(site);
         }}
       />
+
+      <div>Status:</div>
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+        <ViewEditBuildStatus
+          status={site.status}
+          onChange={newStatus => {
+            site.status = newStatus;
+            props.onChange(site);
+          }}
+        />
+        {site.status === 'build' && !!site.buildId && <ActionButton
+          iconProps={{ iconName: mapStatusIcon[site.status] }}
+          title='Open project page'
+          href={`${window.location.origin}/#build=${site.buildId}`}
+          target='build'
+        >
+          <span style={{ backgroundColor: 'grey', color: 'black' }}>&nbsp;TODO: Completion chart&nbsp;</span>
+          &nbsp; ??%
+          <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
+
+        </ActionButton>}
+        {site.status === 'complete' && !!site.buildId && <ActionButton
+          iconProps={{ iconName: mapStatusIcon[site.status] }}
+          title='Open project page'
+          href={`${window.location.origin}/#build=${site.buildId}`}
+          target='build'
+        >
+          View project
+          <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
+        </ActionButton>}
+      </Stack>
 
     </div>
     <EconomyTable2 site={siteMap} noCompare />

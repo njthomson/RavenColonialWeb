@@ -206,22 +206,32 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       if (hideEmpties) {
         if (childNode.parent?.body.type !== 'bc') {
           // parent not barycenter - skip if no sites
-          if (!childHasSites) { continue; }
+          if (!childHasSites) {
+            continue;
+          }
         } else {
           // parent is barycenter ...
           const idx = sorted.indexOf(key);
           if (idx < 2) {
             // ideally: keep the alternate if either of the 1st two bodies have sites
             // but this requires us to pre-process the whole tree, not just immediate siblings
-            if (!(processed[0].childHasSites && processed[0].childNode.body.type === 'bc') && (!processed[1].childHasSites && processed[1].childNode.body.type === 'bc')) { continue; }
+            if ((!processed[0].childHasSites && processed[0].childNode.body.type === 'bc') && (!processed[1].childHasSites && processed[1].childNode.body.type === 'bc')) {
+              continue;
+            }
           } else {
             // treat the rest as normal
-            if (!childHasSites) { continue; }
+            if (!childHasSites) {
+              continue;
+            }
           }
         }
       }
 
       sortedChildren[key] = childNode;
+    }
+
+    if (node.hasSites && Object.keys(sortedChildren).length === 0 && node.map?.sites.length === 0) {
+      console.warn(`Node ${node.body.name} has sites but no children?`, node);
     }
 
     node.children = sortedChildren;
