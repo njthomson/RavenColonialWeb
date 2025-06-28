@@ -61,10 +61,6 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
     }
 
     const items = bodies.filter(b => b.type !== 'bc').map(b => ({ key: `bd-${b.num}`, text: b.name, data: b })) as IContextualMenuItem[];
-    items.unshift(...[{
-      key: 'aaa',
-      text: 'Both',
-    }]);
 
     return <div>
       <ActionButton
@@ -79,7 +75,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
         <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
       </ActionButton>
 
-      {<ContextualMenu
+      {dropDown && <ContextualMenu
         id={`cm${id}`}
         hidden={!dropDown}
         alignTargetEdge={false}

@@ -128,6 +128,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     api.systemV2.getSys(this.props.systemName)
       .then(sys => {
 
+        if (sys.v === 0) {
+          console.warn(`System schema: ${sys.v} ... re-import is needed`);
+          return this.doImport('no-sites');
+        }
+
         const sysMap = buildSystemModel2(sys, this.state.useIncomplete);
         const orderIDs = sysMap.sites.map(s => s.id);
         this.setState({
@@ -151,10 +156,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       });
   };
 
-  doImport = () => {
+  doImport = (type?: string) => {
     this.setState({ processingMsg: 'Importing ...', errorMsg: '' });
 
-    api.systemV2.import(this.props.systemName)
+    api.systemV2.import(this.props.systemName, type)
       .then(sys => {
         const newSysMap = buildSystemModel2(sys, this.state.useIncomplete);
         this.setState({
@@ -244,7 +249,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     this.setState({
       dirtySites,
       sysMap: newSysMap,
-      selectedSite: newSite,
       orderIDs: [...this.state.orderIDs, newSite.id],
     });
 
@@ -252,6 +256,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     setTimeout(() => {
       const element = document.getElementById(id);
       if (element) {
+        // adjust delay based on how far we need to scroll
+        const duration = 200 + (document.scrollingElement?.scrollTop ?? 1000) * 0.5;
         // start scrolling
         element.parentElement?.scrollIntoView({
           behavior: 'smooth',
@@ -265,7 +271,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             cancelable: true,
             view: window
           }));
-        }, 500);
+        }, duration);
       }
 
     }, 100);

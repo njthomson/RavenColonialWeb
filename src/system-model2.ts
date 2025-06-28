@@ -118,7 +118,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete);
 
   // re-sort bodies by their num value
-  sys.bodies.sort((a, b) => a.num - b.num);
+  // sys.bodies.sort((a, b) => a.num - b.num);
 
   const finalMap = Object.assign(sys, {
     ...sysMap,

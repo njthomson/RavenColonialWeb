@@ -2,6 +2,7 @@ import { BodyFeature, ReserveLevel } from "./types";
 
 /** Represents an architected system system */
 export interface Sys {
+  v: number;
   name: string;
   id64: number;
   architect: string;

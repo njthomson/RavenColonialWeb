@@ -173,14 +173,25 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     // no, recurse ....
     const sortedChildren: BodyMapTree = {};
-    const sorted = Object.keys(node.children)
-      .sort((a, b) => {
-        return node.children[a].body.num - node.children[b].body.num;
-        // return node.children[a].body.name.localeCompare(node.children[b].body.name);
-        // const an = node.children[a].body.name.replace(this.props.systemName + ' ', '').replace(' ', '');
-        // const bn = node.children[b].body.name.replace(this.props.systemName + ' ', '').replace(' ', '');
-        // return an.localeCompare(bn);
-      });
+    const sorted = Object.keys(node.children);
+    /* I think we can trust sorting on the server now
+    .sort((a, b) => {
+      let an = node.children[a].body.num;
+      let bn = node.children[b].body.num;
+      if (an > 100_000 || bn > 100_000) {
+        // use distLS if either body is an asteroid cluster
+        return node.children[a].body.distLS - node.children[b].body.distLS;
+      }
+
+      if (an > 100_000) { an = (an - 100_000) / 100; }
+      if (bn > 100_000) { bn = (bn - 100_000) / 100; }
+      return an - bn;
+      // return node.children[a].body.name.localeCompare(node.children[b].body.name);
+      // const an = node.children[a].body.name.replace(this.props.systemName + ' ', '').replace(' ', '');
+      // const bn = node.children[b].body.name.replace(this.props.systemName + ' ', '').replace(' ', '');
+      // return an.localeCompare(bn);
+    });
+    */
 
     // pre-process, so we know the state of all sibling nodes
     const processed = sorted.map(key => {
@@ -216,25 +227,6 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     node.children = sortedChildren;
     return node.hasSites;
   }
-
-  // fooTree2(node: BodyMapTreeNode) {
-  //   const children = Object.values(node.children);
-  //   if (children.length === 0) {
-  //     return node.hasSites;
-  //   } else {
-
-  //   }
-
-  //   // node.children = Object.entries(node.children)
-  //   //   .filter(([k, v]) => {
-  //   //     return !this.state.hideEmpties || v.hasSites;
-  //   //   })
-  //   //   .reduce((map, [k, v]) => {
-  //   //     map[k] = v;
-  //   //     return map;
-  //   //   }, {} as BodyMapTree);
-  // }
-
 
   findInTree(node: BodyMapTreeNode, name: string): BodyMapTreeNode | undefined {
     if (node.body.name === name) {
@@ -437,7 +429,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const innerBorders = hasSites ? `2px dashed ${appTheme.palette.themeTertiary}` : undefined;
   const bottomGap = 10;
 
-  let bodyTitle = `${node.body.name}\n${node.body.subType}\n` + node.body.features.map(f => '» ' + mapBodyFeature[f]).join('\n');
+  let bodyTitle = `${node.body.name}\n${node.body.subType}\nArrival: ~${node.body.distLS.toFixed(1)} ls\n` + node.body.features.map(f => '» ' + mapBodyFeature[f]).join('\n');
   const isLandable = node.body.features.includes(BodyFeature.landable);
 
   const featureIcons = <Stack
@@ -492,7 +484,17 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
             {up && !leftDotted && <line x1={1} y1={-1} x2={1} y2={sz} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
             {down && !leftDotted && <line x1={1} y1={sz} x2={1} y2={2 + sz * 2} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
 
-            <circle cx={indent + sz} cy={1 + sz} r={sz} fill={c1} stroke={c2} strokeWidth={2} />
+            {/* A basic circle for all but asteroid clusters */}
+            {node.body.type !== 'ac' && <>
+              <circle cx={indent + sz} cy={1 + sz} r={sz} fill={c1} stroke={c2} strokeWidth={2} />
+              {/* TODO: Use an ellipse for rings? */}
+            </>}
+            {/* A basic circle for all but asteroid clusters */}
+            {node.body.type === 'ac' && <>
+              <ellipse cx={indent + sz} cy={1 + sz + 4} rx={sz / 4} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
+              <ellipse cx={indent + sz - 6} cy={1 + sz} rx={sz / 2.5} ry={sz / 2.5} fill={c1} stroke={c2} strokeWidth={2} />
+              <ellipse cx={indent + sz + 4} cy={1 + sz - 4} rx={sz / 3} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
+            </>}
           </svg>
 
           <div style={{ position: 'relative', borderBottom: innerBorders, paddingRight: 20 }} >
@@ -592,7 +594,7 @@ const mapBodyFeatureColor = {
 const getBodyColour = (bodyType?: BodyType, subType?: string) => {
   switch (bodyType) {
     default:
-      return { c1: 'brown', c2: 'rgb(255, 255, 255)' };
+      return { c1: 'blue', c2: 'red' };
     case 'bh':// Black Hole
       return { c1: 'rgb(38, 0, 43)', c2: 'rgb(255, 255, 255)' };
     case 'ns':// Neutron Star
@@ -621,7 +623,17 @@ const getBodyColour = (bodyType?: BodyType, subType?: string) => {
     case 'un':
       return { c1: 'rgb(46, 46, 45)', c2: 'rgb(70, 69, 67)' };
     case 'ac':
-      return { c1: 'rgb(139, 139, 138)', c2: 'rgb(95, 83, 83)' };
+      switch (subType) {
+        default:
+        case 'Icy':
+          return { c1: 'rgb(93, 111, 121)', c2: 'rgb(136, 142, 150)' };
+        case 'Metal Rich':
+          return { c1: 'rgb(92, 87, 82)', c2: 'rgb(133, 120, 110)' };
+        case 'Metallic':
+          return { c1: 'rgb(124, 113, 102)', c2: 'rgb(153, 143, 134)' };
+        case 'Rocky':
+          return { c1: 'rgb(92, 79, 64)', c2: 'rgb(150, 123, 102)' };
+      }
     case 'st': // some kind of star
       if (subType?.includes('Blue')) {
         return { c1: 'rgb(167, 227, 245)', c2: 'rgb(176, 241, 243)' };
@@ -672,7 +684,7 @@ const getBodySize = (bodyType?: BodyType) => {
       return 12;
 
     case 'ri':
-      return 9;
+      return 12;
 
     case 'ib':
       return 6;

@@ -18,8 +18,8 @@ export const systemV2 = {
     return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(id64OrName)}/sites`, 'PUT', JSON.stringify(data));
   },
 
-  import: async (systemName: string): Promise<Sys> => {
-    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import`, 'POST');
+  import: async (systemName: string, type?: string): Promise<Sys> => {
+    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import/${type}`, 'POST');
   },
 };
 
