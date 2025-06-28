@@ -51,6 +51,7 @@ const supportedTypes: Record<string, ImageData> = {
   'hestia': { cmdr: 'Abe Andet', location: ` Farias Berth - Pegasi Sector MS-T b3-5` },
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
+  'mantus': { cmdr: 'kekosummer', location: ` Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
   'meteope': { cmdr: 'kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
   'minerva': { cmdr: 'kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
   'minthe': { cmdr: 'kekosummer', location: `Greko chemical workshop - Col 285 Sector GL-X c1-11, A 6` },

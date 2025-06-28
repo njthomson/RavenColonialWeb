@@ -21,6 +21,7 @@ import { FindSystemName } from '../../components';
 import { createRandomPhoneticName, delayFocus } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
+import { Project } from '../../types';
 
 interface SystemView2Props {
   systemName: string;
@@ -45,6 +46,7 @@ interface SystemView2State {
   originalSiteIDs: string[];
   showEditSys?: boolean;
   showConfirmAction?: () => void;
+  activeProjects?: Project[];
 }
 
 const viewTypes = [
@@ -144,6 +146,18 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
         });
+
+        // TODO: load on demand instead of all at once?
+        const buildIds = sysMap.sites.filter(s => s.status === 'build' && !!s.buildId).map(s => s.id);
+        if (buildIds.length > 0) {
+          const promises = buildIds.map(id => api.project.get(id).then(proj => {
+            return proj;
+          }));
+          return Promise.all(promises).then(projects => {
+            this.setState({ activeProjects: projects });
+          })
+        }
+
       })
       .catch(err => {
         if (err.statusCode === 404) {

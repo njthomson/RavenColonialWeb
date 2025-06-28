@@ -7,8 +7,9 @@ import { ViewEditBuildType } from './ViewEditBuildType';
 import { ViewEditBody } from './ViewEditBody';
 import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { SystemView2 } from './SystemView2';
-import { mapStatusIcon, ViewEditBuildStatus } from './ViewEditStatus';
-import { ActionButton, Icon, Stack } from '@fluentui/react';
+import { ViewEditBuildStatus } from './ViewEditStatus';
+import { Stack } from '@fluentui/react';
+import { ProjectLink2 } from './ProjectLink2';
 
 export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onChange: (site: Site) => void }> = (props) => {
   const { site, sysView } = props;
@@ -68,26 +69,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
             props.onChange(site);
           }}
         />
-        {site.status === 'build' && !!site.buildId && <ActionButton
-          iconProps={{ iconName: mapStatusIcon[site.status] }}
-          title='Open project page'
-          href={`${window.location.origin}/#build=${site.buildId}`}
-          target='build'
-        >
-          <span style={{ backgroundColor: 'grey', color: 'black' }}>&nbsp;TODO: Completion chart&nbsp;</span>
-          &nbsp; ??%
-          <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
-
-        </ActionButton>}
-        {site.status === 'complete' && !!site.buildId && <ActionButton
-          iconProps={{ iconName: mapStatusIcon[site.status] }}
-          title='Open project page'
-          href={`${window.location.origin}/#build=${site.buildId}`}
-          target='build'
-        >
-          View project
-          <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
-        </ActionButton>}
+        <ProjectLink2 status={site.status} buildId={site.buildId} sysView={props.sysView} />
       </Stack>
 
     </div>

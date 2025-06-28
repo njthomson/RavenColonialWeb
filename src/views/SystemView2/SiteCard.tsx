@@ -1,4 +1,4 @@
-import { Stack, IconButton, Callout, DirectionalHint, ActionButton, Icon } from "@fluentui/react";
+import { Stack, IconButton, Callout, DirectionalHint } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { SiteMap2 } from "../../system-model2";
 import { appTheme } from "../../theme";
@@ -6,7 +6,8 @@ import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
-import { mapStatusIcon, ViewEditBuildStatus } from "./ViewEditStatus";
+import { ViewEditBuildStatus } from "./ViewEditStatus";
+import { ProjectLink2 } from "./ProjectLink2";
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
   const site = props.site;
@@ -88,26 +89,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
                 props.sysView.siteChanged(site.original);
               }}
             />
-            {site.status === 'build' && !!site.buildId && <ActionButton
-              iconProps={{ iconName: mapStatusIcon[site.status] }}
-              title='Open project page'
-              href={`${window.location.origin}/#build=${site.buildId}`}
-              target='build'
-            >
-              <span style={{ backgroundColor: 'grey', color: 'black' }}>&nbsp;TODO: Completion chart&nbsp;</span>
-              &nbsp; ??%
-              <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
-
-            </ActionButton>}
-            {site.status === 'complete' && !!site.buildId && <ActionButton
-              iconProps={{ iconName: mapStatusIcon[site.status] }}
-              title='Open project page'
-              href={`${window.location.origin}/#build=${site.buildId}`}
-              target='build'
-            >
-              View project
-              <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
-            </ActionButton>}
+            <ProjectLink2 status={site.status} buildId={site.buildId} sysView={props.sysView} />
           </Stack>
 
         </div>
