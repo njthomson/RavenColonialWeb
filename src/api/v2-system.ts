@@ -5,7 +5,7 @@ import { callAPI } from "./api-util";
 
 /** System level APIs */
 export const systemV2 = {
-  currentSchemaVersion: 2,
+  currentSchemaVersion: 3,
 
   getSys: async (systemName: string): Promise<Sys> => {
     return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}`);

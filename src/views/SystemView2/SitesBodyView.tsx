@@ -1,6 +1,6 @@
 import { Component, FunctionComponent } from "react";
 import { Bod, BodyType } from "../../types2";
-import { Icon, Stack, Toggle } from "@fluentui/react";
+import { ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack, Toggle } from "@fluentui/react";
 import { appTheme } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
 import { SitesViewProps, SystemView2 } from "./SystemView2";
@@ -49,6 +49,8 @@ interface SitesBodyViewState {
   bodyTree: BodyMapTree;
   hideEmpties: boolean;
   lastSiteId?: string;
+  bodyFilter: Set<BodyFeature>;
+  showBodyFilter?: boolean;
 }
 
 export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState> {
@@ -64,6 +66,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       showTable: false,
       bodyTree: this.prepBodyTree(props.sysMap, defaultHideEmpties),
       hideEmpties: defaultHideEmpties,
+      bodyFilter: new Set<BodyFeature>(),
     };
   }
 
@@ -261,16 +264,19 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
   }
 
   render() {
-    const { bodyTree, hideEmpties } = this.state;
+    const { bodyTree, hideEmpties, showBodyFilter, bodyFilter } = this.state;
 
-    return <div style={{}}>
-      <div style={{
-        float: 'right',
-        marginTop: 8,
-        position: 'sticky',
-        zIndex: 1,
-        top: 54,
-      }}>
+    return <div>
+      <Stack
+        horizontal
+        style={{
+          float: 'right',
+          marginTop: 8,
+          position: 'sticky',
+          zIndex: 1,
+          top: 54,
+        }}
+      >
         <Toggle
           onText='Hide empty bodies'
           offText='Hide empty bodies'
@@ -286,12 +292,61 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
             store.sysViewHideEmpties = !!checked;
           }}
         />
-      </div>
-      <br />
-      <div style={{ marginLeft: bodyTree[rootBC.name] ? indent : 0 }}>
+        <IconButton
+          id='btn-body-filter'
+          iconProps={{ iconName: bodyFilter.size > 0 ? 'FilterSolid' : 'Filter' }}
+          title='Body filter'
+          style={{ marginRight: 6, }}
+          onClick={() => this.setState({ showBodyFilter: !showBodyFilter })}
+        />
+      </Stack>
+      <div style={{ marginLeft: bodyTree[rootBC.name] && bodyFilter.size === 0 ? indent : 0 }}>
         {Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element)}
       </div>
-    </div >;
+      {showBodyFilter && <ContextualMenu
+        target={`#btn-body-filter`}
+        styles={{
+          container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
+        }}
+        onDismiss={() => this.setState({ showBodyFilter: false })}
+        onItemClick={(ev, item) => {
+          if (ev?.defaultPrevented) { return; }
+
+          const key = item?.key.slice(3) as BodyFeature;
+          let newFilter = this.state.bodyFilter;
+          if (newFilter.has(key)) {
+            newFilter.delete(key);
+          } else {
+            newFilter.add(key);
+          }
+          this.setState({ bodyFilter: newFilter, showBodyFilter: false });
+        }}
+
+        items={[
+          {
+            key: `bf-clear`,
+            text: 'Clear',
+            iconProps: { iconName: 'ClearFilter' },
+            canCheck: false,
+            onClick: (ev) => {
+              ev?.preventDefault();
+              bodyFilter.clear();
+              this.setState({ showBodyFilter: false });
+            }
+          },
+
+          { key: `bf-div`, itemType: ContextualMenuItemType.Divider },
+
+          ...Object.values(BodyFeature).map(f => ({
+            key: `bf-${f}`,
+            text: mapBodyFeature[f],
+            iconProps: { iconName: mapBodyFeatureIcon[f], style: { color: mapBodyFeatureColor[f] } },
+            canCheck: true,
+            checked: bodyFilter.has(f),
+          } as IContextualMenuItem)),
+        ]}
+      />}
+    </div>;
   }
 
   renderBody(node: BodyMapTreeNode, idx: number): ChildParts {
@@ -310,6 +365,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         element: <BBaryCentre
           key={`barycentre-${node.body.name}${idx}`}
           hasParent={!!node.parent}
+          filtering={this.state.bodyFilter.size > 0}
           bodyA={childParts[0]?.element}
           bodyB={childParts[1]?.element}
           children={childElements}
@@ -332,6 +388,14 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         ? idx === 0 || (idx > 1 && idx !== siblings.length - 1)
         : siblings.length > 1 && idx !== siblings.length - 1;
 
+      const { bodyFilter } = this.state;
+      if (!!bodyFilter && !Array.from(bodyFilter).every(f => node.body.features.includes(f))) {
+        return {
+          hasSites: hasSites || !!node.map?.sites.length,
+          element: <div key={'nobody-' + node.body.num}>{childParts.map(cp => cp.element)}</div>,
+        };
+      }
+
       return {
         hasSites: hasSites || !!node.map?.sites.length,
         element: <BBody
@@ -341,6 +405,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           name={name}
           children={childParts.length ? childParts.map(cp => cp.element) : undefined}
           root={!node.parent}
+          filtering={this.state.bodyFilter.size > 0}
           up={drawUp}
           down={drawDown}
           leftDotted={parentIsBaryCentre && idx > 1}
@@ -358,13 +423,13 @@ type ChildParts = {
   element: JSX.Element;
 }
 
-export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean }> = (props) => {
+export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean, filtering: boolean }> = (props) => {
 
   return <>
     <div style={{
       position: 'relative',
       // marginLeft: props.hasParent ? 0 : indent,
-      paddingLeft: props.hasParent ? indent : 0,
+      paddingLeft: props.hasParent && !props.filtering ? indent : 0,
     }}>
 
       {props.bodyA}
@@ -373,17 +438,17 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
         <Stack
           horizontal
           verticalAlign='center'
-          style={{ borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, }}
+          style={{ borderLeft: props.filtering ? undefined : `2px solid ${appTheme.palette.themeSecondary}`, }}
         >
-          <div style={{
+          {!props.filtering && <div style={{
             borderBottom: `2px dotted ${appTheme.palette.themeTertiary}`,
             marginLeft: indent,
             paddingRight: 20,
             color: 'grey'
-          }}>x</div>
+          }}>x</div>}
 
           <div style={{
-            borderLeft: `2px dotted ${appTheme.palette.themeTertiary}`,
+            borderLeft: props.filtering ? undefined : `2px dotted ${appTheme.palette.themeTertiary}`,
             fontSize: 12,
             margin: '10px 0',
           }}>
@@ -394,7 +459,7 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
 
       {props.bodyB}
 
-      {props.hasParent && <>
+      {props.hasParent && !props.filtering && <>
         {props.up && <div style={{
           position: 'absolute',
           borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, //grey`,
@@ -424,6 +489,7 @@ interface BodyBlockProps {
   onSelect: (id: string) => void;
   node: BodyMapTreeNode;
   root?: boolean;
+  filtering: boolean;
   name?: string,
   up?: boolean;
   down?: boolean;
@@ -431,7 +497,7 @@ interface BodyBlockProps {
 }
 
 export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
-  const { node, name, up, down, leftDotted, root } = props;
+  const { node, name, up, down, leftDotted, root, filtering } = props;
 
   const orbitals = node.map?.orbital;
   const surfaces = node.map?.surface;
@@ -452,7 +518,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
       key={`bfi-${node.body.num}${f}`}
       title={mapBodyFeature[f]}
       iconName={mapBodyFeatureIcon[f]}
-      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.3)' }}
+      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.4)' }}
     />)}
   </Stack>;
 
@@ -486,13 +552,13 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
               backgroundColor: appTheme.palette.white, // 'black',
             }}
           >
-            {!root && <>
+            {!root && !filtering && <>
               {!leftDotted && <line x1={0} y1={1 + sz} x2={indent + sz} y2={1 + sz} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
               {leftDotted && <line x1={0} y1={1 + sz} x2={indent + sz} y2={1 + sz} stroke={appTheme.palette.themeTertiary} strokeWidth={2} strokeDasharray='2, 2' />}
-            </>}
 
-            {up && !leftDotted && <line x1={1} y1={-1} x2={1} y2={sz} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
-            {down && !leftDotted && <line x1={1} y1={sz} x2={1} y2={2 + sz * 2} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
+              {up && !leftDotted && <line x1={1} y1={-1} x2={1} y2={sz} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
+              {down && !leftDotted && <line x1={1} y1={sz} x2={1} y2={2 + sz * 2} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
+            </>}
 
             {/* A basic circle for all but asteroid clusters */}
             {node.body.type !== 'ac' && <>
@@ -533,7 +599,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           </div>}
         </div>}
 
-        {!!props.children && <>
+        {!!props.children && !filtering && <>
           <div style={{
             position: 'absolute',
             borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, //gold`,
@@ -546,9 +612,9 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     </>
 
     {/* Children go after body sites */}
-    {props.children && <div style={{ marginLeft: sz + indent }}>{props.children}</div>}
+    {props.children && <div style={{ marginLeft: filtering ? 0 : sz + indent }}>{props.children}</div>}
 
-    {!root && <>
+    {!root && !filtering && <>
       {up && !leftDotted && <>
         {/* Join UP to prior siblings */}
         <div style={{
@@ -591,7 +657,7 @@ const mapBodyFeatureIcon = {
 };
 
 const mapBodyFeatureColor = {
-  bio: appTheme.isInverted ? 'rgb(100,255,100)' : 'rgb(0,30,0)',
+  bio: appTheme.isInverted ? 'rgb(100,255,100)' : 'rgb(0, 119, 0)',
   geo: 'rgb(255,100,100)',
   volcanism: 'rgb(255,0,0)',
   rings: appTheme.isInverted ? 'rgb(240,240,0)' : 'rgb(30,30,0)',
