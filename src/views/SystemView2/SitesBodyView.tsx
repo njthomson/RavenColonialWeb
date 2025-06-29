@@ -501,9 +501,9 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
             </>}
             {/* A basic circle for all but asteroid clusters */}
             {node.body.type === 'ac' && <>
-              <ellipse cx={indent + sz} cy={1 + sz + 4} rx={sz / 4} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
-              <ellipse cx={indent + sz - 6} cy={1 + sz} rx={sz / 2.5} ry={sz / 2.5} fill={c1} stroke={c2} strokeWidth={2} />
-              <ellipse cx={indent + sz + 4} cy={1 + sz - 4} rx={sz / 3} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
+              <ellipse cx={indent + sz + 2} cy={1 + sz + 4} rx={sz / 4} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
+              <ellipse cx={indent + sz - 4} cy={1 + sz} rx={sz / 2.5} ry={sz / 2.5} fill={c1} stroke={c2} strokeWidth={2} />
+              <ellipse cx={indent + sz + 5} cy={1 + sz - 7} rx={sz / 3} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
             </>}
           </svg>
 

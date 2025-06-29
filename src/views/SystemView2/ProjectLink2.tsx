@@ -1,24 +1,35 @@
+import * as api from '../../api';
 import { ActionButton, Icon, Stack } from "@fluentui/react";
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo, useState } from "react";
 import { BuildStatus } from "../../types2";
 import { SystemView2 } from "./SystemView2";
 import { ChartGeneralProgress } from "../../components";
 import { mapStatusIcon } from "./ViewEditStatus";
+import { Project } from "../../types";
 
 export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: string, sysView: SystemView2 }> = (props) => {
   let showChart = false;
-  // const [proj, setProj] = useState<Project | undefined>(undefined);
-  // useMemo(async () => {
-  //   if (props.status === 'plan') { return undefined; }
-  //   // return `${props.status} ${props.buildId}`;
-  //   return await api.project.get(props.buildId);
-  // }, [props.status, props.buildId]).then(proj => {
-  //   setProj(proj);
-  // });
+  const [proj, setProj] = useState<Project | undefined | null>(undefined);
+
+  useMemo(async () => {
+    if (props.status === 'plan' || !props.buildId) {
+      // make no request
+      return undefined;
+    } else if (typeof props.sysView.state.activeProjects[props.buildId] === 'undefined') {
+      // make a request
+      const p = await api.project.get(props.buildId);
+      props.sysView.state.activeProjects[p.buildId] = p ?? null!;
+      return p;
+    } else {
+      // use cached value
+      return props.sysView.state.activeProjects[props.buildId];
+    }
+  }, [props.status, props.buildId, props.sysView.state.activeProjects]).then(proj => {
+    setProj(proj);
+  });
 
   if (props.status === 'plan' || !props.buildId) { return null; }
 
-  const proj = props.status === 'build' && props.sysView.state.activeProjects?.find(p => p.buildId === props.buildId);
   let progressElement = <></>;
   if (proj) {
     const progress = (100 - (100 / proj.maxNeed * proj.sumNeed));

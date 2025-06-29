@@ -46,7 +46,7 @@ interface SystemView2State {
   originalSiteIDs: string[];
   showEditSys?: boolean;
   showConfirmAction?: () => void;
-  activeProjects?: Project[];
+  activeProjects: Record<string, Project | null>
 }
 
 const viewTypes = [
@@ -74,6 +74,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       deletedIDs: [],
       orderIDs: [],
       viewType: store.sysViewView,
+      activeProjects: {},
     };
   }
 
@@ -130,7 +131,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     api.systemV2.getSys(this.props.systemName)
       .then(sys => {
 
-        if (sys.v === 0) {
+        if (sys.v < api.systemV2.currentSchemaVersion) {
           console.warn(`System schema: ${sys.v} ... re-import is needed`);
           return this.doImport('no-sites');
         }
@@ -146,17 +147,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
         });
-
-        // TODO: load on demand instead of all at once?
-        const buildIds = sysMap.sites.filter(s => s.status === 'build' && !!s.buildId).map(s => s.id);
-        if (buildIds.length > 0) {
-          const promises = buildIds.map(id => api.project.get(id).then(proj => {
-            return proj;
-          }));
-          return Promise.all(promises).then(projects => {
-            this.setState({ activeProjects: projects });
-          })
-        }
 
       })
       .catch(err => {
