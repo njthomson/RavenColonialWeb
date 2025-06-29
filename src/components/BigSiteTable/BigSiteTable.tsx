@@ -9,7 +9,7 @@ import { CalloutMsg } from "../CalloutMsg";
 import { Chevrons } from "../Chevrons";
 import { EconomyBlock } from "../EconomyBlock";
 import { PadSize } from "../PadSize";
-import { TierPoints } from "../TierPoints";
+import { TierPoint } from "../TierPoints";
 
 
 export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => {
@@ -502,8 +502,8 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
         {type.tier}
       </td>
 
-      <td className={`${cn.br}`}><TierPoints tier={type.needs.tier} count={type.needs.count} /></td>
-      <td className={`${cn.br}`}><TierPoints tier={type.gives.tier} count={type.gives.count} /></td>
+      <td className={`${cn.br}`}><TierPoint tier={type.needs.tier} count={type.needs.count} /></td>
+      <td className={`${cn.br}`}><TierPoint tier={type.gives.tier} count={type.gives.count} /></td>
 
       <td className={`cl ${cn.br}`}>
         {type.inf !== 'none' && <Stack horizontal verticalAlign='center'>

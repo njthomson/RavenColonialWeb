@@ -3,7 +3,7 @@ import { FunctionComponent } from "react";
 import { appTheme } from "../theme";
 import { asPosNegTxt } from "../util";
 
-export const TierPoints: FunctionComponent<{ tier: number, count: number, disabled?: boolean }> = (props) => {
+export const TierPoint: FunctionComponent<{ tier: number, count: number, disabled?: boolean }> = (props) => {
   if (props.tier !== 2 && props.tier !== 3) return null;
 
   let { disabled } = props;

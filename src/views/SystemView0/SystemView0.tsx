@@ -6,7 +6,7 @@ import { ContextualMenu, DefaultButton, Dialog, DialogFooter, Icon, IconButton, 
 import { ProjectLink } from "../../components";
 import { appTheme, cn } from "../../theme";
 import { Chevrons } from "../../components/Chevrons";
-import { TierPoints } from "../../components/TierPoints";
+import { TierPoint } from "../../components/TierPoints";
 import { asPosNegTxt, delayFocus, isMobile } from "../../util";
 import { BodyMap, buildSystemModel, SiteMap, SysMap, unknown } from "../../system-model";
 import { SysEffects, getSiteType, mapName, sysEffects } from "../../site-data";
@@ -220,9 +220,9 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
 
         <div>Tier points:</div>
         <div style={{ gridColumn: '2 / span 3' }}>
-          <TierPoints tier={2} count={tierPoints.tier2} />
+          <TierPoint tier={2} count={tierPoints.tier2} />
           &nbsp;
-          <TierPoints tier={3} count={tierPoints.tier3} />
+          <TierPoint tier={3} count={tierPoints.tier3} />
         </div>
 
         {this.renderSysEconomies()}
@@ -422,10 +422,10 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
     }
 
     if (tierPoints.tier2 < 0) {
-      validations.push(<div key={`valTier2`}>» System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
+      validations.push(<div key={`valTier2`}>» System needs <TierPoint tier={2} count={-tierPoints.tier2} /></div>);
     }
     if (tierPoints.tier3 < 0) {
-      validations.push(<div key={`valTier3`}>» System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
+      validations.push(<div key={`valTier3`}>» System needs <TierPoint tier={3} count={-tierPoints.tier3} /></div>);
     }
 
     if (unknown in bodies) {
@@ -628,7 +628,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
       if (editMockSite.buildType === original?.buildType) deficit -= needs.count;
 
       if (deficit > 0) {
-        validations.push(<div key={`valTierPoints`}>System needs <TierPoints tier={needs.tier} count={deficit} /></div>);
+        validations.push(<div key={`valTierPoints`}>System needs <TierPoint tier={needs.tier} count={deficit} /></div>);
       }
     }
 

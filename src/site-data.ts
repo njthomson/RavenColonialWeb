@@ -15,7 +15,6 @@ export type Economy =
 
 export type BuildClass =
   | 'starport'
-  | 'planetary'
   | 'installation'
   | 'outpost'
   | 'settlement'
@@ -199,7 +198,7 @@ export const getBuildTypeDisplayName = (buildType: string | undefined) => {
   if (!buildType) return '?';
 
   const type = getSiteType(buildType);
-  let txt = type.buildClass === 'starport' || type.buildClass === 'planetary'
+  let txt = type.buildClass === 'starport'
     ? `${type.displayName}`
     : `${type.displayName} ${type.buildClass}`;
 
@@ -215,7 +214,7 @@ export const getBuildTypeDisplayName = (buildType: string | undefined) => {
 export const canReceiveLinks = (type: SiteType): boolean => {
 
   // star ports and orbital outposts can receive links (but not Asteroid bases?)
-  if (type.buildClass === 'planetary' || (type.buildClass === 'starport' /*&& type.subTypes[0] !== 'asteroid'*/)) {
+  if (type.buildClass === 'starport') {
     return true;
   } else if (type.buildClass === 'outpost') {
     return true;
@@ -631,7 +630,7 @@ export const siteTypes: SiteType[] = [
     "displayName2": "Large Planetary Port",
     "subTypes": ["zeus", "hera", "poseidon", "aphrodite"],
     "haul": 215597,
-    "buildClass": "planetary",
+    "buildClass": "starport",
     "tier": 3,
     "padSize": "large",
     "orbital": false,

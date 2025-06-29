@@ -5,7 +5,7 @@ import { getSiteType, SysEffects, mapName } from "../site-data";
 import { asPosNegTxt } from "../util";
 import { Chevrons } from "./Chevrons";
 import { Icon } from "@fluentui/react";
-import { TierPoints } from "./TierPoints";
+import { TierPoint } from "./TierPoints";
 
 export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: boolean }> = (props) => {
   const paddingTop = 2;
@@ -35,12 +35,12 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
 
   let needs = <span style={{ color: 'grey' }}>None</span>;
   if (st.needs.count > 0) {
-    needs = <span><TierPoints tier={st.needs.tier} count={st.needs.count} /></span>;
+    needs = <span><TierPoint tier={st.needs.tier} count={st.needs.count} /></span>;
   }
 
   let gives = <span style={{ color: 'grey' }}>None</span>;
   if (st.gives.count > 0) {
-    gives = <TierPoints tier={st.gives.tier} count={st.gives.count} />
+    gives = <TierPoint tier={st.gives.tier} count={st.gives.count} />
   }
 
   return <>

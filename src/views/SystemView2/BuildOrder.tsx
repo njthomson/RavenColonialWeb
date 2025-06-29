@@ -1,13 +1,15 @@
 import { DefaultButton, Icon, Panel, PanelType, Stack } from "@fluentui/react";
-import { Component } from "react";
+import { Component, FunctionComponent } from "react";
 import { appTheme, cn } from "../../theme";
 import { isMobile } from "../../util";
-import { SiteMap2, SysMap2 } from "../../system-model2";
+import { SiteMap2, sumTierPoints, SysMap2, TierPoints } from "../../system-model2";
 import { getSiteType } from "../../site-data";
+import { TierPoint } from "../../components/TierPoints";
 
 interface BuildOrderProps {
   sysMap: SysMap2;
   orderIDs: string[];
+  useIncomplete: boolean;
   onClose: (orderIDs: string[] | undefined) => void
 };
 
@@ -16,6 +18,7 @@ interface BuildOrderState {
   sortedIDs: string[];
   dragId?: string;
   dragging: boolean;
+  tierPoints: TierPoints;
 }
 
 export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
@@ -28,26 +31,32 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       return m;
     }, {} as Record<string, SiteMap2>);
 
+    const tierPoints = sumTierPoints(props.sysMap.siteMaps, props.useIncomplete);
+
     this.state = {
       map: map,
       sortedIDs: [...props.orderIDs],
       dragging: false,
+      tierPoints: tierPoints,
     };
   }
 
   shiftRow(id1: string, id2: string) {
-    const { sortedIDs } = this.state;
+    const { sortedIDs, map } = this.state;
     const i1 = sortedIDs.indexOf(id1);
     const i2 = sortedIDs.indexOf(id2);
 
     const z = sortedIDs[i1];
     sortedIDs[i1] = sortedIDs[i2]
     sortedIDs[i2] = z;
-    this.setState({ sortedIDs });
+
+    const sortedSiteMaps = sortedIDs.map(id => map[id]);
+    const tierPoints = sumTierPoints(sortedSiteMaps, this.props.useIncomplete);
+    this.setState({ sortedIDs, tierPoints });
   }
 
   render() {
-    const { map, sortedIDs, dragId, dragging } = this.state;
+    const { map, sortedIDs, dragId, dragging, tierPoints } = this.state;
 
     const rows = sortedIDs.map((id, i) => {
       const s = map[id];
@@ -123,9 +132,12 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         onDismiss={(ev) => this.props.onClose(undefined)}
         onRenderFooterContent={() => <div style={{ marginBottom: 10 }}>
           <Stack horizontal horizontalAlign='end' tokens={{ childrenGap: 10 }}>
+            <BothTierPoints disable={false} tier2={tierPoints.tier2} tier3={tierPoints.tier3} fontSize={24} />
+
             <DefaultButton
               iconProps={{ iconName: 'Accept' }}
               text='Okay'
+              style={{ marginLeft: 100 }}
               onClick={() => this.props.onClose(this.state.sortedIDs)}
             />
             <DefaultButton
@@ -164,4 +176,28 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       </Panel>
     </>;
   }
+}
+
+export const BothTierPoints: FunctionComponent<{ tier2: number; tier3: number; disable: boolean; fontSize: number; }> = (props) => {
+  return <div
+    style={{
+      marginLeft: 10,
+      color: props.disable ? 'grey' : undefined,
+      fontSize: props.fontSize
+    }}>
+    <span style={{ width: 20 }} />
+    <span
+      className='bubble'
+      style={props.tier2 < 0 ? { color: appTheme.palette.red, border: `2px dashed ${appTheme.palette.redDark}` } : { border: '2px dashed transparent' }}
+    >
+      <TierPoint tier={2} count={props.tier2} disabled={props.disable} />
+    </span>
+    <span style={{ width: 4 }} />
+    <span
+      className='bubble'
+      style={props.tier3 < 0 ? { color: appTheme.palette.red, border: `2px dashed ${appTheme.palette.redDark}` } : { border: '2px dashed transparent' }}
+    >
+      <TierPoint tier={3} count={props.tier3} disabled={props.disable} />
+    </span>
+  </div>;
 }

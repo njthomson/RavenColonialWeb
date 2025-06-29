@@ -115,6 +115,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   }
 
   // calc sum effects from all sites
+  const tierPoints = sumTierPoints(sysMap.siteMaps, useIncomplete);
   const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete);
 
   // re-sort bodies by their num value
@@ -123,6 +124,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   const finalMap = Object.assign(sys, {
     ...sysMap,
     ...sumEffects,
+    tierPoints,
   });
 
   // // store in the cache
@@ -145,23 +147,8 @@ export const getUnknownBody = (): Bod => {
 }
 
 const initializeSysMap = (sys: Sys) => {
-  // allSites.forEach(p => {
-  //   const m = p as SiteMap;
-  //   // remove everything we're going to set below
-  //   delete m.links;
-  //   delete m.economies;
-  //   delete m.primaryEconomy;
-  //   delete m.parentLink;
-  //   delete m.body;
-  // });
 
-  // let systemName = projects.find(s => s.systemName?.length > 0)?.systemName!;
-  // let systemAddress = projects.find(s => s.systemAddress > 0)?.systemAddress ?? 0;
-
-  // let architect = '';
-  // let primaryPort = undefined;
   let siteMaps: SiteMap2[] = [];
-  // let countActive = 0;
 
   // first: group sites by their bodies
   const bodyMap = sys.sites.reduce((map, s) => {
@@ -194,17 +181,6 @@ const initializeSysMap = (sys: Sys) => {
       body.surface.push(site);
     }
 
-    // // assign if not known
-    // if (!architect && !!p.architectName) {
-    //   architect = p.architectName;
-    // }
-    // if (p.isPrimaryPort) {
-    //   primaryPort = p;
-    // }
-    // if (s.status === 'complete') {
-    //   countActive++;
-    // }
-
     return map;
   }, {} as Record<string, BodyMap2>);
 
@@ -233,11 +209,10 @@ const initializeSysMap = (sys: Sys) => {
   return sysMap;
 };
 
-const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
+export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
 
-  const mapEconomies: Record<string, number> = {};
-  const sumEffects: SysEffects = {};
   const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
+  const primaryPortId = siteMaps[0].id;
 
   let taxCount = -2;
   for (const site of siteMaps) {
@@ -245,7 +220,7 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
     if (site.status === 'plan' && !useIncomplete) continue;
 
     // sum system tier points needed - these are already spent for projects in-progress
-    if (site.id !== site.sys.primaryPortId && site.type.needs.count > 0 && site.type.needs.tier > 1) {
+    if (site.id !== primaryPortId && site.type.needs.count > 0 && site.type.needs.tier > 1) {
       let needCount = site.type.needs.count;
       if (site.type.buildClass === 'starport' && site.type.tier > 1) {
         taxCount++;
@@ -261,6 +236,26 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
       const tierName = site.type.needs.tier === 2 ? 'tier2' : 'tier3';
       tierPoints[tierName] -= needCount;
     }
+
+    // skip incomplete sites, unless ...
+    if (site.status !== 'complete' && !useIncomplete) continue;
+
+    // sum system tier points given
+    if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
+      const tierName = site.type.gives.tier === 2 ? 'tier2' : 'tier3';
+      tierPoints[tierName] += site.type.gives.count;
+    }
+  }
+
+  return tierPoints;
+}
+
+const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
+
+  const mapEconomies: Record<string, number> = {};
+  const sumEffects: SysEffects = {};
+
+  for (const site of siteMaps) {
 
     // skip incomplete sites, unless ...
     if (site.status !== 'complete' && !useIncomplete) continue;
@@ -281,12 +276,6 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
       if (effect === 0) continue;
       sumEffects[key] = (sumEffects[key] ?? 0) + effect;
     }
-
-    // sum system tier points given
-    if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
-      const tierName = site.type.gives.tier === 2 ? 'tier2' : 'tier3';
-      tierPoints[tierName] += site.type.gives.count;
-    }
   }
 
   // sort: highest count first, or alpha if equal
@@ -303,7 +292,6 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
   return {
     economies,
     sumEffects,
-    tierPoints,
   };
 }
 

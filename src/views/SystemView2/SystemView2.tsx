@@ -5,10 +5,10 @@ import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
 import { buildSystemModel2, SiteMap2, SysMap2, unknown } from '../../system-model2';
-import { TierPoints } from '../../components/TierPoints';
+import { TierPoint } from '../../components/TierPoints';
 import { SiteLink } from '../../components/ProjectLink/ProjectLink';
 import { SystemStats } from './SystemStats';
-import { BuildOrder } from './BuildOrder';
+import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
 import { Site, Sys } from '../../types2';
@@ -373,6 +373,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         <BuildOrder
           sysMap={sysMap}
           orderIDs={this.state.orderIDs}
+          useIncomplete={this.state.useIncomplete}
           onClose={(orderIDs) => {
             if (orderIDs) {
               sysMap.primaryPortId = orderIDs[0];
@@ -426,22 +427,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           <CopyButton text={systemName} fontSize={16} />
           <Link href={pageLink} style={{ marginLeft: 4 }}>{systemName}</Link>
 
-          <div style={{ marginLeft: 10, color: sysMap ? undefined : 'grey' }}>
-            <span style={{ width: 20 }} />
-            <span
-              className='bubble'
-              style={sysMap?.tierPoints.tier2 < 0 ? { color: appTheme.palette.red, border: `2px dashed ${appTheme.palette.redDark}` } : { border: '2px dashed transparent' }}
-            >
-              <TierPoints tier={2} count={sysMap?.tierPoints.tier2} disabled={!sysMap} />
-            </span>
-            <span style={{ width: 4 }} />
-            <span
-              className='bubble'
-              style={sysMap?.tierPoints.tier3 < 0 ? { color: appTheme.palette.red, border: `2px dashed ${appTheme.palette.redDark}` } : { border: '2px dashed transparent' }}
-            >
-              <TierPoints tier={3} count={sysMap?.tierPoints.tier3} disabled={!sysMap} />
-            </span>
-          </div>
+          <BothTierPoints disable={!this.state.sysMap} tier2={this.state.sysMap?.tierPoints.tier2 ?? 0} tier3={this.state.sysMap?.tierPoints.tier3 ?? 0} fontSize={24} />
 
           <IconButton
             id='sysView2_SearchNew'
@@ -865,10 +851,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     if (tierPoints.tier2 < 0) {
-      validations.push(<div key={`valTier2`}>» System needs <TierPoints tier={2} count={-tierPoints.tier2} /></div>);
+      validations.push(<div key={`valTier2`}>» System needs <TierPoint tier={2} count={-tierPoints.tier2} /></div>);
     }
     if (tierPoints.tier3 < 0) {
-      validations.push(<div key={`valTier3`}>» System needs <TierPoints tier={3} count={-tierPoints.tier3} /></div>);
+      validations.push(<div key={`valTier3`}>» System needs <TierPoint tier={3} count={-tierPoints.tier3} /></div>);
     }
 
     // TODO: warn if a body has 4+ orbitals

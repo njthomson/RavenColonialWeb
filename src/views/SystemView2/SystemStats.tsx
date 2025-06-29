@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 import { Chevrons } from "../../components/Chevrons";
-import { TierPoints } from "../../components/TierPoints";
+import { TierPoint } from "../../components/TierPoints";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
 import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
@@ -30,11 +30,11 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       &nbsp;
       &nbsp;
       <span style={{ color: sysMap.tierPoints.tier2 < 0 ? appTheme.palette.red : undefined }}>
-        <TierPoints tier={2} count={sysMap.tierPoints.tier2} />
+        <TierPoint tier={2} count={sysMap.tierPoints.tier2} />
       </span>
       &nbsp;
       <span style={{ color: sysMap.tierPoints.tier3 < 0 ? appTheme.palette.red : undefined }}>
-        <TierPoints tier={3} count={sysMap.tierPoints.tier3} />
+        <TierPoint tier={3} count={sysMap.tierPoints.tier3} />
       </span>
 
     </div>
