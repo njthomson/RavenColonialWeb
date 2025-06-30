@@ -314,7 +314,11 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         styles={{
           container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
         }}
-        onDismiss={() => this.setState({ showBodyFilter: false })}
+        onDismiss={ev => {
+          if (!ev?.defaultPrevented) {
+            this.setState({ showBodyFilter: false });
+          }
+        }}
         onItemClick={(ev, item) => {
           if (ev?.defaultPrevented) { return; }
 
