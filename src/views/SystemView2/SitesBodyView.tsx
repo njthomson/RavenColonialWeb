@@ -300,7 +300,12 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           onClick={() => this.setState({ showBodyFilter: !showBodyFilter })}
         />
       </Stack>
-      <div style={{ marginLeft: bodyTree[rootBC.name] && bodyFilter.size === 0 ? indent : 0 }}>
+
+      <div style={{
+        paddingTop: 20,
+        marginLeft: bodyTree[rootBC.name] && bodyFilter.size === 0 ? indent : 0
+      }}
+      >
         {Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element)}
       </div>
       {showBodyFilter && <ContextualMenu
