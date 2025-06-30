@@ -41,18 +41,17 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     };
   }
 
-  shiftRow(id1: string, id2: string) {
+  shiftRow(dragId: string, rowId: string) {
     const { sortedIDs, map } = this.state;
-    const i1 = sortedIDs.indexOf(id1);
-    const i2 = sortedIDs.indexOf(id2);
 
-    const z = sortedIDs[i1];
-    sortedIDs[i1] = sortedIDs[i2]
-    sortedIDs[i2] = z;
+    // filter dragging item out of the list, then insert it ahead of the current row (getting idx before filtering, so we can drag it to the very bottom)
+    const idx = sortedIDs.indexOf(rowId);
+    const newSorted = sortedIDs.filter(id => id !== dragId);
+    newSorted.splice(idx, 0, dragId);
 
-    const sortedSiteMaps = sortedIDs.map(id => map[id]);
+    const sortedSiteMaps = newSorted.map(id => map[id]);
     const tierPoints = sumTierPoints(sortedSiteMaps, this.props.useIncomplete);
-    this.setState({ sortedIDs, tierPoints });
+    this.setState({ sortedIDs: newSorted, tierPoints });
   }
 
   render() {
