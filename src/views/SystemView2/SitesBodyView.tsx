@@ -51,6 +51,7 @@ interface SitesBodyViewState {
   lastSiteId?: string;
   bodyFilter: Set<BodyFeature>;
   showBodyFilter?: boolean;
+  bodyFilterExclude?: boolean;
 }
 
 export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState> {
@@ -264,7 +265,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
   }
 
   render() {
-    const { bodyTree, hideEmpties, showBodyFilter, bodyFilter } = this.state;
+    const { bodyTree, hideEmpties, showBodyFilter, bodyFilter, bodyFilterExclude } = this.state;
 
     return <div>
       <Stack
@@ -339,8 +340,18 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
               this.setState({ showBodyFilter: false });
             }
           },
+          {
+            key: `bf-exclude`,
+            text: bodyFilterExclude ? 'Exclude matches' : 'Include matches',
+            iconProps: { iconName: bodyFilterExclude ? 'SkypeCircleMinus' : 'CirclePlus' },
+            canCheck: false,
+            onClick: (ev) => {
+              ev?.preventDefault();
+              this.setState({ bodyFilterExclude: !bodyFilterExclude });
+            }
+          },
 
-          { key: `bf-div`, itemType: ContextualMenuItemType.Divider },
+          { key: `bf-div1`, itemType: ContextualMenuItemType.Divider },
 
           ...Object.values(BodyFeature).map(f => ({
             key: `bf-${f}`,
@@ -394,11 +405,17 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         : siblings.length > 1 && idx !== siblings.length - 1;
 
       const { bodyFilter } = this.state;
-      if (!!bodyFilter && !Array.from(bodyFilter).every(f => node.body.features.includes(f))) {
-        return {
-          hasSites: hasSites || !!node.map?.sites.length,
-          element: <div key={'nobody-' + node.body.num}>{childParts.map(cp => cp.element)}</div>,
-        };
+      if (bodyFilter.size > 0) {
+        let filterApplies = this.state.bodyFilterExclude
+          ? node.body.features.some(f => bodyFilter.has(f))
+          : !Array.from(bodyFilter).every(f => node.body.features.includes(f));
+
+        if (filterApplies) {
+          return {
+            hasSites: hasSites || !!node.map?.sites.length,
+            element: <div key={'nobody-' + node.body.num}>{childParts.map(cp => cp.element)}</div>,
+          };
+        }
       }
 
       return {
