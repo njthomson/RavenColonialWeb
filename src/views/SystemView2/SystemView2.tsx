@@ -1,6 +1,6 @@
 import './SystemView2.css';
 import * as api from '../../api';
-import { ActionButton, CommandBar, DefaultButton, Dialog, DialogFooter, Icon, IconButton, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ActionButton, CommandBar, DefaultButton, Dialog, DialogFooter, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
@@ -18,7 +18,7 @@ import { SiteCard } from './SiteCard';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName } from '../../components';
-import { createRandomPhoneticName, delayFocus } from '../../util';
+import { createRandomPhoneticName, delayFocus, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { Project } from '../../types';
@@ -420,6 +420,44 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const enableSave = this.isDirty() && !processingMsg;
 
+    const itemAddNewSite = {
+      key: 'sys-add1',
+      title: 'Add a planned or "what if" site',
+      text: 'Add',
+      iconProps: { iconName: 'Add' },
+      split: !isMobile(),
+      disabled: !!processingMsg,
+      onClick: () => this.createNewSite(),
+    } as IContextualMenuItem;
+
+    const splitItemsAddNewSite = [
+      {
+        key: 'sys-add5',
+        text: 'Import existing bodies and stations',
+        iconProps: { iconName: 'Build' },
+        onClick: () => this.doImport(),
+
+        style: { height: 60 },
+        onRenderContent: ((p, d) => {
+          return <div style={{ justifyContent: 'left' }}>
+            <span>
+              {d.renderItemIcon(p)}
+              {d.renderItemName(p)}
+            </span>
+            <div style={{ color: appTheme.palette.themeSecondary }}>Use to update bodies and new stations from Spansh and RavenColonial</div>
+          </div>;
+        })
+      }
+    ] as IContextualMenuItem[];
+
+    if (isMobile()) {
+      // split buttons don't work properly on mobile devices, so we'll add the default button as the first of the split items
+      splitItemsAddNewSite.unshift({
+        ...itemAddNewSite,
+        text: 'Add a new site'
+      });
+    }
+
     return <>
       <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>
       <h2 style={{ margin: 10, height: 32 }}>
@@ -456,66 +494,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
       <CommandBar
         className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`}
-        style={{
-          position: 'sticky',
-          zIndex: 2,
-          top: 0,
-        }}
-        styles={{
-          root: {
-            paddingLeft: 10,
-          }
-        }}
+        style={{ position: 'sticky', zIndex: 2, top: 0, }}
+        styles={{ root: { paddingLeft: 10, } }}
         items={[
           {
-            key: 'sys-add1',
-            title: 'Add a planned or "what if" site',
-            text: 'Add',
-            iconProps: { iconName: 'Add' },
-            split: true,
-            disabled: !!processingMsg,
-            onClick: () => this.createNewSite(),
-
+            ...itemAddNewSite,
             subMenuProps: {
               calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
-              items: [
-                // {
-                //   key: 'sys-add1',
-                //   text: 'Plan a new site',
-                //   iconProps: { iconName: 'WebAppBuilderFragmentCreate' },
-                //   onClick: () => this.createNewSite(),
-                // },
-                // {
-                //   key: 'sys-add2',
-                //   text: 'Start building a site',
-                //   iconProps: { iconName: 'Manufacturing' },
-                // },
-                // {
-                //   key: 'sys-add3',
-                //   text: 'Add a completed site',
-                //   iconProps: { iconName: 'CityNext2' },
-                // },
-                // {
-                //   key: 'sys-add4',
-                //   itemType: ContextualMenuItemType.Divider,
-                // },
-                {
-                  key: 'sys-add5',
-                  text: 'Import existing bodies and stations',
-                  iconProps: { iconName: 'Build' },
-                  onClick: () => this.doImport(),
-                  style: { height: 60 },
-                  onRenderContent: ((p, d) => {
-                    return <div style={{ justifyContent: 'left' }}>
-                      <span>
-                        {d.renderItemIcon(p)}
-                        {d.renderItemName(p)}
-                      </span>
-                      <div style={{ color: appTheme.palette.themeSecondary }}>Use to update bodies and new stations from Spansh and RavenColonial</div>
-                    </div>;
-                  })
-                }
-              ]
+              items: splitItemsAddNewSite,
             }
           },
 
@@ -572,7 +558,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             id: 'sysView2_UseIncomplete',
             key: 'toggle-use-incomplete',
             title: 'Include incomplete sites in calculations?',
-            // text: 'Include all',
             iconProps: { iconName: useIncomplete ? 'TestBeakerSolid' : 'TestBeaker' },
             disabled: !!processingMsg,
             onClick: () => {
@@ -607,8 +592,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 {
                   key: 'btn-open-inara',
                   text: 'View on Inara',
-                  // disabled: refreshing,
-                  // style: {color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
                   onClick: () => {
                     window.open(`https://inara.cz/elite/starsystem/?search=${systemName}`, 'Inara');
                   },
@@ -616,8 +599,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 {
                   key: 'btn-open-spansh',
                   text: 'View on Spansh',
-                  // disabled: refreshing,
-                  // style: {color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
                   onClick: () => {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
                   },

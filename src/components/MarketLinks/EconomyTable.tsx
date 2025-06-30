@@ -105,7 +105,7 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
             <Icon className='icon-inline' iconName='Cancel' style={{ cursor: 'Default', textAlign: 'center', width: '100%', color: appTheme.palette.red, fontWeight: 'bold' }} />
           </td>;
 
-          if (journalMapVal) {
+          if (journalMapVal > 0) {
             // value from journal
             journalMapElements.push(<td className={cn.bl}>{journalMapVal.toFixed(0)} %</td>);
 
@@ -380,7 +380,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
               <span>{mapName[key]}</span>
             </Stack>
           </td>
-          {val ? <td className='cr'>{val.toFixed(0)} %</td> : <td className='cr' style={{ textAlign: 'center', color: 'grey' }}>-</td>}
+          {val > 0 ? <td className='cr'>{val.toFixed(0)} %</td> : <td className='cr' style={{ textAlign: 'center', color: 'grey' }}>-</td>}
           {/* {journalMapElements} */}
         </tr>;
       });

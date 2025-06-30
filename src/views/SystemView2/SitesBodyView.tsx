@@ -347,6 +347,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           {
             key: `bf-exclude`,
             text: bodyFilterExclude ? 'Exclude matches' : 'Include matches',
+            title: 'Click to toggle between excluding or including bodies with selected features below',
             iconProps: { iconName: bodyFilterExclude ? 'SkypeCircleMinus' : 'CirclePlus' },
             canCheck: false,
             onClick: (ev) => {

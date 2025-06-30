@@ -5,6 +5,8 @@ import { SiteMap2 } from "./system-model2";
 import { BodyFeature } from "./types";
 import { asPosNegTxt2 } from "./util";
 
+let showConsoleAudit = false;
+
 export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean): Economy => {
   if (!site.economies || !site.primaryEconomy) {
     site.economyAudit = [];
@@ -50,7 +52,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     site.economies = map;
     site.primaryEconomy = primaryEconomy;
 
-    if (Date.now() < 0) { // <-- TODO: change this
+    if (showConsoleAudit) {
       var mapTxt = Object.entries(map)
         .filter(([k, v]) => v > 0)
         .sort((a, b) => b[1] - a[1])
@@ -100,6 +102,8 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       console.warn(`Unexpected body type: "${site.body?.type}"`);
       return;
 
+    case 'un':
+      break;
     case 'bh':
     case 'ns':
     case 'wd':

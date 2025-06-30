@@ -114,7 +114,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
 
         {!loading && this.renderActiveProjects()}
 
-        {!loading && !showCreate && <div>
+        {!loading && !showCreate && systemName && <div>
           <Stack horizontal tokens={{ childrenGap: 8 }} style={{ marginTop: 16 }}>
             <DefaultButton
               iconProps={{ iconName: 'Manufacturing' }}
@@ -124,7 +124,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
             <DefaultButton
               iconProps={{ iconName: 'CityNext2' }}
               text='Add a completed project?'
-              split
+              split={true}
               menuProps={{
                 items: [
                   {
@@ -140,6 +140,10 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
                 }
               }}
               onClick={() => this.setState({ showAddExisting: !this.state.showAddExisting })}
+              onTouchEnd={ev => {
+                ev.preventDefault();
+                this.setState({ showAddExisting: !this.state.showAddExisting });
+              }}
             />
           </Stack>
 
