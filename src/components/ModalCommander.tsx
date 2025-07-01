@@ -76,7 +76,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           // and push into local storage
           store.cmdrLinkedFCs = linkedFCs;
         })
-        .catch(err => console.error(err.message));
+        .catch(err => console.error(err.stack));
     }
   }
 

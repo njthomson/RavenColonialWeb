@@ -212,7 +212,7 @@ const initializeSysMap = (sys: Sys) => {
 export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
 
   const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
-  const primaryPortId = siteMaps[0].id;
+  const primaryPortId = siteMaps && siteMaps[0]?.id;
 
   let taxCount = -2;
   for (const site of siteMaps) {

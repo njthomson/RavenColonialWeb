@@ -155,7 +155,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           console.error(`No data for: ${this.props.systemName} ... trying import ...`);
           this.doImport();
         } else {
-          console.error(err.message);
+          console.error(err.stack);
           this.setState({ errorMsg: err?.message ?? 'Something failed' });
         }
       });
@@ -184,7 +184,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         });
       })
       .catch(err => {
-        console.error(err.message);
+        console.error(err.stack);
         this.setState({ errorMsg: err?.message ?? 'Something failed' });
       });
   };
