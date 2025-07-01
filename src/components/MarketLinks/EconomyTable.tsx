@@ -395,6 +395,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
     if (props.site.id.startsWith('&')) {
       if (realMatch) {
         spanshHeader = <>
+          {!!props.sysView.state.useIncomplete && <Icon iconName='Warning' style={{ color: appTheme.palette.yellow }} />}
           From&nbsp;
           <Link
             href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
@@ -412,7 +413,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
                 color: 'grey',
               }}
             >
-              &nbsp;(As of: {new Date(realMatch.updated).toLocaleString()})
+              &nbsp;As of: {new Date(realMatch.updated).toLocaleString()}
             </span>
           </>}
         </>;
@@ -524,8 +525,12 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
 
     <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
       {!!realEconomy && <>
-        <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
-        <br />
+        {!!props.sysView.state.useIncomplete && <div style={{ color: appTheme.palette.yellow }}>
+          <Icon iconName='Warning' /> Spansh comparison may not match if calculating with incomplete sites <Icon iconName='TestBeakerSolid' />
+        </div>}
+        <div>
+          <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
+        </div>
       </>}
       Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
     </div>
