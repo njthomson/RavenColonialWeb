@@ -312,7 +312,7 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
 
 
 export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boolean; noCompare?: boolean; sysView: SystemView2 }> = (props) => {
-  const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site.id);
+  const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site?.id);
   const realEconomy = realMatch?.economies;
 
   const [showAudit, setShowAudit] = useState(false);

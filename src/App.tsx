@@ -130,7 +130,7 @@ export class App extends Component<AppProps, AppState> {
     if (!!store.cmdrName) {
       api.cmdr.getPrimary(store.cmdrName)
         .then(buildId => store.primaryBuildId = buildId)
-        .catch(err => console.error(err.message));
+        .catch(err => console.error(err.stack));
     }
   }
 

@@ -553,6 +553,11 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const { c1, c2 } = getBodyColour(props.node?.body.type, props.node?.body.subType);
   const sz = getBodySize(props.node?.body.type);
 
+  // without surface sites, singular orbitals are positioned too high and look disconnected
+  const shiftOrbitalsDown = !canHaveBodySites && orbitals?.length === 1 && !orbitals[0].links
+    ? sz * 0.70
+    : 0;
+
   return <div
     style={{
       position: 'relative',
@@ -614,6 +619,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           borderLeft: innerBorders,
           position: 'relative',
           marginBottom: bottomGap,
+          top: shiftOrbitalsDown,
         }}>
           <div style={{ fontSize: 14, padding: '2px 8px', borderBottom: innerBorders }}>
             {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}

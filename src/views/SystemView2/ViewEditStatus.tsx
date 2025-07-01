@@ -16,7 +16,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
         setDropDown(!dropDown);
       }}
     >
-      {props.status}
+      {mapStatus[props.status]}
       <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
     </ActionButton>
 

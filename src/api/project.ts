@@ -4,7 +4,6 @@ import { callAPI } from "./api-util";
 /** Project APIs */
 export const project = {
 
-
   create: async (project: CreateProject): Promise<Project> => {
     return await callAPI<Project>(
       `/api/project/`,

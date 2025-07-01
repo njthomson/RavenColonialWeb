@@ -7,9 +7,17 @@ import { callAPI } from "./api-util";
 /** System level APIs */
 export const systemV2 = {
   currentSchemaVersion: 3,
+  cache: {
+    sys: {} as Record<string, Sys>,
+    economies: {} as Record<string, GetRealEconomies[]>,
+  },
 
   getSys: async (systemName: string): Promise<Sys> => {
-    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}`);
+    if (systemName in systemV2.cache.sys) { return systemV2.cache.sys[systemName]; }
+
+    const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}`);
+    systemV2.cache.sys[systemName] = result;
+    return result;
   },
 
   getBodies: async (systemName: string): Promise<Site> => {
@@ -25,7 +33,11 @@ export const systemV2 = {
   },
 
   getRealEconomies: async (id64OrName: string): Promise<GetRealEconomies[]> => {
-    return await callAPI<GetRealEconomies[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/spanshEconomies`);
+    if (id64OrName in systemV2.cache.economies) { return systemV2.cache.economies[id64OrName]; }
+
+    const result = await callAPI<GetRealEconomies[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/spanshEconomies`);
+    systemV2.cache.economies[id64OrName] = result;
+    return result;
   },
 };
 

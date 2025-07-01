@@ -30,14 +30,20 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     if (site.type.buildClass === 'settlement') {
       // Odyssey settlements have only 1 fixed economy
       adjust(site.type.inf, +1.0, 'Odyssey settlement fixed economy', map, site);
+      // but they get body buff's?
+      applyBuffs(map, site);
     } else {
       // calculate everything else
       applyBodyType(map, site);
-      applyBodyFeatures(map, site);
+      if (!site.type.fixed) {
+        // fixed economies do not get body buff's?
+        applyBodyFeatures(map, site);
+      }
       applyStrongLinks(map, site, useIncomplete);
       applyBuffs(map, site);
       applyWeakLinks(map, site, useIncomplete);
     }
+
     // sort to get the primary
     const primaryEconomy = Object.keys(map).sort((a, b) => {
       return map[b as keyof EconomyMap] - map[a as keyof EconomyMap];
@@ -171,7 +177,7 @@ const applyBodyFeatures = (map: EconomyMap, site: SiteMap2) => {
 const applyStrongLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolean) => {
   if (!site.links?.strongSites) { return; }
 
-  const strongInf = new Set<keyof EconomyMap>();
+  // const strongInf = new Set<keyof EconomyMap>(); // Apply strong links once per inf
   for (let s of site.links.strongSites) {
     // skip incomplete sites ?
     if (s.status !== 'complete' && !useIncomplete) { continue; }
@@ -187,15 +193,19 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolea
       }
     }
 
+    /* Apply strong links once per inf
     // Track which economy types are providing a strong link (unless we have a fixed/specialized economy?)
     if (!site.type.fixed) {
       strongInf.add(inf as keyof EconomyMap);
     }
+    */
 
     // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
     if (s.type.tier === 2) {
       if (s.type.inf in map) {
         adjust(s.type.inf, +0.8, `Apply strong link from: ${s.name} (Tier 2)`, map, site);
+        // boost every link?
+        applyStrongLinkBoost(inf, map, site);
       } else {
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name}`);
       }
@@ -212,16 +222,19 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolea
 
       if (inf in map) {
         adjust(s.type.inf, +0.4, `Apply strong link from: ${s.name} (Tier 1)`, map, site);
+        applyStrongLinkBoost(inf, map, site);
       } else {
         console.warn(`Unknown economy '${inf}' for site '${s.name}', generating for: ${site.name}`);
       }
     }
   }
 
+  /* Apply strong links once per inf?
   // Strong Links are subject to modifiers which affect them depending on specific characteristics of the local body
   for (const inf of Array.from(strongInf)) {
     applyStrongLinkBoost(inf, map, site);
   }
+  */
 };
 
 const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => {
@@ -234,18 +247,18 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
 
     case 'agriculture':
       if (matches(['elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body is ELW or WW || Body has BIO or TERRAFORMABLE', map, site);
+        return adjust(inf, +0.4, '+ Boost: Body is ELW / WW or has BIO / TERRAFORMABLE', map, site);
       }
       if (matches(['icy'], site.body?.type) || matches([BodyFeature.tidal], site.body?.features)) {
         // TODO: Need to support: "On or orbiting a moon that is tidally locked to its planet and its subsequent parent planet(s) are tidally locked to the star"
         // Ideally ... just make those bodies have: BodyFeature.tidal
-        return adjust(inf, -0.4, 'Strong link boost: Body is ICY || Body has TIDAL', map, site);
+        return adjust(inf, -0.4, 'Strong link boost: Body is ICY or has TIDAL', map, site);
       }
       break;
 
     case 'extraction':
       if (matches(["major", "pristine"], reserveLevel) || matches([BodyFeature.volcanism], site.body?.features)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR or PRISTINE || Body has VOLCANISM', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR / PRISTINE or has VOLCANISM', map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
         return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
@@ -254,7 +267,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
 
     case 'hightech':
       if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body is AMMONIA or ELW or WW || Body has BIO or GEO', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: Body is AMMONIA or ELW / WW or has has BIO / GEO', map, site);
       }
       return;
 
@@ -270,7 +283,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
 
     case 'tourism':
       if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features) || site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
-        return adjust(inf, +0.4, 'Strong link boost: Body is AMMONIA or ELW or WW || Body has BIO or GEO || System has Black Hole or Neutron Star or White Dwarf', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: Body is AMMONIA / ELW / WW or has BIO / GEO or System has Black Hole / Neutron Star / White Dwarf', map, site);
       }
       return;
   }

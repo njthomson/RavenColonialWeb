@@ -66,16 +66,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     super(props);
 
     this.state = {
+      ...this.getResetState(),
       processingMsg: 'Loading ...',
       useIncomplete: store.useIncomplete,
-      sysMap: undefined!,
-      sysOriginal: undefined!,
-      originalSiteIDs: [],
-      dirtySites: {},
-      deletedIDs: [],
-      orderIDs: [],
       viewType: store.sysViewView,
-      activeProjects: {},
     };
   }
 
@@ -101,32 +95,46 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
   }
 
-  doSystemSearch() {
-    // reset/clear everything, ready to search for a new system
-    window.document.title = 'Sys: ?';
-    this.setState({
+  getResetState() {
+    return {
       errorMsg: '',
       processingMsg: undefined,
+      // skip: useIncomplete
       sysOriginal: undefined!,
       sysMap: undefined!,
       showBuildOrder: false,
       pinnedSite: undefined,
+      pinnedSnapshot: undefined,
+      sysStatsSnapshot: undefined,
       selectedSite: undefined,
       invalidSite: undefined,
       dirtySites: {},
       deletedIDs: [],
+      // skip: viewType,
       orderIDs: [],
+      originalSiteIDs: [],
       showEditSys: false,
+      showConfirmAction: undefined,
+      activeProjects: {},
+      realEconomies: [],
+    } as Omit<SystemView2State, 'useIncomplete' | 'viewType'>;
+  }
+
+  doSystemSearch() {
+    // reset/clear everything, ready to search for a new system
+    window.document.title = 'Sys: ?';
+    this.setState({
+      ...this.getResetState()
     });
     delayFocus('find-system-input');
   }
 
   loadData = (reset?: boolean) => {
     this.setState({
+      ...(reset ? this.getResetState() : {} as any),
       processingMsg: 'Loading ...',
       showConfirmAction: undefined,
       errorMsg: '',
-      sysMap: reset ? undefined! : this.state.sysMap,
     });
 
     api.systemV2.getSys(this.props.systemName)
@@ -292,7 +300,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   siteChanged = (site: Site) => {
     // console.log(`siteChanged: ${site.name} (${site.buildType} on body #${site.bodyNum} / ${site.id})`);
     SystemView2.lastBodyNum = -1; //site.bodyNum;
-    SystemView2.lastBuildType = site.buildType;
+    SystemView2.lastBuildType = ''; //site.buildType;
 
     // track which sites have changed
     const { dirtySites } = this.state;

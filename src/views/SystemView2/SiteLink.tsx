@@ -23,8 +23,8 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
   return <div
     id={id + '-div'}
     style={{ cursor: 'default' }}
-    onMouseUp={() => {
-      if (props.doSelect) {
+    onMouseUp={ev => {
+      if (props.doSelect && !ev.defaultPrevented) {
         sysView.siteSelected(site);
       } else {
         setIsCurrent(!isCurrent);

@@ -196,7 +196,20 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
               }}
             />}
             <h3 style={{ fontSize: 20 }}>
-              Choose a type:
+              <Stack horizontal verticalAlign='center'>
+                <div>Choose a type:</div>
+                <IconButton
+                  title='View table in a separate tab'
+                  href='/table'
+                  target='table'
+                  iconProps={{ iconName: 'OpenInNewWindow', style: { cursor: 'pointer' } }}
+                  style={{
+                    marginLeft: 10,
+                    marginTop: 4,
+                    width: 16, height: 16,
+                  }}
+                />
+              </Stack>
             </h3>
             <ShowCoachingMarks target='#go-large' id='largeBuildType' />
           </div>;
