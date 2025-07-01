@@ -421,7 +421,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
         spanshHeader = <span style={{ color: 'grey' }}>Loading ...</span>;
       } else {
         spanshHeader = <Link
-          title='Compare estimated values with real values from Spansh'
+          title={`Compare estimated values with real values from Spansh.\n\nNOTE: Comparisons are only valid when everything in the system is known to Raven Colonial.`}
           onClick={() => {
             props.sysView.doGetRealEconomies();
             setLoadingCompare(true);
