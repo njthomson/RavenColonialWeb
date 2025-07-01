@@ -1,4 +1,5 @@
 
+import { EconomyMap } from "../system-model2";
 import { ReserveLevel } from "../types";
 import { Site, Sys } from "../types2";
 import { callAPI } from "./api-util";
@@ -22,6 +23,10 @@ export const systemV2 = {
   import: async (systemName: string, type?: string): Promise<Sys> => {
     return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import/${type}`, 'POST');
   },
+
+  getRealEconomies: async (id64OrName: string): Promise<GetRealEconomies[]> => {
+    return await callAPI<GetRealEconomies[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/spanshEconomies`);
+  },
 };
 
 export interface SitesPut {
@@ -30,4 +35,10 @@ export interface SitesPut {
   orderIDs: string[];
   architect?: string;
   reserveLevel?: ReserveLevel;
+}
+
+export interface GetRealEconomies {
+  id: string;
+  updated: string;
+  economies: EconomyMap;
 }

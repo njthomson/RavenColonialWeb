@@ -12,7 +12,7 @@ export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: str
   const [proj, setProj] = useState<Project | undefined | null>(undefined);
 
   useMemo(async () => {
-    if (props.status === 'plan' || !props.buildId) {
+    if (props.status !== 'build' || !props.buildId) {
       // make no request
       return undefined;
     } else if (typeof props.sysView.state.activeProjects[props.buildId] === 'undefined') {
@@ -34,7 +34,6 @@ export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: str
   if (proj) {
     const progress = (100 - (100 / proj.maxNeed * proj.sumNeed));
     progressElement = <Stack horizontal verticalAlign='center' horizontalAlign='start'>
-      {/* <span style={{ backgroundColor: 'grey', color: 'black' }}>&nbsp;TODO: Completion chart&nbsp;</span> */}
       <div style={{ width: 160, height: 20, padding: 0, margin: '10px 10px 0 10px' }}>
         <ChartGeneralProgress progress={proj.maxNeed - proj.sumNeed} maxNeed={proj.maxNeed} readyOnFC={0} minimal width={160} />
       </div>

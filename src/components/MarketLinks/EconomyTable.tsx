@@ -8,6 +8,7 @@ import { CopyButton } from "../CopyButton";
 import { EconomyBlock } from "../EconomyBlock";
 import { SiteMap2 } from "../../system-model2";
 import { mapBodyTypeNames } from "../../types2";
+import { SystemView2 } from "../../views/SystemView2/SystemView2";
 
 const journalEconomiesCache: Record<string, { timestamp: string; map: EconomyMap }> = {};
 type StationEconomies = { Name: string, Name_Localised: string, Proportion: number };
@@ -310,68 +311,74 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
 };
 
 
-export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boolean; noCompare?: boolean; }> = (props) => {
-  const cacheKey = `${props.site.sys.name}/${props.site.name}`;
+export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boolean; noCompare?: boolean; sysView: SystemView2 }> = (props) => {
+  const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site.id);
+  const realEconomy = realMatch?.economies;
 
-  const [journalMap] = useState<EconomyMap | undefined>(journalEconomiesCache[cacheKey]?.map);
   const [showAudit, setShowAudit] = useState(false);
+  const [loadingCompare, setLoadingCompare] = useState(!!realEconomy);
 
   // exit early if the site is not complete it cannot be landed at
   if (!props.site || props.site.type.padSize === 'none') return null;
 
   let economyRatioRows: JSX.Element[] = [];
+  let spanshHeader = undefined
   if (props.site.economies) {
-    const economyRatioKeys = Array.from(new Set([...Object.keys(props.site.economies ?? {}), ...Object.keys(journalMap ?? {})]));
+    const economyRatioKeys = Array.from(new Set([
+      ...Object.keys(props.site.economies ?? {}),
+      ...Object.keys(realEconomy ?? {})
+    ]));
+
     economyRatioRows = economyRatioKeys
-      .map(key => ([key, props.site.economies![key as keyof EconomyMap] ?? 0]) as [keyof EconomyMap, number])
-      .filter(([, val]) => val > 0 /*|| (journalMap && journalMap[key] > 0)*/)
+      .map(key => ([key, (props.site.economies && props.site.economies[key as keyof EconomyMap]) ?? 0]) as [keyof EconomyMap, number])
+      .filter(([key, val]) => val > 0 || (realEconomy && realEconomy[key] > 0))
       .sort((a, b) => b[1] - a[1])
       .map(([key, val]) => {
         val = Math.round(val * 100);
 
-        // if we have entries from journal files to compare ...
-        /*
-        let journalMapElements: JSX.Element[] = [];
-        if (journalMap) {
-          const journalMapVal = Math.round(journalMap && journalMap[key] * 100);
-          const greyDash = <td className={cn.bl} style={{ textAlign: 'center', color: 'grey' }}>-</td>;
-          const redX = <td className={cn.bl} style={{ textAlign: 'center' }}>
-            <Icon className='icon-inline' iconName='Cancel' style={{ cursor: 'Default', textAlign: 'center', width: '100%', color: appTheme.palette.red, fontWeight: 'bold' }} />
-          </td>;
+        // if we have realEconomy data to compare ...
+        let comparisonElements = <></>;
+        if (realEconomy) {
+          const realVal = realEconomy[key];
 
-          if (journalMapVal) {
-            // value from journal
-            journalMapElements.push(<td className={cn.bl}>{journalMapVal.toFixed(0)} %</td>);
-
-            // match?
-            const match = journalMapVal === val;
-            let journalMapDiff = <Icon
-              className='icon-inline'
-              iconName={match ? 'CheckMark' : 'Cancel'}
-              style={{
-                cursor: 'Default',
-                textAlign: 'center',
-                width: '100%',
-                color: match ? appTheme.palette.greenLight : appTheme.palette.red,
-                fontWeight: 'bold'
-
-              }}
-            />;
-            journalMapElements.push(<td className={cn.bl}>{journalMapDiff}</td>);
+          // show values from Spansh
+          if (typeof realVal !== 'undefined') {
 
             // diff
-            if (journalMapVal && journalMapVal !== val && val > 0) {
-              const diff = val - journalMapVal;
-              journalMapDiff = <span style={{ color: appTheme.palette.yellow }}>{asPosNegTxt(diff)} %</span>;
-              journalMapElements.push(<td >{journalMapDiff}</td>);
+            let diffElement = undefined;
+            if (realVal !== val && val > 0) {
+              const diff = val - realVal;
+              diffElement = <span style={{ color: appTheme.palette.yellow }}>{asPosNegTxt(diff)} %</span>;
             }
+
+            const match = realVal === val;
+            comparisonElements = <>
+              <td className={cn.bl}>{realVal.toFixed(0)} %</td>
+              <td className={cn.bl}>
+                <Icon
+                  className='icon-inline'
+                  iconName={match ? 'CheckMark' : 'Cancel'}
+                  style={{
+                    cursor: 'Default',
+                    textAlign: 'center',
+                    width: '100%',
+                    color: match ? appTheme.palette.greenLight : appTheme.palette.red,
+                    fontWeight: 'bold'
+                  }}
+                />
+              </td>
+              <td>{diffElement}</td>
+            </>;
           } else {
-            // no value from journal?
-            journalMapElements.push(greyDash);
-            journalMapElements.push(redX);
+            // no value to compare?
+            comparisonElements = <>
+              <td className={cn.bl} style={{ textAlign: 'center', color: 'grey' }}>-</td>
+              <td className={cn.bl} style={{ textAlign: 'center' }}>
+                <Icon className='icon-inline' iconName='Cancel' style={{ cursor: 'Default', textAlign: 'center', width: '100%', color: appTheme.palette.red, fontWeight: 'bold' }} />
+              </td>
+            </>;
           }
         }
-        */
 
         return <tr key={`link${props.site.buildId}econ${key}`}>
           <td className={`cl ${cn.br}`} >
@@ -381,9 +388,49 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
             </Stack>
           </td>
           {val > 0 ? <td className='cr'>{val.toFixed(0)} %</td> : <td className='cr' style={{ textAlign: 'center', color: 'grey' }}>-</td>}
-          {/* {journalMapElements} */}
+          {comparisonElements}
         </tr>;
       });
+
+    if (props.site.id.startsWith('&')) {
+      if (realMatch) {
+        spanshHeader = <>
+          From&nbsp;
+          <Link
+            href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
+            target='spansh'
+          >
+            Spansh <Icon iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
+          </Link>
+
+          {realMatch?.updated && <>
+            <span
+              style={{
+                fontWeight: 'normal',
+                position: 'absolute',
+                width: 'max-content',
+                color: 'grey',
+              }}
+            >
+              &nbsp;(As of: {new Date(realMatch.updated).toLocaleString()})
+            </span>
+          </>}
+        </>;
+      } else if (loadingCompare) {
+        spanshHeader = <span style={{ color: 'grey' }}>Loading ...</span>;
+      } else {
+        spanshHeader = <Link
+          title='Compare estimated values with real values from Spansh'
+          onClick={() => {
+            props.sysView.doGetRealEconomies();
+            setLoadingCompare(true);
+          }}
+        >
+          Compare with Spansh?
+        </Link>;
+      }
+    }
+
   }
 
   const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => ['bh', 'ns', 'wd'].includes(b.type)).map(b => b.type)));
@@ -455,23 +502,31 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
         </div>
       </Panel>}
 
-      <table className='economy-ratios' cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
-        <thead>
-          <tr>
-            <th className={`${cn.bb} ${cn.br}`}>Economy</th>
-            <th className={`${cn.bb}`}>Estimate</th>
-            {/* {!!journalMap && <th className={`${cn.bb} ${cn.bl}`} colSpan={3}>From journals</th>} */}
-          </tr>
-        </thead>
-        <tbody>
-          {economyRatioRows}
-        </tbody>
-      </table>
+      {economyRatioRows.length > 0 && <>
+        <table className='economy-ratios' cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
+          <thead>
+            <tr>
+              <th className={`${cn.bb} ${cn.br}`} style={{ width: 100, height: 16 }}>Economy</th>
+              <th className={`${cn.bb}`}>Estimate</th>
+              {spanshHeader && <th className={`cl ${cn.bb} ${cn.bl}`} colSpan={3}>
+                {spanshHeader}
+              </th>}
+            </tr>
+          </thead>
+          <tbody>
+            {economyRatioRows}
+          </tbody>
+        </table>
+      </>}
 
     </div>
     }
 
     <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
+      {!!realEconomy && <>
+        <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
+        <br />
+      </>}
       Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
     </div>
   </div>;

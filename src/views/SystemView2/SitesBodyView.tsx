@@ -296,7 +296,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         <IconButton
           id='btn-body-filter'
           iconProps={{ iconName: bodyFilter.size > 0 ? 'FilterSolid' : 'Filter' }}
-          title='Body filter'
+          title='Filter bodies, excluding or including, based on their features.'
           style={{ marginRight: 6, }}
           onClick={() => this.setState({ showBodyFilter: !showBodyFilter })}
         />

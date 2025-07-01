@@ -281,11 +281,18 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
   // assume reserveLevel of PRISTINE if not set
   const reserveLevel = site.sys.reserveLevel ?? 'pristine';
 
-  // If the System has Major or Pristine Resources (+0.40) for Industrial, Extraction and Refinery
-  if (reserveLevel === 'major' || reserveLevel === 'pristine') {
-    if (map.industrial > 0) { adjust('industrial', +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site); }
-    if (map.extraction > 0) { adjust('extraction', +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site); }
-    if (map.refinery > 0) { adjust('refinery', +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site); }
+  // Buffs only apply once per any criteria, except: Reserve level. Hence we will do these first
+  const reserveSensitiveEconomies = ['industrial', 'extraction', 'refinery'] as (keyof EconomyMap)[];
+  for (const key of reserveSensitiveEconomies) {
+    if (map[key] > 0) {
+      if (reserveLevel === 'major' || reserveLevel === 'pristine') {
+        // If the System has Major or Pristine Resources (+0.40) for Industrial, Extraction and Refinery
+        adjust(key, +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site);
+      } else if (reserveLevel === 'low' || reserveLevel === 'depleted') {
+        // If the System has Low or Depleted Resources (-0.40) for Industrial, Extraction and Refinery
+        adjust(key, -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site);
+      }
+    }
   }
 
   // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
@@ -329,12 +336,6 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
     if (map.tourism > 0) { adjust('tourism', +0.4, 'Buff: body is AMMONIA', map, site); }
   }
 
-  // If the System has Low or Depleted Resources (-0.40) for Industrial, Extraction and Refinery
-  if (reserveLevel === 'low' || reserveLevel === 'depleted') {
-    if (map.industrial > 0) { adjust('industrial', -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site); }
-    if (map.extraction > 0) { adjust('extraction', -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site); }
-    if (map.refinery > 0) { adjust('refinery', -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site); }
-  }
   // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
   if (site.body?.type === 'ib') {
     if (map.agriculture > 0) { adjust('agriculture', -0.4, 'Buff: body is ICY', map, site); }

@@ -73,7 +73,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       </Stack>
 
     </div>
-    <EconomyTable2 site={siteMap} noCompare />
+    <EconomyTable2 site={siteMap} sysView={sysView} />
     {siteMap?.links && <MarketLinks site={siteMap as any} sysView={props.sysView} />}
     <BuildEffects buildType={site.buildType} />
 

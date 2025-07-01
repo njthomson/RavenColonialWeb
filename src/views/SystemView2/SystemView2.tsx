@@ -12,7 +12,7 @@ import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
 import { Site, Sys } from '../../types2';
-import { SitesPut } from '../../api/v2-system';
+import { GetRealEconomies, SitesPut } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
 import { SiteCard } from './SiteCard';
 import { store } from '../../local-storage';
@@ -47,6 +47,7 @@ interface SystemView2State {
   showEditSys?: boolean;
   showConfirmAction?: () => void;
   activeProjects: Record<string, Project | null>
+  realEconomies?: GetRealEconomies[];
 }
 
 const viewTypes = [
@@ -159,6 +160,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         }
       });
   };
+
+  doGetRealEconomies = () => {
+    api.systemV2.getRealEconomies(this.state.sysMap.id64.toString())
+      .then(realEconomies => {
+        this.setState({ realEconomies });
+      });
+  }
 
   doImport = (type?: string) => {
     this.setState({ processingMsg: 'Importing ...', errorMsg: '' });

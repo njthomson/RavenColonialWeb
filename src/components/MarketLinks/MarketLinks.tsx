@@ -39,7 +39,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
     const { strong, weak } = props.site.links.economies[key];
     const color = economyColors[key] ?? '#FFF';
 
-    linkRows.push(<tr key={`link${props.site.buildId}${key}`}>
+    linkRows.push(<tr key={`link${props.site.buildId}-${key}`}>
       <td className={cn.br}>
         <div style={{ display: 'inline-block', width: 10, height: 10, marginRight: 8, backgroundColor: color, border: '1px solid rgba(0,0,0,0.3)' }}></div>
         {mapName[key]}
@@ -52,7 +52,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
   // TODO: Split this component into 2?
   // list of strong linked sites
   const siteRows = props.site.links.strongSites.map(s => {
-    return <div key={`link${props.site.buildId}${s.buildId}`} style={{ marginLeft: 8 }}>
+    return <div key={`link${props.site.buildId}-${s.buildId ?? (s as any).id}`} style={{ marginLeft: 8 }}>
       {!props.sysView && <ProjectLink proj={s} noSys noBold />}
       {props.sysView && <SiteLink prefix='ml' site={s as any as SiteMap2} sysView={props.sysView} />}
     </div>;
