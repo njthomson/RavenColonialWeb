@@ -85,6 +85,10 @@ const adjust = (inf: string, delta: number, reason: string, map: EconomyMap, sit
   map[inf as keyof EconomyMap] += delta;
   const after = map[inf as keyof EconomyMap];
 
+  if (inf === 'colony') {
+    console.warn(`Why are we adjusting Colony for: ${site.name} ?`);
+  }
+
   site.economyAudit?.push({ inf, delta, reason, before, after });
 };
 
@@ -224,7 +228,7 @@ const applyStrongLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolea
       }
 
       if (inf in map) {
-        adjust(s.type.inf, +0.4, `Apply strong link from: ${s.name} (Tier 1)`, map, site);
+        adjust(inf, +0.4, `Apply strong link from: ${s.name} (Tier 1)`, map, site);
         // boost? (if economy is not fixed?)
         if (!site.type.fixed) {
           applyStrongLinkBoost(inf, map, site);
