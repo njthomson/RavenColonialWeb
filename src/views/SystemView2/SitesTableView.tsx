@@ -43,7 +43,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
     }
   };
 
-  let lastGroupVal = sortedSites[0][sortColumn];
+  let lastGroupVal = sortedSites.length > 0 ? sortedSites[0][sortColumn] : undefined;
   const borderTop = `2px dotted ${appTheme.palette.blackTranslucent40}`;
   const rows: JSX.Element[] = [];
 
@@ -187,6 +187,10 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
         {rows}
       </tbody>
     </table>
+
+    {rows.length === 0 && <div style={{ color: 'grey', margin: 10 }}>
+      No sites yet ...
+    </div>}
 
   </div >;
 }

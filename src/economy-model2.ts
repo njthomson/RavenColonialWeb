@@ -1,7 +1,6 @@
 import { Economy } from "./site-data";
 import { EconomyMap } from "./system-model";
 import { SiteMap2 } from "./system-model2";
-// import { SiteMap2 } from "./system-model2";
 import { BodyFeature } from "./types";
 import { asPosNegTxt2 } from "./util";
 

@@ -296,6 +296,8 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
 }
 
 const getBodyPrimaryPort = (sites: SiteMap2[], useIncomplete: boolean): SiteMap2 | undefined => {
+  if (sites.length === 0) return undefined;
+
   // skip incomplete sites?
   if (!useIncomplete) {
     sites = sites.filter(s => s.status === 'complete');

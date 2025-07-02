@@ -129,7 +129,19 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
             }
           } else {
             // match parent body
-            if (!bp) { throw new Error(`Why no Body Parent? p:${p}`); }
+            if (!bp) {
+              console.warn(`Assuming missing bodyNum: #${p} is a bary-center, for: ${b.name} (#${b.num})`);
+              let bpi = b.parents.indexOf(p);
+              let fakeParents = b.parents.slice(bpi + 1);
+              bp = {
+                num: p,
+                name: `Assumed bary-center ${Date.now()}`,
+                type: 'bc',
+                subType: 'Barycenter?',
+                parents: fakeParents,
+              } as Bod;
+              sysMap.bodies.push(bp);
+            }
             if (!bpn) {
               bpn = map[bp?.name];
             } else {
@@ -143,7 +155,9 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
             }
           }
 
-          if (!bpn) { throw new Error(`Why no BPN? p:${p}`); }
+          if (!bpn) {
+            throw new Error(`Why no BPN? p:${p}`);
+          }
         }
 
         if (!bpn && bm.num > 0 && bm.parents.length === 0) {

@@ -912,7 +912,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         style={{ marginBottom: 10 }}
         onClick={() => this.createNewSite()}
       >
-        Add new ...
+        Add new
       </ActionButton>
     </div>;
   }
