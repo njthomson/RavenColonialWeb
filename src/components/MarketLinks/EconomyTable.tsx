@@ -455,7 +455,8 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
       {showAudit && props.site.economyAudit && <Panel
         isLightDismiss
         isOpen
-        type={PanelType.medium}
+        type={PanelType.custom}
+        customWidth='800px'
         headerText={`Economy audit: ${props.site.name}`}
         allowTouchBodyScroll={isMobile()}
         styles={{

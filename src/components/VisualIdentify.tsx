@@ -1,6 +1,6 @@
 
 import { ActionButton, Checkbox, IconButton, Label, Link, Panel, Stack } from "@fluentui/react";
-import { Component } from "react";
+import { Component, FunctionComponent } from "react";
 import { appTheme, cn } from "../theme";
 import { SiteType, siteTypes } from "../site-data";
 import { CopyButton } from "./CopyButton";
@@ -307,19 +307,46 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         </Stack>
       </div>
 
+      <SiteImage buildType={zoom} sz={sz} />
+    </div>;
+  }
+}
+
+
+export const SiteImage: FunctionComponent<{ buildType: string; sz: number; }> = (props) => {
+
+  const match = supportedTypes[props.buildType];
+
+  return <>
+    {!match && <>
+      <div
+        style={{
+          border: `2px solid ${appTheme.palette.themePrimary}`,
+          height: 80,
+          alignContent: 'center',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ color: appTheme.palette.themePrimary }}>Image not available</div>
+        <div style={{ color: appTheme.palette.themeTertiary }}>Please share?</div>
+      </div>
+    </>}
+
+    {match && <>
       <div
         style={{
           position: 'relative',
-          width: sz * 1.5,
-          height: sz,
+          width: props.sz * 1.5,
+          height: props.sz,
           border: `2px solid ${appTheme.palette.themePrimary}`,
           background: 'black',
-          backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${zoom}.jpg)`,
+          backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg)`,
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
       >
+
         <span
           style={{
             position: 'absolute',
@@ -330,10 +357,10 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
             color: 'wheat'
           }}
         >
-          Cmdr {supportedTypes[zoom].cmdr}
+          Cmdr {match.cmdr}
         </span>
 
-        {supportedTypes[zoom].location && <span
+        {match.location && <span
           style={{
             position: 'absolute',
             padding: '0 4px',
@@ -342,7 +369,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
             color: 'wheat'
           }}
         >
-          {supportedTypes[zoom].location}
+          {match.location}
         </span>}
 
         <IconButton
@@ -358,10 +385,11 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
             width: 16,
             height: 16,
           }}
-          href={`https://njthomson.github.io/SrvSurvey/colony/${zoom}.jpg`}
-          target='visZoom'
+          href={`https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg`}
+          target='visprops.buildType'
         />
       </div>
-    </div>;
-  }
+    </>}
+
+  </>;
 }

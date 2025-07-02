@@ -701,6 +701,7 @@ const mapBodyFeatureIcon = {
   terraformable: 'World',
   tidal: 'Contrast',
   landable: 'DrillDownSolid',
+  atmos: 'Cloudy',
 };
 
 const mapBodyFeatureColor = {
@@ -711,6 +712,7 @@ const mapBodyFeatureColor = {
   terraformable: 'rgb(100,200,200)',
   tidal: appTheme.isInverted ? 'rgb(170,170,255)' : 'rgb(50,50,255)',
   landable: 'rgb(200,150,100)',
+  atmos: 'rgb(167, 203, 218)',
 };
 
 // c1 is fill / c2 is stroke

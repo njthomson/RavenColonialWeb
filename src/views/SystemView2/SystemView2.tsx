@@ -4,7 +4,7 @@ import { ActionButton, CommandBar, DefaultButton, Dialog, DialogFooter, Icon, Ic
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
-import { buildSystemModel2, SiteMap2, SysMap2, unknown } from '../../system-model2';
+import { buildSystemModel2, getMaxOrbitalSiteCount, getMaxSurfaceSiteCount, SiteMap2, SysMap2, unknown } from '../../system-model2';
 import { TierPoint } from '../../components/TierPoints';
 import { SiteLink } from '../../components/ProjectLink/ProjectLink';
 import { SystemStats } from './SystemStats';
@@ -21,7 +21,7 @@ import { FindSystemName } from '../../components';
 import { createRandomPhoneticName, delayFocus, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
-import { Project } from '../../types';
+import { BodyFeature, Project } from '../../types';
 
 interface SystemView2Props {
   systemName: string;
@@ -854,11 +854,34 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       validations.push(<div key={`valTier3`}>» System needs <TierPoint tier={3} count={-tierPoints.tier3} /></div>);
     }
 
-    // TODO: warn if a body has 4+ orbitals
+    for (const bm of Object.values(bodyMap)) {
 
-    // TODO: warn if a non-landable body has surface sites
+      // warn if a non-landable body has surface sites
+      if (bm.surface.length > 0 && !bm.features.includes(BodyFeature.landable)) {
+        const key = `valBodyNotLandable-${bm.num}`;
+        validations.push(<div key={key}>
+          » <b>{bm.name}</b> has surface sites but it is not landable:
+          <br />
+          {bm.surface.map(s => getMiniLink(s, 'bodyName', key + s.id.slice(1)))}
+        </div>);
+      }
 
-    // TODO: warn if there's too many surface sites on a body? (Assuming we can know how that is determines)
+      // warn if a body has 4+ orbitals // TODO: figure out the logic for this
+      const maxOrbitalSites = getMaxOrbitalSiteCount(this.state.sysMap, bm);
+      if (bm.orbital.length > maxOrbitalSites) {
+        validations.push(<div key={`valBodyTooManyOribtals-${bm.num}`}>
+          » <b>{bm.name}</b> has too many orbital sites
+        </div>);
+      }
+
+      // warn if there's too many surface sites on a body? (Assuming we can know how that is determines)
+      const maxSurfaceSites = getMaxSurfaceSiteCount(this.state.sysMap, bm);
+      if (bm.surface.length > maxSurfaceSites) {
+        validations.push(<div key={`valBodyTooManyOribtals-${bm.num}`}>
+          » <b>{bm.name}</b> has too many surface sites
+        </div>);
+      }
+    }
 
     if (unknown in bodyMap) {
       validations.push(<div key={`valNoBody`}>

@@ -29,7 +29,7 @@ export const systemV2 = {
   },
 
   import: async (systemName: string, type?: string): Promise<Sys> => {
-    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import/${type}`, 'POST');
+    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import/${type ?? ''}`, 'POST');
   },
 
   getRealEconomies: async (id64OrName: string): Promise<GetRealEconomies[]> => {

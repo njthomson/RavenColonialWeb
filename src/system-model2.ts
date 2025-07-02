@@ -490,3 +490,52 @@ export const hasPreReq = (sysMap: SysMap2, type: SiteType) => {
       return false;
   }
 }
+
+export const getMaxOrbitalSiteCount = (sysMap: SysMap2, bm: BodyMap2) => {
+  // TODO: figure out the logic controlling how many orbitals sites are allowed
+
+  const hasPrimaryPort = bm.sites.some(s => s.id === sysMap.primaryPortId);
+  return hasPrimaryPort ? 4 : 3;
+}
+
+export const getMaxSurfaceSiteCount = (sysMap: SysMap2, bm: Bod) => {
+  if (!bm.features.includes(BodyFeature.landable)) {
+    return 0;
+  }
+
+  // var count = 0;
+  // /*
+  //   Radius:
+  //     0 km - 1500 km   1 Slot
+  //   1500 km - 3750 km   2 Slot
+  //   3750 km - 6000 km   3 Slot
+  //   6000 km +           4 Slot
+  // */
+  // if (bm.radius > 6000) {
+  //   count = 4;
+  // } else if (bm.radius > 3750) {
+  //   count = 3;
+  // } else if (bm.radius > 1500) {
+  //   count = 2;
+  // } else {
+  //   count = 1;
+  // }
+
+  // // Volanism? +1 Slot
+  // if (bm.features.includes(BodyFeature.volcanism)) {
+  //   count += 1;
+  // }
+
+  // // Atmosphere? +2 Slot
+  // if (bm.features.includes(BodyFeature.atmos)) {
+  //   count += 2;
+  // }
+
+  // // Terraforming? +1 Slot
+  // if (bm.features.includes(BodyFeature.terraformable)) {
+  //   count += 1;
+  // }
+
+  // TODO: figure out the logic controlling how many surface sites are allowed
+  return 7;
+}

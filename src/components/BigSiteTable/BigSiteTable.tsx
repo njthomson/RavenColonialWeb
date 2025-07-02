@@ -1,26 +1,70 @@
 import './BigSiteTable.css';
-import { IContextualMenuItem, ContextualMenuItemType, ContextualMenu, ActionButton, Icon, Stack, IconButton } from "@fluentui/react";
-import { Component, FunctionComponent } from "react";
-import { mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
+import { IContextualMenuItem, ContextualMenuItemType, ContextualMenu, ActionButton, Icon, Stack, IconButton, Panel, PanelType } from "@fluentui/react";
+import { Component, FunctionComponent, useState } from "react";
+import { getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
-import { asPosNegTxt } from "../../util";
+import { asPosNegTxt, isMobile } from "../../util";
 import { isTypeValid, SysMap } from "../../system-model";
 import { CalloutMsg } from "../CalloutMsg";
 import { Chevrons } from "../Chevrons";
 import { EconomyBlock } from "../EconomyBlock";
 import { PadSize } from "../PadSize";
 import { TierPoint } from "../TierPoints";
+import { BuildEffects } from '../BuildEffects';
+import { SiteImage } from '../VisualIdentify';
 
 
 export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => {
+  const [targetBuildType, setTargetBuildType] = useState('');
+
   return <div>
     <BigSiteTable
       showTitle
       buildType={undefined}
-      onChange={() => {
-        // TODO: show a detail card?
+      onChange={newValue => {
+        setTargetBuildType(newValue);
       }}
     />
+    {targetBuildType && <>
+      <Panel
+        isOpen
+        isLightDismiss
+        className='build-order'
+        headerText={targetBuildType}
+        allowTouchBodyScroll={isMobile()}
+        type={PanelType.medium}
+        styles={{
+          header: { textTransform: 'capitalize' },
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        }}
+        onDismiss={(ev: any) => {
+          // if the mouse is over a button for another build-type ... try clicking it
+          setTimeout(() => {
+            let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
+            while (!!btn?.parentElement && btn.tagName !== 'BUTTON') {
+              btn = btn.parentElement;
+            }
+
+            if (btn?.id.startsWith('st-') && !btn.id.endsWith(targetBuildType)) {
+              btn.click();
+            }
+          }, 10);
+
+          // but close the panel first
+          setTargetBuildType('');
+        }}
+      >
+        <div>
+          <h1 style={{ margin: 0, color: appTheme.palette.themePrimary }}>{getSiteType(targetBuildType)?.displayName2}</h1>
+
+          <div style={{ margin: '10px 0' }}>
+            <SiteImage buildType={targetBuildType} sz={400} />
+          </div>
+
+          <BuildEffects buildType={targetBuildType} noType heading='Build details:' />
+        </div>
+      </Panel>
+    </>}
   </div>;
 }
 

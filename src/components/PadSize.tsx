@@ -1,7 +1,7 @@
 import { FunctionComponent } from "react";
 import { cn } from "../theme";
 
-export const PadSize: FunctionComponent<{ size: string }> = (props) => {
+export const PadSize: FunctionComponent<{ size: string; title?: string }> = (props) => {
   if (!props.size || props.size === 'none') return <></>;
 
   // assume large and reduce as needed
@@ -17,7 +17,7 @@ export const PadSize: FunctionComponent<{ size: string }> = (props) => {
 
   return <div
     className={`pad-size ${cn.padSize}`}
-    title={`Pad size: ${props.size}`}
+    title={props.title ?? `Pad size: ${props.size}`}
     style={{
       display: 'inline-block',
       marginLeft: 4,

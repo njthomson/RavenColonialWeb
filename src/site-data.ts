@@ -296,7 +296,7 @@ export const siteTypes: SiteType[] = [
   },
   {
     "displayName": "Orbis",
-    "displayName2": "Orbis Starport ",
+    "displayName2": "Orbis Starport",
     "subTypes": ["apollo", "artemis"],
     "haul": 214878,
     "buildClass": "starport",
@@ -1032,3 +1032,80 @@ export const siteTypes: SiteType[] = [
     "preReq": 'outpostMining'
   }
 ];
+
+/** buildType: [ small, medium, large ] */
+export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
+
+  // T2/T3  space ports
+  no_truss: [8, 11, 5], // Coriolis Starport
+  dual_truss: [8, 11, 5], // Coriolis Starport
+  quad_truss: [8, 11, 5], // Coriolis Starport
+  asteroid: [8, 11, 5], // Asteroid Starport
+  ocellus: [8, 11, 5], // Ocellus Starport
+  apollo: [8, 11, 5], // Orbis Starport
+  artemis: [8, 11, 5], // Orbis Starport
+
+  // T1 outposts
+  plutus: [3, 1, 0], // Commercial Outpost
+  vulcan: [2, 1, 0], // Industrial Outpost
+  dysnomia: [0, 1, 0], // Pirate Outpost
+  vesta: [4, 1, 0], // Civilian Outpost
+  prometheus: [2, 1, 0], // Scientific Outpost
+  nemesis: [2, 1, 0], // Military Outpost
+
+  // T2 surface hubs
+  hestia: [4, 4, 4], // Civilian Surface Outpost
+  decima: [4, 4, 4], // Civilian Surface Outpost
+  atropos: [4, 4, 4], // Civilian Surface Outpost
+  nona: [4, 4, 4], // Civilian Surface Outpost
+  lachesis: [4, 4, 4], // Civilian Surface Outpost
+  clotho: [4, 4, 2], // Civilian Surface Outpost
+  hephaestus: [4, 4, 4], // Industrial Surface Outpost
+  opis: [4, 4, 4], // Industrial Surface Outpost <-- confirm
+  ponos: [4, 2, 2], // Industrial Surface Outpost
+  tethys: [4, 4, 4], // Industrial Surface Outpost
+  bia: [4, 2, 2], // Industrial Surface Outpost
+  mefitis: [4, 4, 2], // Industrial Surface Outpost
+  necessitas: [4, 4, 4], // Scientific Surface Outpost
+  ananke: [4, 4, 2], // Scientific Surface Outpost
+  fauna: [4, 4, 2], // Scientific Surface Outpost
+  providentia: [4, 4, 4], // Scientific Surface Outpost
+  antevorta: [4, 2, 2], // Scientific Surface Outpost <-- confirm
+  porrima: [4, 4, 2], // Scientific Surface Outpost
+
+  // T3 surface star ports
+  zeus: [4, 4, 4], // Large Planetary Port
+  hera: [4, 4, 4], // Large Planetary Port
+  poseidon: [4, 4, 4], // Large Planetary Port
+  aphrodite: [4, 4, 4], // Large Planetary Port
+
+  // Odyssey Settlements
+  consus: [1, 0, 0], // Agriculture Settlement: Small
+  picumnus: [1, 0, 1], // Agriculture Settlement: Medium
+  annona: [1, 0, 0], // Agriculture Settlement: Medium
+  ceres: [1, 0, 1], // Agriculture Settlement: Large
+  fornax: [2, 0, 1], // Agriculture Settlement: Large
+  ourea: [1, 0, 0], // Mining Settlement: Small
+  mantus: [0, 1, 0], // Mining Settlement: Medium
+  orcus: [1, 0, 1], // Mining Settlement: Medium
+  erebus: [1, 0, 1], // Mining Settlement: Large
+  aerecura: [0, 0, 1], // Mining Settlement: Large
+  fontus: [1, 0, 0], // Industrial Settlement: Small
+  meteope: [0, 0, 1], // Industrial Settlement: Medium
+  palici: [1, 0, 1], // Industrial Settlement: Medium
+  minthe: [0, 1, 0], // Industrial Settlement: Medium
+  gaea: [0, 0, 1], // Industrial Settlement: Large
+  ioke: [0, 1, 0], // Military Settlement: Small
+  bellona: [1, 0, 0], // Military Settlement: Medium
+  enyo: [1, 1, 0], // Military Settlement: Medium
+  polemos: [1, 1, 0], // Military Settlement: Medium
+  minerva: [2, 0, 1], // Military Settlement: Large
+  pheobe: [1, 0, 0], // Bio Settlement: Small
+  asteria: [1, 0, 0], // Bio Settlement: Medium
+  caerus: [3, 0, 0], // Bio Settlement: Medium
+  chronos: [1, 0, 1], // Bio Settlement: Large
+  aergia: [0, 1, 0], // Tourist Settlement: Small
+  comus: [2, 0, 1], // Tourist Settlement: Medium
+  gelos: [1, 0, 1], // Tourist Settlement: Medium
+  fufluns: [2, 0, 2], // Tourist Settlement: Large
+};

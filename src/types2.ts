@@ -22,6 +22,7 @@ export interface Bod {
   type: BodyType;
   subType: string;
   features: BodyFeature[];
+  // max: { orbit: number; surfaace: number; }
 }
 
 export type BodyType =
