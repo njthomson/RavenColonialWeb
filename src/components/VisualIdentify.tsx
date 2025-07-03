@@ -1,5 +1,5 @@
 
-import { ActionButton, Checkbox, IconButton, Label, Link, Panel, Stack } from "@fluentui/react";
+import { ActionButton, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
 import { Component, FunctionComponent } from "react";
 import { appTheme, cn } from "../theme";
 import { SiteType, siteTypes } from "../site-data";
@@ -12,6 +12,7 @@ interface ImageData {
 }
 
 const supportedTypes: Record<string, ImageData> = {
+  'aerecura': { cmdr: 'kekosummer', location: `Correa Prospecting Platform - LTT 1873, B 1` },
   'aergia': { cmdr: 'kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
   'alastor': { cmdr: 'Abe Andet', location: `Bierce Platform - Arietis Sector PJ-Q B5-5` },
   'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
@@ -29,7 +30,7 @@ const supportedTypes: Record<string, ImageData> = {
   'chronos': { cmdr: 'kekosummer', location: `Neborak Astrophysics Enterprise - Col 285 Sector GL-X c1-11, B 4` },
   'clotho': { cmdr: 'Abe Andet', location: `Morelli Gateway - Arietis Sector PJ-Q B5-5` },
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
-  'comus': { cmdr: 'kekosummer', location: `Vynnychenko Entertainment Zone - Col 285 Sector GL-X c1-11, B 5 a` },
+  'comus': { cmdr: 'Disnaematter', location: `Emem's Leisure - Synuefe FI-Z b46-1.` },
   'consus': { cmdr: 'kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
   'decima': { cmdr: 'kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a` },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
@@ -39,6 +40,7 @@ const supportedTypes: Record<string, ImageData> = {
   'eirene': { cmdr: 'Abe Andet', location: `Gibbs Point - Arietis Sector PJ-Q B5-5` },
   'enodia': { cmdr: 'grinning2001', location: `Katzenstein Legacy - IC 2391 Sector LH-V b2-5, B 10` },
   'enyo': { cmdr: 'Abe Andet', location: ` Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5` },
+  'erebus': { cmdr: 'kekosummer', location: `Dhillion Mineralogic Exchange - LTT 1873, B 1` },
   'eupraxia': { cmdr: 'Abe Andet', location: `Hooper Vison - Arietis Sector PJ-Q B5-5` },
   'euthenia': { cmdr: 'Disnaematter', location: ` McMullen's Progress - Synuefe EM-M c23-8` },
   'fontus': { cmdr: 'kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6` },
@@ -77,6 +79,9 @@ const supportedTypes: Record<string, ImageData> = {
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
 };
 
+const sortedGroups = siteTypes.slice(1).sort((a, b) => a.displayName2.localeCompare(b.displayName2));
+const sortedTypes = Object.keys(supportedTypes).sort();
+
 const typeTypes = Object.keys(supportedTypes).reduce((map, key) => {
   map[key] = siteTypes.find(st => st.subTypes.includes(key))!;
   return map;
@@ -88,10 +93,10 @@ interface VisualIdentifyProps {
 
 interface VisualIdentifyState {
   zoom: string;
-  showOrbital: boolean;
   showSurface: boolean;
   typeNames: string[];
   showMissing?: boolean;
+  showInGroups: boolean;
 }
 
 export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentifyState> {
@@ -101,15 +106,15 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
     this.state = {
       zoom: props.buildType ?? '',
-      showOrbital: true,
-      showSurface: true,
-      typeNames: Object.keys(supportedTypes),
+      showSurface: false,
+      typeNames: sortedTypes,
+      showInGroups: true,
     };
   }
 
   componentDidMount(): void {
     // force an initial sort + filter
-    this.setFilter('');
+    this.setFilter();
   }
 
   componentDidUpdate(prevProps: Readonly<VisualIdentifyProps>, prevState: Readonly<VisualIdentifyState>, snapshot?: any): void {
@@ -119,10 +124,53 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   }
 
   render() {
-    const { zoom } = this.state;
+    const { zoom, showInGroups, showMissing, showSurface } = this.state;
 
     return <div style={{ padding: 10, fontSize: 12 }}>
-      {!zoom && this.renderGrid()}
+      {!zoom && <>
+        <Stack horizontal horizontalAlign='space-between'>
+
+          <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ childrenGap: 10, padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>
+            <div style={{ fontSize: 14, paddingBottom: 8 }}>
+              <b>Show:</b>
+              &nbsp;
+              Orbital
+            </div>
+            <Toggle
+              onText='Surface'
+              offText='Surface'
+              checked={showSurface}
+              onChange={() => {
+                this.setState({ showSurface: !showSurface });
+
+                setTimeout(() => {
+                  this.setFilter();
+                }, 10);
+              }}
+            />
+            <Toggle
+              onText='Grouped'
+              offText='Grouped'
+              checked={showInGroups}
+              onChange={() => {
+                this.setState({ showInGroups: !showInGroups });
+              }}
+            />
+          </Stack>
+
+          <ActionButton
+            text='What is missing?'
+            iconProps={{ iconName: 'ImageSearch' }}
+            style={{ position: 'relative', right: 0 }}
+            onClick={() => this.setState({ showMissing: !showMissing })}
+          />
+        </Stack>
+
+        {showInGroups && this.renderGoups()}
+        {!showInGroups && this.renderGrid()}
+
+        {showMissing && this.renderMissing()}
+      </>}
       {zoom && this.renderZoom()}
     </div>;
   }
@@ -136,31 +184,27 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
     }
   };
 
-  setFilter = (toggleName: string) => {
-    let { showOrbital, showSurface } = this.state;
-    if (toggleName === 'showOrbital') { showOrbital = !showOrbital; }
-    if (toggleName === 'showSurface') { showSurface = !showSurface; }
+  setFilter = () => {
+    const { showSurface, showInGroups } = this.state;
 
-    if (!showOrbital && !showSurface) {
-      if (toggleName === 'showOrbital') { showSurface = true; }
-      if (toggleName === 'showSurface') { showOrbital = true }
-    }
-
-    const typeNames = Object.keys(supportedTypes)
-      .sort()
-      .filter(key => typeTypes[key].orbital === showOrbital || typeTypes[key].orbital !== showSurface);
+    const typeNames = showInGroups ?
+      sortedGroups
+        .filter(t => t.orbital !== showSurface)
+        .flatMap(t => t.subTypes.filter(st => st in supportedTypes))
+      : sortedTypes
+        .filter(key => typeTypes[key].orbital !== showSurface);
 
     this.setState({
-      showOrbital: showOrbital,
       showSurface: showSurface,
       typeNames: typeNames,
     });
   };
 
   renderGrid() {
-    const { showOrbital, showSurface, typeNames, showMissing } = this.state;
+    const { typeNames } = this.state;
 
     const rows = typeNames.map(t => (<div
+      key={`grid-${t}`}
       title={`${t[0].toUpperCase()}${t.slice(1)}\n${typeTypes[t].displayName2}\nTier: ${typeTypes[t].tier}`}
       onClick={() => this.setZoom(t)}
     >
@@ -181,35 +225,55 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
     </div>));
 
     return <div style={{ maxWidth: 880 }}>
-      <Stack horizontal horizontalAlign='space-between'>
-
-        <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ childrenGap: 10, padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>
-          <Label>Filter:</Label>
-          <Checkbox
-            label="Orbital"
-            checked={showOrbital}
-            onChange={() => this.setFilter('showOrbital')}
-          />
-          <Checkbox
-            label="Surface"
-            checked={showSurface}
-            onChange={() => this.setFilter('showSurface')}
-          />
-        </Stack>
-
-        <ActionButton
-          text='What is missing?'
-          iconProps={{ iconName: 'ImageSearch' }}
-          style={{ position: 'relative', right: 0 }}
-          onClick={() => this.setState({ showMissing: !showMissing })}
-        />
-      </Stack>
 
       <Stack horizontal wrap tokens={{ childrenGap: 10 }}>
         {rows}
       </Stack>
 
-      {showMissing && this.renderMissing()}
+    </div>;
+  }
+
+  renderGoups() {
+    const { showSurface } = this.state;
+
+    const sz = 200;
+
+    const rows = sortedGroups
+      .map(type => {
+        // skip groups with zero images
+        const notMissing = type.subTypes.filter(st => st in supportedTypes);
+        if (notMissing.length === 0 || type.orbital === showSurface) { return null; }
+
+        return <div key={`grp-${type.displayName2}`}>
+
+          <h2 className={cn.h3} style={{ margin: '20px 0 10px 0', color: appTheme.palette.black }}>{type.displayName2}</h2>
+          <Stack wrap horizontal tokens={{ childrenGap: 10 }}>
+            {type.subTypes.map(st => {
+              if (notMissing.includes(st)) {
+                return <div key={`grp-${type.displayName2}-${st}`} onClick={() => this.setZoom(st)}>
+                  <Link style={{ textTransform: 'capitalize', textAlign: 'center' }}>
+                    {st}
+                    <SiteImage buildType={st} width={sz} height={sz} noCredits />
+                  </Link>
+
+                </div>;
+              } else {
+                return <div key={`grp-${type.displayName2}-${st}`} style={{ textAlign: 'center' }}>
+                  {st}
+                  <SiteImage buildType={st} width={sz} height={sz} noCredits />
+                </div>;
+              }
+            })}
+          </Stack>
+        </div>;
+      });
+
+    return <div style={{}}>
+      <div style={{ textTransform: 'capitalize', cursor: 'default' }}>
+        <Stack wrap horizontal tokens={{ childrenGap: '0 60px' }}>
+          {rows}
+        </Stack>
+      </div>
     </div>;
   }
 
@@ -298,22 +362,24 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
       <div style={{ textTransform: 'capitalize', marginBottom: 4, fontSize: 22 }} >
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+          <div>{type.displayName2}</div>
+          <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
           <CopyButton text={copyLink} title='Copy link to this page' fontSize={14} />
           <div style={{ fontWeight: 'bold' }}>{zoom}</div>
-          <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
-          <div>{type.displayName2}</div>
           <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
           <div>Tier: {type.tier}</div>
         </Stack>
       </div>
 
-      <SiteImage buildType={zoom} sz={sz} />
+      <SiteImage buildType={zoom} height={sz} />
     </div>;
   }
 }
 
 
-export const SiteImage: FunctionComponent<{ buildType: string; sz: number; }> = (props) => {
+export const SiteImage: FunctionComponent<{ buildType: string; height: number; width?: number; noCredits?: boolean }> = (props) => {
+  let height = props.height;
+  let width = props.width ?? props.height * 1.5;
 
   const match = supportedTypes[props.buildType];
 
@@ -321,14 +387,17 @@ export const SiteImage: FunctionComponent<{ buildType: string; sz: number; }> = 
     {!match && <>
       <div
         style={{
-          border: `2px solid ${appTheme.palette.themePrimary}`,
-          height: 80,
+          border: `2px solid ${appTheme.palette.themeTertiary}`,
+          width: width,
+          height: props.width ? height : undefined,
+          padding: props.width ? undefined : '40px 0',
           alignContent: 'center',
           textAlign: 'center',
+          backgroundColor: 'black',
         }}
       >
-        <div style={{ color: appTheme.palette.themePrimary }}>Image not available</div>
-        <div style={{ color: appTheme.palette.themeTertiary }}>Please share?</div>
+        <div style={{ color: appTheme.palette.themeTertiary }}>Image not available</div>
+        {/* <div style={{ color: appTheme.palette.themeTertiary }}>Please share?</div> */}
       </div>
     </>}
 
@@ -336,9 +405,9 @@ export const SiteImage: FunctionComponent<{ buildType: string; sz: number; }> = 
       <div
         style={{
           position: 'relative',
-          width: props.sz * 1.5,
-          height: props.sz,
-          border: `2px solid ${appTheme.palette.themePrimary}`,
+          width: width,
+          height: height,
+          border: `2px solid ${appTheme.palette.themeTertiary}`,
           background: 'black',
           backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg)`,
           backgroundSize: 'contain',
@@ -347,47 +416,49 @@ export const SiteImage: FunctionComponent<{ buildType: string; sz: number; }> = 
         }}
       >
 
-        <span
-          style={{
-            position: 'absolute',
-            padding: '0 4px',
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'black',
-            color: 'wheat'
-          }}
-        >
-          Cmdr {match.cmdr}
-        </span>
+        {!props.noCredits && <>
+          <span
+            style={{
+              position: 'absolute',
+              padding: '0 4px',
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'black',
+              color: 'wheat'
+            }}
+          >
+            Cmdr {match.cmdr}
+          </span>
 
-        {match.location && <span
-          style={{
-            position: 'absolute',
-            padding: '0 4px',
-            bottom: 0,
-            backgroundColor: 'black',
-            color: 'wheat'
-          }}
-        >
-          {match.location}
-        </span>}
+          {match.location && <span
+            style={{
+              position: 'absolute',
+              padding: '0 4px',
+              bottom: 0,
+              backgroundColor: 'black',
+              color: 'wheat'
+            }}
+          >
+            {match.location}
+          </span>}
 
-        <IconButton
-          title='View full size in another tab'
-          iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10 } }}
-          style={{
-            position: 'absolute',
-            right: 2,
-            top: 2,
-            color: 'wheat',
-            padding: 0,
-            margin: 0,
-            width: 16,
-            height: 16,
-          }}
-          href={`https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg`}
-          target='visprops.buildType'
-        />
+          <IconButton
+            title='View full size in another tab'
+            iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10 } }}
+            style={{
+              position: 'absolute',
+              right: 2,
+              top: 2,
+              color: 'wheat',
+              padding: 0,
+              margin: 0,
+              width: 16,
+              height: 16,
+            }}
+            href={`https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg`}
+            target='visprops.buildType'
+          />
+        </>}
       </div>
     </>}
 
