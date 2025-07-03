@@ -137,20 +137,20 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       errorMsg: '',
     });
 
-    api.systemV2.getSys(this.props.systemName)
-      .then(sys => {
+    api.systemV2.getSys(this.props.systemName, true)
+      .then(newSys => {
 
-        if (sys.v < api.systemV2.currentSchemaVersion) {
-          console.warn(`System schema: ${sys.v} ... re-import is needed`);
+        if (newSys.v < api.systemV2.currentSchemaVersion) {
+          console.warn(`System schema: ${newSys.v} ... re-import is needed`);
           return this.doImport('no-sites');
         }
 
-        const sysMap = buildSystemModel2(sys, this.state.useIncomplete);
-        const orderIDs = sysMap.sites.map(s => s.id);
+        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
+        const orderIDs = newSysMap.sites.map(s => s.id);
         this.setState({
           processingMsg: undefined,
-          sysOriginal: sys,
-          sysMap: sysMap,
+          sysOriginal: newSys,
+          sysMap: newSysMap,
           dirtySites: {},
           deletedIDs: [],
           orderIDs: orderIDs,
@@ -180,15 +180,17 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     this.setState({ processingMsg: 'Importing ...', errorMsg: '' });
 
     api.systemV2.import(this.props.systemName, type)
-      .then(sys => {
-        const newSysMap = buildSystemModel2(sys, this.state.useIncomplete);
+      .then(newSys => {
+        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
+        const orderIDs = newSysMap.sites.map(s => s.id);
         this.setState({
           processingMsg: undefined,
-          sysOriginal: sys,
+          sysOriginal: newSys,
           sysMap: newSysMap,
           dirtySites: {},
           deletedIDs: [],
-          orderIDs: newSysMap.sites.map(s => s.id),
+          orderIDs: orderIDs,
+          originalSiteIDs: [...orderIDs],
         });
       })
       .catch(err => {
@@ -222,11 +224,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     api.systemV2.saveSites(
       this.state.sysMap.id64.toString(), payload)
-      .then(sys => {
-        const newSysMap = buildSystemModel2(sys, this.state.useIncomplete);
+      .then(newSys => {
+        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
         this.setState({
           processingMsg: undefined,
-          sysOriginal: sys,
+          sysOriginal: newSys,
           sysMap: newSysMap,
           dirtySites: {},
           deletedIDs: [],
@@ -246,13 +248,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     });
   };
 
-  createNewSite = () => {
+  createNewSite = (bodyNum?: number) => {
     const newSite = {
       id: `x${Date.now()}`,
       status: 'plan',
-      bodyNum: SystemView2.lastBodyNum ?? -1,
+      bodyNum: bodyNum ?? -1, // SystemView2.lastBodyNum
       name: createRandomPhoneticName(),
-      buildType: SystemView2.lastBuildType ?? '',
+      buildType: '', // SystemView2.lastBuildType ?? '',
     } as Site;
 
     const { sysMap, dirtySites } = this.state;
@@ -299,8 +301,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   siteChanged = (site: Site) => {
     // console.log(`siteChanged: ${site.name} (${site.buildType} on body #${site.bodyNum} / ${site.id})`);
-    SystemView2.lastBodyNum = -1; //site.bodyNum;
-    SystemView2.lastBuildType = ''; //site.buildType;
+    SystemView2.lastBodyNum = site.bodyNum;
+    SystemView2.lastBuildType = site.buildType;
 
     // track which sites have changed
     const { dirtySites } = this.state;
@@ -660,8 +662,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           Are you sure you want to proceed?
         </div>
         <DialogFooter>
-          <DefaultButton text="Yes" iconProps={{ iconName: 'CheckMark' }} onClick={() => showConfirmAction()} />
-          <PrimaryButton text="No" iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showConfirmAction: undefined })} />
+          <DefaultButton text='Yes' iconProps={{ iconName: 'CheckMark' }} onClick={() => showConfirmAction()} />
+          <PrimaryButton text='No' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showConfirmAction: undefined })} />
         </DialogFooter>
       </Dialog>}
 

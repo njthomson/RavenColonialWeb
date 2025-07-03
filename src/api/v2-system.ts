@@ -12,8 +12,8 @@ export const systemV2 = {
     economies: {} as Record<string, GetRealEconomies[]>,
   },
 
-  getSys: async (systemName: string): Promise<Sys> => {
-    if (systemName in systemV2.cache.sys) { return systemV2.cache.sys[systemName]; }
+  getSys: async (systemName: string, force?: boolean): Promise<Sys> => {
+    if (systemName in systemV2.cache.sys && !force) { return systemV2.cache.sys[systemName]; }
 
     const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}`);
     systemV2.cache.sys[systemName] = result;
@@ -32,8 +32,8 @@ export const systemV2 = {
     return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import/${type ?? ''}`, 'POST');
   },
 
-  getRealEconomies: async (id64OrName: string): Promise<GetRealEconomies[]> => {
-    if (id64OrName in systemV2.cache.economies) { return systemV2.cache.economies[id64OrName]; }
+  getRealEconomies: async (id64OrName: string, force?: boolean): Promise<GetRealEconomies[]> => {
+    if (id64OrName in systemV2.cache.economies && !force) { return systemV2.cache.economies[id64OrName]; }
 
     const result = await callAPI<GetRealEconomies[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/spanshEconomies`);
     systemV2.cache.economies[id64OrName] = result;

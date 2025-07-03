@@ -572,6 +572,15 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     ? sz * 0.70
     : 0;
 
+  const btnAddSite = <IconButton
+    iconProps={{ iconName: 'CircleAddition' }}
+    title={`Add a new site to: ${node.body.name}`}
+    style={{ marginLeft: 4, paddingTop: 2 }}
+    onClick={() => {
+      props.sysView.createNewSite(node.body.num);
+    }}
+  />;
+
   return <div
     style={{
       position: 'relative',
@@ -623,6 +632,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
             <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 0 }}>
               <span style={{ marginRight: 6, width: 'max-content' }}>{name}</span>
               {(!hasSites || !canHaveBodySites) && featureIcons}
+              {!hasSites && btnAddSite}
             </Stack>
             {hasSites && canHaveBodySites && <div style={{ position: 'absolute', right: 10, top: 30 }}>{featureIcons}</div>}
 
@@ -635,9 +645,12 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           marginBottom: bottomGap,
           top: shiftOrbitalsDown,
         }}>
-          <div style={{ fontSize: 14, padding: '2px 8px', borderBottom: innerBorders }}>
+          <div style={{ position: 'relative', fontSize: 14, padding: '2px 8px', borderBottom: innerBorders }}>
             {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
             {orbitals && orbitals.map(s => <SiteLink key={`orbitalsite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' />)}
+            <div style={{ position: 'absolute', right: -24, bottom: -13 }}>
+              {btnAddSite}
+            </div>
           </div>
 
           {canHaveBodySites && <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px' }}>
