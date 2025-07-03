@@ -174,7 +174,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       .then(realEconomies => {
         this.setState({ realEconomies });
       });
-  }
+  };
 
   doImport = (type?: string) => {
     this.setState({ processingMsg: 'Importing ...', errorMsg: '' });
@@ -248,6 +248,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     });
   };
 
+  doOnScrollEnd(action: () => void) {
+
+    const func = () => {
+      action();
+      document.removeEventListener("scrollend", func);
+    };
+
+    document.addEventListener("scrollend", func);
+  }
+
   createNewSite = (bodyNum?: number) => {
     const newSite = {
       id: `x${Date.now()}`,
@@ -278,22 +288,20 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     setTimeout(() => {
       const element = document.getElementById(id);
       if (element) {
-        // adjust delay based on how far we need to scroll
-        const duration = 200 + (document.scrollingElement?.scrollTop ?? 1000) * 0.5;
-        // start scrolling
-        element.parentElement?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-
-        // then make the card appear
-        setTimeout(() => {
+        // when scrolling ends - do this
+        this.doOnScrollEnd(() => {
           element.dispatchEvent(new MouseEvent('mouseup', {
             bubbles: true,
             cancelable: true,
             view: window
           }));
-        }, duration);
+        });
+
+        // start scrolling
+        element.parentElement?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
       }
 
     }, 100);
@@ -313,7 +321,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       dirtySites,
       sysMap: newSysMap,
     });
-  }
+  };
 
   siteDeleted = (targetId: string) => {
 
@@ -352,11 +360,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       const pinnedSite = this.state.sysMap.sites.find(s => s.id === id);
       this.setState({ pinnedSite });
     }
-  }
+  };
 
   siteSelected = (selectedSite?: Site) => {
     this.setState({ selectedSite });
-  }
+  };
 
   isDirty() {
     const { sysMap, dirtySites, deletedIDs, sysOriginal, orderIDs } = this.state;
@@ -369,7 +377,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || (sysOriginal && JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id)))
       ;
     return dirty;
-  }
+  };
 
   render() {
     if (!this.props.systemName) {
