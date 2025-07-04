@@ -19,7 +19,6 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
 
   return <div>
     <BigSiteTable
-      showTitle
       buildType={undefined}
       onChange={newValue => {
         setTargetBuildType(newValue);
@@ -74,7 +73,6 @@ interface BigSiteTableProps {
   tableOnly?: boolean;
   stickyTop?: number;
   allowPartial?: boolean;
-  showTitle?: boolean;
 }
 
 interface BigSiteTableState {
@@ -132,7 +130,6 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
   render() {
     return <div className='bst'>
       <Stack horizontal verticalAlign='baseline'>
-        {this.props.showTitle && <h2 style={{ margin: 10 }}>All build types</h2>}
         {this.renderFilterText()}
       </Stack>
 
@@ -213,7 +210,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
         />
       </>}
 
-      <table cellPadding={0} cellSpacing={0}>
+      <table cellPadding={0} cellSpacing={0} style={{ marginBottom: 24 }}>
         <colgroup>
           <col width='250px' />  {/* buildType */}
           <col width='15px' />  {/* i */}
@@ -368,7 +365,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           }}
         />
       </>}
-      {parts.length === 0 && <div>None</div>}
+      {parts.length === 0 && <div>None <span style={{ fontSize: 10, color: 'grey' }}>click columns to filter</span></div>}
     </Stack>;
   }
 

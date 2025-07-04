@@ -296,7 +296,7 @@ export class App extends Component<AppProps, AppState> {
         </Modal>}
         <br />
         <footer className={cn.footer}>
-          <div>© 2025  Raven Colonial Corporation | <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> | <LinkSrvSurvey text='About SrvSurvey' /></div>
+          <div>© 2025  Raven Colonial Corporation <span style={{ color: 'grey' }}>|</span> <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> <span style={{ color: 'grey' }}>|</span> <LinkSrvSurvey text='About SrvSurvey' /></div>
         </footer>
 
         <Dialog
