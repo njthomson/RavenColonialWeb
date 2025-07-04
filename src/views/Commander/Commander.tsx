@@ -36,7 +36,6 @@ export class Commander extends Component<CmdrProps, CmdrState> {
   }
 
   componentDidMount(): void {
-    window.document.title = `Cmdr: ${this.cmdr ?? '?'}`;
     if (this.cmdr) {
       this.fetchCmdrProjects(this.cmdr);
     }

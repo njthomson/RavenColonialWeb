@@ -298,6 +298,7 @@ export const siteTypes: SiteType[] = [
     "displayName": "Orbis",
     "displayName2": "Orbis Starport",
     "subTypes": ["apollo", "artemis"],
+    "altTypes": ["orbis"],
     "haul": 214878,
     "buildClass": "starport",
     "tier": 3,
