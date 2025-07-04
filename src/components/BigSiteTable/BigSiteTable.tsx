@@ -177,6 +177,14 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           }
           this.setState({ filterColumns });
         },
+        onRenderContent(props, defaultRenders) {
+          return <>
+            {defaultRenders.renderCheckMarkIcon(props)}
+            {/* {defaultRenders.renderItemIcon(props)} */}
+            <EconomyBlock economy={t} size='10px' />
+            {defaultRenders.renderItemName(props)}
+          </>;
+        },
       } as IContextualMenuItem)),
       { key: 'divider_1', itemType: ContextualMenuItemType.Divider, },
       {
