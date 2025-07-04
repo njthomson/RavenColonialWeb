@@ -81,6 +81,7 @@ const supportedTypes: Record<string, ImageData> = {
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon - Synuefe EM-M c23-8` },
   'vesta': { cmdr: 'Locke Denman', location: `Kusama Depot - 37 Sextantis, 2 D` },
   'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
+  'zeus': { cmdr: 'EDExplorer', location: `Ascendia City - Col 285 Sector ZX-R b5-0, A 4` },
 };
 
 const sortedGroups = siteTypes.slice(1).sort((a, b) => a.displayName2.localeCompare(b.displayName2));
