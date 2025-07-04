@@ -220,7 +220,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
           height: 200,
           border: `2px solid ${appTheme.palette.themePrimary}`,
           backgroundColor: 'black',
-          backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${t}.jpg)`,
+          backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${t}-thumb.jpg)`,
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -385,10 +385,14 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
 
 export const SiteImage: FunctionComponent<{ buildType: string; height: number; width?: number; noCredits?: boolean }> = (props) => {
-  let height = props.height;
+  // TODO: improve this for vertical/mobile devices
   let width = props.width ?? props.height * 1.5;
+  let height = props.height;
 
   const match = supportedTypes[props.buildType];
+  const imgUrl = width <= 200
+    ? `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}-thumb.jpg)`
+    : `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg)`;
 
   return <>
     {!match && <>
@@ -416,7 +420,7 @@ export const SiteImage: FunctionComponent<{ buildType: string; height: number; w
           height: height,
           border: `2px solid ${appTheme.palette.themeTertiary}`,
           background: 'black',
-          backgroundImage: `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg)`,
+          backgroundImage: imgUrl,
           backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
