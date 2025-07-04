@@ -19,7 +19,7 @@ const supportedTypes: Record<string, ImageData> = {
   'ananke': { cmdr: 'Kai Thoreau', location: `Nakayama Landing - HIP 87968, 4 A` },
   'angelia': { cmdr: 'grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
   'annona': { cmdr: 'kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4` },
-  'apollo': { cmdr: 'Locke Denman', location: ` Ore Depot - HIP 87968, 5 A` },
+  'apollo': { cmdr: 'Kai Thoreau', location: `Ore Depot - HIP 87968, 5 A` },
   'artemis': { cmdr: 'Alora Anophis', location: `Besonders Reach - Pru Euq XO-Z d13-11, 2 a` },
   'asteria': { cmdr: 'kekosummer', location: `Enju genetics laboratory - Col 285 Sector GL-X c1-11, B 4` },
   'asteroid': { cmdr: 'grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
