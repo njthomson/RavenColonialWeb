@@ -29,13 +29,12 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
       <Panel
         isOpen
         isLightDismiss
-        className='build-order'
         headerText={targetBuildType}
         allowTouchBodyScroll={isMobile()}
         type={PanelType.medium}
         styles={{
-          header: { textTransform: 'capitalize' },
-          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+          header: { textTransform: 'capitalize', cursor: 'default' },
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
         }}
         onDismiss={(ev: any) => {
           // if the mouse is over a button for another build-type ... try clicking it
@@ -54,7 +53,7 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
           setTargetBuildType('');
         }}
       >
-        <div>
+        <div style={{ cursor: 'default' }}>
           <h1 style={{ margin: 0, color: appTheme.palette.themePrimary }}>{getSiteType(targetBuildType)?.displayName2}</h1>
 
           <div style={{ margin: '10px 0' }}>
@@ -534,7 +533,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
       {this.props.sysMap && <td className={`${cn.br}`}>{this.renderValid(type)}</td>}
 
-      <td className={`${cn.br}`}>{this.renderHaulSize(type.haul)}</td>
+      <td className={`${cn.br}`}><HaulSize haul={type.haul} /></td>
 
       <td className={`${cn.br}`}><PadSize size={padSize} /></td>
 
@@ -577,34 +576,6 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       ? <Icon iconName='SkypeCheck' style={{ color: appTheme.palette.greenLight }} />
       : <Icon iconName='Cancel' style={{ color: appTheme.palette.red, fontWeight: 'bold' }} />;
     // : <span style={{ color: 'grey' }}>-</span>;
-  }
-
-  renderHaulSize(haul: number) {
-
-    const dark = appTheme.isInverted
-      ? 'rgb(48, 48, 48)'
-      : 'rgb(200, 200, 200)';
-
-    return <div
-      title={haul.toLocaleString()}
-      style={{
-        // display: 'inline',
-        position: 'relative',
-        width: 30,
-        height: 25,
-        overflow: 'hidden',
-        marginLeft: 8,
-        marginBottom: 2,
-      }}
-    >
-      <div style={{ position: 'absolute', left: 0, bottom: 0, width: 4, height: 4, backgroundColor: 'lime', }} />
-      <div style={{ position: 'absolute', left: 5, bottom: 0, width: 4, height: 8, backgroundColor: haul > 4_000 ? 'lightgreen' : dark, }} />
-      <div style={{ position: 'absolute', left: 10, bottom: 0, width: 4, height: 12, backgroundColor: haul > 8_000 ? 'yellow' : dark }} />
-      <div style={{ position: 'absolute', left: 15, bottom: 0, width: 4, height: 16, backgroundColor: haul > 20_000 ? 'orange' : dark }} />
-      <div style={{ position: 'absolute', left: 20, bottom: 0, width: 4, height: 20, backgroundColor: haul > 50_000 ? 'red' : dark }} />
-      <div style={{ position: 'absolute', left: 25, bottom: 0, width: 4, height: 24, backgroundColor: haul > 200_000 ? 'darkred' : dark }} />
-    </div>
-      ;
   }
 
 }
@@ -689,3 +660,31 @@ const infEconomies = [
   'service',
   'tourism',
 ];
+
+export const HaulSize: FunctionComponent<{ haul: number }> = (props) => {
+  const { haul } = props;
+
+  const dark = appTheme.isInverted
+    ? 'rgb(48, 48, 48)'
+    : 'rgb(200, 200, 200)';
+
+  return <div
+    title={`~${haul.toLocaleString()} units`}
+    style={{
+      // display: 'inline',
+      position: 'relative',
+      width: 30,
+      height: 25,
+      overflow: 'hidden',
+      marginLeft: 8,
+      marginBottom: 2,
+    }}
+  >
+    <div style={{ position: 'absolute', left: 0, bottom: 0, width: 4, height: 4, backgroundColor: 'lime', }} />
+    <div style={{ position: 'absolute', left: 5, bottom: 0, width: 4, height: 8, backgroundColor: haul > 4_000 ? 'lightgreen' : dark, }} />
+    <div style={{ position: 'absolute', left: 10, bottom: 0, width: 4, height: 12, backgroundColor: haul > 8_000 ? 'yellow' : dark }} />
+    <div style={{ position: 'absolute', left: 15, bottom: 0, width: 4, height: 16, backgroundColor: haul > 20_000 ? 'orange' : dark }} />
+    <div style={{ position: 'absolute', left: 20, bottom: 0, width: 4, height: 20, backgroundColor: haul > 50_000 ? 'red' : dark }} />
+    <div style={{ position: 'absolute', left: 25, bottom: 0, width: 4, height: 24, backgroundColor: haul > 200_000 ? 'darkred' : dark }} />
+  </div>;
+}
