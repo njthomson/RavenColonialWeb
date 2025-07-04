@@ -280,6 +280,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   renderMissing() {
     const { showMissing } = this.state;
 
+    const countTotal = siteTypes.flatMap(t => t.subTypes).length;
     let countMissing = 0;
     const groups = siteTypes
       .slice(1)
@@ -303,6 +304,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
       isLightDismiss
       isOpen={showMissing}
       headerText={`Missing ${countMissing} images:`}
+      title={`Missing ${countMissing} of ${countTotal} images`}
       allowTouchBodyScroll={isMobile()}
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
@@ -311,7 +313,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         this.setState({ showMissing: false });
       }}
     >
-      <div style={{ textTransform: 'capitalize' }}>
+      <div style={{ textTransform: 'capitalize', cursor: 'default' }}>
         {rows}
       </div>
     </Panel>;
