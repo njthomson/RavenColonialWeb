@@ -278,13 +278,13 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   }
 
   renderMissing() {
-    const { typeNames, showMissing } = this.state;
+    const { showMissing } = this.state;
 
     let countMissing = 0;
     const groups = siteTypes
       .slice(1)
       .reduce((map, t) => {
-        const missing = t.subTypes.filter(st => !typeNames.includes(st));
+        const missing = t.subTypes.filter(st => !(st in supportedTypes));
         if (missing.length > 0) {
           countMissing += missing.length;
           map[t.displayName2] = missing;
