@@ -56,6 +56,7 @@ const supportedTypes: Record<string, ImageData> = {
   'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1` },
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
+  'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3` },
   'mantus': { cmdr: 'kekosummer', location: `Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
   'meteope': { cmdr: 'kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
   'minerva': { cmdr: 'kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
