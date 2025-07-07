@@ -268,8 +268,8 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
         }
       } else {
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name} - ${s.type.displayName2} (${s.buildType})`);
-        continue;
       }
+      continue;
     }
 
     if (!s.primaryEconomy) {
