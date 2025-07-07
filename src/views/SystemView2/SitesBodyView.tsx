@@ -334,7 +334,9 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           }
         }}
         onItemClick={(ev, item) => {
-          if (ev?.defaultPrevented) { return; }
+          // if (ev?.defaultPrevented) { return; }
+          ev?.preventDefault();
+
 
           const key = item?.key.slice(3) as BodyFeature;
           let newFilter = this.state.bodyFilter;
@@ -343,7 +345,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           } else {
             newFilter.add(key);
           }
-          this.setState({ bodyFilter: newFilter, showBodyFilter: false });
+          this.setState({ bodyFilter: newFilter });
         }}
 
         items={[
@@ -372,7 +374,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
           { key: `bf-div1`, itemType: ContextualMenuItemType.Divider },
 
-          ...Object.values(BodyFeature).map(f => ({
+          ...Object.values(BodyFeature).filter(f => f !== BodyFeature.atmos).map(f => ({
             key: `bf-${f}`,
             text: mapBodyFeature[f],
             iconProps: { iconName: mapBodyFeatureIcon[f], style: { color: mapBodyFeatureColor[f] } },
@@ -755,7 +757,7 @@ const getBodyColour = (bodyType?: BodyType, subType?: string) => {
     case 'rb':
       return { c1: 'rgb(94, 69, 48)', c2: 'rgb(75, 61, 49)' };
     case 'ib':
-      return { c1: 'rgb(126, 213, 219)', c2: 'rgb(207, 218, 219)' };
+      return { c1: 'rgb(126, 213, 219)', c2: 'rgb(196, 234, 236)' };
     case 'ri':
       return { c1: 'rgb(114, 145, 146)', c2: 'rgb(134, 166, 168)' };
     case 'un':

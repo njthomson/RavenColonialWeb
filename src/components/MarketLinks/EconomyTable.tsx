@@ -9,6 +9,7 @@ import { EconomyBlock } from "../EconomyBlock";
 import { SiteMap2 } from "../../system-model2";
 import { mapBodyTypeNames } from "../../types2";
 import { SystemView2 } from "../../views/SystemView2/SystemView2";
+import { BodyFeature } from "../../types";
 
 const journalEconomiesCache: Record<string, { timestamp: string; map: EconomyMap }> = {};
 type StationEconomies = { Name: string, Name_Localised: string, Proportion: number };
@@ -434,6 +435,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
 
   }
 
+  const bodyFeatures = props.site.body?.features?.filter(f => f !== BodyFeature.landable).join(', ').toUpperCase();
   const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => ['bh', 'ns', 'wd'].includes(b.type)).map(b => b.type)));
   const systemFeatures = systemFeatureStarTypes.map(t => mapBodyTypeNames[t]).join(', ').toUpperCase();
   let flip = false;
@@ -456,7 +458,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
         isLightDismiss
         isOpen
         type={PanelType.custom}
-        customWidth='800px'
+        customWidth='780px'
         headerText={`Economy audit: ${props.site.name}`}
         allowTouchBodyScroll={isMobile()}
         styles={{
@@ -468,7 +470,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
           <div style={{ padding: 8, marginBottom: 10, color: appTheme.palette.themePrimary }}>
 
             <div>Body type:&nbsp;{props.site.body?.type?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
-            <div>Body features:&nbsp;{props.site.body?.features?.join(', ').toUpperCase() || <span style={{ color: 'grey' }}>none</span>}</div>
+            <div>Body features:&nbsp;{bodyFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>System features:&nbsp;{systemFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>Reserve level:&nbsp;
               {props.site.sys.reserveLevel?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>}
@@ -478,8 +480,8 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
           <table cellPadding={0} cellSpacing={0}>
             <colgroup>
               <col width='5%' />
-              <col width='15%' />
-              <col width='12%' />
+              <col width='8%' />
+              <col width='8%' />
               <col width='70%' />
             </colgroup>
             <tbody>
@@ -490,8 +492,8 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
                 if (newPrev) { flip = !flip; }
                 return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>
                   <td style={{ textTransform: 'capitalize' }}>{newPrev ? x.inf : ''}</td>
-                  <td>{x.before.toFixed(2)} {asPosNegTxt2(x.delta)}</td>
-                  <td className='cl'>= {x.after.toFixed(2)}</td>
+                  <td>{asPosNegTxt2(x.delta)}</td>
+                  <td className='cl'>{newNext && <>= {x.after.toFixed(2)}</>}</td>
                   <td className='cl' style={{ paddingBottom: newNext ? 8 : 0 }} >{x.reason}</td>
                 </tr>;
               })}
