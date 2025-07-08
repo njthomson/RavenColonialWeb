@@ -4,7 +4,7 @@ import { SiteMap2 } from "./system-model2";
 import { BodyFeature } from "./types";
 import { asPosNegTxt2 } from "./util";
 
-let showConsoleAudit = true; // Date.now() < 0;
+let showConsoleAudit = Date.now() < 0;
 
 export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean): Economy => {
   if (!site.economies || !site.primaryEconomy) {
@@ -32,13 +32,15 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
       // but they get body buff's?
       applyBuffs(map, site);
     } else {
-      // calculate everything else
-      applyBodyType(map, site);
-      if (!site.type.fixed) {
-        // fixed economies do not get body buff's?
-        // OR is it because Garvey Gateway is a strong-link to a bigger port?
-        applyBodyFeatures(map, site);
+      // only apply body features if we are the surface primary or we're an orbital and there is no surface primary
+      if (site.body?.surfacePrimary === site || (site.type.orbital && !site.body?.surfacePrimary)) {
+        applyBodyType(map, site);
+        if (!site.type.fixed) {
+          // do fixed economies do not get body buff's?
+          applyBodyFeatures(map, site);
+        }
       }
+
       applyStrongLinks2(map, site, useIncomplete);
       applyBuffs(map, site);
       applyWeakLinks(map, site, useIncomplete);
@@ -48,11 +50,6 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     const primaryEconomy = Object.keys(map).sort((a, b) => {
       return map[b as keyof EconomyMap] - map[a as keyof EconomyMap];
     })[0] as Economy;
-
-    // round values (why do we get values of "2.2499999999999996"?)
-    for (const key in map) {
-      map[key as keyof EconomyMap] = Math.round(map[key as keyof EconomyMap] * 100) / 100;
-    }
 
     // assign these to the given site
     site.economies = map;
@@ -68,7 +65,6 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
       const sorted = site.economyAudit
         .sort((a, b) => a.inf.localeCompare(b.inf));
       const auditTxt = sorted
-        // .map(x => `${x.inf.padStart(12)}: ${x.before.toFixed(2)} ${asPosNegTxt2(x.delta).padEnd(4, '0')}  =>  ${x.after.toFixed(2)} \t ${x.reason}`)
         .map((x, i) => {
           let t = `${x.inf.padStart(12)}: \t${asPosNegTxt2(x.delta).padEnd(4, '0')} \t ${x.reason}`;
           if (sorted[i + 1]?.inf !== x.inf) {
@@ -90,6 +86,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
 const adjust = (inf: string, delta: number, reason: string, map: EconomyMap, site: SiteMap2) => {
   const before = map[inf as keyof EconomyMap];
   map[inf as keyof EconomyMap] += delta;
+  // round values (why do we get values of "2.2499999999999996"?)
   map[inf as keyof EconomyMap] = Math.round(map[inf as keyof EconomyMap] * 100) / 100;
   const after = map[inf as keyof EconomyMap];
 
@@ -115,7 +112,7 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
   }
 
   // Colony-type ports acquire their economy type(s) as follows:
-  // - The “Base Inheritable Economy” type of the local body they are on or orbit is assessed
+  // - The "Base Inheritable Economy" type of the local body they are on or orbit is assessed
   switch (site.body?.type) {
     default:
       console.warn(`Unexpected body type: "${site.body?.type}"`);
@@ -282,7 +279,8 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
     for (var e in s.economies) {
       const val = s.economies[e as keyof EconomyMap];
       if (val >= 1) {
-        adjust(e, infSize, `Apply (multi) strong link from: ${s.name} (T${s.type.tier})`, map, site);
+        // use the ACTUAL economy strength
+        adjust(e, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
         applyStrongLinkBoost(e as Economy, map, site);
       }
     }
@@ -310,10 +308,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
 
     case 'extraction':
       if (matches(["major", "pristine"], reserveLevel) || matches([BodyFeature.volcanism], site.body?.features)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR/PRISTINE or has VOLCANISM', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: System reserveLevel is MAJOR/PRISTINE or has VOLCANISM', map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
-        return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
+        return adjust(inf, -0.4, 'Strong link boost: System reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
 
@@ -326,10 +324,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2) => 
     case 'industrial':
     case 'refinery':
       if (matches(["major", "pristine"], reserveLevel)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR or PRISTINE', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: System reserveLevel is MAJOR or PRISTINE', map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
-        return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
+        return adjust(inf, -0.4, 'Strong link boost: System reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
 

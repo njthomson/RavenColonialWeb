@@ -1,6 +1,6 @@
 import './SystemView2.css';
 import * as api from '../../api';
-import { ActionButton, CommandBar, DefaultButton, Dialog, DialogFooter, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
@@ -22,6 +22,7 @@ import { createRandomPhoneticName, delayFocus, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
+import { AuditTestWholeSystem } from './AuditTestWholeSystem';
 
 interface SystemView2Props {
   systemName: string;
@@ -48,6 +49,7 @@ interface SystemView2State {
   showConfirmAction?: () => void;
   activeProjects: Record<string, Project | null>
   realEconomies?: GetRealEconomies[];
+  auditWholeSystem?: boolean;
 }
 
 const viewTypes = [
@@ -117,6 +119,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       showConfirmAction: undefined,
       activeProjects: {},
       realEconomies: [],
+      auditWholeSystem: false,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType'>;
   }
 
@@ -439,7 +442,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   renderTitleAndCommands() {
     const { systemName } = this.props;
-    const { processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction } = this.state;
+    const { processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${systemName}`;
@@ -629,6 +632,18 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
                   },
                 },
+                {
+                  key: 'btn-test-system-devide',
+                  itemType: ContextualMenuItemType.Divider,
+                },
+                {
+                  key: 'btn-test-system',
+                  text: 'Compare whole system',
+                  onClick: () => {
+                    this.doGetRealEconomies();
+                    this.setState({ auditWholeSystem: true });
+                  },
+                }
               ]
             }
           },
@@ -675,6 +690,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         </DialogFooter>
       </Dialog>}
 
+      {auditWholeSystem && !!sysMap && <>
+        <AuditTestWholeSystem
+          sysView={this}
+          onClose={() => {
+            this.setState({ auditWholeSystem: false });
+          }}
+        />
+      </>}
     </>;
   }
 

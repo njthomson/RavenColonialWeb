@@ -221,10 +221,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap) => {
 
     case 'extraction':
       if (matches(["major", "pristine"], site.reserveLevel) || matches([BodyFeature.volcanism], site.bodyFeatures)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR or PRISTINE || Body has VOLCANISM', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: System reserveLevel is MAJOR or PRISTINE || Body has VOLCANISM', map, site);
       }
       if (matches(["depleted", "low"], site.reserveLevel)) {
-        return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
+        return adjust(inf, -0.4, 'Strong link boost: System reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
 
@@ -237,10 +237,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap) => {
     case 'industrial':
     case 'refinery':
       if (matches(["major", "pristine"], site.reserveLevel)) {
-        return adjust(inf, +0.4, 'Strong link boost: Body reserveLevel is MAJOR or PRISTINE', map, site);
+        return adjust(inf, +0.4, 'Strong link boost: System reserveLevel is MAJOR or PRISTINE', map, site);
       }
       if (matches(["depleted", "low"], site.reserveLevel)) {
-        return adjust(inf, -0.4, 'Strong link boost: Body reserveLevel is LOW or DEPLETED', map, site);
+        return adjust(inf, -0.4, 'Strong link boost: System reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
 

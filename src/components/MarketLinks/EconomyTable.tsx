@@ -312,7 +312,7 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
 };
 
 
-export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boolean; noCompare?: boolean; sysView: SystemView2 }> = (props) => {
+export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: boolean; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean }> = (props) => {
   const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site?.id);
   const realEconomy = realMatch?.economies;
 
@@ -443,7 +443,8 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
 
     {props.site.economies && <div style={{ position: 'relative' }}>
       <h3 className={cn.h3}>
-        Economy Ratios:
+        {!props.noTableHeader && <>Economy Ratios:</>}
+        {!!props.noTableHeader && <>&nbsp;</>}
         <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}>
           {!!props.site.economyAudit && <Link
             title='See a breakdown of economy calculations'
@@ -526,16 +527,18 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; showName?: boole
     </div>
     }
 
-    <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
-      {!!realEconomy && <>
-        {!!props.sysView.state.useIncomplete && <div style={{ color: appTheme.palette.yellow }}>
-          <Icon iconName='Warning' /> Spansh comparison may not match if calculating with incomplete sites <Icon iconName='TestBeakerSolid' />
-        </div>}
-        <div>
-          <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
-        </div>
-      </>}
-      Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
-    </div>
+    {!props.noDisclaimer && <>
+      <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
+        {!!realEconomy && <>
+          {!!props.sysView.state.useIncomplete && <div style={{ color: appTheme.palette.yellow }}>
+            <Icon iconName='Warning' /> Spansh comparison may not match if calculating with incomplete sites <Icon iconName='TestBeakerSolid' />
+          </div>}
+          <div>
+            <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
+          </div>
+        </>}
+        Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+      </div>
+    </>}
   </div>;
 };
