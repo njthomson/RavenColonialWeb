@@ -12,76 +12,79 @@ interface ImageData {
 }
 
 const supportedTypes: Record<string, ImageData> = {
-  'aerecura': { cmdr: 'kekosummer', location: `Correa Prospecting Platform - LTT 1873, B 1` },
-  'aergia': { cmdr: 'kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
+  'aerecura': { cmdr: 'Kekosummer', location: `Correa Prospecting Platform - LTT 1873, B 1` },
+  'aergia': { cmdr: 'Kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
   'alastor': { cmdr: 'Abe Andet', location: `Bierce Platform - Arietis Sector PJ-Q B5-5` },
   'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
   'ananke': { cmdr: 'Kai Thoreau', location: `Nakayama Landing - HIP 87968, 4 A` },
-  'angelia': { cmdr: 'grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
-  'annona': { cmdr: 'kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4` },
+  'angelia': { cmdr: 'Grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
+  'annona': { cmdr: 'Kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4` },
   'apollo': { cmdr: 'Kai Thoreau', location: `Ore Depot - HIP 87968, 5 A` },
   'artemis': { cmdr: 'Alora Anophis', location: `Besonders Reach - Pru Euq XO-Z d13-11, 2 a` },
-  'asteria': { cmdr: 'kekosummer', location: `Enju genetics laboratory - Col 285 Sector GL-X c1-11, B 4` },
-  'asteroid': { cmdr: 'grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
+  'asteria': { cmdr: 'Kekosummer', location: `Enju genetics laboratory - Col 285 Sector GL-X c1-11, B 4` },
+  'asteroid': { cmdr: 'Grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
   'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8` },
   'bacchus': { cmdr: 'Abe Andet', location: `Galouye Vista - Arietis Sector PJ-Q B5-5` },
-  'bellona': { cmdr: 'kekosummer', location: `Xie arsenal - Col 285 Sector GL-X c1-11, B 2` },
+  'bellona': { cmdr: 'Kekosummer', location: `Xie arsenal - Col 285 Sector GL-X c1-11, B 2` },
+  'bia': { cmdr: 'Disnaematter', location: `Wolff Facility - Synuefe EM-M c23-8` },
   'caelus': { cmdr: 'Disnaematter', location: `Hooker Horizons - Synuefe CN-Z b46-1` },
-  'caerus': { cmdr: 'kekosummer', location: `Pozandr astrophysics site - Col 285 Sector GL-X c1-11, B 4` },
-  'ceres': { cmdr: 'kekosummer', location: `Doroshenko Nutrition Biome - Col 285 Sector GL-X c1-11, A 4` },
-  'chronos': { cmdr: 'kekosummer', location: `Neborak Astrophysics Enterprise - Col 285 Sector GL-X c1-11, B 4` },
+  'caerus': { cmdr: 'Kekosummer', location: `Pozandr astrophysics site - Col 285 Sector GL-X c1-11, B 4` },
+  'ceres': { cmdr: 'Kekosummer', location: `Doroshenko Nutrition Biome - Col 285 Sector GL-X c1-11, A 4` },
+  'chronos': { cmdr: 'Kekosummer', location: `Neborak Astrophysics Enterprise - Col 285 Sector GL-X c1-11, B 4` },
   'clotho': { cmdr: 'Abe Andet', location: `Morelli Gateway - Arietis Sector PJ-Q B5-5` },
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
   'comus': { cmdr: 'Disnaematter', location: `Emem's Leisure - Synuefe FI-Z b46-1.` },
-  'consus': { cmdr: 'kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
-  'decima': { cmdr: 'kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a` },
+  'consus': { cmdr: 'Kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
+  'decima': { cmdr: 'Kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a` },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
-  'dicaeosyne': { cmdr: 'grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
+  'dicaeosyne': { cmdr: 'Grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
   'dodona': { cmdr: 'Abe Andet', location: `Karman Vision - Arietis Sector PJ-Q B5-5` },
   'dual_truss': { cmdr: 'Abe Andet', location: `McCulley Gateway - Pegasi Sector IM-S a5-0` },
   'eirene': { cmdr: 'Abe Andet', location: `Gibbs Point - Arietis Sector PJ-Q B5-5` },
   'enodia': { cmdr: 'Locke Denman', location: `Glaser Relay - 37 Sextantis, 2 e` },
   'enyo': { cmdr: 'Abe Andet', location: `Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5` },
-  'erebus': { cmdr: 'kekosummer', location: `Dhillion Mineralogic Exchange - LTT 1873, B 1` },
+  'erebus': { cmdr: 'Kekosummer', location: `Dhillion Mineralogic Exchange - LTT 1873, B 1` },
   'eupraxia': { cmdr: 'Abe Andet', location: `Hooper Vison - Arietis Sector PJ-Q B5-5` },
   'euthenia': { cmdr: 'Disnaematter', location: `McMullen's Progress - Synuefe EM-M c23-8` },
-  'fontus': { cmdr: 'kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6` },
-  'fornax': { cmdr: 'kekosummer', location: `Hakimi Horticultural Centre - Col 285 Sector GL-X c1-11, A 6` },
-  'fufluns': { cmdr: 'kekosummer', location: `Oliveira Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
-  'gaea': { cmdr: 'grinning2001', location: `Villalba Synthetics Workshop - IC 2391 Sector LH-V b2-5, A 3` },
-  'gelos': { cmdr: 'kekosummer', location: `Burn Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
+  'fontus': { cmdr: 'Kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6` },
+  'fornax': { cmdr: 'Kekosummer', location: `Hakimi Horticultural Centre - Col 285 Sector GL-X c1-11, A 6` },
+  'fufluns': { cmdr: 'Kekosummer', location: `Oliveira Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
+  'gaea': { cmdr: 'Grinning2001', location: `Villalba Synthetics Workshop - IC 2391 Sector LH-V b2-5, A 3` },
+  'gelos': { cmdr: 'Kekosummer', location: `Burn Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach - Synuefe EM-M c23-8` },
-  'hermes': { cmdr: 'grinning2001' },
+  'hermes': { cmdr: 'Grinning2001' },
   'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5` },
   'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1` },
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
   'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3` },
-  'mantus': { cmdr: 'kekosummer', location: `Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
-  'meteope': { cmdr: 'kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
-  'minerva': { cmdr: 'kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
-  'minthe': { cmdr: 'kekosummer', location: `Greko chemical workshop - Col 285 Sector GL-X c1-11, A 6` },
+  'mantus': { cmdr: 'Kekosummer', location: `Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
+  'meteope': { cmdr: 'Kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
+  'minerva': { cmdr: 'Kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
+  'minthe': { cmdr: 'Kekosummer', location: `Greko chemical workshop - Col 285 Sector GL-X c1-11, A 6` },
   'necessitas': { cmdr: 'Abe Andet', location: `Lenthall Gateway - Arietis Sector PJ-Q B5-5` },
-  'nemesis': { cmdr: 'grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
+  'nemesis': { cmdr: 'Grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport - Pegasi Sector DL-y D60` },
   'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5` },
-  'opis': { cmdr: 'kekosummer', location: `Morgan Base - LTT 1873, B 2` },
-  'orcus': { cmdr: 'kekosummer', location: `Weber metalurgic station - Col 285 Sector GL-X c1-11, B 3` },
-  'ourea': { cmdr: 'kekosummer', location: `Polubotok drilling station - Col 285 Sector GL-X c1-11, B 3` },
-  'palici': { cmdr: 'kekosummer', location: `Tolmie - Col 285 Sector GL-X c1-11, A 6` },
-  'pheobe': { cmdr: 'kekosummer', location: `Vytrebenko Biochemical Centre - Col 285 Sector GL-X c1-11, B 4` },
-  'picumnus': { cmdr: 'kekosummer', location: `Orellana Botanical Nursery - Col 285 Sector GL-X c1-11, A 4` },
+  'opis': { cmdr: 'Kekosummer', location: `Morgan Base - LTT 1873, B 2` },
+  'orcus': { cmdr: 'Kekosummer', location: `Weber metalurgic station - Col 285 Sector GL-X c1-11, B 3` },
+  'ourea': { cmdr: 'Kekosummer', location: `Polubotok drilling station - Col 285 Sector GL-X c1-11, B 3` },
+  'palici': { cmdr: 'Kekosummer', location: `Tolmie - Col 285 Sector GL-X c1-11, A 6` },
+  'pheobe': { cmdr: 'Kekosummer', location: `Vytrebenko Biochemical Centre - Col 285 Sector GL-X c1-11, B 4` },
+  'phorcys': { cmdr: 'Artemwaynes', location: ` Montgomery Enterprise - HIP 60611, 7` },
+  'picumnus': { cmdr: 'Kekosummer', location: `Orellana Botanical Nursery - Col 285 Sector GL-X c1-11, A 4` },
   'pistis': { cmdr: 'Disnaematter', location: `Pogue Terminal - Synuefe EM-M c23-8` },
-  'plutus': { cmdr: 'grinning2001', location: `Rahman Town - IC 2391 Sector EL-Y c9, B 10, A 3` },
-  'polemos': { cmdr: 'kekosummer', location: `Ferreyra Defense Base - Col 285 Sector GL-X c1-11, B 5 a` },
+  'plutus': { cmdr: 'Grinning2001', location: `Rahman Town - IC 2391 Sector EL-Y c9, B 10, A 3` },
+  'polemos': { cmdr: 'Kekosummer', location: `Ferreyra Defense Base - Col 285 Sector GL-X c1-11, B 5 a` },
   'porrima': { cmdr: 'Disnaematter', location: `Pettitt Nook - Synuefe EM-M c23-8` },
+  'poseidon': { cmdr: 'Disnaematter', location: `David Lynch Memorial - Synuefe EM-M c23-8` },
   'prometheus': { cmdr: 'Abe Andet', location: `Fuller Depot - Arietis Sector PJ-Q B5-5` },
-  'quad_truss': { cmdr: 'grinning2001', location: `Crowley Gateway - Synuefe DL-N c23-20` },
-  'silenus': { cmdr: 'grinning2001', location: `Hornby Vista - IC 2391 Sector LH-V b2-5, A 3` },
+  'quad_truss': { cmdr: 'Grinning2001', location: `Crowley Gateway - Synuefe DL-N c23-20` },
+  'silenus': { cmdr: 'Grinning2001', location: `Hornby Vista - IC 2391 Sector LH-V b2-5, A 3` },
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point - Pegasi Sector MS-T b3-5` },
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon - Synuefe EM-M c23-8` },
   'vesta': { cmdr: 'Locke Denman', location: `Kusama Depot - 37 Sextantis, 2 D` },
-  'vulcan': { cmdr: 'grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
+  'vulcan': { cmdr: 'Grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
   'zeus': { cmdr: 'EDExplorer', location: `Ascendia City - Col 285 Sector ZX-R b5-0, A 4` },
 };
 
@@ -120,7 +123,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
   componentDidMount(): void {
     // force an initial sort + filter
-    this.setFilter();
+    this.setFilter(false, true);
   }
 
   componentDidUpdate(prevProps: Readonly<VisualIdentifyProps>, prevState: Readonly<VisualIdentifyState>, snapshot?: any): void {
@@ -147,11 +150,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
               offText='Surface'
               checked={showSurface}
               onChange={() => {
-                this.setState({ showSurface: !showSurface });
-
-                setTimeout(() => {
-                  this.setFilter();
-                }, 10);
+                this.setFilter(!showSurface, showInGroups);
               }}
             />
             <Toggle
@@ -159,7 +158,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
               offText='Grouped'
               checked={showInGroups}
               onChange={() => {
-                this.setState({ showInGroups: !showInGroups });
+                this.setFilter(showSurface, !showInGroups);
               }}
             />
           </Stack>
@@ -190,8 +189,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
     }
   };
 
-  setFilter = () => {
-    const { showSurface, showInGroups } = this.state;
+  setFilter = (showSurface: boolean, showInGroups: boolean) => {
 
     const typeNames = showInGroups ?
       sortedGroups
@@ -201,6 +199,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         .filter(key => typeTypes[key].orbital !== showSurface);
 
     this.setState({
+      showInGroups: showInGroups,
       showSurface: showSurface,
       typeNames: typeNames,
     });
