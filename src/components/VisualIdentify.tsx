@@ -1,6 +1,6 @@
 
 import { ActionButton, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
-import { Component, FunctionComponent } from "react";
+import { Component, FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../theme";
 import { SiteType, siteTypes } from "../site-data";
 import { CopyButton } from "./CopyButton";
@@ -9,7 +9,15 @@ import { isMobile } from "../util";
 interface ImageData {
   cmdr: string;
   location?: string;
+  more?: ImageRef[];
 }
+
+interface ImageRef {
+  n: string;
+  c?: string;
+  l?: string;
+}
+
 
 const supportedTypes: Record<string, ImageData> = {
   'aerecura': { cmdr: 'Kekosummer', location: `Correa Prospecting Platform - LTT 1873, B 1` },
@@ -26,7 +34,7 @@ const supportedTypes: Record<string, ImageData> = {
   'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8` },
   'bacchus': { cmdr: 'Abe Andet', location: `Galouye Vista - Arietis Sector PJ-Q B5-5` },
   'bellona': { cmdr: 'Kekosummer', location: `Xie arsenal - Col 285 Sector GL-X c1-11, B 2` },
-  'bia': { cmdr: 'Disnaematter', location: `Wolff Facility - Synuefe EM-M c23-8` },
+  'bia': { cmdr: 'Disnaematter', location: `Wolff Facility - Synuefe EM-M c23-8`, more: [{ n: 'bia-plan.jpg', c: 'Cmdr Kekosummer' }] },
   'caelus': { cmdr: 'Disnaematter', location: `Hooker Horizons - Synuefe CN-Z b46-1` },
   'caerus': { cmdr: 'Kekosummer', location: `Pozandr astrophysics site - Col 285 Sector GL-X c1-11, B 4` },
   'ceres': { cmdr: 'Kekosummer', location: `Doroshenko Nutrition Biome - Col 285 Sector GL-X c1-11, A 4` },
@@ -384,15 +392,20 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 }
 
 
-export const SiteImage: FunctionComponent<{ buildType: string; height: number; width?: number; noCredits?: boolean }> = (props) => {
+export const SiteImage: FunctionComponent<{ buildType: string; height: number; width?: number; noCredits?: boolean; }> = (props) => {
   // TODO: improve this for vertical/mobile devices
   let width = props.width ?? props.height * 1.5;
   let height = props.height;
 
   const match = supportedTypes[props.buildType];
-  const imgUrl = width <= 200
-    ? `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}-thumb.jpg)`
-    : `url(https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg)`;
+
+  const img = {
+    n: width <= 200 ? `${props.buildType}-thumb.jpg` : `${props.buildType}.jpg`,
+  } as ImageRef;
+  if (match && !props.noCredits) {
+    img.c = `Cmdr ${match.cmdr}`;
+    img.l = match.location;
+  }
 
   return <>
     {!match && <>
@@ -411,67 +424,121 @@ export const SiteImage: FunctionComponent<{ buildType: string; height: number; w
         {/* <div style={{ color: appTheme.palette.themeTertiary }}>Please share?</div> */}
       </div>
     </>}
-
     {match && <>
-      <div
+      <SiteImages imgs={[img, ...match.more ?? []]} width={width} height={height} noCredits={props.noCredits} />
+    </>}
+  </>;
+}
+
+export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; width?: number; noCredits?: boolean; }> = (props) => {
+
+  const [imgIdx, setImgIdx] = useState(0);
+
+  const img = props.imgs[imgIdx];
+  const imgUrl = `https://njthomson.github.io/SrvSurvey/colony/${img.n}`;
+
+  return <>
+    <div
+      style={{
+        position: 'relative',
+        width: props.width,
+        height: props.height,
+        border: `2px solid ${appTheme.palette.themeTertiary}`,
+        background: 'black',
+        backgroundImage: `url(${imgUrl})`,
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+
+      {img.c && <span
         style={{
-          position: 'relative',
-          width: width,
-          height: height,
-          border: `2px solid ${appTheme.palette.themeTertiary}`,
-          background: 'black',
-          backgroundImage: imgUrl,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
+          position: 'absolute',
+          padding: '0 4px',
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'black',
+          color: 'wheat'
         }}
       >
+        {img.c}
+      </span>}
 
-        {!props.noCredits && <>
-          <span
-            style={{
-              position: 'absolute',
-              padding: '0 4px',
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'black',
-              color: 'wheat'
-            }}
+      {img.l && <span
+        style={{
+          position: 'absolute',
+          padding: '0 4px',
+          bottom: 0,
+          backgroundColor: 'black',
+          color: 'wheat'
+        }}
+      >
+        {img.l}
+      </span>}
+
+      {!props.noCredits && <>
+        <IconButton
+          title='View full size in another tab'
+          iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10 } }}
+          style={{
+            position: 'absolute',
+            right: 2,
+            top: 2,
+            color: 'wheat',
+            backgroundColor: 'black',
+            padding: 0,
+            margin: 0,
+            width: 16,
+            height: 16,
+          }}
+          href={imgUrl}
+          target='visprops.buildType'
+        />
+        {props.imgs.length > 1 && <>
+          <Stack horizontal style={{
+            position: 'absolute',
+            left: 2,
+            top: 2,
+            backgroundColor: 'black',
+            padding: 0,
+            margin: 0,
+          }}
           >
-            Cmdr {match.cmdr}
-          </span>
-
-          {match.location && <span
-            style={{
-              position: 'absolute',
-              padding: '0 4px',
-              bottom: 0,
-              backgroundColor: 'black',
-              color: 'wheat'
-            }}
-          >
-            {match.location}
-          </span>}
-
-          <IconButton
-            title='View full size in another tab'
-            iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10 } }}
-            style={{
-              position: 'absolute',
-              right: 2,
-              top: 2,
-              color: 'wheat',
-              padding: 0,
-              margin: 0,
-              width: 16,
-              height: 16,
-            }}
-            href={`https://njthomson.github.io/SrvSurvey/colony/${props.buildType}.jpg`}
-            target='visprops.buildType'
-          />
+            <IconButton
+              title='Previous image'
+              iconProps={{ iconName: 'DoubleChevronLeft', style: { fontSize: 10 } }}
+              style={{
+                color: 'wheat',
+                padding: 0,
+                margin: 0,
+                width: 16,
+                height: 16,
+              }}
+              onClick={() => {
+                let idx = imgIdx > 0 ? imgIdx - 1 : props.imgs.length - 1;
+                setImgIdx(idx);
+              }}
+            />
+            <IconButton
+              title='Next image'
+              iconProps={{ iconName: 'DoubleChevronRight', style: { fontSize: 10 } }}
+              style={{
+                color: 'wheat',
+                padding: 0,
+                margin: 0,
+                width: 16,
+                height: 16,
+              }}
+              onClick={() => {
+                let idx = imgIdx === props.imgs.length - 1 ? 0 : imgIdx + 1;
+                setImgIdx(idx);
+              }}
+            />
+          </Stack>
         </>}
-      </div>
-    </>}
+      </>}
 
+    </div>
   </>;
 }

@@ -37,16 +37,18 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
         }}
         onDismiss={(ev: any) => {
           // if the mouse is over a button for another build-type ... try clicking it
-          setTimeout(() => {
-            let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
-            while (!!btn?.parentElement && btn.tagName !== 'BUTTON') {
-              btn = btn.parentElement;
-            }
+          if (ev.type === 'click') {
+            setTimeout(() => {
+              let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
+              while (!!btn?.parentElement && btn.tagName !== 'BUTTON') {
+                btn = btn.parentElement;
+              }
 
-            if (btn?.id.startsWith('st-') && !btn.id.endsWith(targetBuildType)) {
-              btn.click();
-            }
-          }, 10);
+              if (btn?.id.startsWith('st-') && !btn.id.endsWith(targetBuildType)) {
+                btn.click();
+              }
+            }, 10);
+          }
 
           // but close the panel first
           setTargetBuildType('');
