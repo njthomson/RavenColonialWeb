@@ -10,6 +10,7 @@ import { SiteMap2 } from "../../system-model2";
 import { mapBodyTypeNames } from "../../types2";
 import { SystemView2 } from "../../views/SystemView2/SystemView2";
 import { BodyFeature } from "../../types";
+import { BodyOverride } from "../../views/SystemView2/BodyOverride";
 
 const journalEconomiesCache: Record<string, { timestamp: string; map: EconomyMap }> = {};
 type StationEconomies = { Name: string, Name_Localised: string, Proportion: number };
@@ -317,6 +318,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
   const realEconomy = realMatch?.economies;
 
   const [showAudit, setShowAudit] = useState(false);
+  const [bodyOverride, setBodyOverride] = useState(false);
   const [loadingCompare, setLoadingCompare] = useState(!!realEconomy);
 
   // exit early if the site is not complete it cannot be landed at
@@ -470,11 +472,12 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
         <div className='audit' >
           <div style={{ padding: 8, marginBottom: 10, color: appTheme.palette.themePrimary }}>
 
-            <div>Body type:&nbsp;{props.site.body?.type?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
+            <div>Body type:&nbsp;{(props.site.body?.type && mapBodyTypeNames[props.site.body?.type])?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
+            {props.site.body && <Link style={{ float: 'right', fontSize: 10 }} onClick={() => setBodyOverride(true)}>Override?</Link>}
             <div>Body features:&nbsp;{bodyFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>System features:&nbsp;{systemFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>Reserve level:&nbsp;
-              {props.site.sys.reserveLevel?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>}
+              {props.site.sys.reserveLevel?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown, assuming PRISTINE</span>}
             </div>
           </div>
 
@@ -504,6 +507,14 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
           <div className='small' style={{ marginTop: 16, marginBottom: 8 }}>
             Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
           </div>
+
+          {props.site.body && bodyOverride && <>
+            <BodyOverride
+              body={props.site.body}
+              sysView={props.sysView}
+              onClose={() => setBodyOverride(false)}
+            />
+          </>}
         </div>
       </Panel>}
 

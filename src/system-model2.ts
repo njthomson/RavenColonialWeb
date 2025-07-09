@@ -367,7 +367,12 @@ const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteM
 
       if (!primarySite.type.orbital && s.type.orbital && (s.type.buildClass === 'outpost' || s.type.buildClass === 'starport')) {
         // surface sites cannot claim orbital ports
-        return false
+        return false;
+      }
+
+      if (s.type.orbital && !primarySite.type.orbital && !!body.orbitalPrimary) {
+        // surface sites cannot claim orbital facilities if there's an orbital port
+        return false;
       }
 
       // TODO: something about tier's ... or pre-sort so higher tier's go first?

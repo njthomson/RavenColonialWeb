@@ -214,24 +214,24 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
       <table cellPadding={0} cellSpacing={0} style={{ marginBottom: 24 }}>
         <colgroup>
-          <col width='250px' />  {/* buildType */}
-          <col width='15px' />  {/* i */}
+          <col width='250px' />{/* buildType */}
+          <col width='15px' />{/* i */}
           {/* <col width='66px' /> */}
-          {this.props.sysMap && <col width='68px' />}  {/* valid */}
-          <col width='44px' /> {/* haul */}
-          <col width='60px' /> {/* pad */}
-          <col width='95px' /> {/* env */}
-          <col width='80px' /> {/* tier */}
-          <col width='80px' /> {/* needs */}
-          <col width='80px' /> {/* gives */}
-          <col width='130px' /> {/* inf */}
-          <col width='75px' /> {/* pop */}
-          <col width='75px' /> {/* mpop */}
-          <col width='90px' /> {/* sec */}
-          <col width='85px' /> {/* wealth */}
-          <col width='75px' /> {/* tech */}
-          <col width='75px' /> {/* sol */}
-          <col width='75px' /> {/* dev */}
+          {this.props.sysMap && <col width='68px' />}{/* valid */}
+          <col width='44px' />{/* haul */}
+          <col width='60px' />{/* pad */}
+          <col width='95px' />{/* env */}
+          <col width='80px' />{/* tier */}
+          <col width='80px' />{/* needs */}
+          <col width='80px' />{/* gives */}
+          <col width='130px' />{/* inf */}
+          <col width='75px' />{/* pop */}
+          <col width='75px' />{/* mpop */}
+          <col width='90px' />{/* sec */}
+          <col width='85px' />{/* wealth */}
+          <col width='75px' />{/* tech */}
+          <col width='75px' />{/* sol */}
+          <col width='75px' />{/* dev */}
         </colgroup>
 
         <thead>

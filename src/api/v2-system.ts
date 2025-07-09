@@ -1,7 +1,7 @@
 
 import { EconomyMap } from "../system-model2";
-import { ReserveLevel } from "../types";
-import { Site, Sys } from "../types2";
+import { BodyFeature, ReserveLevel } from "../types";
+import { Bod, Site, Sys } from "../types2";
 import { callAPI } from "./api-util";
 
 /** System level APIs */
@@ -24,6 +24,10 @@ export const systemV2 = {
     return await callAPI<Site>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`);
   },
 
+  updateBody: async (systemName: string, data: BodyPut): Promise<Bod[]> => {
+    return await callAPI<Bod[]>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`, 'PUT', JSON.stringify(data));
+  },
+
   saveSites: async (id64OrName: string, data: SitesPut): Promise<Sys> => {
     return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(id64OrName)}/sites`, 'PUT', JSON.stringify(data));
   },
@@ -40,6 +44,11 @@ export const systemV2 = {
     return result;
   },
 };
+
+export interface BodyPut {
+  num: number;
+  features?: BodyFeature[];
+}
 
 export interface SitesPut {
   update: Site[];
