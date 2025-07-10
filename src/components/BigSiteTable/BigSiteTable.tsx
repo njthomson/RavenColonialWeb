@@ -506,7 +506,6 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
               onClick={ev => {
                 ev.preventDefault();
                 this.props.onChange(st);
-                // this.setState({ showList: false });
               }}
             >
               {st.replace('_i', '').replace('_e', '')}

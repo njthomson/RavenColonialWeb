@@ -17,7 +17,7 @@ export const callSvcAPI = async <T>(url: URL, method: string = 'GET', body?: str
   if (logApiCalls) { console.log(`calling: (${method}) ${url}`); }
 
   const headers: HeadersInit = url.origin === apiSvcUrl && store.cmdrName
-    ? { 'Rcc-Cmdr': store.cmdrName }
+    ? { 'rcc-cmdr0': base64Encode(store.cmdrName) }
     : {};
 
   const response = !body
@@ -53,3 +53,9 @@ export const callSvcAPI = async <T>(url: URL, method: string = 'GET', body?: str
   );
 };
 
+const base64Encode = (txt: string): string => {
+  const bytes = Array.from(new TextEncoder().encode(txt));
+  var raw = bytes.map(b => String.fromCharCode(b)).join('');
+  var base64 = btoa(raw);
+  return base64;
+}

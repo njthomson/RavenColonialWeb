@@ -220,7 +220,10 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           <BigSiteTable
             buildType={this.props.buildType}
             sysMap={this.props.sysMap}
-            onChange={newValue => this.props.onChange(newValue)}
+            onChange={newValue => {
+              this.props.onChange(newValue);
+              this.setState({ showList: false });
+            }}
             stickyTop={isMobile() ? 0 : 64}
             allowPartial={this.props.tableOnly}
           />
