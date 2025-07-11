@@ -53,8 +53,8 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     applySpecializedPort(map, site);
   } else {
     // Colony ports start with an economy based on the parent body, but
-    // only apply if we are the surface primary or we're an orbital and there is no surface primary
-    if (site.body?.surfacePrimary === site || (site.type.orbital && !site.body?.surfacePrimary)) {
+    // only apply if we are the surface primary or we're an orbital and there is no surface primary or the surface primary is fixed economy type
+    if (site.body?.surfacePrimary === site || (site.type.orbital && (!site.body?.surfacePrimary || site.body?.surfacePrimary?.type.inf !== 'colony'))) {
       applyBodyType(map, site);
     }
   }
@@ -194,22 +194,25 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
     case 'ib':
       adjust('industrial', +1, 'Body type: ICY', map, site);
       break;
+    case 'ac':
+      // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
+      adjust('extraction', +1, 'Body type: HMC', map, site);
+      break;
   }
 
   // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
   if (site.body.features.includes(BodyFeature.rings)) {
-    adjust('extraction', +1, 'Body has: RINGS', map, site);
-    // TODO: asteroid belt around stars
+    if (!['hmc', 'mrb'].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site); }
   }
   // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
   if (site.body.features.includes(BodyFeature.bio)) {
-    adjust('agriculture', +1, 'Body has: BIO', map, site);
+    if (!['elw', 'ww'].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site); }
     adjust('terraforming', +1, 'Body has: BIO', map, site);
   }
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.body.features.includes(BodyFeature.geo)) {
-    adjust('extraction', +1, 'Body has: GEO', map, site);
-    adjust('industrial', +1, 'Body has: GEO', map, site);
+    if (!['hmc', 'mrb'].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site); }
+    if (!['gg', 'ri', 'ib'].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site); }
   }
 };
 
