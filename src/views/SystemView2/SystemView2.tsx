@@ -1,6 +1,6 @@
 import './SystemView2.css';
 import * as api from '../../api';
-import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
@@ -29,6 +29,7 @@ interface SystemView2Props {
 }
 
 interface SystemView2State {
+  hideLoginPrompt?: boolean;
   errorMsg?: string;
   processingMsg?: string;
   useIncomplete: boolean;
@@ -57,6 +58,8 @@ const viewTypes = [
   'table',
 ];
 
+const anonymous = !store.cmdrName;
+
 export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   static countNew = 0;
   static lastBuildType?: string;
@@ -83,7 +86,21 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     } else {
       this.doSystemSearch();
     }
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
   }
+
+  componentWillUnmount(): void {
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+  }
+
+  handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (this.isDirty()) {
+      e.preventDefault();
+      // Chrome requires returnValue to be set
+      e.returnValue = '';
+      return '';
+    }
+  };
 
   componentDidUpdate(prevProps: Readonly<SystemView2Props>, prevState: Readonly<SystemView2State>, snapshot?: any): void {
     if (prevProps.systemName !== this.props.systemName) {
@@ -180,6 +197,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   doImport = (type?: string) => {
+    if (!store.cmdrName) {
+      console.warn('You need to sign in in for this');
+      return;
+    }
+
     this.setState({ processingMsg: 'Importing ...', errorMsg: '' });
 
     api.systemV2.import(this.props.systemName, type)
@@ -205,7 +227,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   saveData = () => {
 
     if (!store.cmdrName) {
-      window.alert('You need to sign-in to Raven Colonial to save data.\n(temporary message)');
+      console.warn('You need to sign in in for this');
+      window.alert('You need to sign-in to Raven Colonial to save data.');
       document.getElementById('current-cmdr')?.click();
       return;
     }
@@ -416,8 +439,39 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         />
       </>}
 
-      {this.renderCoachmarks()}
+      {!anonymous && this.renderCoachmarks()}
+      {anonymous && this.renderLoginPrompt()}
     </div>;
+  }
+
+  renderLoginPrompt() {
+    if (this.state.hideLoginPrompt) { return null; }
+
+    return <>
+      <TeachingBubble
+        target={'#current-cmdr'}
+        headline='Greetings'
+        isWide
+        calloutProps={{
+          preventDismissOnResize: true,
+          directionalHint: DirectionalHint.bottomLeftEdge,
+        }}
+        onDismiss={() => this.setState({ hideLoginPrompt: true })}
+        primaryButtonProps={{
+          text: 'Okay',
+          onClick: () => {
+            document.getElementById('current-cmdr')?.click();
+            this.setState({ hideLoginPrompt: true });
+          }
+        }}
+        secondaryButtonProps={{
+          text: 'Maybe later',
+          onClick: () => this.setState({ hideLoginPrompt: true }),
+        }}
+      >
+        You must enter a Commander name to save and fully use this tool.
+      </TeachingBubble >
+    </>;
   }
 
   renderFindSystem() {
@@ -436,6 +490,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         />
         <br />
         <ShowMySystems />
+        {!store.cmdrName && this.renderLoginPrompt()}
       </div>
     </div>;
   }
@@ -450,12 +505,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const enableSave = this.isDirty() && !processingMsg;
 
     const itemAddNewSite = {
+      id: 'sysView2_AddSaveLoad',
       key: 'sys-add1',
       title: 'Add a planned or "what if" site',
       text: 'Add',
       iconProps: { iconName: 'Add' },
       split: !isMobile(),
-      disabled: !!processingMsg,
+      disabled: !!processingMsg || anonymous,
       onClick: () => this.createNewSite(),
     } as IContextualMenuItem;
 
@@ -465,7 +521,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         text: 'Import existing bodies and stations',
         iconProps: { iconName: 'Build' },
         onClick: () => this.doImport(),
-
+        disabled: !!processingMsg || anonymous,
         style: { height: 60 },
         onRenderContent: ((p, d) => {
           return <div style={{ justifyContent: 'left' }}>
@@ -473,7 +529,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               {d.renderItemIcon(p)}
               {d.renderItemName(p)}
             </span>
-            <div style={{ color: appTheme.palette.themeSecondary }}>Use to update bodies and new stations from Spansh and RavenColonial</div>
+            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Use to update bodies and new stations from Spansh and RavenColonial</div>
           </div>;
         })
       }
@@ -535,12 +591,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
-            id: 'sysView2_AddSaveLoad',
             key: 'sys-load',
             title: 'Abandon your current changes and reload',
             text: 'Load',
             iconProps: { iconName: 'OpenFolderHorizontal' },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || anonymous,
             onClick: () => {
               if (this.isDirty()) {
                 this.setState({ showConfirmAction: () => this.loadData() });
@@ -555,7 +610,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Save changes to this system',
             text: 'Save',
             iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
-            disabled: !enableSave,
+            disabled: !enableSave || anonymous,
             onClick: this.saveData,
           },
 
@@ -967,6 +1022,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         iconProps={{ iconName: 'Add' }}
         style={{ marginBottom: 10 }}
         onClick={() => this.createNewSite()}
+        disabled={!store.cmdrName}
       >
         Add new
       </ActionButton>

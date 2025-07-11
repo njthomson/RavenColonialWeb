@@ -574,14 +574,16 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     ? sz * 0.70
     : 0;
 
-  const btnAddSite = <IconButton
-    iconProps={{ iconName: 'CircleAddition' }}
-    title={`Add a new site to: ${node.body.name}`}
-    style={{ marginLeft: 4, paddingTop: 2 }}
-    onClick={() => {
-      props.sysView.createNewSite(node.body.num);
-    }}
-  />;
+  const btnAddSite = !store.cmdrName
+    ? <Icon iconName="CircleAddition" style={{ marginLeft: 4, paddingTop: 2, color: appTheme.palette.neutralTertiaryAlt }} />
+    : <IconButton
+      iconProps={{ iconName: 'CircleAddition' }}
+      title={`Add a new site to: ${node.body.name}`}
+      style={{ marginLeft: 4, paddingTop: 2 }}
+      onClick={() => {
+        props.sysView.createNewSite(node.body.num);
+      }}
+    />;
 
   return <div
     style={{

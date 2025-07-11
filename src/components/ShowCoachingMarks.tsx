@@ -5,28 +5,98 @@ import { store } from "../local-storage";
 import { LinkSrvSurvey } from "./LinkSrvSurvey";
 
 export const ShowManyCoachingMarks: FunctionComponent<{ targets: string[] }> = (props) => {
-  const [targets, setTargets] = useState(props.targets);
-  const [openId, setOpenId] = useState('');
+  const notAgainId = props.targets[0];
+  const [complete, setComplete] = useState(store.notAgain.includes(notAgainId));
+  const [notAgainPending, setNotAgainPending] = useState(complete);
+
+  const total = props.targets.length;
+  const [idx, setIdx] = useState(0);
+  const [quick, setQuick] = useState(false);
+
+  const id = props.targets[idx];
+  const target = `#${id}`;
+  const match = coachingContent[id];
+  const lastOne = idx + 1 === total;
+
+  if (complete || !match) { return null; }
 
   return <>
-    {targets.map(id => {
-      if (!openId || openId === id) {
-        return <ShowCoachingMarks
-          key={id}
-          target={`#${id}`}
-          id={id}
-          onOpen={id => {
-            setOpenId(id);
-          }}
-          onDismiss={id => {
-            setTargets(targets.filter(i => i !== id));
-            setOpenId('');
-          }}
-        />;
-      } else {
-        return null;
-      }
-    })}
+    <Coachmark
+      key={`cm${id}`}
+      target={target}
+      persistentBeak
+      delayBeforeCoachmarkAnimation={100}
+      isCollapsed={!quick}
+      positioningContainerProps={{ directionalHint: match.directionalHint }}
+      beaconColorOne={appTheme.palette.black}
+    >
+      <TeachingBubbleContent
+        headline={match.headline}
+        target={target}
+        footerContent={`${1 + idx} of ${total}`}
+        isWide
+        styles={{
+          bodyContent: {
+            zIndex: 3,
+            backgroundColor: appTheme.palette.white,
+            border: '1px solid ' + appTheme.palette.accent,
+          },
+          headline: { color: appTheme.palette.black },
+          footer: { color: appTheme.palette.accent },
+        }}
+
+        primaryButtonProps={!idx ? undefined : {
+          text: 'Previous',
+          onClick: () => {
+            // move prev
+            if (idx > 0) {
+              setIdx(idx - 1);
+            }
+          }
+        }}
+
+        secondaryButtonProps={{
+          text: lastOne ? 'Okay' : 'Next',
+          style: { border: `1px solid ${appTheme.palette.accent}` },
+          onClick: () => {
+            if (lastOne) {
+              if (!!notAgainPending) {
+                store.notAgain = [...store.notAgain, notAgainId];
+              }
+              setComplete(true);
+            } else {
+              // move next
+              setQuick(true);
+              setIdx(idx + 1);
+            }
+          }
+        }}
+      >
+        <div style={{ color: appTheme.palette.black }}>
+          <div style={{ marginBlock: 10 }}>
+            {match.body}
+          </div>
+          {!lastOne && <br />}
+          {lastOne && <Checkbox
+            label='Do not show me this again'
+            checked={notAgainPending}
+            styles={{
+              checkbox: { borderColor: appTheme.palette.themeTertiary },
+              text: { color: appTheme.palette.themeTertiary },
+            }}
+            onChange={(_, checked) => setNotAgainPending(!!checked)}
+          />}
+        </div>
+
+        <Coachmark
+          key={`cmi${id}`}
+          target={target}
+          preventFocusOnMount
+          positioningContainerProps={{ directionalHint: match.directionalHint }}
+        />
+
+      </TeachingBubbleContent>
+    </Coachmark>
   </>;
 }
 
@@ -60,6 +130,7 @@ export const ShowCoachingMarks: FunctionComponent<{ target: string, id: string, 
         primaryButtonProps={{
           primary: true,
           text: 'Okay',
+          style: { border: `1px solid ${appTheme.palette.accent}` },
           onClick: () => {
             setShow(false);
             if (!!notAgainPending) {
@@ -117,25 +188,25 @@ const coachingContent: Record<string, {
 
   sysView2_AddSaveLoad: {
     headline: 'Add to your system ...',
-    directionalHint: DirectionalHint.bottomLeftEdge,
+    directionalHint: DirectionalHint.rightTopEdge,
     body: <div>
       <div>
         When first viewing a system, existing stations and bodies are automatically imported using data from <Link href='https://spansh.co.uk' target='spansh'>spansh.co.uk</Link>.
       </div>
       <div style={{ margin: '8px 0', display: 'flex' }}>
-        <Icon iconName="Add" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="Add" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Use the add button to create new planned or "what if" sites.
       </div>
       <div>
-        <Icon iconName="Save" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="Save" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         You'll need to explicitly save your changes if you want them in future sessions or different computers.
       </div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="OpenFolderHorizontal" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="OpenFolderHorizontal" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         You can re-load at any time, helpful if you want to undo changes.
       </div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="Build" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="Build" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Choose import from the submenu should completed station or body information need to be updated.
       </div>
     </div>,
@@ -146,15 +217,15 @@ const coachingContent: Record<string, {
     directionalHint: DirectionalHint.bottomLeftEdge,
     body: <div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="GridViewSmall" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="GridViewSmall" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         The table is best for quickly editing or adding many sites. Click columns to adjust sorting.
       </div>
       <div>
-        <Icon iconName="Nav2DMapView" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="Nav2DMapView" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         The map shows all bodies and how your sites are spread across this system.
       </div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="Pinned" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="Pinned" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Click any site to pin it, showing the result of calculations in a side panel.
       </div>
     </div>,
@@ -165,11 +236,11 @@ const coachingContent: Record<string, {
     directionalHint: DirectionalHint.bottomLeftEdge,
     body: <div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="TestBeaker" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="TestBeaker" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Choose if calculations should use only completed systems or all planned and in-progress ones too.
       </div>
       <div>
-        <Icon iconName="SortLines" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="SortLines" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Calculations are sensitive to the order sites are built. Use this to view and adjust the order sites are processed.
       </div>
     </div>,
@@ -180,12 +251,12 @@ const coachingContent: Record<string, {
     directionalHint: DirectionalHint.leftTopEdge,
     body: <div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="Pinned" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
-        Pin sites in the map, or table, to see the result of calculations.
+        <Icon className='icon-inline' iconName="Pinned" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Pin sites in the map or table to see their stats and calculations.
       </div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="Camera" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
-        Take a snap shot of a panel, then make changes to various sites and observe the differences.
+        <Icon className='icon-inline' iconName="Camera" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Take a snap shot of a panel, then make changes and observe the differences.
       </div>
     </div>,
   },
@@ -196,7 +267,7 @@ const coachingContent: Record<string, {
     body: <div>
       <div>Use this button to navigate to other systems.</div>
       <div style={{ margin: '8px 0' }}>
-        <Icon iconName="Save" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        <Icon className='icon-inline' iconName="Save" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Don't forget to save your progress first.
       </div>
     </div>,
