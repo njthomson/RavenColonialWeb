@@ -17,9 +17,16 @@ export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: str
       return undefined;
     } else if (typeof props.sysView.state.activeProjects[props.buildId] === 'undefined') {
       // make a request
-      const p = await api.project.get(props.buildId);
-      props.sysView.state.activeProjects[p.buildId] = p ?? null!;
-      return p;
+      try {
+        const p = await api.project.get(props.buildId);
+        props.sysView.state.activeProjects[p.buildId] = p ?? null!;
+        return p;
+      } catch (err: any) {
+        if (err.statusCode !== 404) {
+          // ignore cases where a project is not found
+          console.error(`ProjectLink2: getProject: ${err.stack}`);
+        }
+      }
     } else {
       // use cached value
       return props.sysView.state.activeProjects[props.buildId];

@@ -472,6 +472,11 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
         <div className='audit' >
           <div style={{ padding: 8, marginBottom: 10, color: appTheme.palette.themePrimary }}>
 
+            <div style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>
+              <Icon className='icon-inline' iconName={props.site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
+              &nbsp;
+              {props.site.type.displayName2} (Tier: {props.site.type.tier} - {props.site.type.buildClass})
+            </div>
             <div>Body type:&nbsp;{(props.site.body?.type && mapBodyTypeNames[props.site.body?.type])?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
             {props.site.body && <Link style={{ float: 'right', fontSize: 10 }} onClick={() => setBodyOverride(true)}>Override?</Link>}
             <div>Body features:&nbsp;{bodyFeatures || <span style={{ color: 'grey' }}>none</span>}</div>

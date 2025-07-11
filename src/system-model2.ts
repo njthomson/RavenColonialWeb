@@ -261,10 +261,10 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
     if (site.status !== 'complete' && !useIncomplete) continue;
 
     // calc total system economic influence
-    calculateColonyEconomies2(site, useIncomplete);
-    const inf = site.type.inf === 'colony' && site.primaryEconomy
-      ? site.primaryEconomy
-      : site.type.inf;
+    if (['settlement', 'outpost', 'starport'].includes(site.type.buildClass)) {
+      calculateColonyEconomies2(site, useIncomplete);
+    }
+    const inf = site.primaryEconomy ?? site.type.inf;
 
     if (inf !== 'none') {
       mapEconomies[inf] = (mapEconomies[inf] ?? 0) + 1;
