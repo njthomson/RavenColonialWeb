@@ -387,6 +387,11 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
   for (const key of reserveSensitiveEconomies) {
     if (map[key] > 0) {
       if (reserveLevel === 'major' || reserveLevel === 'pristine') {
+        // this is a dirty hack to prevent refinery from over applying :(
+        if (key === 'refinery' && site.body?.type !== 'rb' && site.type.inf === 'colony') {
+          continue;
+        }
+
         // If the System has Major or Pristine Resources (+0.40) for Industrial, Extraction and Refinery
         adjust(key, +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site);
       } else if (reserveLevel === 'low' || reserveLevel === 'depleted') {
