@@ -611,6 +611,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: 'Save',
             iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
             disabled: !enableSave || anonymous,
+            style: {
+              color: !enableSave || anonymous ? 'grey' : appTheme.palette.yellowDark,
+              border: !enableSave || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
+            },
             onClick: this.saveData,
           },
 
