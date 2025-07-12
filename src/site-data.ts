@@ -1075,10 +1075,10 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   porrima: [4, 4, 2], // Scientific Surface Outpost
 
   // T3 surface star ports
-  zeus: [4, 4, 4], // Large Planetary Port
-  hera: [4, 4, 4], // Large Planetary Port
-  poseidon: [4, 4, 4], // Large Planetary Port
-  aphrodite: [4, 4, 4], // Large Planetary Port
+  zeus: [4, 4, 8], // Large Planetary Port
+  hera: [4, 4, 8], // Large Planetary Port
+  poseidon: [4, 4, 8], // Large Planetary Port
+  aphrodite: [4, 4, 8], // Large Planetary Port
 
   // Odyssey Settlements
   consus: [1, 0, 0], // Agriculture Settlement: Small
