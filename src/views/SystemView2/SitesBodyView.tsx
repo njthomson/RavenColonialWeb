@@ -1,6 +1,6 @@
 import { Component, FunctionComponent } from "react";
 import { Bod, BodyType } from "../../types2";
-import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack } from "@fluentui/react";
 import { appTheme } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
 import { SitesViewProps, SystemView2 } from "./SystemView2";

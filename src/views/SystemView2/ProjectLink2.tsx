@@ -58,7 +58,7 @@ export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: str
     >
       {!showChart && <>View project</>}
       {showChart && progressElement}
-      <Icon iconName='OpenInNewTab' style={{ marginLeft: 4, fontSize: 12 }} className='icon-inline' />
+      <Icon iconName='OpenInNewWindow' style={{ marginLeft: 4, fontSize: 12 }} />
     </ActionButton >
   </>;
 }

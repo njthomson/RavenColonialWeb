@@ -1,10 +1,11 @@
 
-import { ActionButton, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, Icon, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../theme";
 import { SiteType, siteTypes } from "../site-data";
 import { CopyButton } from "./CopyButton";
 import { isMobile } from "../util";
+import { BuildEffects } from "./BuildEffects";
 
 interface ImageData {
   cmdr: string;
@@ -60,12 +61,14 @@ const supportedTypes: Record<string, ImageData> = {
   'gaea': { cmdr: 'Grinning2001', location: `Villalba Synthetics Workshop - IC 2391 Sector LH-V b2-5, A 3` },
   'gelos': { cmdr: 'Kekosummer', location: `Burn Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach - Synuefe EM-M c23-8` },
+  'hephaestus': { cmdr: 'Disnaematter', location: `Chaly Foundry - Synuefe XK-O c22-4` },
   'hermes': { cmdr: 'Grinning2001' },
   'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5` },
   'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1` },
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
   'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3` },
+  'laverna': { cmdr: 'Disnaematter', location: `Riess Sanctuary - Synuefe XK-O c22-4` },
   'mantus': { cmdr: 'Kekosummer', location: `Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
   'meteope': { cmdr: 'Kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
   'minerva': { cmdr: 'Kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
@@ -143,20 +146,23 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   render() {
     const { zoom, showInGroups, showMissing, showSurface } = this.state;
 
-    return <div style={{ padding: 10, fontSize: 12 }}>
+    return <div style={{ marginLeft: 10, fontSize: 12 }}>
       {!zoom && <>
         <Stack horizontal horizontalAlign='space-between'>
 
-          <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ childrenGap: 10, padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>
-            <div style={{ fontSize: 14, paddingBottom: 8 }}>
+          <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ childrenGap: 10 }} style={{ textTransform: 'capitalize', marginLeft: 0 }}>
+            <div style={{ fontSize: 14, marginBottom: 10, cursor: 'default', userSelect: 'none' }}>
               <b>Show:</b>
-              &nbsp;
-              Orbital
+              <span style={{ cursor: 'pointer' }} onClick={() => this.setFilter(!showSurface, showInGroups)}>
+                &nbsp;
+                Orbital
+              </span>
             </div>
             <Toggle
               onText='Surface'
               offText='Surface'
               checked={showSurface}
+              styles={{ root: { cursor: 'pointer' }, text: { cursor: 'pointer' } }}
               onChange={() => {
                 this.setFilter(!showSurface, showInGroups);
               }}
@@ -165,10 +171,21 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
               onText='Grouped'
               offText='Grouped'
               checked={showInGroups}
+              styles={{ root: { cursor: 'pointer' }, text: { cursor: 'pointer' } }}
               onChange={() => {
                 this.setFilter(showSurface, !showInGroups);
               }}
             />
+            <ActionButton
+              title='View table of site properties in a new tab'
+              iconProps={{ iconName: 'ViewListGroup', style: { cursor: 'pointer' } }}
+              style={{ height: 20, marginBottom: 8 }}
+              href='/table'
+              target='table'
+            >
+              Table&nbsp;
+              <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ cursor: 'pointer' }} />
+            </ActionButton>
           </Stack>
 
           <ActionButton
@@ -345,7 +362,15 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
       'text/html': new Blob([`<a href='${`${window.location.origin}/#vis=${zoom}`}'>${type.displayName2}: ${zoom}</a>`], { type: 'text/html' }),
     });
 
-    const sz = window.innerHeight - 250;
+    const onMobile = isMobile(true);
+    const ww = onMobile ? window.outerWidth : window.innerWidth;
+    const hh = window.innerHeight;
+
+    const h = ww > hh
+      ? hh - (onMobile ? 150 : 200)
+      : ww - (onMobile ? 40 : 60);
+
+    const w = ww > hh ? h * 1.5 : h;
 
     return <div>
       <Stack horizontal horizontalAlign='start' verticalAlign='center' tokens={{ padding: 0 }} style={{ textTransform: 'capitalize', padding: 0, marginLeft: -4 }}>
@@ -375,33 +400,39 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         </div>
       </Stack>
 
-      <div style={{ textTransform: 'capitalize', marginBottom: 4, fontSize: 22 }} >
+      <div style={{ textTransform: 'capitalize', marginBottom: 4, fontSize: onMobile ? 16 : 22 }} >
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
           <div>{type.displayName2}</div>
           <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
           <CopyButton text={copyLink} title='Copy link to this page' fontSize={14} />
           <div style={{ fontWeight: 'bold' }}>{zoom}</div>
           <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
-          <div>Tier: {type.tier}</div>
+          <div>Tier:&nbsp;{type.tier}&nbsp;</div>
         </Stack>
       </div>
 
-      <SiteImage buildType={zoom} height={sz} />
+      <Stack horizontal wrap>
+        <div style={{ marginBottom: 10, marginRight: 10 }}>
+          <SiteImage buildType={zoom} width={w} height={h} />
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <BuildEffects buildType={zoom} noType noTitle />
+        </div>
+      </Stack>
     </div>;
   }
 }
 
 
-export const SiteImage: FunctionComponent<{ buildType: string; height: number; width?: number; noCredits?: boolean; }> = (props) => {
-  // TODO: improve this for vertical/mobile devices
-  let width = props.width ?? props.height * 1.5;
+export const SiteImage: FunctionComponent<{ buildType: string; height: number; width: number; noCredits?: boolean; }> = (props) => {
+
+  let width = props.width;
   let height = props.height;
-
-  const match = supportedTypes[props.buildType];
-
   const img = {
     n: width <= 200 ? `${props.buildType}-thumb.jpg` : `${props.buildType}.jpg`,
   } as ImageRef;
+
+  const match = supportedTypes[props.buildType];
   if (match && !props.noCredits) {
     img.c = `Cmdr ${match.cmdr}`;
     img.l = match.location;
@@ -480,7 +511,7 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
       {!props.noCredits && <>
         <IconButton
           title='View full size in another tab'
-          iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10 } }}
+          iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10, cursor: 'pointer' } }}
           style={{
             position: 'absolute',
             right: 2,

@@ -58,7 +58,7 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
           <h1 style={{ margin: 0, color: appTheme.palette.themePrimary }}>{getSiteType(targetBuildType)?.displayName2}</h1>
 
           <div style={{ margin: '10px 0' }}>
-            <SiteImage buildType={targetBuildType} height={400} />
+            <SiteImage buildType={targetBuildType} width={600} height={400} />
           </div>
 
           <BuildEffects buildType={targetBuildType} noType heading='Build details:' />

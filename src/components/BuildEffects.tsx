@@ -137,7 +137,7 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
 
         <tr>
           <td className={tds} colSpan={3} />
-          <td className={tds} style={{ width: 200 }} />
+          <td className={tds} style={{ width: 100 }} />
         </tr>
 
       </tbody>

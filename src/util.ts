@@ -32,8 +32,12 @@ export const validIncDecLocale = (txt: string, step: number, max: number) => {
   }
 }
 
-export const isMobile = () => {
-  return (navigator as any).userAgentData?.mobile || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+export const isMobile = (agentOnly?: boolean) => {
+  if (agentOnly) {
+    return (navigator as any).userAgentData?.mobile || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  } else {
+    return (navigator as any).userAgentData?.mobile || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+  }
 };
 
 /** Artificial delay so spinners doesn't flicker in and out */
