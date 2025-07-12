@@ -1,6 +1,6 @@
 import { Component, FunctionComponent } from "react";
 import { Bod, BodyType } from "../../types2";
-import { ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack, Toggle } from "@fluentui/react";
 import { appTheme } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
 import { SitesViewProps, SystemView2 } from "./SystemView2";
@@ -50,8 +50,8 @@ interface SitesBodyViewState {
   hideEmpties: boolean;
   lastSiteId?: string;
   bodyFilter: Set<BodyFeature>;
-  showBodyFilter?: boolean;
-  bodyFilterExclude?: boolean;
+  showBodyFilter: boolean;
+  bodyFilterExclude: boolean;
 }
 
 export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState> {
@@ -67,6 +67,8 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       showTable: false,
       bodyTree: this.prepBodyTree(props.sysMap, defaultHideEmpties),
       hideEmpties: defaultHideEmpties,
+      showBodyFilter: false,
+      bodyFilterExclude: false,
       bodyFilter: new Set<BodyFeature>(),
     };
   }
@@ -282,8 +284,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     const { bodyTree, hideEmpties, showBodyFilter, bodyFilter, bodyFilterExclude } = this.state;
 
     return <div>
-      <Stack
-        horizontal
+      <div
         style={{
           float: 'right',
           marginTop: 8,
@@ -292,29 +293,15 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           top: 54,
         }}
       >
-        <Toggle
-          onText='Hide empty bodies'
-          offText='Hide empty bodies'
-          checked={hideEmpties}
-          styles={{
-            text: { fontSize: 12 }
-          }}
-          onChange={(ev, checked) => {
-            this.setState({
-              bodyTree: this.prepBodyTree(this.props.sysMap, !!checked),
-              hideEmpties: !!checked,
-            });
-            store.sysViewHideEmpties = !!checked;
-          }}
-        />
-        <IconButton
+        <ActionButton
           id='btn-body-filter'
+          text='Filter bodies'
           iconProps={{ iconName: bodyFilter.size > 0 ? 'FilterSolid' : 'Filter' }}
-          title='Filter bodies, excluding or including, based on their features.'
+          title='Filter bodies, excluding or including, based on their features'
           style={{ marginRight: 6, }}
           onClick={() => this.setState({ showBodyFilter: !showBodyFilter })}
         />
-      </Stack>
+      </div>
 
       <div style={{
         paddingTop: 20,
@@ -333,11 +320,10 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
             this.setState({ showBodyFilter: false });
           }
         }}
+
         onItemClick={(ev, item) => {
           // if (ev?.defaultPrevented) { return; }
           ev?.preventDefault();
-
-
           const key = item?.key.slice(3) as BodyFeature;
           let newFilter = this.state.bodyFilter;
           if (newFilter.has(key)) {
@@ -350,8 +336,56 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
         items={[
           {
+            key: `bf-empties`,
+            text: 'Hide empty bodies',
+            title: 'Toggle hiding bodies without any sites',
+            iconProps: { iconName: hideEmpties ? 'StatusErrorFull' : 'ErrorBadge' },
+            checked: hideEmpties,
+            onClick: (ev) => {
+              ev?.preventDefault();
+              this.setState({
+                bodyTree: this.prepBodyTree(this.props.sysMap, !hideEmpties),
+                hideEmpties: !hideEmpties,
+              });
+              store.sysViewHideEmpties = !hideEmpties;
+            }
+          },
+
+          {
+            key: `bf-div1`, itemType: ContextualMenuItemType.Normal,
+            onRender: () => (<div style={{ height: 2, backgroundColor: appTheme.palette.themeSecondary }} />)
+          },
+
+          ...Object.values(BodyFeature).filter(f => f !== BodyFeature.atmos).map(f => ({
+            key: `bf-${f}`,
+            text: mapBodyFeature[f],
+            title: `Show bodies with ${mapBodyFeature[f]}?`,
+            iconProps: { iconName: mapBodyFeatureIcon[f], style: { color: mapBodyFeatureColor[f] } },
+            canCheck: true,
+            checked: bodyFilterExclude !== bodyFilter.has(f),
+          } as IContextualMenuItem)),
+
+          {
+            key: `bf-div2`, itemType: ContextualMenuItemType.Normal,
+            onRender: () => (<div style={{ height: 1, backgroundColor: appTheme.palette.themeTertiary }} />)
+          },
+
+          {
+            key: `bf-exclude`,
+            text: bodyFilterExclude ? 'Excluding matches' : 'Including matches',
+            title: 'Toggle between excluding or including bodies with selected features',
+            iconProps: { iconName: bodyFilterExclude ? 'SkypeCircleMinus' : 'CirclePlus' },
+            checked: !bodyFilterExclude,
+            onClick: (ev) => {
+              ev?.preventDefault();
+              this.setState({ bodyFilterExclude: !bodyFilterExclude });
+            }
+          },
+
+          {
             key: `bf-clear`,
             text: 'Clear',
+            title: 'Clear body feature filters',
             iconProps: { iconName: 'ClearFilter' },
             canCheck: false,
             onClick: (ev) => {
@@ -360,27 +394,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
               this.setState({ showBodyFilter: false });
             }
           },
-          {
-            key: `bf-exclude`,
-            text: bodyFilterExclude ? 'Exclude matches' : 'Include matches',
-            title: 'Click to toggle between excluding or including bodies with selected features below',
-            iconProps: { iconName: bodyFilterExclude ? 'SkypeCircleMinus' : 'CirclePlus' },
-            canCheck: false,
-            onClick: (ev) => {
-              ev?.preventDefault();
-              this.setState({ bodyFilterExclude: !bodyFilterExclude });
-            }
-          },
 
-          { key: `bf-div1`, itemType: ContextualMenuItemType.Divider },
-
-          ...Object.values(BodyFeature).filter(f => f !== BodyFeature.atmos).map(f => ({
-            key: `bf-${f}`,
-            text: mapBodyFeature[f],
-            iconProps: { iconName: mapBodyFeatureIcon[f], style: { color: mapBodyFeatureColor[f] } },
-            canCheck: true,
-            checked: bodyFilter.has(f),
-          } as IContextualMenuItem)),
         ]}
       />}
     </div>;
@@ -408,6 +422,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           children={childElements}
           up={node.parent && (idx > 0 || !parentIsBaryCentre)}
           down={siblings.length > 1 && idx !== siblings.length - 1}
+          leftDotted={parentIsBaryCentre && idx > 1}
         />
       };
 
@@ -466,7 +481,25 @@ type ChildParts = {
   element: JSX.Element;
 }
 
-export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean, filtering: boolean }> = (props) => {
+export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean, filtering: boolean, leftDotted?: boolean }> = (props) => {
+  // calculate a rough ratio of the size of each body and adjust how far down is the bottom line connecting to the children
+  const na = (props.bodyA.props as BodyBlockProps).node;
+  const sa = na?.map?.sites.length || 0;
+  const szA = Math.max(getBodySize(na?.body.type), sa * 20);
+
+  const nb = (props.bodyB.props as BodyBlockProps).node;
+  const sb = nb?.map?.sites.length || 0;
+  const szB = Math.max(getBodySize(nb?.body.type), sb * 20);
+  const r = szA / szB;
+
+  let bottomHeight = szA < szB ? '30%' : '45%';
+  if (r < 0.1) {
+    bottomHeight = '15%';
+  } else if (r < 0.3) {
+    bottomHeight = '20%';
+  } else if (r > 2) {
+    bottomHeight = '50%';
+  }
 
   return <>
     <div style={{
@@ -503,24 +536,36 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
       {props.bodyB}
 
       {props.hasParent && !props.filtering && <>
+        {!props.leftDotted && <>
+          {props.up && <div style={{
+            position: 'absolute',
+            borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, //grey`,
+            borderBottom: `2px solid ${appTheme.palette.themeSecondary}`, //grey`,
+            left: 0,
+            top: 0,
+            width: indent,
+            height: bottomHeight,
+          }} />}
+
+          {props.down && <div style={{
+            position: 'absolute',
+            borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, //red`,
+            borderTop: `2px solid ${appTheme.palette.themeSecondary}`, //red`,
+            left: 0,
+            top: bottomHeight,
+            width: indent,
+            bottom: 0,
+          }} />}
+        </>}
+      </>}
+      {props.leftDotted && <>
         {props.up && <div style={{
           position: 'absolute',
-          borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, //grey`,
-          borderBottom: `2px solid ${appTheme.palette.themeSecondary}`, //grey`,
+          borderBottom: `2px dotted ${appTheme.palette.themeTertiary}`, //grey`,
           left: 0,
           top: 0,
           width: indent,
-          height: '30%',
-        }} />}
-
-        {props.down && <div style={{
-          position: 'absolute',
-          borderLeft: `2px solid ${appTheme.palette.themeSecondary}`, //red`,
-          borderTop: `2px solid ${appTheme.palette.themeSecondary}`, //red`,
-          left: 0,
-          top: '30%',
-          width: indent,
-          bottom: 0,
+          height: bottomHeight,
         }} />}
       </>}
     </div>
