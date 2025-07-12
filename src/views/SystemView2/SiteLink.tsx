@@ -20,6 +20,8 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
     ? 'grey'
     : (site.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);
 
+  var economy = site.primaryEconomy ?? site.type.inf;
+
   return <div
     id={id + '-div'}
     style={{ cursor: 'default' }}
@@ -39,7 +41,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
           style={{ color: isNotUsed ? nameColor : undefined }}
         />
 
-        {site.primaryEconomy && <EconomyBlock economy={site.primaryEconomy} size='10px' />}
+        {economy && <EconomyBlock economy={economy} size='10px' />}
 
         <span id={id} style={{ position: 'absolute', left: 80 }} />
 

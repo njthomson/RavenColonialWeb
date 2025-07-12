@@ -335,21 +335,21 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
 
     case 'agriculture':
       if (matches(['elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
-        return adjust(inf, +0.4, reason + ' Boost: Body is ELW/WW or has BIO/TERRAFORMABLE', map, site);
+        adjust(inf, +0.4, reason + ' Boost: Body is ELW/WW or has BIO/TERRAFORMABLE', map, site);
       }
       if (matches(['icy'], site.body?.type) || matches([BodyFeature.tidal], site.body?.features)) {
         // TODO: Need to support: "On or orbiting a moon that is tidally locked to its planet and its subsequent parent planet(s) are tidally locked to the star"
         // Ideally ... just make those bodies have: BodyFeature.tidal
-        return adjust(inf, -0.4, reason + ' boost: Body is ICY or has TIDAL', map, site);
+        adjust(inf, -0.4, reason + ' boost: Body is ICY or has TIDAL', map, site);
       }
       break;
 
     case 'extraction':
       if (matches(["major", "pristine"], reserveLevel) || matches([BodyFeature.volcanism], site.body?.features)) {
-        return adjust(inf, +0.4, reason + ' boost: System reserveLevel is MAJOR/PRISTINE or has VOLCANISM', map, site);
+        adjust(inf, +0.4, reason + ' boost: System reserveLevel is MAJOR/PRISTINE or has VOLCANISM', map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
-        return adjust(inf, -0.4, reason + ' boost: System reserveLevel is LOW or DEPLETED', map, site);
+        adjust(inf, -0.4, reason + ' boost: System reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
 
@@ -362,16 +362,16 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
     case 'industrial':
     case 'refinery':
       if (matches(["major", "pristine"], reserveLevel)) {
-        return adjust(inf, +0.4, reason + ' boost: System reserveLevel is MAJOR or PRISTINE', map, site);
+        adjust(inf, +0.4, reason + ' boost: System reserveLevel is MAJOR or PRISTINE', map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
-        return adjust(inf, -0.4, reason + ' boost: System reserveLevel is LOW or DEPLETED', map, site);
+        adjust(inf, -0.4, reason + ' boost: System reserveLevel is LOW or DEPLETED', map, site);
       }
       return;
 
     case 'tourism':
       if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features) || site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
-        return adjust(inf, +0.4, reason + ' boost: Body is AMMONIA/ELW/WW or has BIO/GEO or System has Black Hole/Neutron Star/White Dwarf', map, site);
+        adjust(inf, +0.4, reason + ' boost: Body is AMMONIA/ELW/WW or has BIO/GEO or System has Black Hole/Neutron Star/White Dwarf', map, site);
       }
       return;
   }
