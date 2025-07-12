@@ -299,7 +299,7 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
 
         // Do not boost fixed economies unless it's a match
         if (!site.type.fixed || s.type.inf === site.type.fixed) {
-          applyStrongLinkBoost(s.type.inf, map, site, 'Strong link A');
+          applyStrongLinkBoost(s.type.inf, map, site, 'Strong link');
         }
       } else {
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name} - ${s.type.displayName2} (${s.buildType})`);
@@ -319,7 +319,7 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
       if (val >= 1) {
         // use the ACTUAL economy strength
         adjust(e, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
-        applyStrongLinkBoost(e as Economy, map, site, 'Strong link B');
+        applyStrongLinkBoost(e as Economy, map, site, 'Strong link');
       }
     }
   }
@@ -335,43 +335,43 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
 
     case 'agriculture':
       if (matches(['elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
-        adjust(inf, +0.4, reason + ' Boost: Body is ELW/WW or has BIO/TERRAFORMABLE', map, site);
+        adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO/TERRAFORMABLE`, map, site);
       }
       if (matches(['icy'], site.body?.type) || matches([BodyFeature.tidal], site.body?.features)) {
         // TODO: Need to support: "On or orbiting a moon that is tidally locked to its planet and its subsequent parent planet(s) are tidally locked to the star"
         // Ideally ... just make those bodies have: BodyFeature.tidal
-        adjust(inf, -0.4, reason + ' boost: Body is ICY or has TIDAL', map, site);
+        adjust(inf, -0.4, `- ${reason} boost: Body is ICY or has TIDAL`, map, site);
       }
       break;
 
     case 'extraction':
       if (matches(["major", "pristine"], reserveLevel) || matches([BodyFeature.volcanism], site.body?.features)) {
-        adjust(inf, +0.4, reason + ' boost: System reserveLevel is MAJOR/PRISTINE or has VOLCANISM', map, site);
+        adjust(inf, +0.4, `+ ${reason} boost: System reserveLevel is MAJOR/PRISTINE or has VOLCANISM`, map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
-        adjust(inf, -0.4, reason + ' boost: System reserveLevel is LOW or DEPLETED', map, site);
+        adjust(inf, -0.4, `- ${reason} boost: System reserveLevel is LOW or DEPLETED`, map, site);
       }
       return;
 
     case 'hightech':
       if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        return adjust(inf, +0.4, reason + ' boost: Body is AMMONIA or ELW/WW or has has BIO/GEO', map, site);
+        return adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA or ELW/WW or has has BIO/GEO`, map, site);
       }
       return;
 
     case 'industrial':
     case 'refinery':
       if (matches(["major", "pristine"], reserveLevel)) {
-        adjust(inf, +0.4, reason + ' boost: System reserveLevel is MAJOR or PRISTINE', map, site);
+        adjust(inf, +0.4, `+ ${reason} boost: System reserveLevel is MAJOR or PRISTINE`, map, site);
       }
       if (matches(["depleted", "low"], reserveLevel)) {
-        adjust(inf, -0.4, reason + ' boost: System reserveLevel is LOW or DEPLETED', map, site);
+        adjust(inf, -0.4, `- ${reason} boost: System reserveLevel is LOW or DEPLETED`, map, site);
       }
       return;
 
     case 'tourism':
       if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features) || site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
-        adjust(inf, +0.4, reason + ' boost: Body is AMMONIA/ELW/WW or has BIO/GEO or System has Black Hole/Neutron Star/White Dwarf', map, site);
+        adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA/ELW/WW or has BIO/GEO or System has Black Hole/Neutron Star/White Dwarf`, map, site);
       }
       return;
   }
