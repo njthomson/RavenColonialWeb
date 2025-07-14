@@ -490,7 +490,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
             <colgroup>
               <col width='5%' />
               <col width='8%' />
-              <col width='8%' />
+              <col width='10%' />
               <col width='70%' />
             </colgroup>
             <tbody>
@@ -498,12 +498,30 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
                 // flip the background color?
                 const newPrev = x.inf !== props.site.economyAudit![i - 1]?.inf;
                 const newNext = x.inf !== props.site.economyAudit![i + 1]?.inf;
+                const realMatchKnown = newNext && !!realMatch?.economies && x.inf in realMatch?.economies;
+                const realMatchEqual = realMatchKnown && realMatch?.economies && realMatch.economies[x.inf as keyof EconomyMap] === x.after * 100;
+
                 if (newPrev) { flip = !flip; }
                 return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>
                   <td style={{ textTransform: 'capitalize' }}>{newPrev ? x.inf : ''}</td>
                   <td>{asPosNegTxt2(x.delta)}</td>
-                  <td className='cl'>{newNext && <>= {x.after.toFixed(2)}</>}</td>
-                  <td className='cl' style={{ paddingBottom: newNext ? 8 : 0 }} >{x.reason}</td>
+                  <td className='cl'>
+                    {newNext && <>
+                      <>= {x.after.toFixed(2)}</>
+                      {realMatchKnown && <>
+                        <Icon
+                          className='icon-inline'
+                          iconName={realMatchEqual ? 'CheckMark' : 'Cancel'}
+                          style={{ marginLeft: 4, fontWeight: 'bold', color: realMatchEqual ? appTheme.palette.greenLight : appTheme.palette.red }}
+                        />
+                        {!realMatchEqual && <div style={{ color: appTheme.palette.accent, fontWeight: 'bold' }}>= {(realMatch.economies[x.inf as keyof EconomyMap] / 100).toFixed(2)}</div>}
+                      </>}
+                    </>}
+                  </td>
+                  <td className='cl' style={{ paddingBottom: newNext ? 8 : 0 }} >
+                    {x.reason}
+                    {realMatchKnown && !realMatchEqual && <div style={{ color: appTheme.palette.accent, fontWeight: 'bold' }}>According to Spansh</div>}
+                  </td>
                 </tr>;
               })}
             </tbody>
