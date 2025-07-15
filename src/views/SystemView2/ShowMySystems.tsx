@@ -2,7 +2,6 @@ import * as api from '../../api';
 import { FunctionComponent, useEffect, useState } from "react";
 import { ActionButton, DefaultButton, Link, Spinner, Stack } from "@fluentui/react";
 import { store } from '../../local-storage';
-import { appTheme } from '../../theme';
 
 export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
   const [showList, setShowList] = useState(false);
@@ -41,19 +40,19 @@ export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
   return <div style={{ fontSize: 14 }}>
     <ActionButton
       iconProps={{ iconName: showList ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
-      text='Show my systems ...'
+      text='Systems I have contributed to ...'
       title='Show systems where you have contributed to a site'
       onClick={() => setShowList(!showList)}
     />
 
     {showList && <div style={{ justifyContent: 'left' }}>
-      <div style={{ marginBottom: 10, color: appTheme.palette.themeSecondary }}>Systems where you have contributed to a project site:</div>
+      {/* <div style={{ marginBottom: 10, color: appTheme.palette.themeSecondary }}>Systems where you have contributed to a project site:</div> */}
       {loading && <Stack horizontal><Spinner labelPosition='right' label='Loading ...' /></Stack>}
       {systems && <>
         {entries.length > 0 && <div>
           <ul>
             {entries.map(([name, count]) => (<li key={`s${name}`}>
-              <Link onClick={() => window.location.replace(`/#sys=${name}`)}>
+              <Link onClick={() => window.location.assign(`/#sys=${name}`)}>
                 {name}
                 <span style={{ color: 'grey' }}> - {count} sites</span>
               </Link>

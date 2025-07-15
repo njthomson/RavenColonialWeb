@@ -12,7 +12,7 @@ import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
 import { Site, Sys } from '../../types2';
-import { GetRealEconomies, SitesPut } from '../../api/v2-system';
+import { GetRealEconomies, SitesPut, SysSnapshot } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
 import { SiteCard } from './SiteCard';
 import { store } from '../../local-storage';
@@ -23,6 +23,7 @@ import { ShowMySystems } from './ShowMySystems';
 import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
+import { ArchitectSummery } from './ArchitectSummary';
 
 interface SystemView2Props {
   systemName: string;
@@ -177,6 +178,23 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           originalSiteIDs: [...orderIDs],
         });
 
+        // Temporary - until current users have visited their sites?
+        if (!!store.cmdrName && !!newSys.architect) {
+          return api.systemV2.getSnapshot(newSys.id64)
+            .catch(err => {
+              if (err.statusCode === 404) {
+                console.log(`Generate a snapshot for: ${this.props.systemName} ... `);
+                // clear this cache any time we add a snapshot
+                api.systemV2.cache.snapshots = {};
+                // save a new snapshot
+                const snapshot = this.getSnapshot(newSys);
+                return api.systemV2.saveSnapshot(newSys.id64, snapshot);
+              } else {
+                console.error(err.stack);
+                this.setState({ errorMsg: err?.message ?? 'Something failed' });
+              }
+            });
+        }
       })
       .catch(err => {
         if (err.statusCode === 404) {
@@ -235,11 +253,12 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     this.setState({ processingMsg: 'Saving ...', errorMsg: '' });
 
-    const payload = {
+    const payload: SitesPut = {
       update: Object.values(this.state.dirtySites),
       delete: this.state.deletedIDs,
       orderIDs: this.state.orderIDs,
-    } as SitesPut;
+      snapshot: this.state.sysMap.architect ? this.getSnapshot(this.state.sysMap) : undefined,
+    };
 
     if (this.state.sysOriginal.architect !== this.state.sysMap.architect) {
       payload.architect = this.state.sysMap.architect;
@@ -259,12 +278,31 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           dirtySites: {},
           deletedIDs: [],
         });
+
+        // clear this cache any time we save a system
+        api.systemV2.cache.snapshots = {};
       })
       .catch(err => {
         console.error(`saveData failed:`, err.stack);
         this.setState({ errorMsg: err.message });
       });
   };
+
+  getSnapshot(newSys: Sys) {
+    // prepare a snapshot without using incomplete sites
+    const snapshotFull = buildSystemModel2(newSys, false, true);
+    const snapshot: SysSnapshot = {
+      architect: newSys.architect,
+      id64: newSys.id64,
+      v: newSys.v,
+      name: newSys.name,
+      pos: newSys.pos,
+      tierPoints: snapshotFull.tierPoints,
+      sumEffects: snapshotFull.sumEffects,
+      sites: newSys.sites,
+    };
+    return snapshot;
+  }
 
   recalc = () => {
     // console.log(this.state.sysMap);
@@ -395,12 +433,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   isDirty() {
     const { sysMap, dirtySites, deletedIDs, sysOriginal, orderIDs } = this.state;
 
+    // we cannot be dirty if either of these are missing
+    if (!sysMap || !sysOriginal) return false;
+
     const dirty = !!Object.keys(dirtySites).length
       || deletedIDs.length > 0
-      || orderIDs.length !== sysOriginal?.sites?.length
-      || sysMap?.architect !== sysOriginal?.architect
-      || sysMap?.reserveLevel !== sysOriginal?.reserveLevel
-      || (sysOriginal && JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id)))
+      || orderIDs.length !== sysOriginal.sites?.length
+      || sysMap.architect !== sysOriginal.architect
+      || sysMap.reserveLevel !== sysOriginal.reserveLevel
+      || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
       ;
     return dirty;
   };
@@ -484,12 +525,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           text=''
           onMatch={(text) => {
             if (!!text?.trim()) {
-              window.location.replace(`/#sys=${text.trim()}`);
+              window.location.assign(`/#sys=${text.trim()}`);
             }
           }}
         />
-        <br />
-        <ShowMySystems />
+        {!anonymous && <>
+          <ArchitectSummery sysView={this} />
+          <ShowMySystems />
+        </>}
         {!store.cmdrName && this.renderLoginPrompt()}
       </div>
     </div>;

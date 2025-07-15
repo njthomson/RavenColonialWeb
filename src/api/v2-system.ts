@@ -1,5 +1,7 @@
 
-import { EconomyMap } from "../system-model2";
+import { store } from "../local-storage";
+import { SysEffects } from "../site-data";
+import { EconomyMap, TierPoints } from "../system-model2";
 import { BodyFeature, ReserveLevel } from "../types";
 import { Bod, Site, Sys } from "../types2";
 import { callAPI } from "./api-util";
@@ -10,6 +12,7 @@ export const systemV2 = {
   cache: {
     sys: {} as Record<string, Sys>,
     economies: {} as Record<string, GetRealEconomies[]>,
+    snapshots: {} as Record<string, SysSnapshot[]>,
   },
 
   getSys: async (systemName: string, force?: boolean): Promise<Sys> => {
@@ -43,6 +46,23 @@ export const systemV2 = {
     systemV2.cache.economies[id64OrName] = result;
     return result;
   },
+
+  getCmdrSnapshots: async (force?: boolean): Promise<SysSnapshot[]> => {
+    const cmdr = store.cmdrName;
+    if (cmdr in systemV2.cache.snapshots && !force) { return systemV2.cache.snapshots[cmdr]; }
+
+    const result = await callAPI<SysSnapshot[]>(`/api/v2/system/snapshots/`);
+    systemV2.cache.snapshots[cmdr] = result;
+    return result;
+  },
+
+  getSnapshot: async (id64: number): Promise<SysSnapshot> => {
+    return await callAPI<SysSnapshot>(`/api/v2/system/${encodeURIComponent(id64)}/snapshot`);
+  },
+
+  saveSnapshot: async (id64: number, data: SysSnapshot): Promise<void> => {
+    return await callAPI<void>(`/api/v2/system/${encodeURIComponent(id64)}/snapshot`, 'PUT', JSON.stringify(data));
+  },
 };
 
 export interface BodyPut {
@@ -56,10 +76,23 @@ export interface SitesPut {
   orderIDs: string[];
   architect?: string;
   reserveLevel?: ReserveLevel;
+  snapshot?: SysSnapshot;
 }
 
 export interface GetRealEconomies {
   id: string;
   updated: string;
   economies: EconomyMap;
+}
+
+/** Represents an architected system system */
+export interface SysSnapshot {
+  v: number;
+  architect: string;
+  id64: number;
+  name: string;
+  pos: number[];
+  sites: Site[];
+  tierPoints: TierPoints;
+  sumEffects: SysEffects;
 }
