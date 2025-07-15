@@ -498,8 +498,9 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
                 // flip the background color?
                 const newPrev = x.inf !== props.site.economyAudit![i - 1]?.inf;
                 const newNext = x.inf !== props.site.economyAudit![i + 1]?.inf;
-                const realMatchKnown = newNext && !!realMatch?.economies && x.inf in realMatch?.economies;
-                const realMatchEqual = realMatchKnown && realMatch?.economies && Math.round(realMatch.economies[x.inf as keyof EconomyMap]) === Math.round(x.after * 100);
+                const realMatchKnown = newNext && !!realMatch?.economies;
+                const spanshValue = realMatch?.economies && x.inf in realMatch.economies ? Math.round(realMatch.economies[x.inf as keyof EconomyMap]) : 0;
+                const realMatchEqual = realMatchKnown && realMatch?.economies && spanshValue === Math.round(x.after * 100);
 
                 if (newPrev) { flip = !flip; }
                 return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>
@@ -514,7 +515,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
                           iconName={realMatchEqual ? 'CheckMark' : 'Cancel'}
                           style={{ marginLeft: 4, fontWeight: 'bold', color: realMatchEqual ? appTheme.palette.greenLight : appTheme.palette.red }}
                         />
-                        {!realMatchEqual && <div style={{ color: appTheme.palette.accent, fontWeight: 'bold' }}>= {(realMatch.economies[x.inf as keyof EconomyMap] / 100).toFixed(2)}</div>}
+                        {!realMatchEqual && <div style={{ color: appTheme.palette.accent, fontWeight: 'bold' }}>= {(spanshValue / 100).toFixed(2)}</div>}
                       </>}
                     </>}
                   </td>
