@@ -239,9 +239,13 @@ const coachingContent: Record<string, {
         <Icon className='icon-inline' iconName="TestBeaker" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Choose if calculations should use only completed systems or all planned and in-progress ones too.
       </div>
-      <div>
+      <div style={{ margin: '8px 0' }}>
         <Icon className='icon-inline' iconName="SortLines" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
         Calculations are sensitive to the order sites are built. Use this to view and adjust the order sites are processed.
+      </div>
+      <div style={{ margin: '8px 0' }}>
+        <Icon className='icon-inline' iconName="FabricFolderSearch" style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+        Audit the whole system, comparing against data from Spansh.
       </div>
     </div>,
   },

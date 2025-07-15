@@ -499,7 +499,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
                 const newPrev = x.inf !== props.site.economyAudit![i - 1]?.inf;
                 const newNext = x.inf !== props.site.economyAudit![i + 1]?.inf;
                 const realMatchKnown = newNext && !!realMatch?.economies && x.inf in realMatch?.economies;
-                const realMatchEqual = realMatchKnown && realMatch?.economies && realMatch.economies[x.inf as keyof EconomyMap] === x.after * 100;
+                const realMatchEqual = realMatchKnown && realMatch?.economies && Math.round(realMatch.economies[x.inf as keyof EconomyMap]) === Math.round(x.after * 100);
 
                 if (newPrev) { flip = !flip; }
                 return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>

@@ -702,6 +702,17 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
+            key: 'sys-audit-all',
+            title: 'Compare audit of whole system',
+            iconProps: { iconName: 'FabricFolderSearch' },
+            disabled: !!processingMsg,
+            onClick: () => {
+              this.doGetRealEconomies();
+              this.setState({ auditWholeSystem: true });
+            }
+          },
+
+          {
             id: 'sys-card-target',
             key: 'sys-edit',
             title: 'Edit system data',
@@ -732,18 +743,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                   text: 'View on Spansh',
                   onClick: () => {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
-                  },
-                },
-                {
-                  key: 'btn-test-system-devide',
-                  itemType: ContextualMenuItemType.Divider,
-                },
-                {
-                  key: 'btn-test-system',
-                  text: 'Compare whole system',
-                  onClick: () => {
-                    this.doGetRealEconomies();
-                    this.setState({ auditWholeSystem: true });
                   },
                 }
               ]

@@ -367,7 +367,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
 
     case 'hightech':
       if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        return adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA or ELW/WW or has has BIO/GEO`, map, site);
+        return adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA/ELW/WW or has has BIO/GEO`, map, site);
       }
       return;
 
