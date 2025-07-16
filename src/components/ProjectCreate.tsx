@@ -1,4 +1,4 @@
-import { ChoiceGroup, DefaultButton, IChoiceGroupOption, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, Stack, TeachingBubble, TextField, Toggle } from '@fluentui/react';
+import { ChoiceGroup, DefaultButton, DirectionalHint, IChoiceGroupOption, Icon, IconButton, Label, MessageBar, MessageBarType, PrimaryButton, Spinner, Stack, TeachingBubble, TextField, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
@@ -8,11 +8,18 @@ import { cn } from '../theme';
 import { BuildType } from './BuildType/BuildType';
 import { delay } from '../util';
 import { CopyButton } from './CopyButton';
+import { ViewEditBody } from '../views/SystemView2/ViewEditBody';
+import { Bod } from '../types2';
+import { BodyMap2 } from '../system-model2';
 
 interface ProjectCreateProps {
-  systemName?: string;
+  systemName: string;
   knownMarketIds: string[];
   onCancel: () => void;
+  noTitle?: boolean;
+  knownCompletedNames?: string[];
+  bodies?: Bod[];
+  bodyMap?: Record<string, BodyMap2>
 }
 
 // TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
@@ -24,6 +31,8 @@ interface ProjectCreateState extends Omit<CreateProject, 'marketId'> {
   foundStations?: StationEDSM[];
   msgError?: string;
   msgClass?: MessageBarType;
+  bodyNum: number;
+  bodyName?: string;
 }
 
 
@@ -49,6 +58,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       notes: '',
       isPrimaryPort: false,
       commodities: {},
+      bodyNum: -1,
     };
   }
 
@@ -58,8 +68,9 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   }
 
   readyToCreate(): boolean {
-    const { buildName, marketId, buildType, systemAddress } = this.state;
-    return !!marketId && parseInt(marketId) > 0 && !!buildType && !!buildName && systemAddress > 0;
+    const { buildName, marketId, buildType, systemAddress, bodyNum } = this.state;
+    const showNewBodies = !!this.props.bodies && !!this.props.bodyMap;
+    return !!marketId && parseInt(marketId) > 0 && !!buildType && !!buildName && systemAddress > 0 && (!showNewBodies || bodyNum > -1);
   }
 
   componentDidUpdate(prevProps: Readonly<ProjectCreateProps>, prevState: Readonly<ProjectCreateState>, snapshot?: any): void {
@@ -71,12 +82,17 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   render() {
     const { buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking, isPrimaryPort } = this.state;
 
+    const showNewBodies = !!this.props.bodies && !!this.props.bodyMap;
+
     return <>
       <div className="create-project">
-        <h3 className={cn.h3}>Start a new project:</h3>
+        {!this.props.noTitle && <h3 className={cn.h3}>Start a new project:</h3>}
 
-        <MessageBar messageBarType={MessageBarType.success}>
-          Creating projects through <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' /> is <strong>strongly recommended</strong>.
+        <MessageBar messageBarType={MessageBarType.success} styles={{ root: { marginBottom: 10 } }}>
+          Use this to manually create a new build project: for tracking delivery progress and cargo pre-loaded onto Fleet Carriers.
+          <br />
+          <br />
+          <b><Icon className='icon-inline' iconName='LightBulb' />&nbsp;Creating projects through<LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' /> is easier and highly recommended</b>
         </MessageBar>
 
         {checking && <Spinner label='Searching for known construction sites...' labelPosition='right' style={{ maxWidth: 'fit-content' }} />}
@@ -99,6 +115,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
 
           {showMarketIdHelp && <TeachingBubble
             target={'#manual-marketId'}
+            calloutProps={{ directionalHint: DirectionalHint.bottomLeftEdge, gapSpace: 1 }}
             hasCloseButton={true}
             onDismiss={() => { this.setState({ showMarketIdHelp: false }) }}
           >
@@ -122,17 +139,33 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           onChange={(_, checked) => this.setState({ isPrimaryPort: !!checked })}
         />
 
-        <Label required>Build type:</Label>
-        <BuildType
-          buildType={buildType}
-          onChange={(t) => this.setState({ buildType: t })}
-        />
+        {showNewBodies && <Stack horizontal verticalAlign='center'>
+          <Label required>Body:</Label>
+          <ViewEditBody
+            systemName={this.props.systemName}
+            bodies={this.props.bodies ?? []}
+            bodyMap={this.props.bodyMap ?? {}}
+            bodyNum={this.state.bodyNum ?? -1}
+            onChange={num => this.setState({
+              bodyNum: num,
+              bodyName: this.props.bodies?.find(b => b.num === num)?.name,
+            })}
+            pinnedSiteId=''
+          />
+        </Stack>}
+
+        <Stack horizontal verticalAlign='center'>
+          <Label required>Build type:</Label>
+          <BuildType
+            buildType={buildType}
+            onChange={(t) => this.setState({ buildType: t })}
+          />
+        </Stack>
         <br />
 
-        {!!buildType && <MessageBar messageBarType={MessageBarType.severeWarning}>
+        {/* {!!buildType && <MessageBar messageBarType={MessageBarType.severeWarning}>
           Note: Cargo requirements will need to be manually entered.
-        </MessageBar>}
-
+        </MessageBar>} */}
 
         {msgError && <MessageBar messageBarType={msgClass ?? MessageBarType.error}>{msgError}</MessageBar>}
 
@@ -221,7 +254,13 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         msgError: undefined,
       });
 
-      const foundStations = data.stations.filter(s => (s.name.includes('Construction') || s.name.includes('Colonisation')) && !this.props.knownMarketIds.includes(s.marketId.toString()));
+      const foundStations = data.stations.filter(s => {
+        return (s.name.includes('Construction Site:') || s.name.includes('Colonisation'))
+          && !this.props.knownMarketIds.includes(s.marketId.toString())
+          && this.props.knownMarketIds.some(n => s.name.endsWith(n))
+          ;
+      });
+
       if (foundStations.length === 0) {
         this.setState({
           showMarketId: true,

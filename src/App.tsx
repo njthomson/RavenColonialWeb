@@ -194,6 +194,7 @@ export class App extends Component<AppProps, AppState> {
 
   render() {
     const { cmdrEdit, pivot, showDonate, showThemes } = this.state;
+    const useSys = false;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -208,10 +209,10 @@ export class App extends Component<AppProps, AppState> {
               href: '/#home',
             },
             {
-              key: 'find', text: 'Find',
-              iconProps: { iconName: 'Search' },
-              checked: pivot === 'find',
-              href: '/#find',
+              key: 'find', text: useSys ? 'System' : 'Find',
+              iconProps: { iconName: useSys ? 'HomeGroup' : 'Search' },
+              checked: pivot === (useSys ? 'sys' : 'find'),
+              href: useSys ? '/#sys' : '/#find',
               onClick: (ev, i) => {
                 if (window.location.hash.startsWith('#find')) {
                   ev?.preventDefault();

@@ -148,7 +148,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
         <col width='5%' />
         <col width='5%' />
         <col width='45%' />
-        <col width='40%' />
+        <col width='45%' />
         <col width='10%' />
         <col width='5%' />
       </colgroup>

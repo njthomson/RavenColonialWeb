@@ -170,7 +170,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         <ImportStationsFromEDSM systemName={systemName} projects={refs} onClose={() => this.setState({ showImportEDSM: false })} />
       </Modal>}
 
-      {showCreate && <div className='half right'>
+      {showCreate && systemName && <div className='half right'>
         <ProjectCreate
           systemName={systemName}
           knownMarketIds={knownMarketIds}

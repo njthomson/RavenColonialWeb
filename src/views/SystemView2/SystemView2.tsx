@@ -1,6 +1,6 @@
 import './SystemView2.css';
 import * as api from '../../api';
-import { ActionButton, CommandBar, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
+import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
@@ -17,7 +17,7 @@ import { SitesBodyView } from './SitesBodyView';
 import { SiteCard } from './SiteCard';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
-import { FindSystemName } from '../../components';
+import { FindSystemName, ProjectCreate } from '../../components';
 import { createRandomPhoneticName, delayFocus, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
@@ -52,6 +52,7 @@ interface SystemView2State {
   activeProjects: Record<string, Project | null>
   realEconomies?: GetRealEconomies[];
   auditWholeSystem?: boolean;
+  showCreateBuildProject?: boolean;
 }
 
 const viewTypes = [
@@ -138,6 +139,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       activeProjects: {},
       realEconomies: [],
       auditWholeSystem: false,
+      showCreateBuildProject: false,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType'>;
   }
 
@@ -451,7 +453,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return this.renderFindSystem();
     }
 
-    const { errorMsg, sysMap, processingMsg, showBuildOrder } = this.state;
+    const { errorMsg, sysMap, processingMsg, showBuildOrder, showCreateBuildProject } = this.state;
 
     return <div className='sys'>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
@@ -482,6 +484,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
       {!anonymous && this.renderCoachmarks()}
       {anonymous && this.renderLoginPrompt()}
+      {showCreateBuildProject && this.renderCreateBuildProject()}
     </div>;
   }
 
@@ -546,6 +549,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const pageLink = `${window.location.origin}/#sys=${systemName}`;
 
     const enableSave = this.isDirty() && !processingMsg;
+    const noSplitAddButton = isMobile();
 
     const itemAddNewSite = {
       id: 'sysView2_AddSaveLoad',
@@ -553,37 +557,64 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       title: 'Add a planned or "what if" site',
       text: 'Add',
       iconProps: { iconName: 'Add' },
-      split: !isMobile(),
+      split: !noSplitAddButton,
       disabled: !!processingMsg || anonymous,
       onClick: () => this.createNewSite(),
     } as IContextualMenuItem;
 
     const splitItemsAddNewSite = [
       {
-        key: 'sys-add5',
-        text: 'Import existing bodies and stations',
+        key: 'sys-do-import',
+        text: 'Import bodies and stations',
         iconProps: { iconName: 'Build' },
-        onClick: () => this.doImport(),
         disabled: !!processingMsg || anonymous,
-        style: { height: 60 },
+        style: { height: 72 },
         onRenderContent: ((p, d) => {
           return <div style={{ justifyContent: 'left' }}>
             <span>
               {d.renderItemIcon(p)}
               {d.renderItemName(p)}
             </span>
-            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Use to update bodies and new stations from Spansh and RavenColonial</div>
+            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Update bodies and stations from external sources</div>
           </div>;
-        })
-      }
+        }),
+        onClick: () => this.doImport(),
+      },
+      {
+        key: 'sys-add-div',
+        itemType: ContextualMenuItemType.Divider,
+      },
+      {
+        key: 'sys-add-manual',
+        text: 'New construction ...',
+        iconProps: { iconName: 'Manufacturing' },
+        disabled: !!processingMsg || anonymous,
+        style: { height: 72 },
+        onRenderContent: ((p, d) => {
+          return <div style={{ justifyContent: 'left' }}>
+            <span>
+              {d.renderItemIcon(p)}
+              {d.renderItemName(p)}
+            </span>
+            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Manually start a new build project</div>
+          </div>;
+        }),
+        onClick: () => this.setState({ showCreateBuildProject: true }),
+      },
     ] as IContextualMenuItem[];
 
-    if (isMobile()) {
+    if (noSplitAddButton) {
       // split buttons don't work properly on mobile devices, so we'll add the default button as the first of the split items
-      splitItemsAddNewSite.unshift({
-        ...itemAddNewSite,
-        text: 'Add a new site'
-      });
+      splitItemsAddNewSite.unshift(
+        {
+          ...itemAddNewSite,
+          text: 'Add a new site'
+        },
+        {
+          key: 'sys-add-div2',
+          itemType: ContextualMenuItemType.Divider,
+        },
+      );
     }
 
     return <>
@@ -1103,6 +1134,43 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       'sysView2_Snapshot',
       'sysView2_SearchNew',
     ]} />;
+  }
+
+  renderCreateBuildProject() {
+    const knownMarketIDs = this.state.sysMap?.sites
+      .filter(s => s.id.startsWith('&') && !s.buildId)
+      .map(s => s.id.slice(1));
+
+    const knownCompletedSites = this.state.sysMap?.sites
+      .filter(s => s.id.startsWith('&') || s.buildId)
+      .map(s => s.name);
+
+    return <>
+      <Panel
+        isOpen
+        type={PanelType.medium}
+        headerText={`Start a new project`}
+        allowTouchBodyScroll={isMobile()}
+        styles={{
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        }}
+        onDismiss={() => {
+          this.setState({ showCreateBuildProject: false });
+        }}
+      >
+        <ProjectCreate
+          noTitle
+          systemName={this.props.systemName}
+          knownMarketIds={knownMarketIDs}
+          knownCompletedNames={knownCompletedSites}
+          bodies={this.state.sysMap.bodies}
+          bodyMap={this.state.sysMap.bodyMap}
+          onCancel={() => {
+            this.setState({ showCreateBuildProject: false });
+          }}
+        />
+      </Panel >
+    </>;
   }
 }
 
