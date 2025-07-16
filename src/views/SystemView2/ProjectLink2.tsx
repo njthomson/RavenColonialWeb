@@ -1,24 +1,24 @@
 import * as api from '../../api';
 import { ActionButton, Icon, Stack } from "@fluentui/react";
 import { FunctionComponent, useMemo, useState } from "react";
-import { BuildStatus } from "../../types2";
 import { SystemView2 } from "./SystemView2";
 import { ChartGeneralProgress } from "../../components";
 import { mapStatusIcon } from "./ViewEditStatus";
 import { Project } from "../../types";
+import { Site } from '../../types2';
 
-export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: string, sysView: SystemView2 }> = (props) => {
+export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 }> = (props) => {
   let showChart = false;
   const [proj, setProj] = useState<Project | undefined | null>(undefined);
 
   useMemo(async () => {
-    if (props.status !== 'build' || !props.buildId) {
+    if (props.site.status !== 'build' || !props.site.buildId) {
       // make no request
       return undefined;
-    } else if (typeof props.sysView.state.activeProjects[props.buildId] === 'undefined') {
+    } else if (typeof props.sysView.state.activeProjects[props.site.buildId] === 'undefined') {
       // make a request
       try {
-        const p = await api.project.get(props.buildId);
+        const p = await api.project.get(props.site.buildId);
         props.sysView.state.activeProjects[p.buildId] = p ?? null!;
         return p;
       } catch (err: any) {
@@ -29,13 +29,13 @@ export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: str
       }
     } else {
       // use cached value
-      return props.sysView.state.activeProjects[props.buildId];
+      return props.sysView.state.activeProjects[props.site.buildId];
     }
-  }, [props.status, props.buildId, props.sysView.state.activeProjects]).then(proj => {
+  }, [props.site, props.sysView.state.activeProjects]).then(proj => {
     setProj(proj);
   });
 
-  if (props.status === 'plan' || !props.buildId) { return null; }
+  if (props.site.status === 'plan' || !props.site.buildId) { return null; }
 
   let progressElement = <></>;
   if (proj) {
@@ -51,9 +51,9 @@ export const ProjectLink2: FunctionComponent<{ status: BuildStatus, buildId: str
 
   return <>
     <ActionButton
-      iconProps={{ iconName: mapStatusIcon[props.status] }}
+      iconProps={{ iconName: mapStatusIcon[props.site.status] }}
       title='Open project page'
-      href={`${window.location.origin}/#build=${props.buildId}`}
+      href={`${window.location.origin}/#build=${props.site.buildId}`}
       target='build'
     >
       {!showChart && <>View project</>}

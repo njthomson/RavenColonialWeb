@@ -69,7 +69,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
             props.onChange(site);
           }}
         />
-        <ProjectLink2 status={site.status} buildId={site.buildId} sysView={props.sysView} />
+        <ProjectLink2 site={site} sysView={props.sysView} />
       </Stack>
 
     </div>

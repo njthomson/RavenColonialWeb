@@ -49,7 +49,16 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
   }
 
   componentDidUpdate(prevProps: Readonly<ProjectProps>, prevState: Readonly<ProjectState>, snapshot?: any): void {
-    if (prevProps.systemName !== this.props.systemName) {
+    if (!!prevProps.systemName && this.props.systemName === '') {
+      this.setState({
+        systemName: undefined,
+        refs: [],
+        showCompleted: false,
+        showCreate: false,
+        showImportEDSM: false,
+        showAddExisting: false,
+      });
+    } else if (prevProps.systemName !== this.props.systemName) {
       this.findProjects(this.props.systemName)
         .catch(err => this.setState({ errorMsg: err.message }));
     }

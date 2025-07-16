@@ -59,7 +59,9 @@ export const calculateColonyEconomies = (site: SiteMap, useIncomplete: boolean):
       .map(x => `${x.inf.padStart(12)}: ${x.before.toFixed(2)} ${asPosNegTxt2(x.delta).padEnd(4, '0')}  =>  ${x.after.toFixed(2)} \t ${x.reason}`)
       .join('\n');
 
-    console.log(`*** ${site.buildName} (${site.buildType}) ***\n\n${auditTxt}\n\n${mapTxt}\n\n`);
+    if (Date.now() < 0) {
+      console.log(`*** ${site.buildName} (${site.buildType}) ***\n\n${auditTxt}\n\n${mapTxt}\n\n`);
+    }
     site.economyAudit
       .sort((a, b) => map[b.inf as keyof EconomyMap] - map[a.inf as keyof EconomyMap]);
   }

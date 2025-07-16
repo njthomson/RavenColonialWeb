@@ -1,7 +1,7 @@
-import { Stack, IconButton, Callout, DirectionalHint } from "@fluentui/react";
-import { FunctionComponent } from "react";
+import { Stack, IconButton, Callout, DirectionalHint, ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IContextualMenuItem } from "@fluentui/react";
+import { FunctionComponent, useState } from "react";
 import { SiteMap2 } from "../../system-model2";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ViewEditName } from "./ViewEditName";
@@ -81,7 +81,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           />
 
           <div>Status:</div>
-          <Stack horizontal verticalAlign='center' style={{ alignItems: 'center' }}>
+          <Stack horizontal verticalAlign='baseline'>
             <ViewEditBuildStatus
               status={site.status}
               onChange={newStatus => {
@@ -89,12 +89,12 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
                 props.sysView.siteChanged(site.original);
               }}
             />
-            <ProjectLink2 status={site.status} buildId={site.buildId} sysView={props.sysView} />
+            <ProjectLink2 site={site} sysView={props.sysView} />
           </Stack>
 
         </div>
 
-        <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 10 }}>
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 10 }}>
           <IconButton
             iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
             title='Pin this site'
@@ -109,6 +109,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             onClick={() => props.sysView.siteDeleted(site.id)}
           />
 
+          <DeleteSibling site={site} sysView={props.sysView} />
         </Stack>
 
       </div>
@@ -117,3 +118,58 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
   </div>;
 }
 
+export const DeleteSibling: FunctionComponent<{ site: SiteMap2; sysView: SystemView2 }> = (props) => {
+  const [dropDown, setDropDown] = useState(false);
+
+  // do nothing if we are planning or have no buildId
+  if (props.site.status === 'plan' || !props.site.buildId) { return null; }
+
+  // if anything is being built on the same body WITHOUT a buildId - offer to remove it
+  const matches = props.sysView.state.sysMap.siteMaps.filter(s => !s.buildId && s.bodyNum === props.site.bodyNum && s.buildType === props.site.buildType && s.type.orbital === props.site.type.orbital);
+  if (!matches.length) { return null; }
+
+  const id = `pl2r-${Date.now()}`;
+  return <div>
+    <ActionButton
+      id={id}
+      className={cn.abm}
+      onClick={() => setDropDown(!dropDown)}
+    >
+      <Icon iconName={'EngineeringGroup'} style={{ fontSize: 16 }} />
+      <span>&nbsp;Remove duplicates</span>
+      <Icon className='arr' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} />
+    </ActionButton>
+
+    {dropDown && <ContextualMenu
+      hidden={!dropDown}
+      alignTargetEdge={false}
+      target={`#${id}`}
+      directionalHint={DirectionalHint.bottomLeftEdge}
+      styles={{
+        container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, cursor: 'pointer' }
+      }}
+      onDismiss={(ev) => {
+        ev?.preventDefault();
+        setDropDown(false);
+      }}
+      onItemClick={(ev, item) => {
+        ev?.preventDefault();
+        props.sysView.siteDeleted(item?.data);
+      }}
+      items={[
+        {
+          key: 'pl2rh',
+          text: 'Delete redundant planning site?',
+          itemType: ContextualMenuItemType.Header,
+          itemProps: { style: { color: 'red' } },
+        },
+        ...matches.map(s => ({
+          key: `pl2rm-${s.id.slice(1)}`,
+          data: s.id,
+          text: `${s.name}`,
+          secondaryText: `${s.type.displayName2} (${s.buildType || '?'})`,
+          iconProps: { iconName: s.status === 'plan' ? 'WebAppBuilderFragment' : 'ConstructionCone' }
+        } as IContextualMenuItem))]}
+    />}
+  </div>;
+}

@@ -1,6 +1,6 @@
 import { DirectionalHint, ActionButton, Icon, ContextualMenu, IContextualMenuItem } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { BuildStatus, mapStatus } from "../../types2";
 
 export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onChange: (status: BuildStatus) => void }> = (props) => {
@@ -10,6 +10,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
   return <div>
     <ActionButton
       id={id}
+      className={`${cn.abm}`}
       style={{ justifyContent: 'left' }}
       onClick={(ev) => {
         ev.preventDefault();
@@ -17,10 +18,10 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
       }}
     >
       {mapStatus[props.status]}
-      <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
+      <Icon className='icon-inline arr' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10 }} />
     </ActionButton>
 
-    <ContextualMenu
+    {dropDown && <ContextualMenu
       hidden={!dropDown}
       alignTargetEdge={false}
       target={`#${id}`}
@@ -40,7 +41,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
         key: `status-${key}`,
         text: name,
       } as IContextualMenuItem))}
-    />
+    />}
   </div>;
 }
 

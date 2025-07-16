@@ -265,7 +265,12 @@ export const cn = mergeStyleSets({
     // },
     scrollbarWidth: 10,
     scrollbarColor: appTheme.palette.themeTertiary + ' ' + appTheme.palette.neutralQuaternaryAlt,
-  }
+  },
+  /** ActionButton, as ContextMenu trigger */
+  abm: {
+    selectors: { '.arr': { color: 'grey', marginLeft: 4, fontSize: 10 } },
+    ':hover': { selectors: { '.arr': { color: appTheme.palette.themeTertiary } } },
+  },
 });
 
 

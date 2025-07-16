@@ -1,6 +1,6 @@
 import './App.css';
 import * as api from './api';
-import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, IContextualMenuItem, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
+import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
 import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
@@ -65,16 +65,6 @@ export class App extends Component<AppProps, AppState> {
       this.setState({ pivot: newPivot, pivotArg: pivotArg });
     };
   }
-
-  clickNearItem = (item: IContextualMenuItem | undefined): boolean | void => {
-    if (!item) { return; }
-
-    const newHash = `/#${item.key}`;
-    if (!window.location.hash.startsWith(newHash) || newHash !== '#find') {
-      window.location.assign(newHash);
-    }
-    return true;
-  };
 
   componentDidMount(): void {
     this.setStateFromHash();
@@ -215,19 +205,24 @@ export class App extends Component<AppProps, AppState> {
               iconProps: { iconName: 'Home' },
               title: 'Home',
               checked: pivot === 'home',
-              onClick: (_, i) => this.clickNearItem(i),
+              href: '/#home',
             },
             {
               key: 'find', text: 'Find',
               iconProps: { iconName: 'Search' },
               checked: pivot === 'find',
-              onClick: (_, i) => this.clickNearItem(i),
+              href: '/#find',
+              onClick: (ev, i) => {
+                if (window.location.hash.startsWith('#find')) {
+                  ev?.preventDefault();
+                }
+              }
             },
             {
               key: 'build', text: 'Build',
               iconProps: { iconName: 'Manufacturing' },
               checked: pivot === 'build',
-              onClick: (_, i) => this.clickNearItem(i),
+              href: '/#build',
             },
             // {
             //   key: 'cmdr', text: 'Cmdr',
@@ -238,7 +233,7 @@ export class App extends Component<AppProps, AppState> {
               key: 'about', text: 'About',
               iconProps: { iconName: 'Help' },
               checked: pivot === 'about',
-              onClick: (_, i) => this.clickNearItem(i),
+              href: '/#about',
             },
 
           ]}
@@ -265,9 +260,8 @@ export class App extends Component<AppProps, AppState> {
             }
           ]}
         />
-        <ContextualMenu
+        {showThemes && <ContextualMenu
           target={`#set-theme`}
-          hidden={!showThemes}
           onDismiss={() => this.setState({ showThemes: false })}
           items={[
             { key: 'choose', text: 'Choose a theme:', disabled: true },
@@ -287,7 +281,7 @@ export class App extends Component<AppProps, AppState> {
           styles={{
             container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
           }}
-        />
+        />}
 
         {this.renderBody()}
 
