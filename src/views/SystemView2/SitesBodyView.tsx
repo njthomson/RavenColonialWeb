@@ -289,7 +289,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           float: 'right',
           marginTop: 8,
           position: 'sticky',
-          zIndex: 1,
+          zIndex: 2,
           top: 54,
         }}
       >
@@ -299,7 +299,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           text='Filter bodies'
           iconProps={{ iconName: hideEmpties || bodyFilter.size > 0 ? 'FilterSolid' : 'Filter' }}
           title='Filter bodies, excluding or including, based on their features'
-          style={{ marginRight: 6, }}
+          style={{ marginRight: 6 }}
           onClick={() => this.setState({ showBodyFilter: !showBodyFilter })}
         />
       </div>

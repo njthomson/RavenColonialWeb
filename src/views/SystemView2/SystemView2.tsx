@@ -641,14 +641,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       store.siteGraphType = newGraphType;
     };
 
+    const onMobile = isMobile();
+
     return <>
-      <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>
-      <h2 style={{ margin: 10, height: 32 }}>
+      {!onMobile && <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>}
+      <h2 style={{ margin: 10, height: 32, fontSize: onMobile ? 18 : undefined }}>
         <Stack horizontal verticalAlign='baseline'>
           <CopyButton text={systemName} fontSize={16} />
           <Link href={pageLink} style={{ marginLeft: 4 }}>{systemName}</Link>
 
-          <BothTierPoints disable={!this.state.sysMap} tier2={this.state.sysMap?.tierPoints.tier2 ?? 0} tier3={this.state.sysMap?.tierPoints.tier3 ?? 0} fontSize={24} />
+          <BothTierPoints disable={!this.state.sysMap} tier2={this.state.sysMap?.tierPoints.tier2 ?? 0} tier3={this.state.sysMap?.tierPoints.tier3 ?? 0} fontSize={onMobile ? 18 : 24} />
 
           <IconButton
             id='sysView2_SearchNew'
@@ -665,14 +667,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               }
             }}
           />
-
-          <Stack horizontal verticalAlign='center' style={{ marginLeft: 40, fontWeight: 'normal', width: 240, color: 'grey' }}>
-            <Icon iconName='ProcessMetaTask' style={{ fontSize: 20 }} />
-            <div style={{ marginLeft: 8, fontSize: 12, }}>
-              This page and calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
-            </div>
-          </Stack>
-
         </Stack>
       </h2>
 

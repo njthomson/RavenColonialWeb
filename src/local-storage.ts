@@ -46,12 +46,10 @@ const readString = (key: Stored, defaultValue: string = ''): string => window.lo
 
 const readValue = <T>(key: Stored, defaultValue?: T): T | undefined => {
   const json = window.localStorage.getItem(key);
-  if (!json)
+  if (typeof json === 'undefined')
     return defaultValue;
-  else if (json[0] !== '{' && json[0] !== '[')
-    return json as T; // assume this is just a string type and should not be JSON parsed
   else
-    return JSON.parse(json) as T;
+    return JSON.parse(json!) as T;
 }
 
 const readBoolean = (key: Stored, defaultValue?: boolean): boolean => !!readValue(key, defaultValue);
@@ -195,7 +193,7 @@ class LocalStorage {
   get viewEditBuiltTypeTab(): string { return readString(Stored.viewEditBuiltTypeTab, 'both'); }
   set viewEditBuiltTypeTab(newValue: string) { writeValue(Stored.viewEditBuiltTypeTab, newValue); }
 
-  get siteGraphType(): SiteGraphType { return readValue<SiteGraphType>(Stored.siteGraphType) ?? 'major'; }
+  get siteGraphType(): SiteGraphType { return readString(Stored.siteGraphType) as SiteGraphType || 'major'; }
   set siteGraphType(newValue: SiteGraphType) { writeValue(Stored.siteGraphType, newValue); }
 
 }
