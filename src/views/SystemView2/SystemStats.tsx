@@ -19,7 +19,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
     }}
   >
 
-    <div>Calculated:</div>
+    <div>Calculating:</div>
     <div style={{ gridColumn: '2 / span 3' }}>{props.useIncomplete ? 'All sites' : 'Completed sites only'}</div>
 
     <div>System architect:</div>
