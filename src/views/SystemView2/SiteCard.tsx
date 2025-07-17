@@ -82,7 +82,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           />
 
           <div>Status:</div>
-          <Stack horizontal verticalAlign='baseline'>
+          <Stack horizontal verticalAlign='center'>
             <ViewEditBuildStatus
               status={site.status}
               onChange={newStatus => {

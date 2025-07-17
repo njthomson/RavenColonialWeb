@@ -41,7 +41,6 @@ interface SystemView2State {
   pinnedSnapshot?: string;
   sysStatsSnapshot?: string;
   selectedSite?: Site;
-  invalidSite?: Site;
   dirtySites: Record<string, Site>;
   deletedIDs: string[];
   viewType: string;
@@ -129,7 +128,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       pinnedSnapshot: undefined,
       sysStatsSnapshot: undefined,
       selectedSite: undefined,
-      invalidSite: undefined,
       dirtySites: {},
       deletedIDs: [],
       // skip: viewType,
@@ -318,12 +316,28 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   doOnScrollEnd(action: () => void) {
 
-    const func = () => {
+    const tim = setTimeout(() => {
+      // scrolling is not happening - kill the event handlers and do the thing
+      document.removeEventListener("scrollend", funcEnd);
+      document.removeEventListener("scroll", funcScroll);
       action();
-      document.removeEventListener("scrollend", func);
+    }, 150);
+
+    const funcEnd = () => {
+      // we scrolled some, now we stopped scrolling
+      document.removeEventListener("scroll", funcScroll);
+      document.removeEventListener("scrollend", funcEnd);
+      action();
     };
 
-    document.addEventListener("scrollend", func);
+    const funcScroll = () => {
+      // we scrolled some - no need for timeout
+      clearTimeout(tim);
+      document.removeEventListener("scroll", funcScroll);
+    };
+
+    document.addEventListener("scroll", funcScroll);
+    document.addEventListener("scrollend", funcEnd);
   }
 
   createNewSite = (bodyNum?: number) => {
