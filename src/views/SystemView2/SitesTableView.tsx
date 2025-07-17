@@ -56,6 +56,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
     if (isNewGroup) {
       rows.push(<tr key={`p${props.sysMap.id64}${site.id}`}><td colSpan={6} style={{ borderTop }} /></tr>);
     }
+    const isPrimary = !!site.links || site.body?.surfacePrimary === site || site.body?.orbitalPrimary === site;
 
     rows.push(<tr
       key={`r${props.sysMap.id64}${site.id}`}
@@ -105,14 +106,14 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
 
         {siteGraphType !== 'none' && <>
 
-          {site.economies && !site.links && siteGraphType === 'all' && <div style={{ marginLeft: 38, marginBottom: 3, marginTop: -5 }}>
+          {site.economies && !isPrimary && siteGraphType === 'all' && <div style={{ marginLeft: 38, marginBottom: 3, marginTop: -5 }}>
             <EconomyBlocks economies={site.economies} width={200} height={2} />
           </div>}
 
-          {site.links && <>
+          {isPrimary && <>
             <Stack horizontal verticalAlign='baseline' style={{ position: 'relative', marginLeft: 18, marginBottom: 3, marginTop: -4 }}>
 
-              {siteGraphType === 'links' && <>
+              {siteGraphType === 'links' && site.links && <>
                 <Icon iconName={mapSiteGraphTypeIcon.links} style={{ marginRight: 4, color: appTheme.palette.themeTertiary, position: 'relative', top: 1 }} />
                 <MarketLinkBlocks site={site as any} width={200} height={12} />
               </>}

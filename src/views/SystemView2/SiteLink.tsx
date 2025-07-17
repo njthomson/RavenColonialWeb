@@ -22,6 +22,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
 
   const economy = site.primaryEconomy ?? site.type.inf;
   const siteGraphType = props.sysView.state.siteGraphType;
+  const isPrimary = !!site.links || site.body?.surfacePrimary === site || site.body?.orbitalPrimary === site;
 
   return <div
     id={id + '-div'}
@@ -69,14 +70,14 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
 
       {siteGraphType !== 'none' && <>
 
-        {site.economies && !site.links && siteGraphType === 'all' && <div style={{ marginLeft: 36, marginTop: -2, marginBottom: 2 }}>
+        {site.economies && !isPrimary && siteGraphType === 'all' && <div style={{ marginLeft: 36, marginTop: -2, marginBottom: 2 }}>
           <EconomyBlocks economies={site.economies} width={200} height={2} />
         </div>}
 
-        {site.links && <>
+        {isPrimary && <>
           <Stack horizontal verticalAlign='baseline' style={{ position: 'relative', marginLeft: 18 }}>
 
-            {siteGraphType === 'links' && <>
+            {siteGraphType === 'links' && site.links && <>
               <Icon iconName={mapSiteGraphTypeIcon.links} style={{ marginRight: 4, color: appTheme.palette.themeTertiary, position: 'relative', top: 1 }} />
               <MarketLinkBlocks site={site as any} width={200} height={12} />
             </>}
