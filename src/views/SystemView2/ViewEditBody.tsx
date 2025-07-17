@@ -85,7 +85,8 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
         styles={{
           container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, cursor: 'pointer', width: 270 }
         }}
-        onDismiss={(ev) => {
+        onDismiss={ev => {
+          ev?.preventDefault();
           this.setState({ dropDown: false });
           App.resumePageScroll();
         }}

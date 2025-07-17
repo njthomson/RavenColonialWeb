@@ -45,7 +45,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
         onChange={(ev) => setEditName(ev.target.value)}
         onKeyDown={(ev) => {
           if (ev.key === 'Enter') { props.onChange(editName); setEditing(false); }
-          if (ev.key === 'Escape') { setEditing(false); }
+          if (ev.key === 'Escape') { ev.preventDefault(); setEditing(false); }
         }}
       />
 

@@ -31,8 +31,10 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
         }
       }}
       role="dialog"
-      onDismiss={() => {
-        props.onClose();
+      onDismiss={ev => {
+        if (!ev?.defaultPrevented) {
+          props.onClose();
+        }
       }}
       dismissOnTargetClick={true}
     >
