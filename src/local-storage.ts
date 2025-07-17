@@ -46,7 +46,7 @@ const readString = (key: Stored, defaultValue: string = ''): string => window.lo
 
 const readValue = <T>(key: Stored, defaultValue?: T): T | undefined => {
   const json = window.localStorage.getItem(key);
-  if (typeof json === 'undefined')
+  if (json === null)
     return defaultValue;
   else
     return JSON.parse(json!) as T;
