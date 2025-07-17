@@ -178,9 +178,10 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
               }}
             />
             <ActionButton
+              className={cn.bBox}
               title='View table of site properties in a new tab'
               iconProps={{ iconName: 'ViewListGroup', style: { cursor: 'pointer' } }}
-              style={{ height: 20, marginBottom: 8 }}
+              style={{ height: 24, marginBottom: 8, padding: '14px 8px' }}
               href='/table'
               target='table'
             >
@@ -190,6 +191,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
           </Stack>
 
           <ActionButton
+            className={cn.bBox}
             text='What is missing?'
             iconProps={{ iconName: 'ImageSearch' }}
             style={{ position: 'relative', right: 0 }}
@@ -378,6 +380,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
         <div style={{ width: 120, textAlign: 'right' }} onClick={() => this.setZoom(namePrev)}>
           <ActionButton
+            className={cn.bBox}
             iconProps={{ iconName: 'DoubleChevronLeft' }}
             style={{ textTransform: 'capitalize', height: 28, padding: 0, margin: 0, textAlign: 'right' }}
             styles={{ flexContainer: { flexDirection: 'row-reverse' } }}
@@ -386,6 +389,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         </div>
 
         <IconButton
+          className={cn.bBox}
           title='Back to grid'
           iconProps={{ iconName: 'DoubleChevronUp' }}
           style={{ textTransform: 'capitalize', height: 28, padding: 0, margin: 0 }}
@@ -394,6 +398,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
         <div style={{ width: 120, textAlign: 'left' }} onClick={() => this.setZoom(nameNext)}>
           <ActionButton
+            className={cn.bBox}
             iconProps={{ iconName: 'DoubleChevronRight' }}
             style={{ textTransform: 'capitalize', height: 28, padding: 0, margin: 0 }}
             text={nameNext}
@@ -510,23 +515,29 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
       </span>}
 
       {!props.noCredits && <>
-        <IconButton
-          title='View full size in another tab'
-          iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10, cursor: 'pointer' } }}
-          style={{
-            position: 'absolute',
-            right: 2,
-            top: 2,
-            color: 'wheat',
-            backgroundColor: 'black',
-            padding: 0,
-            margin: 0,
-            width: 16,
-            height: 16,
-          }}
-          href={imgUrl}
-          target='visprops.buildType'
-        />
+        <span style={{
+          position: 'absolute',
+          right: 2,
+          top: 2,
+          color: 'wheat',
+          backgroundColor: 'black',
+        }}
+        >
+          <IconButton
+            className={cn.bBox}
+            title='View full size in another tab'
+            iconProps={{ iconName: 'OpenInNewTab', style: { fontSize: 10, cursor: 'pointer' } }}
+            style={{
+              color: 'wheat',
+              padding: 0,
+              margin: 0,
+              width: 16,
+              height: 16,
+            }}
+            href={imgUrl}
+            target='visprops.buildType'
+          />
+        </span>
         {props.imgs.length > 1 && <>
           <Stack horizontal style={{
             position: 'absolute',
@@ -538,6 +549,7 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
           }}
           >
             <IconButton
+              className={cn.bBox}
               title='Previous image'
               iconProps={{ iconName: 'DoubleChevronLeft', style: { fontSize: 10 } }}
               style={{
@@ -553,6 +565,7 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
               }}
             />
             <IconButton
+              className={cn.bBox}
               title='Next image'
               iconProps={{ iconName: 'DoubleChevronRight', style: { fontSize: 10 } }}
               style={{

@@ -1,7 +1,7 @@
 
 import { FunctionComponent } from "react";
 import { appTheme, cn } from "../theme";
-import { getSiteType, SysEffects, mapName, mapSitePads } from "../site-data";
+import { getSiteType, SysEffects, mapName, mapSitePads, averageHauls } from "../site-data";
 import { asPosNegTxt } from "../util";
 import { Chevrons } from "./Chevrons";
 import { Icon, mergeStyleSets, Stack } from "@fluentui/react";
@@ -55,6 +55,8 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
   }
 
   const padMap = mapSitePads[props.buildType];
+  // use measured size, but defer to static size if not known
+  const haulSize = averageHauls[st.displayName2] ?? st.haul;
 
   return <div style={{ cursor: 'default' }}>
     {!props.noTitle && <h3 className={cn.h3}>{props.heading ?? 'System effects:'}</h3>}
@@ -117,8 +119,8 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
           <td className={tds} colSpan={3} style={{ paddingTop }}>
             <div className='grey'>
               <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 10 }}>
-                <HaulSize haul={st.haul} />
-                <div>~{st.haul.toLocaleString()} units</div>
+                <HaulSize haul={haulSize} />
+                <div>~{haulSize.toLocaleString()} units</div>
               </Stack>
             </div>
           </td>

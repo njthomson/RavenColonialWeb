@@ -1,7 +1,7 @@
 import './BigSiteTable.css';
 import { IContextualMenuItem, ContextualMenuItemType, ContextualMenu, ActionButton, Icon, Stack, IconButton, Panel, PanelType, DirectionalHint } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
-import { getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
+import { averageHauls, getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
 import { asPosNegTxt, isMobile } from "../../util";
 import { isTypeValid, SysMap } from "../../system-model";
@@ -460,6 +460,9 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       }
     }
 
+    // use measured size, but defer to static size if not known
+    const haulSize = averageHauls[type.displayName2] ?? type.haul;
+
     return <tr
       key={`btr${type.subTypes}1`}
       className={`${cn.trhi}`}
@@ -522,7 +525,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
       {showValid && <td className={`${cn.br}`}>{this.renderValid(isValid)}</td>}
 
-      <td className={`${cn.br}`}><HaulSize haul={type.haul} /></td>
+      <td className={`${cn.br}`}><HaulSize haul={haulSize} /></td>
 
       <td className={`${cn.br}`}><PadSize size={padSize} /></td>
 

@@ -283,6 +283,9 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
   render() {
     const { bodyTree, hideEmpties, showBodyFilter, bodyFilter, bodyFilterExclude } = this.state;
 
+    const bodyElements = Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element);
+    const noBodies = bodyElements.every(c => c.key?.startsWith('nobody'));
+
     return <div>
       <div
         style={{
@@ -309,7 +312,11 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         marginLeft: bodyTree[rootBC.name] && bodyFilter.size === 0 ? indent : 0
       }}
       >
-        {Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element)}
+        {bodyElements}
+        {noBodies && <div style={{ marginLeft: 40, }}>
+          <div>No bodies meet the filter criteria</div>
+          <div style={{ marginTop: 20, color: appTheme.palette.themePrimary }}>Try toggling "Including matches" to match bodies without the criteria</div>
+        </div>}
       </div>
       {showBodyFilter && <ContextualMenu
         target={`#btn-body-filter`}
@@ -412,10 +419,13 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     if (node.body.type === 'bc') {
       const childElements = childParts.length < 3 ? undefined : childParts.slice(2).map(cp => cp.element);
+      // was everything filtered out?
+      const empty = childParts.every(c => c.element.key?.startsWith('nobody'));
+      const keyPrefix = empty ? 'nobody' : 'barycentre';
       return {
         hasSites: hasSites || !!node.map?.sites.length,
         element: <BBaryCentre
-          key={`barycentre-${node.body.name}${idx}`}
+          key={`${keyPrefix}-${node.body.name}${idx}`}
           hasParent={!!node.parent}
           filtering={this.state.bodyFilter.size > 0}
           bodyA={childParts[0]?.element}

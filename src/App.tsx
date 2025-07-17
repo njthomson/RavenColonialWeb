@@ -206,6 +206,7 @@ export class App extends Component<AppProps, AppState> {
           className={`top-bar ${cn.topBar}`}
           items={[
             {
+              className: cn.bBox,
               key: 'home', text: 'Home',
               iconProps: { iconName: 'Home' },
               title: 'Home',
@@ -213,6 +214,7 @@ export class App extends Component<AppProps, AppState> {
               href: '/#home',
             },
             {
+              className: cn.bBox,
               key: 'find', text: useSys ? 'System' : 'Find',
               iconProps: { iconName: useSys ? 'HomeGroup' : 'Search' },
               checked: pivot === (useSys ? 'sys' : 'find'),
@@ -224,6 +226,7 @@ export class App extends Component<AppProps, AppState> {
               }
             },
             {
+              className: cn.bBox,
               key: 'build', text: 'Build',
               iconProps: { iconName: 'Manufacturing' },
               checked: pivot === 'build',
@@ -235,6 +238,7 @@ export class App extends Component<AppProps, AppState> {
             //   onClick: (_, i) => this.clickNearItem(i),
             // },
             {
+              className: cn.bBox,
               key: 'about', text: 'About',
               iconProps: { iconName: 'Help' },
               checked: pivot === 'about',
@@ -244,6 +248,7 @@ export class App extends Component<AppProps, AppState> {
           ]}
           farItems={[
             {
+              className: cn.bBox,
               id: 'view-vis', key: 'vis',
               iconProps: { iconName: 'View' },
               iconOnly: true,
@@ -251,6 +256,7 @@ export class App extends Component<AppProps, AppState> {
               onClick: () => window.open('/#vis', 'vis'),
             },
             {
+              className: cn.bBox,
               id: 'set-theme', key: 'theme',
               iconProps: { iconName: 'Contrast' },
               iconOnly: true,
@@ -258,6 +264,7 @@ export class App extends Component<AppProps, AppState> {
               onClick: () => this.setState({ showThemes: !this.state.showThemes }),
             },
             {
+              className: cn.bBox,
               id: 'current-cmdr', key: 'current-cmdr',
               iconProps: { iconName: store.cmdrName ? 'Contact' : 'UserWarning' },
               text: this.state.cmdr,
