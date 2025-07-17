@@ -84,6 +84,15 @@ export const mapStatus = {
   complete: 'Complete',
 }
 
+export type SiteGraphType = 'links' | 'major' | 'all' | 'none';
+
+export const mapSiteGraphType = {
+  links: 'Links',
+  major: 'Ports',
+  all: 'All',
+  none: 'None',
+}
+
 // type BodyType = keyof typeof bodyTypes;
 // const bodyTypes = [
 //   'BlackHole',

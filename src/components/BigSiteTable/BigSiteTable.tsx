@@ -1,5 +1,5 @@
 import './BigSiteTable.css';
-import { IContextualMenuItem, ContextualMenuItemType, ContextualMenu, ActionButton, Icon, Stack, IconButton, Panel, PanelType } from "@fluentui/react";
+import { IContextualMenuItem, ContextualMenuItemType, ContextualMenu, ActionButton, Icon, Stack, IconButton, Panel, PanelType, DirectionalHint } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
 import { getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
@@ -12,6 +12,7 @@ import { PadSize } from "../PadSize";
 import { TierPoint } from "../TierPoints";
 import { BuildEffects } from '../BuildEffects';
 import { SiteImage } from '../VisualIdentify';
+import { isTypeValid2, SysMap2 } from '../../system-model2';
 
 
 export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => {
@@ -71,6 +72,7 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
 interface BigSiteTableProps {
   buildType: string | undefined,
   sysMap?: SysMap;
+  sysMap2?: SysMap2;
   onChange: (value: string) => void
   tableOnly?: boolean;
   stickyTop?: number;
@@ -108,7 +110,9 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
             return false;
           }
         }
-        if (filterColumns.has('valid') && this.props.sysMap && !filterColumns.has(`valid:${isTypeValid(this.props.sysMap, t)}`)) { return false; }
+        const showValid = this.props.sysMap || this.props.sysMap2;
+        const { isValid } = this.props.sysMap2 ? isTypeValid2(this.props.sysMap2, t) : isTypeValid(this.props.sysMap, t);
+        if (filterColumns.has('valid') && showValid && !filterColumns.has(`valid:${isValid}`)) { return false; }
         if (filterColumns.has('tier') && !filterColumns.has(`tier${t.tier}`)) { return false; }
         if (filterColumns.has('env') && !filterColumns.has(t.orbital ? 'orbital' : 'planetary')) { return false; }
         if (filterColumns.has('needs') && !filterColumns.has(`needT${t.needs.tier}`)) { return false; }
@@ -199,6 +203,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       }
     ];
 
+    const showValid = this.props.sysMap || this.props.sysMap2;
     return <div className='build-type'>
       {headerContextKey && <>
         <ContextualMenu
@@ -217,7 +222,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           <col width='250px' />{/* buildType */}
           <col width='15px' />{/* i */}
           {/* <col width='66px' /> */}
-          {this.props.sysMap && <col width='68px' />}{/* valid */}
+          {showValid && <col width='68px' />}{/* valid */}
           <col width='44px' />{/* haul */}
           <col width='60px' />{/* pad */}
           <col width='95px' />{/* env */}
@@ -243,7 +248,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
             {this.renderLargeColumnHeader('buildType', `${cn.bb}`)}
             <th className={`${cn.bb} ${cn.br}`}></th>
             {/* {this.renderLargeColumnHeader('layouts', `${cn.bb} ${cn.br}`)} */}
-            {this.props.sysMap && this.renderLargeColumnHeader('valid', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {showValid && this.renderLargeColumnHeader('valid', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('haul', `cc ${cn.bb} ${cn.br}`)}
             {this.renderLargeColumnHeader('pad', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('env', `cc ${cn.bb} ${cn.br} ${cn.trh} btn`)}
@@ -436,7 +441,11 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     const { selection, filterColumns } = this.state;
 
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
-    const cid = `lr-${type.subTypes[0]}`;
+    const showValid = this.props.sysMap || this.props.sysMap2;
+    const { isValid, msg } = this.props.sysMap2
+      ? isTypeValid2(this.props.sysMap2, type)
+      : isTypeValid(this.props.sysMap, type);
+
     const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
 
     let padSize = type.padSize;
@@ -475,14 +484,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           }
         }}
       >
-        {/* <DefaultButton id={cid} text={type.displayName2} /> */}
-        <div id={cid}>{type.displayName2}</div>
-        {/* <Link
-              id={cid}
-            // onClick={() => {            this.props.onChange(type)          }}
-            >
-              {type.displayName2}
-            </Link> */}
+        <div>{type.displayName2}</div>
 
         <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
           {subTypes.map((st, i) => {
@@ -515,29 +517,10 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       </td>
 
       <td className={`${cn.br}`}>
-        {type.preReq && <CalloutMsg id={cid} msg={'Requires ' + mapName[type.preReq]} />}
-        {!type.preReq && <div style={{ width: 15 }} />}
+        {this.renderPreReq(isValid, msg)}
       </td>
 
-      {/* <td className={`${cn.br}`}>
-            <span className='small tc'>
-              <Stack horizontal wrap tokens={{ childrenGap: 2 }}>
-                {/* {type.subTypes.map(st => (<div style={{ border: '1px solid grey', padding: 2 }}>
-                  {st.replace('_i', '').replace('_e', '')}
-                  &nbsp;
-                  <Icon iconName='Photo2' />
-                </div>))} * /}
-                {type.subTypes.map(st => (<ActionButton
-                  // iconProps={{ iconName: 'Photo2', style: { fontSize: 12 } }}
-                  style={{ height: 16, fontSize: 12, padding: 0, margin: 0 }}
-                >
-                  {st.replace('_i', '').replace('_e', '')}
-                </ActionButton>))}
-              </Stack>
-            </span>
-          </td> */}
-
-      {this.props.sysMap && <td className={`${cn.br}`}>{this.renderValid(type)}</td>}
+      {showValid && <td className={`${cn.br}`}>{this.renderValid(isValid)}</td>}
 
       <td className={`${cn.br}`}><HaulSize haul={type.haul} /></td>
 
@@ -572,20 +555,32 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     </tr>;
   }
 
-  renderValid(type: SiteType) {
-    if (!this.props.sysMap) return null;
+  renderPreReq(isValid: boolean, msg?: string) {
+    if (!msg) {
+      return <div style={{ width: 15 }} />
+    }
 
-    // assume we can build it
-    let isValid = isTypeValid(this.props.sysMap, type);
-
-    return isValid
-      ? <Icon iconName='SkypeCheck' style={{ color: appTheme.palette.greenLight }} />
-      : <Icon iconName='Cancel' style={{ color: appTheme.palette.red, fontWeight: 'bold' }} />;
-    // : <span style={{ color: 'grey' }}>-</span>;
+    return <CalloutMsg
+      directionalHint={DirectionalHint.rightCenter}
+      msg={msg}
+      iconName={!isValid ? 'Warning' : undefined}
+      width={22}
+      height={22}
+      style={{
+        fontWeight: !isValid ? 'bold' : undefined,
+        color: !isValid ? appTheme.palette.yellowDark : appTheme.palette.black,
+      }}
+    />;
   }
 
+  renderValid(isValid: boolean) {
+    if (isValid) {
+      return <Icon iconName='SkypeCheck' style={{ color: appTheme.palette.greenLight }} />;
+    } else {
+      return <Icon iconName='Cancel' style={{ color: appTheme.palette.red, fontWeight: 'bold' }} />;
+    }
+  }
 }
-
 
 const mapColumnNames: Record<string, string> = {
   buildType: 'Type',

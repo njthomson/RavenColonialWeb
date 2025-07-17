@@ -1,8 +1,8 @@
-import { IconButton } from "@fluentui/react";
+import { ActionButton, IconButton } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 
-export const ViewEditName: FunctionComponent<{ name: string, onChange: (newName: string) => void }> = (props) => {
+export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean }> = (props) => {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);
   const [editName, setEditName] = useState('');
@@ -16,17 +16,18 @@ export const ViewEditName: FunctionComponent<{ name: string, onChange: (newName:
   return <div>
 
     {!editing && <>
-      <IconButton
+      <ActionButton
+        text={props.name}
         title='Edit the name'
         iconProps={{ iconName: 'Edit' }}
-        style={{ marginLeft: 4 }}
+        style={{ marginLeft: 4, fontSize: props.noBold ? undefined : '1.0em', fontWeight: props.noBold ? undefined : 'bold' }}
+        className={cn.bBox}
         onClick={(ev) => {
           ev.preventDefault();
           setEditName(props.name);
           setEditing(true);
         }}
       />
-      <span style={{ cursor: 'default', marginLeft: 4 }}>{props.name}</span>
     </>}
 
     {editing && <>

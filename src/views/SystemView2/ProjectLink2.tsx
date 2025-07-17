@@ -6,6 +6,7 @@ import { ChartGeneralProgress } from "../../components";
 import { mapStatusIcon } from "./ViewEditStatus";
 import { Project } from "../../types";
 import { Site } from '../../types2';
+import { cn } from '../../theme';
 
 export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 }> = (props) => {
   let showChart = false;
@@ -53,6 +54,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 
     <ActionButton
       iconProps={{ iconName: mapStatusIcon[props.site.status] }}
       title='Open project page'
+      className={cn.bBox}
       href={`${window.location.origin}/#build=${props.site.buildId}`}
       target='build'
     >

@@ -1,12 +1,13 @@
 import './MarketLinks.css';
 import { FunctionComponent } from "react";
-import { cn } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { economyColors, mapName } from "../../site-data";
 import { SiteMap } from "../../system-model";
 import { ProjectLink } from "../ProjectLink/ProjectLink";
 import { SiteMap2 } from '../../system-model2';
 import { SystemView2 } from '../../views/SystemView2/SystemView2';
 import { SiteLink } from '../../views/SystemView2/SiteLink';
+import { Icon, Stack } from '@fluentui/react';
 
 export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean, sysView?: SystemView2 }> = (props) => {
   if (!props.site) return null;
@@ -29,8 +30,8 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
       return <span>{num}</span>;
     }
   }
-
-  const colorBlocks = generateColorBlocks(props.site, 400, 20);
+  const blockHeight = 14;
+  const colorBlocks = generateColorBlocks(props.site, 370, blockHeight);
 
   // table rows for strong/weak links
   const linkRows = [];
@@ -65,9 +66,12 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
       {props.showName && <>Market links for: {props.site.buildName}</>}
     </h3>
 
-    <div style={{ margin: '12px 0 4px 0' }}>
-      {colorBlocks}
-    </div>
+    <Stack horizontal verticalAlign='center' style={{ position: 'relative' }}>
+      <Icon iconName='Link12' style={{ marginRight: 4, color: appTheme.palette.themeTertiary, position: 'relative', top: 1 }} />
+      <div style={{ position: 'relative', margin: '4px 0 2px 0', lineHeight: `${blockHeight}px` }}>
+        {colorBlocks}
+      </div>
+    </Stack>
 
     <table className='table-market-links' cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
       <thead>
@@ -128,13 +132,12 @@ const generateColorBlocks = (site: SiteMap, width: number, height: number): JSX.
   return colorBlocks;
 };
 
-
 export const MarketLinkBlocks: FunctionComponent<{ site: SiteMap, width: number, height: number; }> = (props) => {
   if (!props.site.links) return null;
 
   const colorBlocks = generateColorBlocks(props.site, props.width, props.height);
 
-  return <div>
+  return <div style={{ position: 'relative', lineHeight: `${props.height}px`, minWidth: props.width + 4 }}>
     {colorBlocks}
   </div>
 }
@@ -145,14 +148,18 @@ export const EconomyBlocks: FunctionComponent<{ economies: Record<string, number
   Object.values(props.economies).forEach(v => maxCount += v);
   const blockWidthRatio = props.width / maxCount;
 
+  // sort largest first
+  const sorted = Object.keys(props.economies).sort((a, b) => props.economies[b] - props.economies[a]);
+
   const colorBlocks = [];
-  for (const key of Object.keys(props.economies)) {
+  for (const key of sorted) {
     const v = props.economies[key];
+    if (v === 0) continue;
 
     const color = economyColors[key] ?? '#FFF';
     const blockWidth = (v * blockWidthRatio) - 4;
 
-    let title = `${mapName[key]}: ${v}`;
+    let title = `${mapName[key]}: ${(v * 100).toFixed()}%`;
 
     const block = <div
       key={`eb${key}`}
@@ -169,7 +176,7 @@ export const EconomyBlocks: FunctionComponent<{ economies: Record<string, number
     colorBlocks.push(block);
   };
 
-  return <div style={{ margin: '0' }}>
+  return <div style={{ position: 'relative', lineHeight: `${props.height}px`, minWidth: props.width + 4 }}>
     {colorBlocks}
   </div>
 }

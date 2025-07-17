@@ -10,7 +10,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
   return <div>
     <ActionButton
       id={id}
-      className={`${cn.abm}`}
+      className={`${cn.abm} ${cn.bBox}`}
       style={{ justifyContent: 'left' }}
       onClick={(ev) => {
         ev.preventDefault();
@@ -39,6 +39,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
       items={Object.entries(mapStatus).map(([key, name]) => ({
         iconProps: { iconName: mapStatusIcon[key] },
         key: `status-${key}`,
+        className: cn.bBox,
         text: name,
       } as IContextualMenuItem))}
     />}

@@ -66,6 +66,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
       <ActionButton
         id={`body-${id}`}
         style={{ paddingRight: 10 }}
+        className={cn.bBox}
         onClick={(ev) => {
           ev.preventDefault();
           this.setState({ dropDown: !dropDown });
@@ -118,7 +119,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
 
           return <div
             key={`bdd-${systemName}-${body.num}`}
-            className={cn.trh}
+            className={`${cn.trh} ${cn.bBox}`}
             style={{ padding: 1 }}
             onClick={() => {
               this.setState({ dropDown: false });

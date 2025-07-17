@@ -1,5 +1,6 @@
 import * as api from './api';
 import { FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectRefLite, SortMode } from "./types";
+import { SiteGraphType } from './types2';
 import { fcFullName } from './util';
 
 enum Stored {
@@ -24,6 +25,7 @@ enum Stored {
   sysView2View = 'sysView2View',
   sysViewHideEmpties = 'sysViewHideEmpties',
   viewEditBuiltTypeTab = 'viewEditBuiltTypeTab',
+  siteGraphType = 'siteGraphType',
 }
 
 interface CmdrData {
@@ -46,6 +48,8 @@ const readValue = <T>(key: Stored, defaultValue?: T): T | undefined => {
   const json = window.localStorage.getItem(key);
   if (!json)
     return defaultValue;
+  else if (json[0] !== '{' && json[0] !== '[')
+    return json as T; // assume this is just a string type and should not be JSON parsed
   else
     return JSON.parse(json) as T;
 }
@@ -190,6 +194,9 @@ class LocalStorage {
 
   get viewEditBuiltTypeTab(): string { return readString(Stored.viewEditBuiltTypeTab, 'both'); }
   set viewEditBuiltTypeTab(newValue: string) { writeValue(Stored.viewEditBuiltTypeTab, newValue); }
+
+  get siteGraphType(): SiteGraphType { return readValue<SiteGraphType>(Stored.siteGraphType) ?? 'major'; }
+  set siteGraphType(newValue: SiteGraphType) { writeValue(Stored.siteGraphType, newValue); }
 
 }
 

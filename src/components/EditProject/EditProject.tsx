@@ -1,6 +1,6 @@
 import './EditProject.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, DatePicker, DefaultButton, Dropdown, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker, Toggle } from "@fluentui/react";
+import { ActionButton, Checkbox, DatePicker, DefaultButton, DirectionalHint, Dropdown, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker, Toggle } from "@fluentui/react";
 import { Component } from "react";
 import { BodyFeature, CreateProject, mapBodyTypeNames, mapReserveLevel, Project, ProjectRef, SystemFeature } from "../../types";
 import { cn, appTheme } from "../../theme";
@@ -101,8 +101,8 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
     const rowTimeCompleted = <tr>
       <td>
         <Label style={{ color: this.props.fieldHighlight === 'timeCompleted' ? appTheme.palette.yellowDark : undefined }}>
-          <span id='edit-date-completed'>Date completed:</span>
-          <CalloutMsg id='edit-date-completed' msg={dateCompletedHelpElement} marginLeft={4} />
+          <span>Date completed:</span>
+          <CalloutMsg msg={dateCompletedHelpElement} style={{ fontSize: 12 }} directionalHint={DirectionalHint.bottomCenter} />
           {this.props.fieldHighlight === 'timeCompleted' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
         </Label>
       </td>

@@ -2,7 +2,7 @@ import './ShowGlobalStats.css';
 import * as api from '../../api';
 import { Component, FunctionComponent } from "react";
 import { store } from '../../local-storage';
-import { Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DirectionalHint, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { GlobalStats } from '../../types';
 import { cn } from '../../theme';
 import { CalloutMsg } from '../CalloutMsg';
@@ -104,14 +104,12 @@ const StatsBox: FunctionComponent<{ label: string, title?: string, small?: strin
     <td className='r'>{v.toLocaleString()}</td>
   </tr>);
 
-  const id = `k${Math.random().toString().substring(2)}`;
-
   return <div className={`home-box ${cn.greyer}`} title={props.title}>
     <div className='small t-right'>{props.small}</div>
-    <h3 className={cn.h3} id={`${id}`} >
+    <h3 className={cn.h3}>
       {props.label}:
       &nbsp;
-      {!!props.title && <CalloutMsg id={`${id}`} msg={props.title} />}
+      {!!props.title && <CalloutMsg msg={props.title} style={{ fontSize: 12 }} directionalHint={DirectionalHint.topCenter} />}
     </h3>
     <table className='t-right' cellPadding={0} cellSpacing={0}>
       <tbody>

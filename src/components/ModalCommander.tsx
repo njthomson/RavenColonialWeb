@@ -1,4 +1,4 @@
-import { ActionButton, Checkbox, DefaultButton, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, DefaultButton, DirectionalHint, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
 import { store } from '../local-storage';
@@ -143,14 +143,13 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             />
             <Stack horizontal verticalAlign='center'>
               <Checkbox
-                id='useNativeDiscord'
                 checked={useNativeDiscord}
                 label='Use native Discord links'
                 title='Use Discord protocols to open the App, rather than opening Discord inside a web page. Uncheck if this device does not have Discord installed.'
                 onChange={(_ev, checked) => this.setState({ useNativeDiscord: !!checked })}
               />
               &nbsp;
-              <CalloutMsg id='useNativeDiscord' msg='Requires Discord app to be installed on this device.' />
+              <CalloutMsg msg='Requires Discord app to be installed on this device.' directionalHint={DirectionalHint.rightCenter} style={{ fontSize: 12 }} />
             </Stack>
           </Stack>
 

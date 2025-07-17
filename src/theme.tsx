@@ -271,6 +271,45 @@ export const cn = mergeStyleSets({
     selectors: { '.arr': { color: 'grey', marginLeft: 4, fontSize: 10 } },
     ':hover': { selectors: { '.arr': { color: appTheme.palette.themeTertiary } } },
   },
+  /** Dim IconButton */
+  ibDim: {
+    color: appTheme.palette.themeTertiary,
+    ':hover': {
+      color: appTheme.palette.themePrimary,
+      border: `1px solid ${appTheme.palette.themeTertiary}`,
+    },
+  },
+  /** Bright IconButton */
+  ibBri: {
+    color: appTheme.palette.themeSecondary,
+    ':hover': {
+      color: appTheme.palette.themePrimary,
+      border: `1px solid ${appTheme.palette.themeTertiary}`,
+    },
+  },
+  /** Draw a box around a button on hover */
+  bBox: {
+    border: `1px solid transparent`,
+    ':hover': {
+      zIndex: 2,
+      border: `1px solid ${appTheme.palette.themeTertiary}`,
+    },
+  },
+  /** Draw a box around a button on hover */
+  bBox2: {
+    border: `1px solid ${appTheme.palette.themeTertiary}`,
+    ':hover': {
+      zIndex: 2,
+      border: `1px solid ${appTheme.palette.themeSecondary}`,
+    },
+  },
+  /** Make text bold on hover */
+  bBold: {
+    ':hover': {
+      fontWeight: 'bold',
+    },
+  },
+
 });
 
 

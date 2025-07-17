@@ -1,19 +1,34 @@
 
-import { Callout, Icon } from "@fluentui/react";
-import { FunctionComponent, useState } from "react";
-import { appTheme } from "../theme";
+import { Callout, DirectionalHint, IconButton } from "@fluentui/react";
+import { CSSProperties, FunctionComponent, useState } from "react";
+import { appTheme, cn } from "../theme";
 
-export const CalloutMsg: FunctionComponent<{ id: string, msg: string | JSX.Element; marginLeft?: number; }> = (props) => {
+let nn = 0;
+
+export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName?: string; width?: number; height?: number; style?: CSSProperties; directionalHint?: DirectionalHint }> = (props) => {
   const [showBubble, setShowBubble] = useState(false);
-  return <>
-    <Icon
-      className='small'
-      iconName='Info'
-      style={{ marginLeft: props.marginLeft }}
-      onClick={() => setShowBubble(!showBubble)}
+  const [cid] = useState(`cid--${++nn}`);
+  return <span id={cid}>
+    <IconButton
+      className={cn.bBox}
+      iconProps={{
+        iconName: props.iconName ?? 'Info',
+        style: { ...props.style }
+      }}
+      style={{
+        width: props.width ?? 18,
+        height: props.height ?? 18,
+        padding: 0,
+        margin: 0,
+      }}
+      onClick={ev => {
+        ev.preventDefault();
+        setShowBubble(!showBubble);
+      }}
     />
 
     {showBubble && <Callout
+      directionalHint={props.directionalHint}
       styles={{
         beak: {
           backgroundColor: appTheme.palette.themeTertiary,
@@ -24,9 +39,9 @@ export const CalloutMsg: FunctionComponent<{ id: string, msg: string | JSX.Eleme
         }
       }}
       onDismiss={() => setTimeout(() => setShowBubble(false), 0)}
-      target={`#${props.id}`}
+      target={`#${cid}`}
     >
       {props.msg}
     </Callout>}
-  </>;
+  </span>;
 };

@@ -3,13 +3,15 @@ import { FunctionComponent } from "react";
 import { SystemView2 } from "./SystemView2";
 import { appTheme } from '../../theme';
 import { isMobile } from '../../util';
-import { EconomyTable2 } from "../../components/MarketLinks/EconomyTable";
+import { EconomyTable2 } from './EconomyTable2';
 
 export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onClose: () => void }> = (props) => {
 
   var sites = props.sysView.state.sysMap.siteMaps
     .filter(s => !!s.economies)
     .sort((a, b) => a.bodyNum - b.bodyNum);
+
+  const colorYellow = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
 
   return <>
     <Panel
@@ -36,7 +38,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
       {!!props.sysView.state.realEconomies?.length && <>
         <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
           <>
-            {!!props.sysView.state.useIncomplete && <div style={{ color: appTheme.palette.yellow }}>
+            {!!props.sysView.state.useIncomplete && <div style={{ color: colorYellow }}>
               <Icon iconName='Warning' /> Spansh comparison may not match if calculating with incomplete sites <Icon iconName='TestBeakerSolid' />
             </div>}
             <div>
@@ -51,7 +53,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
             return <>
               <h2 style={{ margin: '20px 0 0 0' }}>{s.name} <span style={{ color: 'grey' }}>- {s.body?.name}</span></h2>
               <div style={{ marginLeft: 40, width: 400 }}>
-                <EconomyTable2 site={s} sysView={props.sysView} noTableHeader noDisclaimer />
+                <EconomyTable2 site={s} sysView={props.sysView} noTableHeader noDisclaimer noChart />
               </div>
             </>;
           })}

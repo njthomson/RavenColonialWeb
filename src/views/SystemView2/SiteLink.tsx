@@ -1,12 +1,12 @@
 import { Stack, Link, Icon, IconButton } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { EconomyBlock } from "../../components/EconomyBlock";
-import { MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
+import { EconomyBlocks, MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
 import { getSiteType } from "../../site-data";
 import { SiteMap2 } from "../../system-model2";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { SiteCard } from "./SiteCard";
-import { SystemView2 } from "./SystemView2";
+import { mapSiteGraphTypeIcon, SystemView2 } from "./SystemView2";
 
 export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2, prefix: string, doSelect?: boolean }> = (props) => {
   const { site, sysView } = props;
@@ -20,7 +20,8 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
     ? 'grey'
     : (site.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);
 
-  var economy = site.primaryEconomy ?? site.type.inf;
+  const economy = site.primaryEconomy ?? site.type.inf;
+  const siteGraphType = props.sysView.state.siteGraphType;
 
   return <div
     id={id + '-div'}
@@ -34,7 +35,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
     }}
   >
     <div>
-      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4, padding: 0 }} style={{ position: 'relative', padding: 0, margin: 0, height: 20 }}>
 
         <Icon
           iconName={site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'}
@@ -51,24 +52,43 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
           <span style={{ color: isNotUsed ? appTheme.palette.themeTertiary : undefined }}>{getSiteType(site.buildType, true).displayName2}</span>
         </Link>}
 
-        {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} className='icon-inline' title='Primary port' />}
-        {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
-        {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
+        {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} title='Primary port' />}
+        {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Planned site' />}
+        {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Under construction' />}
 
-        {isPinned && !site.links && <Icon iconName='PinnedSolid' style={{ marginLeft: 8, color: appTheme.palette.accent }} />}
-
-      </Stack>
-
-      {site.links && <Stack horizontal>
-        <MarketLinkBlocks site={site as any} width={200} height={10} />
         <IconButton
+          className={isPinned ? cn.ibBri : cn.ibDim}
           iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
+          style={{ marginLeft: 4, width: 20, height: 20 }}
           onMouseUp={(ev) => {
             ev.preventDefault();
             sysView.sitePinned(site.id);
           }}
         />
-      </Stack>}
+      </Stack>
+
+      {siteGraphType !== 'none' && <>
+
+        {site.economies && !site.links && siteGraphType === 'all' && <div style={{ marginLeft: 36, marginTop: -2, marginBottom: 2 }}>
+          <EconomyBlocks economies={site.economies} width={200} height={2} />
+        </div>}
+
+        {site.links && <>
+          <Stack horizontal verticalAlign='baseline' style={{ position: 'relative', marginLeft: 18 }}>
+
+            {siteGraphType === 'links' && <>
+              <Icon iconName={mapSiteGraphTypeIcon.links} style={{ marginRight: 4, color: appTheme.palette.themeTertiary, position: 'relative', top: 1 }} />
+              <MarketLinkBlocks site={site as any} width={200} height={12} />
+            </>}
+
+            {siteGraphType !== 'links' && site.economies && <>
+              <Icon iconName={mapSiteGraphTypeIcon.major} style={{ marginRight: 4, color: appTheme.palette.themeTertiary }} />
+              <EconomyBlocks economies={site.economies} width={200} height={12} />
+            </>}
+
+          </Stack>
+        </>}
+      </>}
     </div>
 
     {isCurrent && <SiteCard

@@ -1,6 +1,6 @@
 import * as api from './api';
 import { calculateColonyEconomies } from './economy-model';
-import { canReceiveLinks, Economy, getSiteType, SiteType, SysEffects, sysEffects } from "./site-data";
+import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
 import { ProjectRef } from "./types";
 
 export const unknown = 'Unknown';
@@ -417,22 +417,27 @@ const calcSiteEconomies = (site: SiteMap, useIncomplete: boolean) => {
   }
 };
 
-export const isTypeValid = (sysMap: SysMap, type: SiteType) => {
+export const isTypeValid = (sysMap?: SysMap, type?: SiteType) => {
+  if (!sysMap || !type) { return { isValid: true }; }
 
   // unless we don't have enough tier points?
   if (type.needs.tier === 2 && sysMap.tierPoints.tier2 < type.needs.count) {
-    return false;
+    return { isValid: false, msg: 'Not enough Tier 2 points' };
   }
 
   if (type.needs.tier === 3 && sysMap.tierPoints.tier3 < type.needs.count) {
-    return false;
+    return { isValid: false, msg: 'Not enough Tier 3 points' };
   }
 
   if (type.preReq) {
-    return hasPreReq(sysMap, type);
+    const isValid = hasPreReq(sysMap, type);
+    return {
+      isValid: isValid,
+      msg: (isValid ? 'Requires ' : 'Missing: requires ') + mapName[type.preReq],
+    };
   }
 
-  return true;
+  return { isValid: true };
 }
 
 export const hasPreReq = (sysMap: SysMap, type: SiteType) => {

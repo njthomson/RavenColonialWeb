@@ -1,7 +1,7 @@
 import { FunctionComponent } from 'react';
 import { Site } from '../../types2';
 import { BuildEffects } from '../../components/BuildEffects';
-import { EconomyTable2 } from '../../components/MarketLinks/EconomyTable';
+import { EconomyTable2 } from './EconomyTable2';
 import { ViewEditName } from './ViewEditName';
 import { ViewEditBuildType } from './ViewEditBuildType';
 import { ViewEditBody } from './ViewEditBody';
@@ -41,6 +41,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       <div>Build type:</div>
       <ViewEditBuildType
         buildType={site.buildType}
+        sysMap={sysMap}
         onChange={(newType) => {
           site.buildType = newType;
           props.onChange(site);

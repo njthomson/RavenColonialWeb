@@ -61,6 +61,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <div>Type:</div>
           <ViewEditBuildType
             buildType={site.buildType}
+            sysMap={props.sysView.state.sysMap}
             onChange={(newType) => {
               site.original.buildType = newType;
               props.sysView.siteChanged(site.original);
@@ -94,18 +95,22 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
 
         </div>
 
-        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 10 }}>
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
           <IconButton
+            className={cn.bBox}
             iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
             title='Pin this site'
+            style={{ width: 24, height: 24 }}
             onClick={() => {
               props.sysView.sitePinned(site.id);
             }}
           />
 
           <IconButton
+            className={cn.bBox}
             iconProps={{ iconName: 'Delete' }}
             title='Remove this site'
+            style={{ width: 24, height: 24 }}
             onClick={() => props.sysView.siteDeleted(site.id)}
           />
 
@@ -132,7 +137,7 @@ export const DeleteSibling: FunctionComponent<{ site: SiteMap2; sysView: SystemV
   return <div>
     <ActionButton
       id={id}
-      className={cn.abm}
+      className={`${cn.abm} ${cn.bBox}`}
       onClick={() => setDropDown(!dropDown)}
     >
       <Icon iconName={'EngineeringGroup'} style={{ fontSize: 16 }} />
@@ -161,14 +166,14 @@ export const DeleteSibling: FunctionComponent<{ site: SiteMap2; sysView: SystemV
           key: 'pl2rh',
           text: 'Delete redundant planning site?',
           itemType: ContextualMenuItemType.Header,
-          itemProps: { style: { color: 'red' } },
         },
         ...matches.map(s => ({
           key: `pl2rm-${s.id.slice(1)}`,
           data: s.id,
           text: `${s.name}`,
           secondaryText: `${s.type.displayName2} (${s.buildType || '?'})`,
-          iconProps: { iconName: s.status === 'plan' ? 'WebAppBuilderFragment' : 'ConstructionCone' }
+          iconProps: { iconName: s.status === 'plan' ? 'WebAppBuilderFragment' : 'ConstructionCone' },
+          className: cn.bBox,
         } as IContextualMenuItem))]}
     />}
   </div>;

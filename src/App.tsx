@@ -62,7 +62,11 @@ export class App extends Component<AppProps, AppState> {
     window.onhashchange = () => {
       // console.debug('onhashchange:', ev);
       let [newPivot, pivotArg] = this.getPivotFromHash();
-      this.setState({ pivot: newPivot, pivotArg: pivotArg });
+      this.setState({
+        pivot: newPivot,
+        pivotArg: pivotArg,
+        cmdrEdit: false,
+      });
     };
   }
 

@@ -4,17 +4,15 @@ import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
-import { buildSystemModel2, getMaxOrbitalSiteCount, getMaxSurfaceSiteCount, SiteMap2, SysMap2, unknown } from '../../system-model2';
+import { buildSystemModel2, getMaxOrbitalSiteCount, getMaxSurfaceSiteCount, hasPreReq2, SiteMap2, SysMap2, unknown } from '../../system-model2';
 import { TierPoint } from '../../components/TierPoints';
-import { SiteLink } from '../../components/ProjectLink/ProjectLink';
 import { SystemStats } from './SystemStats';
 import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
-import { Site, Sys } from '../../types2';
+import { Site, SiteGraphType, Sys } from '../../types2';
 import { GetRealEconomies, SitesPut, SysSnapshot } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
-import { SiteCard } from './SiteCard';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName, ProjectCreate } from '../../components';
@@ -24,6 +22,8 @@ import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
 import { ArchitectSummery } from './ArchitectSummary';
+import { mapName } from '../../site-data';
+import { SitePill } from './SitePill';
 
 interface SystemView2Props {
   systemName: string;
@@ -53,6 +53,7 @@ interface SystemView2State {
   realEconomies?: GetRealEconomies[];
   auditWholeSystem?: boolean;
   showCreateBuildProject?: boolean;
+  siteGraphType: SiteGraphType;
 }
 
 const viewTypes = [
@@ -140,6 +141,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       realEconomies: [],
       auditWholeSystem: false,
       showCreateBuildProject: false,
+      siteGraphType: store.siteGraphType,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType'>;
   }
 
@@ -543,7 +545,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   renderTitleAndCommands() {
     const { systemName } = this.props;
-    const { processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem } = this.state;
+    const { processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${systemName}`;
@@ -556,6 +558,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       key: 'sys-add1',
       title: 'Add a planned or "what if" site',
       text: 'Add',
+      className: cn.bBox,
       iconProps: { iconName: 'Add' },
       split: !noSplitAddButton,
       disabled: !!processingMsg || anonymous,
@@ -566,6 +569,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {
         key: 'sys-do-import',
         text: 'Import bodies and stations',
+        className: cn.bBox,
         iconProps: { iconName: 'Build' },
         disabled: !!processingMsg || anonymous,
         style: { height: 72 },
@@ -587,6 +591,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {
         key: 'sys-add-manual',
         text: 'New construction ...',
+        className: cn.bBox,
         iconProps: { iconName: 'Manufacturing' },
         disabled: !!processingMsg || anonymous,
         style: { height: 72 },
@@ -617,6 +622,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       );
     }
 
+    const setGraphType = (newGraphType: SiteGraphType) => {
+      this.setState({ siteGraphType: newGraphType });
+      store.siteGraphType = newGraphType;
+    };
+
     return <>
       <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>
       <h2 style={{ margin: 10, height: 32 }}>
@@ -631,6 +641,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title='Search for a different system'
             iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
             style={{ marginLeft: 10 }}
+            className={cn.bBox}
             onClick={() => {
               // if needed, prompt to save first
               if (this.isDirty()) {
@@ -668,6 +679,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-load',
             title: 'Abandon your current changes and reload',
             text: 'Load',
+            className: cn.bBox,
             iconProps: { iconName: 'OpenFolderHorizontal' },
             disabled: !!processingMsg || anonymous,
             onClick: () => {
@@ -683,6 +695,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-save',
             title: 'Save changes to this system',
             text: 'Save',
+            className: cn.bBox,
             iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
             disabled: !enableSave || anonymous,
             style: {
@@ -697,6 +710,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-change-view',
             title: 'Toggle view between a table or a map',
             text: this.state.viewType === 'body' ? 'Map' : 'Table',
+            className: cn.bBox,
             iconProps: { iconName: this.state.viewType === 'body' ? 'Nav2DMapView' : 'GridViewSmall' },
             disabled: !!processingMsg,
             onClick: () => {
@@ -706,11 +720,57 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             }
           },
 
+          {
+            key: 'sys-graph-type1',
+            title: `Toggle showing charts between ratios of:\n- Market links\n- rimary site economies\n- All site economies\n- No charts`,
+            className: cn.bBox,
+            iconProps: { iconName: mapSiteGraphTypeIcon[siteGraphType] },
+            disabled: !!processingMsg,
+            subMenuProps: {
+              calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
+              items: [
+                {
+                  key: 'sys-graph-type-header',
+                  text: 'Show in-line charts of:',
+                  itemType: ContextualMenuItemType.Header,
+                },
+                {
+                  key: 'sys-graph-type-links',
+                  text: 'Market links',
+                  iconProps: { iconName: mapSiteGraphTypeIcon.links },
+                  className: cn.bBox,
+                  onClick: () => setGraphType('links'),
+                },
+                {
+                  key: 'sys-graph-type-major',
+                  text: 'Economy ratios for primary sites',
+                  iconProps: { iconName: mapSiteGraphTypeIcon.major },
+                  className: cn.bBox,
+                  onClick: () => setGraphType('major'),
+                },
+                {
+                  key: 'sys-graph-type-all',
+                  text: 'Economy ratios for all sites',
+                  iconProps: { iconName: mapSiteGraphTypeIcon.all },
+                  className: cn.bBox,
+                  onClick: () => setGraphType('all'),
+                },
+                {
+                  key: 'sys-graph-type-none',
+                  text: 'Hide charts',
+                  iconProps: { iconName: mapSiteGraphTypeIcon.none },
+                  className: cn.bBox,
+                  onClick: () => setGraphType('none'),
+                },
+              ]
+            }
+          },
 
           {
             key: 'sys-build-order',
             title: 'Adjust order of site calculations',
             text: 'Order',
+            className: cn.bBox,
             iconProps: { iconName: 'SortLines' },
             disabled: !!processingMsg,
             onClick: () => this.setState({ showBuildOrder: true }),
@@ -720,6 +780,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             id: 'sysView2_UseIncomplete',
             key: 'toggle-use-incomplete',
             title: 'Include incomplete sites in calculations?',
+            className: cn.bBox,
             iconProps: { iconName: useIncomplete ? 'TestBeakerSolid' : 'TestBeaker' },
             disabled: !!processingMsg,
             onClick: () => {
@@ -735,6 +796,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           {
             key: 'sys-audit-all',
             title: 'Compare audit of whole system',
+            className: cn.bBox,
             iconProps: { iconName: 'FabricFolderSearch' },
             disabled: !!processingMsg,
             onClick: () => {
@@ -747,6 +809,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             id: 'sys-card-target',
             key: 'sys-edit',
             title: 'Edit system data',
+            className: cn.bBox,
             iconProps: { iconName: 'Edit' },
             disabled: !!processingMsg,
             onClick: () => {
@@ -758,6 +821,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'open-in',
             title: 'View this site in other websites',
             iconProps: { iconName: 'OpenInNewWindow' },
+            className: cn.bBox,
             disabled: !!processingMsg,
             subMenuProps: {
               calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
@@ -765,6 +829,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 {
                   key: 'btn-open-inara',
                   text: 'View on Inara',
+                  className: cn.bBox,
                   onClick: () => {
                     window.open(`https://inara.cz/elite/starsystem/?search=${systemName}`, 'Inara');
                   },
@@ -772,6 +837,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 {
                   key: 'btn-open-spansh',
                   text: 'View on Spansh',
+                  className: cn.bBox,
                   onClick: () => {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
                   },
@@ -862,8 +928,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               position: 'absolute', zIndex: 1,
               top: 44, right: 10, width: 32, height: 32,
               backgroundColor: appTheme.palette.white,
-              border: `1px solid ${appTheme.palette.themePrimary}`
             }}
+            className={cn.bBox2}
             onClick={() => this.setState({ pinnedSnapshot: this.snapshotRef.current?.outerHTML })}
           />
           <IconButton
@@ -873,8 +939,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               position: 'absolute', zIndex: 1,
               top: 10, right: 10, width: 32, height: 32,
               backgroundColor: appTheme.palette.white,
-              border: `1px solid ${appTheme.palette.themePrimary}`
             }}
+            className={cn.bBox2}
             onClick={() => this.setState({ pinnedSite: undefined })}
           />
           {pinnedSitePanel}
@@ -888,8 +954,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               position: 'absolute', zIndex: 1,
               top: 10, right: 10, width: 32, height: 32,
               backgroundColor: appTheme.palette.white,
-              border: `1px solid ${appTheme.palette.themePrimary}`
             }}
+            className={cn.bBox2}
             onClick={() => this.setState({ pinnedSnapshot: undefined, })}
           />
 
@@ -926,8 +992,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               position: 'absolute', zIndex: 1,
               top: 10, right: 10, width: 32, height: 32,
               backgroundColor: appTheme.palette.white,
-              border: `1px solid ${appTheme.palette.themePrimary}`
             }}
+            className={cn.bBox2}
             onClick={() => this.setState({ sysStatsSnapshot: this.sysStatsRef.current?.outerHTML })}
           />
           {sysStatsPanel}
@@ -941,8 +1007,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               position: 'absolute', zIndex: 1,
               top: 10, right: 10, width: 32, height: 32,
               backgroundColor: appTheme.palette.white,
-              border: `1px solid ${appTheme.palette.themePrimary}`
             }}
+            className={cn.bBox2}
             onClick={() => this.setState({ sysStatsSnapshot: undefined, })}
           />
 
@@ -975,30 +1041,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSystemValidationWarnings() {
-    const { tierPoints, bodyMap, architect, reserveLevel, sites } = this.state.sysMap;
+    const { sysMap } = this.state;
+    const { tierPoints, bodyMap, architect, reserveLevel, sites, siteMaps } = sysMap;
 
     const validations = [];
-
-    const getMiniLink = (s: SiteMap2, fieldHighlight: string, key: string) => {
-      const isTarget = this.state.invalidSite?.id === s.id;
-      const id = `invalid-${s.id.replace('&', '')}`;
-      return <div
-        key={key}
-        style={{ marginLeft: 10 }}
-      >
-        <SiteLink site={s} noSys noBold noType iconName={s.status === 'complete' ? (s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite') : ''} />
-        <IconButton
-          id={id}
-          className={`btn ${cn.btn}`}
-          iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
-          style={{ width: 14, height: 14, marginLeft: 4 }}
-          onClick={() => {
-            this.setState({ invalidSite: s });
-          }}
-        />
-        {isTarget && <SiteCard targetId={id} site={s} sysView={this} onClose={() => this.setState({ invalidSite: undefined })} />}
-      </div>;
-    };
 
     if (!architect && sites.some(s => s.status !== 'plan')) {
       validations.push(<div key={`valNoArchitect`}>
@@ -1026,8 +1072,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         const key = `valBodyNotLandable-${bm.num}`;
         validations.push(<div key={key}>
           » <b>{bm.name}</b> has surface sites but it is not landable:
-          <br />
-          {bm.surface.map(s => getMiniLink(s, 'bodyName', key + s.id.slice(1)))}
+          <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
+            {bm.surface.map(s => <SitePill key={`notlandable-${s.id.slice(1)}`} site={s} fieldHighlight='bodyName' keyPrefix='notlandable' sysView={this} />)}
+          </Stack>
         </div>);
       }
 
@@ -1051,30 +1098,48 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (unknown in bodyMap) {
       validations.push(<div key={`valNoBody`}>
         » There are {bodyMap.Unknown.sites.length} site(s) on unknown bodies:
-        <br />
-        {bodyMap.Unknown.sites.map(s => getMiniLink(s, 'bodyName', `noBody${s.name}`))}
+        <Stack horizontal wrap tokens={{ childrenGap: 4 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {bodyMap.Unknown.sites.map(s => <SitePill key={`noBody-${s.id.slice(1)}`} site={s} fieldHighlight='bodyName' keyPrefix='noBody' sysView={this} />)}
+        </Stack>
       </div>);
     }
 
-    // const countTaxable = siteMaps.filter(s => s.type.buildClass === 'starport' && s.type.tier > 1);
-    // const taxableMissingDate = countTaxable.filter(s => !s.timeCompleted);
-    // if (countTaxable.length > 3 && taxableMissingDate.length > 0) {
-    //   validations.push(<div key={`valShouldSetDates`}>
-    //     » Set <b>Date Complete</b> on the following to ensure tier points are scaled correctly:
-    //     <br />
-    //     {taxableMissingDate.map(s => getMiniLink(s, 'timeCompleted', `noDate${s.name}`))}
-    //   </div>);
-    // }
 
-    // TODO: check for missing preReq's?
+    // do we have any sites with no build type?
+    const missingType = this.state.sysMap.siteMaps.filter(s => !s.buildType);
+    const showFixMissingTypes = this.state.sysMap.id64 > 0 && missingType.length > 0;
+    if (showFixMissingTypes) {
+      validations.push(<div key={`valNoBuildType}`}>
+        » There are {missingType.length} site(s) without a build type:
+        <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {missingType.map(s => <SitePill key={`noBuildType-${s.id.slice(1)}`} site={s} fieldHighlight='buildType' keyPrefix='noBuildType' sysView={this} />)}
+        </Stack>
+      </div>);
+    }
 
-    // do we have any sites with body name but not type?
-    // const missingType = this.state.sysMap.siteMaps.filter(s => !s.body!.type && s.name && s.status !== 'plan');
-    // const showFixMissingTypes = this.state.sysMap.id64 > 0 && missingType.length > 0;
+    // check for missing preReq's - grouping them by what they are missing
+    const mapMissingPreReq: Record<string, SiteMap2[]> = {};
+    for (const s of siteMaps) {
+      if (s.type.preReq && !hasPreReq2(sysMap, s.type)) {
+        mapMissingPreReq[s.type.preReq] = [...(mapMissingPreReq[s.type.preReq] ?? []), s];
+      }
+    }
+    for (const [preReq, sites] of Object.entries(mapMissingPreReq)) {
+      validations.push(<div key={`valNoPreReq-${preReq}`}>
+        » Pre req: Missing {mapName[preReq]}:
+        <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {sites.map(s => <SitePill key={`noBuildType-${s.id.slice(1)}`} site={s} fieldHighlight='buildType' keyPrefix='noBuildType' sysView={this} />)}
+        </Stack>
+      </div>);
+    }
 
     return <>
       {/* {showFixMissingTypes && <FixFromCanonn sites={this.state.sysMap.siteMaps} />} */}
-      {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0', maxWidth: 600 } }}> {validations}</MessageBar>}
+      {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0', maxWidth: 600, backgroundColor: appTheme.palette.themeLight } }}>
+        <Stack tokens={{ childrenGap: 4 }} style={{ marginLeft: 10 }}>
+          {validations}
+        </Stack>
+      </MessageBar>}
       <br />
     </>;
   }
@@ -1099,6 +1164,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         iconProps={{ iconName: 'Add' }}
         style={{ marginBottom: 10 }}
         onClick={() => this.createNewSite()}
+        className={cn.bBox}
         disabled={!store.cmdrName}
       >
         Add new
@@ -1174,7 +1240,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 }
 
-export const RightSide: FunctionComponent<{ foo?: string }> = (props) => {
+
+export const mapSiteGraphTypeIcon = {
+  links: 'Link12',
+  major: 'FinancialSolid',
+  all: 'Financial',
+  none: 'Cancel',
+}
+
+export const RightSide: FunctionComponent<{}> = (props) => {
   return <div style={{ position: 'relative' }}>
     <div style={{
       border: `1px solid ${appTheme.palette.themeDarker}`,

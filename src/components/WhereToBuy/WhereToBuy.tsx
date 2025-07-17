@@ -1,6 +1,6 @@
 import './WhereToBuy.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, ComboBox, DefaultButton, Icon, IconButton, Label, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
+import { ActionButton, Checkbox, ComboBox, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import { appTheme, cn } from '../../theme';
 import { FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames, mapSourceEconomy } from '../../types';
@@ -545,14 +545,13 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       >
         <Stack horizontal verticalAlign='center' title={highlightTitleTxt}>
           <ActionButton
-            id='where-highlight'
             iconProps={{ iconName: expandTopBubbles ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
             text={'Highlight:'}
             style={{ height: 22, paddingLeft: 0, }}
             onClick={() => this.setState({ expandTopBubbles: !expandTopBubbles })}
           />
 
-          <CalloutMsg id='where-highlight' msg={highlightTitleTxt} />
+          <CalloutMsg msg={highlightTitleTxt} directionalHint={DirectionalHint.bottomCenter} style={{ fontSize: 12 }} />
         </Stack>
 
         {bubbles}

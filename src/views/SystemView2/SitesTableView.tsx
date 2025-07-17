@@ -4,9 +4,9 @@ import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ActionButton, Icon, IconButton, Stack } from "@fluentui/react";
 import { ViewEditName } from "./ViewEditName";
 import { appTheme, cn } from "../../theme";
-import { SitesViewProps } from "./SystemView2";
+import { mapSiteGraphTypeIcon, SitesViewProps } from "./SystemView2";
 import { SiteMap2 } from "../../system-model2";
-import { MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
+import { EconomyBlocks, MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
 
 export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
@@ -46,6 +46,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   let lastGroupVal = sortedSites.length > 0 ? sortedSites[0][sortColumn] : undefined;
   const borderTop = `2px dotted ${appTheme.palette.blackTranslucent40}`;
   const rows: JSX.Element[] = [];
+  const siteGraphType = props.sysView.state.siteGraphType;
 
   sortedSites.forEach((site, i) => {
     const isNewGroup = site[sortColumn] !== lastGroupVal && sortColumn !== 'name';
@@ -68,7 +69,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
     >
 
       <td style={{ textAlign: 'center' }}>
-        {props.pinnedId === site.id && <Icon iconName='PinnedSolid' />}
+        <IconButton className={props.pinnedId === site.id ? cn.ibBri : cn.ibDim} iconProps={{ iconName: site.id === pinnedId ? 'PinnedSolid' : 'Pinned' }} />
       </td>
 
       <td style={{ textAlign: 'end' }}>
@@ -87,23 +88,43 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       </td>
 
       <td>
-        <Stack horizontal>
+        <Stack horizontal verticalAlign='center'>
           <ViewEditName
+            noBold
             name={site.name}
             onChange={newName => {
               site.original.name = newName;
               props.onChange(site.original);
             }}
           />
-          {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} className='icon-inline' />}
-          {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' />}
-          {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' />}
+          {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} />}
+          {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+          {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
         </Stack>
 
-        {site.links && <Stack horizontal style={{ marginLeft: 30 }}>
-          <MarketLinkBlocks site={site as any} width={200} height={10} />
-          <IconButton iconProps={{ iconName: site.id === pinnedId ? 'PinnedSolid' : 'Pinned' }} />
-        </Stack>}
+
+        {siteGraphType !== 'none' && <>
+
+          {site.economies && !site.links && siteGraphType === 'all' && <div style={{ marginLeft: 38, marginBottom: 3, marginTop: -5 }}>
+            <EconomyBlocks economies={site.economies} width={200} height={2} />
+          </div>}
+
+          {site.links && <>
+            <Stack horizontal verticalAlign='baseline' style={{ position: 'relative', marginLeft: 18, marginBottom: 3, marginTop: -4 }}>
+
+              {siteGraphType === 'links' && <>
+                <Icon iconName={mapSiteGraphTypeIcon.links} style={{ marginRight: 4, color: appTheme.palette.themeTertiary, position: 'relative', top: 1 }} />
+                <MarketLinkBlocks site={site as any} width={200} height={12} />
+              </>}
+
+              {siteGraphType !== 'links' && site.economies && <>
+                <Icon iconName={mapSiteGraphTypeIcon.major} style={{ marginRight: 4, color: appTheme.palette.themeTertiary }} />
+                <EconomyBlocks economies={site.economies} width={200} height={12} />
+              </>}
+
+            </Stack>
+          </>}
+        </>}
       </td>
 
       <td style={{ alignItems: 'center' }}>
@@ -111,6 +132,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
           <Icon iconName={site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
           <ViewEditBuildType
             buildType={site.buildType}
+            sysMap={sysMap}
             onChange={(newType) => {
               site.original.buildType = newType;
               props.onChange(site.original);
@@ -133,6 +155,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
         <IconButton
           title='Remove this site'
           iconProps={{ iconName: 'Delete' }}
+          className={cn.bBox}
           onClick={(ev) => {
             ev.preventDefault();
             props.onRemove(site.id);
@@ -147,8 +170,8 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       <colgroup>
         <col width='5%' />
         <col width='5%' />
-        <col width='45%' />
-        <col width='45%' />
+        <col width='40%' />
+        <col width='50%' />
         <col width='10%' />
         <col width='5%' />
       </colgroup>
@@ -156,25 +179,25 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       <thead>
         <tr>
           <th><Icon iconName='Pinned' /></th>
-          <th className={cn.trh} onClick={() => clickHeader('bodyNum')}>
+          <th className={`${cn.trh} ${cn.bBox}`} onClick={() => clickHeader('bodyNum')}>
             <ActionButton
               iconProps={{ iconName: sortColumn === 'bodyNum' ? (sortOrder ? 'CaretSolidUp' : 'CaretSolidDown') : 'CalculatorSubtract' }}
               text='Body'
             />
           </th>
-          <th className={cn.trh} onClick={() => clickHeader('name')}>
+          <th className={`${cn.trh} ${cn.bBox}`} onClick={() => clickHeader('name')}>
             <ActionButton
               iconProps={{ iconName: sortColumn === 'name' ? (sortOrder ? 'CaretSolidUp' : 'CaretSolidDown') : 'CalculatorSubtract' }}
               text='Name'
             />
           </th>
-          <th className={cn.trh} onClick={() => clickHeader('buildType')}>
+          <th className={`${cn.trh} ${cn.bBox}`} onClick={() => clickHeader('buildType')}>
             <ActionButton
               iconProps={{ iconName: sortColumn === 'buildType' ? (sortOrder ? 'CaretSolidUp' : 'CaretSolidDown') : 'CalculatorSubtract' }}
               text='Type'
             />
           </th>
-          <th className={cn.trh} onClick={() => clickHeader('status')}>
+          <th className={`${cn.trh} ${cn.bBox}`} onClick={() => clickHeader('status')}>
             <ActionButton
               iconProps={{ iconName: sortColumn === 'status' ? (sortOrder ? 'CaretSolidUp' : 'CaretSolidDown') : 'CalculatorSubtract' }}
               text='Status'

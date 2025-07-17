@@ -1,7 +1,7 @@
 import { Component, FunctionComponent } from "react";
 import { Bod, BodyType } from "../../types2";
 import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack } from "@fluentui/react";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
 import { SitesViewProps, SystemView2 } from "./SystemView2";
 import { store } from "../../local-storage";
@@ -294,6 +294,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         }}
       >
         <ActionButton
+          className={cn.bBox}
           id='btn-body-filter'
           text='Filter bodies'
           iconProps={{ iconName: hideEmpties || bodyFilter.size > 0 ? 'FilterSolid' : 'Filter' }}
@@ -622,6 +623,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const btnAddSite = !store.cmdrName
     ? <Icon iconName="CircleAddition" style={{ marginLeft: 4, paddingTop: 2, color: appTheme.palette.neutralTertiaryAlt }} />
     : <IconButton
+      className={cn.ibBri}
       iconProps={{ iconName: 'CircleAddition' }}
       title={`Add a new site to: ${node.body.name}`}
       style={{ marginLeft: 4, paddingTop: 2 }}
@@ -694,16 +696,16 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           marginBottom: bottomGap,
           top: shiftOrbitalsDown,
         }}>
-          <div style={{ position: 'relative', fontSize: 14, padding: '2px 8px', borderBottom: innerBorders }}>
-            {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
+          <div style={{ position: 'relative', fontSize: 14, padding: '2px 8px 4px 8px', borderBottom: innerBorders }}>
+            {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey', userSelect: 'none' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
             {orbitals && orbitals.map(s => <SiteLink key={`orbitalsite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' />)}
             <div style={{ position: 'absolute', right: -24, bottom: -13 }}>
               {btnAddSite}
             </div>
           </div>
 
-          {canHaveBodySites && <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px' }}>
-            {!surfaces?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey' }} ><Icon iconName='GlobeFavorite' /> No surface sites</div>}
+          {canHaveBodySites && <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px 3px 8px' }}>
+            {!surfaces?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey', userSelect: 'none' }} ><Icon iconName='GlobeFavorite' /> No surface sites</div>}
             {surfaces && surfaces.map(s => <SiteLink key={`surfacesite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' />)}
           </div>}
         </div>}
