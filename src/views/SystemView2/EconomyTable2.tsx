@@ -166,7 +166,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
       {showAudit && props.site.economyAudit && <Panel
         isLightDismiss
         isOpen
-        type={PanelType.custom}
+        type={isMobile(true) ? PanelType.medium : PanelType.custom}
         customWidth='780px'
         headerText={`Economy audit: ${props.site.name}`}
         allowTouchBodyScroll={isMobile()}
@@ -195,8 +195,8 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
           <table cellPadding={0} cellSpacing={0}>
             <colgroup>
               <col width='5%' />
-              <col width='8%' />
               <col width='10%' />
+              <col width='14%' />
               <col width='70%' />
             </colgroup>
             <tbody>

@@ -923,8 +923,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {this.renderSystemValidationWarnings()}
     </div>;
 
-    return <div className='system-view2' style={{ position: 'relative' }}>
-      <Stack horizontal wrap>
+    return <div className='system-view2' style={{}}>
+      <Stack horizontal >
         {viewType === 'table' && this.renderBasicTable()}
         {viewType === 'body' && this.renderByBody()}
 
@@ -991,60 +991,59 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           </div>
         </RightSide>}
 
-        <Stack>
-          <RightSide>
-            <IconButton
-              id='sysView2_Snapshot'
-              title='Make a comparison snapshot of this panel'
-              iconProps={{ iconName: 'Camera' }}
+        <RightSide>
+          <IconButton
+            id='sysView2_Snapshot'
+            title='Make a comparison snapshot of this panel'
+            iconProps={{ iconName: 'Camera' }}
+            style={{
+              position: 'absolute', zIndex: 1,
+              top: 10, right: 10, width: 32, height: 32,
+              backgroundColor: appTheme.palette.white,
+            }}
+            className={cn.bBox2}
+            onClick={() => this.setState({ sysStatsSnapshot: this.sysStatsRef.current?.outerHTML })}
+          />
+          {sysStatsPanel}
+        </RightSide>
+
+        {sysStatsSnapshot && <RightSide>
+          <IconButton
+            title='Remove this snapshot'
+            iconProps={{ iconName: 'Clear' }}
+            style={{
+              position: 'absolute', zIndex: 1,
+              top: 10, right: 10, width: 32, height: 32,
+              backgroundColor: appTheme.palette.white,
+            }}
+            className={cn.bBox2}
+            onClick={() => this.setState({ sysStatsSnapshot: undefined, })}
+          />
+
+          <div style={{ position: 'relative', color: 'grey' }}>
+            <div dangerouslySetInnerHTML={{ __html: sysStatsSnapshot }} />
+
+            <div
               style={{
-                position: 'absolute', zIndex: 1,
-                top: 10, right: 10, width: 32, height: 32,
-                backgroundColor: appTheme.palette.white,
+                backgroundColor: 'rgb(255,255,255,0.1)',
+                position: 'absolute',
+                left: -4, top: -4, right: -4, bottom: -4,
               }}
-              className={cn.bBox2}
-              onClick={() => this.setState({ sysStatsSnapshot: this.sysStatsRef.current?.outerHTML })}
-            />
-            {sysStatsPanel}
-          </RightSide>
-
-          {sysStatsSnapshot && <RightSide>
-            <IconButton
-              title='Remove this snapshot'
-              iconProps={{ iconName: 'Clear' }}
-              style={{
-                position: 'absolute', zIndex: 1,
-                top: 10, right: 10, width: 32, height: 32,
-                backgroundColor: appTheme.palette.white,
+            >
+              <span style={{
+                fontSize: 36, fontWeight: 'bolder',
+                position: 'absolute', rotate: '45deg',
+                top: 40, right: -15,
+                color: appTheme.palette.white,
+                textShadow: `${appTheme.palette.black} 0 0 10px`,
               }}
-              className={cn.bBox2}
-              onClick={() => this.setState({ sysStatsSnapshot: undefined, })}
-            />
-
-            <div style={{ position: 'relative', color: 'grey' }}>
-              <div dangerouslySetInnerHTML={{ __html: sysStatsSnapshot }} />
-
-              <div
-                style={{
-                  backgroundColor: 'rgb(255,255,255,0.1)',
-                  position: 'absolute',
-                  left: -4, top: -4, right: -4, bottom: -4,
-                }}
               >
-                <span style={{
-                  fontSize: 36, fontWeight: 'bolder',
-                  position: 'absolute', rotate: '45deg',
-                  top: 40, right: -15,
-                  color: appTheme.palette.white,
-                  textShadow: `${appTheme.palette.black} 0 0 10px`,
-                }}
-                >
-                  snap shot
-                </span>
-              </div>
+                snap shot
+              </span>
             </div>
-          </RightSide>}
-        </Stack>
+          </div>
+        </RightSide>}
+
       </Stack>
     </div>;
   }
@@ -1158,7 +1157,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     return <div
       style={{
-        width: '45%',
+        width: 'max-content',
       }}>
       <SitesTableView
         systemName={this.props.systemName}
@@ -1186,7 +1185,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     return <div
       style={{
-        width: '45%',
+        width: 'max-content',
       }}>
       <SitesBodyView
         systemName={this.props.systemName}

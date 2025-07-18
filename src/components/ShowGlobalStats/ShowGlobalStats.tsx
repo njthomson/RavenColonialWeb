@@ -56,7 +56,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
         />
       </div>}
 
-      {!!stats && <Stack horizontal wrap>
+      {!!stats && <Stack horizontal>
         <Stack>
           <StatsBox
             label='Projects'

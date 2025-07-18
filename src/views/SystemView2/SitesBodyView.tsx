@@ -286,14 +286,14 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     const bodyElements = Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element);
     const noBodies = bodyElements.every(c => c.key?.startsWith('nobody'));
 
-    return <div>
+    return <div style={{ width: 'max-content' }}>
       <div
         style={{
-          float: 'right',
           marginTop: 8,
           position: 'sticky',
           zIndex: 2,
           top: 54,
+          textAlign: 'end',
         }}
       >
         <ActionButton
@@ -308,7 +308,6 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       </div>
 
       <div style={{
-        paddingTop: 20,
         marginLeft: bodyTree[rootBC.name] && bodyFilter.size === 0 ? indent : 0
       }}
       >
