@@ -927,7 +927,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </div>;
 
     return <div className='system-view2' style={{}}>
-      <Stack horizontal >
+      <Stack horizontal>
         {viewType === 'table' && this.renderBasicTable()}
         {viewType === 'body' && this.renderByBody()}
 

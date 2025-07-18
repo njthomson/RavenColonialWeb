@@ -8,7 +8,7 @@ body {
   font-size: 16px;
   padding: 0px;
   padding-bottom: 30px;
-  min-width: max-content;
+  min-width: min-content;
   width: 100%;
 }
 
