@@ -1,7 +1,8 @@
 import { Economy } from "./site-data";
 import { EconomyMap } from "./system-model";
-import { SiteMap2 } from "./system-model2";
+import { SiteMap2, SysMap2 } from "./system-model2";
 import { BodyFeature } from "./types";
+import { Bod } from "./types2";
 import { asPosNegTxt2 } from "./util";
 
 let showConsoleAudit = Date.now() < 0;
@@ -216,11 +217,13 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
   if (site.body.features.includes(BodyFeature.rings)) {
     if (!['hmc', 'mrb'].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site); }
   }
+
   // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
   if (site.body.features.includes(BodyFeature.bio)) {
     if (!['elw', 'ww'].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site); }
     adjust('terraforming', +1, 'Body has: BIO', map, site);
   }
+
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.body.features.includes(BodyFeature.geo)) {
     if (!['hmc', 'mrb'].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site); }
@@ -346,9 +349,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
       if (matches(['elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
         adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO/TERRAFORMABLE`, map, site);
       }
-      if (matches(['icy'], site.body?.type) || matches([BodyFeature.tidal], site.body?.features)) {
-        // TODO: Need to support: "On or orbiting a moon that is tidally locked to its planet and its subsequent parent planet(s) are tidally locked to the star"
-        // Ideally ... just make those bodies have: BodyFeature.tidal
+      if (matches(['icy'], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
         adjust(inf, -0.4, `- ${reason} boost: Body is ICY or has TIDAL`, map, site);
       }
       break;
@@ -427,7 +428,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
       adjust('agriculture', +0.4, 'Buff: body is ELW or WW', map, site);
     }
 
-    if (matches(['ib'], site.body?.type) || matches([BodyFeature.tidal], site.body?.features)) {
+    if (matches(['ib'], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
       // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
       // If the Body is Tidally Locked (-0.40) for Agriculture
       adjust('agriculture', -0.4, 'Buff: body is ICY or has TIDAL', map, site);
@@ -457,7 +458,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
     if (site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
       // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
       adjust('tourism', +0.4, 'Buff: system has Black Hole or Neutron Star or White Dwarf', map, site);
-    } else if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+    } /* else if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
       // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
       // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
       adjust('tourism', +0.4, 'Buff: body has BIO or GEO', map, site);
@@ -466,7 +467,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
       // If the Body is a Water World (+0.40) for Tourism and Agriculture
       // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
       adjust('tourism', +0.4, 'Buff: body is ELW or WW or AMMONIA', map, site);
-    }
+    } */
   }
 };
 
@@ -507,4 +508,34 @@ const matches = <T>(listRequired: T[], check: T | T[] | undefined) => {
   else {
     return false;
   }
+}
+
+const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined): boolean => {
+
+  // stop if this body is not tidally locked
+  if (!body?.features.includes(BodyFeature.tidal)) {
+    return false;
+  }
+
+  // otherwise recurse up parents until we reach a star
+  let parentNum = body.parents[0];
+  let parentBody = sys.bodies.find(b => b.num === parentNum);
+  if (!parentBody) { throw new Error(`Why no parent from: ${body.name}`); }
+
+  // if body is a star - return TRUE say yes as we recursed here
+  if (matches(['bh', 'hs', 'wd', 'st'], parentBody.type)) {
+    return true;
+  }
+
+  if (parentBody.type === 'bc') {
+    /* TODO: Implement this ...
+      - If **immediate** parent is a barycenter: apply penalty only if sibling is a star
+        - If sibling is not a star: do not walk parent chain, do not apply penalty
+      - If barycenter encountered in parent chain: apply no penalty
+    */
+    console.log(`TODO: fully implement barycenters: ${body.name}`);
+    return false;
+  }
+
+  return bodyIsTidalToStar(sys, parentBody);
 }

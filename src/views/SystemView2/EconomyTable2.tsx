@@ -5,7 +5,7 @@ import { mapName } from "../../site-data";
 import { EconomyMap } from "../../system-model";
 import { SiteMap2 } from "../../system-model2";
 import { appTheme, cn } from "../../theme";
-import { BodyFeature } from "../../types";
+import { BodyFeature, mapBodyFeature } from "../../types";
 import { asPosNegTxt, isMobile, asPosNegTxt2 } from "../../util";
 import { BodyOverride } from "./BodyOverride";
 import { SystemView2 } from "./SystemView2";
@@ -138,7 +138,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
 
   }
 
-  const bodyFeatures = props.site.body?.features?.filter(f => f !== BodyFeature.landable).join(', ').toUpperCase();
+  const bodyFeatures = props.site.body?.features?.filter(f => f !== BodyFeature.landable).map(f => mapBodyFeature[f]).join(', ').toUpperCase();
   const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => ['bh', 'ns', 'wd'].includes(b.type)).map(b => b.type)));
   const systemFeatures = systemFeatureStarTypes.map(t => mapBodyTypeNames[t]).join(', ').toUpperCase();
   let flip = false;

@@ -708,7 +708,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
         }}>
           <div style={{ position: 'relative', fontSize: 14, padding: '2px 8px 4px 8px', borderBottom: innerBorders }}>
             {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey', userSelect: 'none' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
-            {orbitals && orbitals.map(s => <SiteLink key={`orbitalsite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' />)}
+            {orbitals && orbitals.map(s => <SiteLink key={`orbitalsite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' siteGraphType={props.sysView.state.siteGraphType} />)}
             <div style={{ position: 'absolute', right: -24, bottom: -13 }}>
               {btnAddSite}
             </div>
@@ -716,7 +716,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
 
           {canHaveBodySites && <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px 3px 8px' }}>
             {!surfaces?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey', userSelect: 'none' }} ><Icon iconName='GlobeFavorite' /> No surface sites</div>}
-            {surfaces && surfaces.map(s => <SiteLink key={`surfacesite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' />)}
+            {surfaces && surfaces.map(s => <SiteLink key={`surfacesite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' siteGraphType={props.sysView.state.siteGraphType} />)}
           </div>}
         </div>}
 

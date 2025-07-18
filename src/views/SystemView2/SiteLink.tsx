@@ -7,8 +7,9 @@ import { SiteMap2 } from "../../system-model2";
 import { appTheme, cn } from "../../theme";
 import { SiteCard } from "./SiteCard";
 import { mapSiteGraphTypeIcon, SystemView2 } from "./SystemView2";
+import { SiteGraphType } from "../../types2";
 
-export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2, prefix: string, doSelect?: boolean }> = (props) => {
+export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2, prefix: string, doSelect?: boolean; siteGraphType: SiteGraphType, noPin?: boolean }> = (props) => {
   const { site, sysView } = props;
   const [isCurrent, setIsCurrent] = useState(sysView.state.selectedSite?.id === site.id);
   const isPinned = sysView.state.pinnedSite?.id === site.id;
@@ -21,7 +22,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
     : (site.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);
 
   const economy = site.primaryEconomy ?? site.type.inf;
-  const siteGraphType = props.sysView.state.siteGraphType;
+  const siteGraphType = props.siteGraphType;
   const isPrimary = !!site.links || site.body?.surfacePrimary === site || site.body?.orbitalPrimary === site;
 
   return <div
@@ -50,14 +51,14 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
         {<Link style={{ color: 'unset', fontStyle: site.status === 'plan' ? 'italic' : undefined }}>
           <span style={{ color: nameColor }}>{site.name}</span>
           &nbsp;
-          <span style={{ color: isNotUsed ? appTheme.palette.themeTertiary : undefined }}>{getSiteType(site.buildType, true).displayName2}</span>
+          <span style={{ color: isNotUsed ? appTheme.palette.themeTertiary : undefined, fontSize: props.noPin ? 10 : undefined }}>{getSiteType(site.buildType, true).displayName2}</span>
         </Link>}
 
         {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} title='Primary port' />}
         {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Planned site' />}
         {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Under construction' />}
 
-        <IconButton
+        {!props.noPin && <IconButton
           className={isPinned ? cn.ibBri : cn.ibDim}
           iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
           style={{ marginLeft: 4, width: 20, height: 20 }}
@@ -65,7 +66,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
             ev.preventDefault();
             sysView.sitePinned(site.id);
           }}
-        />
+        />}
       </Stack>
 
       {siteGraphType !== 'none' && <>

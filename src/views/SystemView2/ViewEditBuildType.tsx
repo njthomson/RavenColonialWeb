@@ -27,9 +27,16 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
   constructor(props: ViewEditBuildTypeProps) {
     super(props);
 
+    // match the current site's location where if possible
+    let defaultLocation = store.viewEditBuiltTypeTab;
+    const isOrbital = props.buildType && getSiteType(props.buildType, true).orbital;
+    if (typeof isOrbital === 'boolean') {
+      defaultLocation = isOrbital ? 'orbital' : 'surface';
+    }
+
     this.state = {
       dropDown: false,
-      location: store.viewEditBuiltTypeTab ?? 'both',
+      location: defaultLocation,
       showTable: false,
     };
   }

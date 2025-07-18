@@ -55,7 +55,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
   const siteRows = props.site.links.strongSites.map(s => {
     return <div key={`link${props.site.buildId}-${s.buildId ?? (s as any).id}`} style={{ marginLeft: 8 }}>
       {!props.sysView && <ProjectLink proj={s} noSys noBold />}
-      {props.sysView && <SiteLink prefix='ml' site={s as any as SiteMap2} sysView={props.sysView} />}
+      {props.sysView && <SiteLink prefix='ml' site={s as any as SiteMap2} sysView={props.sysView} siteGraphType='none' noPin />}
     </div>;
   });
 
