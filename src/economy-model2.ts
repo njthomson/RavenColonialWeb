@@ -332,6 +332,11 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
         // use the ACTUAL economy strength
         adjust(e, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
         applyStrongLinkBoost(e as Economy, map, site, 'Strong link');
+
+        // Add a special case: terraforming can be boosted by colony-to-colony strong links.
+        if (e as Economy === 'terraforming') {
+          adjust(e, +0.4, `+ Colony strong link boost (really?)`, map, site);
+        }
       }
     }
   }

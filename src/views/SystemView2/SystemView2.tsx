@@ -314,6 +314,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     });
   };
 
+  toggleUseIncomplete = () => {
+    const newValue = !this.state.useIncomplete;
+    const sysMap = buildSystemModel2(this.state.sysMap, newValue);
+    this.setState({
+      sysMap: sysMap,
+      useIncomplete: newValue,
+    });
+    store.useIncomplete = newValue;
+  };
+
   doOnScrollEnd(action: () => void) {
 
     const tim = setTimeout(() => {
@@ -791,14 +801,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             className: cn.bBox,
             iconProps: { iconName: useIncomplete ? 'TestBeakerSolid' : 'TestBeaker' },
             disabled: !!processingMsg,
-            onClick: () => {
-              const sysMap = buildSystemModel2(this.state.sysMap, !this.state.useIncomplete);
-              this.setState({
-                sysMap: sysMap,
-                useIncomplete: !useIncomplete,
-              });
-              store.useIncomplete = !useIncomplete;
-            },
+            onClick: () => this.toggleUseIncomplete(),
           },
 
           {

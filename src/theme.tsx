@@ -295,6 +295,17 @@ export const cn = mergeStyleSets({
       border: `1px solid ${appTheme.palette.themeTertiary}`,
     },
   },
+  /** Draw a box around a button on hover, with partial and solid background colours */
+  bBoxS: {
+    border: `1px solid transparent`,
+    backgroundColor: appTheme.palette.whiteTranslucent40,
+    ':hover': {
+      zIndex: 2,
+      border: `1px solid ${appTheme.palette.themeTertiary}`,
+      backgroundColor: appTheme.palette.white,
+    },
+  },
+
   /** Draw a box around a button on hover */
   bBox2: {
     border: `1px solid ${appTheme.palette.themeTertiary}`,

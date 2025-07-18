@@ -32,7 +32,7 @@ export interface SysMap {
   architect?: string;
   primaryPort?: ProjectRef;
   bodies: Record<string, BodyMap>;
-  allSites: SiteMap[];
+  siteMaps: SiteMap[];
   countSites: number;
   countActive: number;
   tierPoints: TierPoints;
@@ -111,7 +111,7 @@ export const buildSystemModel = (projects: ProjectRef[], useIncomplete: boolean,
   }
 
   // calc sum effects from all sites
-  const sumEffects = sumSystemEffects(sysMap.allSites, useIncomplete);
+  const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete);
 
   const finalMap = {
     ...sysMap,
@@ -141,7 +141,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
 
   let architect = '';
   let primaryPort = undefined;
-  let allSites: SiteMap[] = [];
+  let siteMaps: SiteMap[] = [];
   let countActive = 0;
 
   // first: group sites by their bodies
@@ -156,7 +156,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
 
     // create site entry and add to bodies surface/orbital collection
     const site: SiteMap = { ...p, type: getSiteType(p.buildType), body };
-    allSites.push(site);
+    siteMaps.push(site);
     body.sites.push(site);
 
     if (site.type.orbital) {
@@ -190,14 +190,14 @@ const initializeSysMap = (projects: ProjectRef[]) => {
   for (let key of sortedKeys) { bodies[key] = bodyMap[key]; }
 
   // sort all sites and sites-per-body by timeCompleted, forcing unknown to be last
-  allSites = allSites.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
+  siteMaps = siteMaps.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
   for (let body of Object.values(bodies)) {
     body.sites = body.sites.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
   }
 
   const countSites = projects.length;
   const sysMap = {
-    systemName, systemAddress, architect, bodies, primaryPort, allSites, countActive, countSites,
+    systemName, systemAddress, architect, bodies, primaryPort, siteMaps, countActive, countSites,
   };
   return sysMap;
 };
@@ -443,31 +443,31 @@ export const isTypeValid = (sysMap?: SysMap, type?: SiteType) => {
 export const hasPreReq = (sysMap: SysMap, type: SiteType) => {
   switch (type.preReq) {
     case 'satellite':
-      return sysMap.allSites.some(s => ["hermes", "angelia", "eirene"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].includes(s.buildType));
 
     case 'comms':
-      return sysMap.allSites.some(s => ["pistis", "soter", "aletheia"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["pistis", "soter", "aletheia"].includes(s.buildType));
 
     case 'settlementAgr':
-      return sysMap.allSites.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].includes(s.buildType));
 
     case 'installationAgr':
-      return sysMap.allSites.some(s => ["demeter"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["demeter"].includes(s.buildType));
 
     case 'installationMil':
-      return sysMap.allSites.some(s => ["vacuna", "alastor"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["vacuna", "alastor"].includes(s.buildType));
 
     case 'outpostMining':
-      return sysMap.allSites.some(s => ["euthenia", "phorcys"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["euthenia", "phorcys"].includes(s.buildType));
 
     case 'relay':
-      return sysMap.allSites.some(s => ["enodia", "ichnaea"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].includes(s.buildType));
 
     case 'settlementBio':
-      return sysMap.allSites.some(s => ["phoebe", "asteria", "caerus", "chronos"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["phoebe", "asteria", "caerus", "chronos"].includes(s.buildType));
 
     case 'settlementTourism':
-      return sysMap.allSites.some(s => ["aergia", "comus", "gelos", "fufluns"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].includes(s.buildType));
 
     default:
       console.error(`Unexpected preReq: ${type.preReq}`)

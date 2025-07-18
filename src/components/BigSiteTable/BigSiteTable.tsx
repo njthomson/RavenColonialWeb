@@ -111,7 +111,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           }
         }
         const showValid = this.props.sysMap || this.props.sysMap2;
-        const { isValid } = this.props.sysMap2 ? isTypeValid2(this.props.sysMap2, t) : isTypeValid(this.props.sysMap, t);
+        const { isValid } = isTypeValid2(this.props.sysMap2, t, getSiteType(this.props.buildType!, true));
         if (filterColumns.has('valid') && showValid && !filterColumns.has(`valid:${isValid}`)) { return false; }
         if (filterColumns.has('tier') && !filterColumns.has(`tier${t.tier}`)) { return false; }
         if (filterColumns.has('env') && !filterColumns.has(t.orbital ? 'orbital' : 'planetary')) { return false; }
@@ -442,9 +442,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
     const showValid = this.props.sysMap || this.props.sysMap2;
-    const { isValid, msg } = this.props.sysMap2
-      ? isTypeValid2(this.props.sysMap2, type)
-      : isTypeValid(this.props.sysMap, type);
+    const { isValid, msg } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
 
     const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
 

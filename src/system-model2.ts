@@ -1,5 +1,6 @@
 import { calculateColonyEconomies2 } from './economy-model2';
 import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
+import { SysMap } from './system-model';
 import { BodyFeature } from './types';
 import { Bod, Site, Sys } from './types2';
 
@@ -443,15 +444,22 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
   }
 };
 
-export const isTypeValid2 = (sysMap?: SysMap2, type?: SiteType) => {
+export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType | undefined, priorType: SiteType | undefined) => {
   if (!sysMap || !type) { return { isValid: true }; }
 
-  // unless we don't have enough tier points?
-  if (type.needs.tier === 2 && sysMap.tierPoints.tier2 < type.needs.count) {
+  // give credit for points already spent for priorType
+  let neededT2 = sysMap.tierPoints.tier2;
+  let neededT3 = sysMap.tierPoints.tier3;
+  if (priorType) {
+    if (priorType.needs.tier === 2) { neededT2 += priorType.needs.count; }
+    if (priorType.needs.tier === 3) { neededT3 += priorType.needs.count; }
+  }
+
+  if (type.needs.tier === 2 && neededT2 < type.needs.count) {
     return { isValid: false, msg: 'Not enough Tier 2 points' };
   }
 
-  if (type.needs.tier === 3 && sysMap.tierPoints.tier3 < type.needs.count) {
+  if (type.needs.tier === 3 && neededT3 < type.needs.count) {
     return { isValid: false, msg: 'Not enough Tier 3 points' };
   }
 
@@ -466,7 +474,7 @@ export const isTypeValid2 = (sysMap?: SysMap2, type?: SiteType) => {
   return { isValid: true };
 }
 
-export const hasPreReq2 = (sysMap: SysMap2, type: SiteType) => {
+export const hasPreReq2 = (sysMap: SysMap2 | SysMap, type: SiteType) => {
   switch (type.preReq) {
     case 'satellite':
       return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].includes(s.buildType));

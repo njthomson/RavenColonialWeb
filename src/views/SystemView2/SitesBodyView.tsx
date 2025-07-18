@@ -297,7 +297,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         }}
       >
         <ActionButton
-          className={cn.bBox}
+          className={cn.bBoxS}
           id='btn-body-filter'
           text='Filter bodies'
           iconProps={{ iconName: hideEmpties || bodyFilter.size > 0 ? 'FilterSolid' : 'Filter' }}

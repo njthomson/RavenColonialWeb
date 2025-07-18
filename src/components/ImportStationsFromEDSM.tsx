@@ -78,7 +78,7 @@ export class ImportStationsFromEDSM extends Component<ImportStationsFromEDSMProp
 
       // reject if name matches something we already have
       const nameTail = st.name.split(':', 2)[1]?.trim();
-      let match = this.state.sysMap?.allSites.some(s => !s.isMock && (s.buildName.toLowerCase().endsWith(nameTail?.toLowerCase()) || s.buildName.toLowerCase().endsWith(st.name.toLowerCase())));
+      let match = this.state.sysMap?.siteMaps.some(s => !s.isMock && (s.buildName.toLowerCase().endsWith(nameTail?.toLowerCase()) || s.buildName.toLowerCase().endsWith(st.name.toLowerCase())));
       if (match) return false;
 
       // match = this.state.sysMap?.allSites.some(s => s.marketId?.toString() === st.marketId)
@@ -142,7 +142,7 @@ export class ImportStationsFromEDSM extends Component<ImportStationsFromEDSMProp
       linkEDSM: data.url,
       systemAddress: data.id64?.toString(),
       projects: newProjects,
-      sysMap: buildSystemModel([...this.state.sysMap?.allSites, ...newProjects], true, true),
+      sysMap: buildSystemModel([...this.state.sysMap?.siteMaps, ...newProjects], true, true),
     });
   }
 

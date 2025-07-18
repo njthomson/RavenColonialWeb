@@ -84,7 +84,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
     const newUseIncomplete = !this.state.useIncomplete;
     store.useIncomplete = newUseIncomplete;
     this.setState({
-      ...buildSystemModel(this.state.allSites, newUseIncomplete),
+      ...buildSystemModel(this.state.siteMaps, newUseIncomplete),
       useIncomplete: newUseIncomplete
     });
   };
@@ -100,7 +100,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   loadMocks = async (resolution?: 'merge' | 'replace' | undefined) => {
     try {
       // warn before loading?
-      if (!resolution && this.state.allSites.some(s => s.isMock)) {
+      if (!resolution && this.state.siteMaps.some(s => s.isMock)) {
         this.setState({ showLoadMocksDialog: true });
         return;
       } else {
@@ -129,8 +129,8 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
 
       // remove all mocks or only those that collide?
       const newAllSites = resolution === 'replace'
-        ? this.state.allSites.filter(s => !s.isMock)
-        : this.state.allSites.filter(s => !newMockProjects.some(m => m.buildId === s.buildId));
+        ? this.state.siteMaps.filter(s => !s.isMock)
+        : this.state.siteMaps.filter(s => !newMockProjects.some(m => m.buildId === s.buildId));
       newAllSites.push(...newMockProjects);
 
       this.setState({
@@ -158,7 +158,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
       ];
 
       // reduce mocks to minimal fields
-      const minMocks = this.state.allSites
+      const minMocks = this.state.siteMaps
         .filter(s => s.isMock)
         .map(s => {
           const mock: any = {};
@@ -187,8 +187,8 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   };
 
   render() {
-    const { allSites, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete, showBuildOrder, networking, showLoadMocksDialog, saveConflict } = this.state;
-    const showClearAllMocks = allSites.some(s => s.isMock);
+    const { siteMaps, bodies, architect, countSites, tierPoints, showPortLinks, editMockSite, editRealSite, useIncomplete, showBuildOrder, networking, showLoadMocksDialog, saveConflict } = this.state;
+    const showClearAllMocks = siteMaps.some(s => s.isMock);
     const canLoadSaveMocks = !!store.cmdrName;
 
     return <div className='half system-view'>
@@ -282,7 +282,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
             disabled={networking}
             onClick={() => {
               // remove all mocks
-              const newAllSites: ProjectRef[] = this.state.allSites.filter(s => !s.isMock);
+              const newAllSites: ProjectRef[] = this.state.siteMaps.filter(s => !s.isMock);
               this.setState({
                 ...buildSystemModel(newAllSites, useIncomplete),
               });
@@ -380,7 +380,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   }
 
   renderSystemValidationWarnings() {
-    const { tierPoints, bodies, primaryPort, allSites } = this.state;
+    const { tierPoints, bodies, primaryPort, siteMaps } = this.state;
 
     const validations = [];
 
@@ -409,14 +409,14 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
       validations.push(<div key={`valNoPrimary`}>No station has been marked as the system primary port <Icon className='icon-inline' iconName='CrownSolid' style={{ fontWeight: 'bold' }} /></div>);
     }
 
-    if (!allSites[0]?.reserveLevel) {
+    if (!siteMaps[0]?.reserveLevel) {
       validations.push(<div key={`valNoReserve`}>
         » System reserve level unknown - set in <b>Advanced</b> on any site
-        {!!allSites[0] && !allSites[0].isMock && <IconButton
+        {!!siteMaps[0] && !siteMaps[0].isMock && <IconButton
           className={`btn ${cn.btn}`}
           iconProps={{ iconName: 'Edit', style: { fontSize: 12 } }}
           style={{ width: 14, height: 14, marginLeft: 4 }}
-          onClick={() => this.setState({ editRealSite: { ...allSites[0] }, editFieldHighlight: 'reserveLevel' })}
+          onClick={() => this.setState({ editRealSite: { ...siteMaps[0] }, editFieldHighlight: 'reserveLevel' })}
         />}
       </div>);
     }
@@ -436,7 +436,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
       </div>);
     }
 
-    const countTaxable = allSites.filter(s => s.type.buildClass === 'starport' && s.type.tier > 1);
+    const countTaxable = siteMaps.filter(s => s.type.buildClass === 'starport' && s.type.tier > 1);
     const taxableMissingDate = countTaxable.filter(s => !s.timeCompleted);
     if (countTaxable.length > 3 && taxableMissingDate.length > 0) {
       validations.push(<div key={`valShouldSetDates`}>
@@ -449,11 +449,11 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
     // TODO: check for missing preReq's?
 
     // do we have any sites with body name but not type?
-    const missingType = this.state.allSites.filter(s => !s.bodyType && s.bodyName && !s.isMock);
+    const missingType = this.state.siteMaps.filter(s => !s.bodyType && s.bodyName && !s.isMock);
     const showFixMissingTypes = this.state.systemAddress > 0 && missingType.length > 0;
 
     return <>
-      {showFixMissingTypes && <FixFromCanonn sites={this.state.allSites} />}
+      {showFixMissingTypes && <FixFromCanonn sites={this.state.siteMaps} />}
       {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0', maxWidth: 600 } }}> {validations}</MessageBar>}
       <br />
     </>;
@@ -615,10 +615,10 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   }
 
   renderEditMockSite() {
-    const { editMockSite, tierPoints, allSites } = this.state;
+    const { editMockSite, tierPoints, siteMaps } = this.state;
     if (!editMockSite) return;
 
-    const original = allSites.find(s => s.buildId === editMockSite.buildId);
+    const original = siteMaps.find(s => s.buildId === editMockSite.buildId);
 
     // is this valid for the current system?
     const validations = [];
@@ -735,11 +735,11 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   }
 
   onApplyMockSite = (editMockSite: SiteMap | undefined, remove: boolean = false) => {
-    const { allSites, useIncomplete } = this.state;
+    const { siteMaps, useIncomplete } = this.state;
     if (!editMockSite) return;
 
     // remove old instance of the mock site, before adding it back
-    const newAllSites = allSites.filter(s => s.buildId !== editMockSite.buildId);
+    const newAllSites = siteMaps.filter(s => s.buildId !== editMockSite.buildId);
 
     if (!remove) {
       newAllSites.push(editMockSite);
@@ -765,7 +765,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
       onChange={updatedProj => {
 
         // remove old instance of the site, before adding it back
-        const newAllSites: ProjectRef[] = this.state.allSites.filter(s => s.buildId !== updatedProj?.buildId);
+        const newAllSites: ProjectRef[] = this.state.siteMaps.filter(s => s.buildId !== updatedProj?.buildId);
         if (updatedProj) {
           // and apply system level fields to all sites
           newAllSites.forEach(s => {
@@ -786,9 +786,9 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
   }
 
   renderBuildOrder() {
-    const { allSites, systemName } = this.state;
+    const { siteMaps, systemName } = this.state;
 
-    const rows = allSites.map((s, i) => <tr key={`bol${s.buildId}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined }}>
+    const rows = siteMaps.map((s, i) => <tr key={`bol${s.buildId}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined }}>
       <td className={`cr ${cn.br}`}>{i + 1}</td>
 
       <td className={`cl`}>

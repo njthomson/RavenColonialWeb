@@ -1689,7 +1689,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   renderSystemEffects(proj: Project) {
     const { sysMap } = this.state;
-    const site = sysMap?.allSites.find(s => s.buildId === proj.buildId);
+    const site = sysMap?.siteMaps.find(s => s.buildId === proj.buildId);
 
     return <div className='half'>
       {site && sysMap && <>

@@ -204,7 +204,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       }, 10);
     }
 
-    const { isValid, msg } = isTypeValid2(this.props.sysMap, type);
+    const { isValid, msg } = isTypeValid2(this.props.sysMap, type, getSiteType(this.props.buildType));
     const msgElement = <Stack horizontal verticalAlign='center'>
       <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
       <span>{msg}</span>
