@@ -205,6 +205,10 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
     }
 
     const { isValid, msg } = isTypeValid2(this.props.sysMap, type);
+    const msgElement = <Stack horizontal verticalAlign='center'>
+      <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
+      <span>{msg}</span>
+    </Stack>;
 
     return <div
       key={id}
@@ -232,7 +236,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
         {msg && <span style={{ marginLeft: 8, marginTop: 4, }}>
           <CalloutMsg
             directionalHint={DirectionalHint.rightCenter}
-            msg={msg}
+            msg={msgElement}
             iconName={isValid ? undefined : 'Warning'}
             style={{
               fontSize: 12,

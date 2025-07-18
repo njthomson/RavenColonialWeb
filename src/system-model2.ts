@@ -459,7 +459,7 @@ export const isTypeValid2 = (sysMap?: SysMap2, type?: SiteType) => {
     const isValid = hasPreReq2(sysMap, type);
     return {
       isValid: isValid,
-      msg: (isValid ? 'Requires ' : 'Missing: requires ') + mapName[type.preReq],
+      msg: 'Requires ' + mapName[type.preReq],
     };
   }
 

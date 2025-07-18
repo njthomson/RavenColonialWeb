@@ -563,9 +563,14 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       return <div style={{ width: 15 }} />
     }
 
+    const msgElement = <Stack horizontal verticalAlign='center'>
+      <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
+      <span>{msg}</span>
+    </Stack>;
+
     return <CalloutMsg
       directionalHint={DirectionalHint.rightCenter}
-      msg={msg}
+      msg={msgElement}
       iconName={!isValid ? 'Warning' : undefined}
       width={22}
       height={22}
