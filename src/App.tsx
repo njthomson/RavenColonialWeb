@@ -5,7 +5,7 @@ import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
 import { SortMode, TopPivot } from './types';
-import { About, Commander, Home, ProjectSearch, ProjectView } from './views';
+import { About, Commander, Home, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
 import { ViewAll } from './views/ViewAll/ViewAll';
@@ -198,7 +198,6 @@ export class App extends Component<AppProps, AppState> {
 
   render() {
     const { cmdrEdit, pivot, showDonate, showThemes } = this.state;
-    const useSys = false;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -215,10 +214,10 @@ export class App extends Component<AppProps, AppState> {
             },
             {
               className: cn.bBox,
-              key: 'find', text: useSys ? 'System' : 'Find',
-              iconProps: { iconName: useSys ? 'HomeGroup' : 'Search' },
-              checked: pivot === (useSys ? 'sys' : 'find'),
-              href: useSys ? '/#sys' : '/#find',
+              key: 'find', text: 'System',
+              iconProps: { iconName: 'HomeGroup' },
+              checked: pivot === 'sys',
+              href: '/#sys',
               onClick: (ev, i) => {
                 if (window.location.hash.startsWith('#find')) {
                   ev?.preventDefault();
@@ -330,13 +329,13 @@ export class App extends Component<AppProps, AppState> {
 
     switch (pivot) {
       case TopPivot.home: return <Home />;
-      case TopPivot.find: return <ProjectSearch systemName={pivotArg} />;
+      case TopPivot.find: //return <ProjectSearch systemName={pivotArg} />;
+      case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />;
       case TopPivot.build: return <ProjectView buildId={pivotArg} />;
       case TopPivot.buildAll: return <ViewAll />;
       case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
-      case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />;
       case TopPivot.table: return <BigSiteTablePage />;
     }
   }

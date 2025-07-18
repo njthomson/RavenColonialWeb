@@ -169,7 +169,7 @@ class LocalStorage {
   get useNativeDiscord(): boolean { return readBoolean(Stored.useNativeDiscord); }
   set useNativeDiscord(newValue: boolean) { writeValue(Stored.useNativeDiscord, newValue); }
 
-  get useIncomplete(): boolean { return readBoolean(Stored.useIncomplete, true); }
+  get useIncomplete(): boolean { return readBoolean(Stored.useIncomplete, false); }
   set useIncomplete(newValue: boolean) { writeValue(Stored.useIncomplete, newValue); }
 
   get findMarketsOptions(): FindMarketsOptions { return readValue(Stored.findMarketsOptions, { maxDistance: 500, maxArrival: 0, noFC: true, noSurface: false, shipSize: 'medium', requireNeed: true } as FindMarketsOptions)!; }

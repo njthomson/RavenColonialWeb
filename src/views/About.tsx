@@ -1,6 +1,7 @@
 import { DefaultButton, Icon, IconButton, Link, Stack } from "@fluentui/react";
 import { LinkSrvSurvey } from "../components/LinkSrvSurvey";
-import { cn } from "../theme";
+import { appTheme, cn } from "../theme";
+import { mapStatusIcon } from "./SystemView2/ViewEditStatus";
 
 export const learnAbout = (currentHelpId?: string) => {
 
@@ -15,6 +16,7 @@ export const learnAbout = (currentHelpId?: string) => {
   const topics: Record<string, string> = {
     raven: 'Raven Colonial',
     srvsurvey: 'SrvSurvey',
+    sys: 'Planning a system',
     find: 'Finding a project',
     create: 'Creating a project',
     build: 'Building a project',
@@ -75,11 +77,32 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
+    {(!helpId || helpId === 'sys') && <div className={`home-box ${cn.greyer}`}>
+      <h3 className={cn.h3}>Planning a system</h3>
+      The game doesn't allow us to change or remove anything once started so it is vital to plan out a system. Use <Link href='/#sys'><Icon className="icon-inline" iconName='HomeGroup' style={{ textDecoration: 'none' }} /> system</Link> to view a summary of all systems you have architected.
+      You may need to search once to make them appear.
+      <br />
+      Once viewing a system:
+      <ul>
+        <li>When first viewed, Raven Colonial will automatically import body and port data from Spansh. If needed, you can manually import again from the Add sub-menu.</li>
+        <li>Raven Colonial tracks the whole system, showing a list of things to fix in the right panel, eg: not enough tier points, missing pre-req's or similar issues.</li>
+        <li>Toggle between <Icon className="icon-inline" iconName='Nav2DMapView' /> Map and <Icon className="icon-inline" iconName='GridViewSmall' /> Table view to easily edit many sites or to get a sense of where everything is located.</li>
+        <li>Add new sites in any location or at any project phase: <Icon className="icon-inline" iconName={mapStatusIcon.plan} /> planning, <Icon className="icon-inline" iconName={mapStatusIcon.build} /> building, or <Icon className="icon-inline" iconName={mapStatusIcon.complete} /> construction complete.</li>
+        <li>View the impact each site has on the system and other sites nearby. Pin a site to see details about it. This will update in real time as you make changes.</li>
+        <li>Use <Icon className="icon-inline" iconName='Camera' /> to snapshot panels. This allows for easily comparing differences whilst making changes to your system.</li>
+        <li>Use <Icon className="icon-inline" iconName='TestBeakerSolid' /> to control if incomplete stations are included in calculations or not.</li>
+        <li>Use <Icon className="icon-inline" iconName='FabricFolderSearch' /> to view a list of all economies in your system. This also lets you compare with values from Spansh, if they are known.</li>
+        <IconBtnScrollTop />
+      </ul>
+    </div >}
+
+
     {(!helpId || helpId === 'find') && <div className={`home-box ${cn.greyer}`}>
       <h3 className={cn.h3}>Finding a project</h3>
       <ul>
         <li>The home page will show any projects linked to your Commander, active or completed, as well as the last 5 projects you have viewed.</li>
-        <li>Projects can be found by the system name on <Link href='#find'>#find</Link> page.</li>
+        <li>Existing projects can be found on the <Link href='/#sys'><Icon className="icon-inline" iconName='HomeGroup' style={{ textDecoration: 'none' }} /> system</Link> page - look for sites marked with <Icon className="icon-inline" iconName='ConstructionCone' style={{ color: appTheme.palette.yellowDark }} /></li>
+        <li>New construction projects can be started from the Add sub-menu, though it is recommended to start them via <LinkSrvSurvey /></li>
         <li>You do not need to be linked to a Project project to view details and contribute to it.</li>
         <li>When available, use the "<Icon className="btn icon-inline" iconName='OfficeChatSolid' /> Discord" button to check with others working this project.</li>
         <IconBtnScrollTop />
@@ -92,9 +115,8 @@ export const About: React.FunctionComponent = () => {
       <ul>
         <li>Creating projects is best done through <LinkSrvSurvey /> as it can pre-populate required cargo as well as other details pulled from journal files.</li>
         <li>It is also possible to create projects through this site, though will require some manual data entry.</li>
-        <li>Start by entering the system name on the <Link href='#find'>#find</Link> page and enter the relevant system name.</li>
-        <li>Assuming no match is found, click "<Icon className="btn icon-inline" iconName='Manufacturing' /> Start a new Project?" to find any known construction sites. (This information comes from EDSM)</li>
-        <li>Choose the site, or if is not known, you will have to manually find the marketID value in journal files. Click the <Icon className="icon-inline" iconName="Info" /> button for instructions.</li>
+        <li>From <Link href='/#sys'><Icon className="icon-inline" iconName='HomeGroup' style={{ textDecoration: 'none' }} /> system</Link>, search for the relevant system, then click <Icon className="icon-inline" iconName='Manufacturing' style={{ textDecoration: 'none' }} /> New Construction in the Add sub-menu.</li>
+        <li>In the right hand panel, choose the site, or if is not known, you will have to manually find the marketID value in journal files. Click the <Icon className="icon-inline" iconName="Info" /> button for instructions.</li>
         <li>Enter a name and choose the project type. Eg: Vulcan, Coriolis, Chronos, etc. You can find this information when docked at the construction site.</li>
         <li>After creating the site, you will need to manually enter cargo amounts. Or visit the site with SrvSurvey running and these numbers will be populated automatically.</li>
         <IconBtnScrollTop />

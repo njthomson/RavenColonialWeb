@@ -159,7 +159,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
         {!rows.length && <Stack horizontal tokens={{ childrenGap: 8 }} style={{ margin: '20px 0 10px 0' }}>
           <Label>No active projects.</Label>
           <PrimaryButton text='Find or start a project ...' onClick={() => {
-            window.location.assign("#find");
+            window.location.assign("#sys");
             window.location.reload();
           }} />
         </Stack>}

@@ -4,7 +4,7 @@ import { Component, FunctionComponent, useState } from "react";
 import { averageHauls, getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
 import { asPosNegTxt, isMobile } from "../../util";
-import { isTypeValid, SysMap } from "../../system-model";
+import { SysMap } from "../../system-model";
 import { CalloutMsg } from "../CalloutMsg";
 import { Chevrons } from "../Chevrons";
 import { EconomyBlock } from "../EconomyBlock";

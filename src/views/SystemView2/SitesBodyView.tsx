@@ -286,7 +286,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     const bodyElements = Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element);
     const noBodies = bodyElements.every(c => c.key?.startsWith('nobody'));
 
-    return <div style={{ width: 'max-content' }}>
+    return <div style={{ width: 'max-content', marginRight: 32 }}>
       <div
         style={{
           marginTop: 8,

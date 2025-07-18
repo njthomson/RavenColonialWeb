@@ -582,7 +582,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       key: 'sys-add1',
       title: 'Add a planned or "what if" site',
       text: 'Add',
-      className: cn.bBox,
+      className: anonymous ? undefined : cn.bBox,
       iconProps: { iconName: 'Add' },
       split: !noSplitAddButton,
       disabled: !!processingMsg || anonymous,
@@ -593,7 +593,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {
         key: 'sys-do-import',
         text: 'Import bodies and stations',
-        className: cn.bBox,
+        className: anonymous ? undefined : cn.bBox,
         iconProps: { iconName: 'Build' },
         disabled: !!processingMsg || anonymous,
         style: { height: 72 },
@@ -615,7 +615,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {
         key: 'sys-add-manual',
         text: 'New construction ...',
-        className: cn.bBox,
+        className: anonymous ? undefined : cn.bBox,
         iconProps: { iconName: 'Manufacturing' },
         disabled: !!processingMsg || anonymous,
         style: { height: 72 },
@@ -697,7 +697,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-load',
             title: 'Abandon your current changes and reload',
             text: 'Load',
-            className: cn.bBox,
+            className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'OpenFolderHorizontal' },
             disabled: !!processingMsg || anonymous,
             onClick: () => {
@@ -713,7 +713,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-save',
             title: 'Save changes to this system',
             text: 'Save',
-            className: cn.bBox,
+            className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
             disabled: !enableSave || anonymous,
             style: {

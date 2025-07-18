@@ -1,6 +1,6 @@
 import * as api from '../../api';
 import { FunctionComponent, useEffect, useState } from "react";
-import { ActionButton, DefaultButton, Link, Spinner, Stack } from "@fluentui/react";
+import { ActionButton, Link, Spinner, Stack } from "@fluentui/react";
 import { store } from '../../local-storage';
 
 export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
@@ -40,7 +40,7 @@ export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
   return <div style={{ fontSize: 14 }}>
     <ActionButton
       iconProps={{ iconName: showList ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
-      text='Systems I have contributed to ...'
+      text='Systems you have contributed to ...'
       title='Show systems where you have contributed to a site'
       onClick={() => setShowList(!showList)}
     />
@@ -61,11 +61,11 @@ export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
         </div>}
 
         {entries.length === 0 && <Stack horizontal verticalAlign='center'>
-          <span style={{ marginRight: 20 }}>Have you not contributed to any Raven Colonial projects?</span>
-          <DefaultButton text='Find or start a project ...' onClick={() => {
-            window.location.assign("#find");
-            window.location.reload();
-          }} />
+          <div style={{ marginRight: 20 }}>
+            Have you not contributed to any Raven Colonial projects?
+            <br />
+            Search for a system above and see what you can find.
+          </div>
         </Stack>}
       </>}
     </div>}

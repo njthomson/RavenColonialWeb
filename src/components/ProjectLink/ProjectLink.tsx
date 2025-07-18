@@ -26,7 +26,7 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
       fontStyle: props.proj.isMock ? 'italic' : undefined
     }}
   >
-    {!props.noSys && <><Link href={`#find=${props.proj.systemName}`}>{props.proj.systemName}</Link> : </>}
+    {!props.noSys && <><Link href={`#sys=${props.proj.systemName}`}>{props.proj.systemName}</Link> : </>}
 
     <Link
       disabled={props.proj.isMock}
@@ -64,7 +64,7 @@ export const SiteLink: FunctionComponent<ProjectLink2Props> = (props) => {
       fontStyle: props.site.status === 'plan' ? 'italic' : undefined
     }}
   >
-    {!props.noSys && <><Link href={`#find=${props.site.sys.name}`}>{props.site.sys.name}</Link> : </>}
+    {!props.noSys && <><Link href={`#sys=${props.site.sys.name}`}>{props.site.sys.name}</Link> : </>}
 
     <Link
       disabled={props.site.status === 'plan'}

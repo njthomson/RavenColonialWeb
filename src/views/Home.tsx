@@ -60,7 +60,7 @@ const renderQuote = () => {
     <br />
     <br />
     <PrimaryButton text='Find or start a project ...' onClick={() => {
-      window.location.assign("#find");
+      window.location.assign("#sys");
       window.location.reload();
     }} />
   </div>

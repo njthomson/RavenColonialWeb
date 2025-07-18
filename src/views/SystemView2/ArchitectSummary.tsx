@@ -135,7 +135,7 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
 
       <Stack className={css.componentStack} horizontal wrap>
         {rows}
-        {rows?.length === 0 && <div style={{ color: appTheme.palette.themeSecondary }}>No known systems</div>}
+        {rows?.length === 0 && <div style={{ color: appTheme.palette.themeSecondary }}>No known systems. Start by searching for a system.</div>}
       </Stack>
 
     </div >
