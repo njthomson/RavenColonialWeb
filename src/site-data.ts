@@ -748,7 +748,7 @@ export const siteTypes: SiteType[] = [
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "large",
-    "padMap": { meteope: 'large', palici: 'large', minthe: 'medium' },
+    "padMap": { meteope: 'large', palici: 'medium', minthe: 'large' },
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
@@ -1092,9 +1092,9 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   erebus: [1, 0, 1], // Mining Settlement: Large
   aerecura: [0, 0, 1], // Mining Settlement: Large
   fontus: [1, 0, 0], // Industrial Settlement: Small
-  meteope: [0, 0, 1], // Industrial Settlement: Medium
-  palici: [1, 0, 1], // Industrial Settlement: Medium
-  minthe: [0, 1, 0], // Industrial Settlement: Medium
+  minthe: [0, 0, 1], // Industrial Settlement: Medium
+  palici: [0, 1, 0], // Industrial Settlement: Medium
+  meteope: [1, 0, 1], // Industrial Settlement: Medium
   gaea: [0, 0, 1], // Industrial Settlement: Large
   ioke: [0, 1, 0], // Military Settlement: Small
   bellona: [1, 0, 0], // Military Settlement: Medium
