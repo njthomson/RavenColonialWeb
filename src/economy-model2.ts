@@ -41,7 +41,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     case 'settlement':
       // Odyssey settlements have 1 fixed economy + body buffs
       adjust(site.type.inf, +1.0, 'Odyssey settlement fixed economy', map, site);
-      applyBuffs(map, site);
+      applyBuffs(map, site, true);
       return finishUp(map, site);
 
     case 'outpost':
@@ -53,9 +53,10 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     // Specialized ports start with their own economy type
     applySpecializedPort(map, site);
   } else {
-    // Colony ports start with an economy based on the parent body, but
-    // only apply if we are the surface primary or we're an orbital and there is no surface primary or the surface primary is fixed economy type
-    if (site.body?.surfacePrimary === site || (site.type.orbital && (!site.body?.surfacePrimary || site.body?.surfacePrimary?.type.inf !== 'colony'))) {
+    // Colony ports start with an economy based on the parent body, but ...
+    // ~~only apply if we are the surface primary or we're an orbital and there is no surface primary or the surface primary is fixed economy type~~
+    // Do not apply if we are an Orbital and the surface primary IS Colony
+    if (!site.type.orbital || site.body?.surfacePrimary?.type.inf !== 'colony') {
       applyBodyType(map, site);
     }
   }
@@ -67,7 +68,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
   // these apply for fixed and economy ports
   applyStrongLinks2(map, site, useIncomplete);
   if (!site.type.fixed) {
-    applyBuffs(map, site);
+    applyBuffs(map, site, false);
 
     // // identical to buffs?
     // for (const inf in map) {
@@ -398,7 +399,9 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
   }
 }
 
-const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
+const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
+
+  // Do not apply any negative buffs to Odyssey settlements
 
   // assume reserveLevel of PRISTINE if not set
   const reserveLevel = site.sys.reserveLevel ?? 'pristine';
@@ -415,7 +418,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
 
         // If the System has Major or Pristine Resources (+0.40) for Industrial, Extraction and Refinery
         adjust(key, +0.4, 'Buff: reserveLevel MAJOR or PRISTINE', map, site);
-      } else if (reserveLevel === 'low' || reserveLevel === 'depleted') {
+      } else if ((reserveLevel === 'low' || reserveLevel === 'depleted') && !isSettlement) {
         // If the System has Low or Depleted Resources (-0.40) for Industrial, Extraction and Refinery
         adjust(key, -0.4, 'Buff: reserveLevel LOW or DEPLETED', map, site);
       }
@@ -433,7 +436,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
       adjust('agriculture', +0.4, 'Buff: body is ELW or WW', map, site);
     }
 
-    if (matches(['ib'], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
+    if ((matches(['ib'], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && !isSettlement) {
       // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
       // If the Body is Tidally Locked (-0.40) for Agriculture
       adjust('agriculture', -0.4, 'Buff: body is ICY or has TIDAL', map, site);
@@ -463,7 +466,8 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
     if (site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
       // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
       adjust('tourism', +0.4, 'Buff: system has Black Hole or Neutron Star or White Dwarf', map, site);
-    } /* else if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+    }
+    if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
       // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
       // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
       adjust('tourism', +0.4, 'Buff: body has BIO or GEO', map, site);
@@ -472,7 +476,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2) => {
       // If the Body is a Water World (+0.40) for Tourism and Agriculture
       // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
       adjust('tourism', +0.4, 'Buff: body is ELW or WW or AMMONIA', map, site);
-    } */
+    }
   }
 };
 

@@ -64,12 +64,12 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
 
         <div>
           {sites.map(s => {
-            return <>
+            return <div key={`atws-s-${s.id.slice(1)}`}>
               <h2 style={{ margin: '20px 0 0 0' }}>{s.name} <span style={{ color: 'grey' }}>- {s.body?.name}</span></h2>
               <div style={{ marginLeft: 40, width: 400 }}>
                 <EconomyTable2 site={s} sysView={props.sysView} noTableHeader noDisclaimer noChart />
               </div>
-            </>;
+            </div>;
           })}
         </div>
       </>}
