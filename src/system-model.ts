@@ -443,31 +443,31 @@ export const isTypeValid = (sysMap?: SysMap, type?: SiteType) => {
 export const hasPreReq = (sysMap: SysMap, type: SiteType) => {
   switch (type.preReq) {
     case 'satellite':
-      return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType.startsWith(n)));
 
     case 'comms':
-      return sysMap.siteMaps.some(s => ["pistis", "soter", "aletheia"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["pistis", "soter", "aletheia"].some(n => s.buildType.startsWith(n)));
 
     case 'settlementAgr':
-      return sysMap.siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].some(n => s.buildType.startsWith(n)));
 
     case 'installationAgr':
-      return sysMap.siteMaps.some(s => ["demeter"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["demeter"].some(n => s.buildType.startsWith(n)));
 
     case 'installationMil':
-      return sysMap.siteMaps.some(s => ["vacuna", "alastor"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["vacuna", "alastor"].some(n => s.buildType.startsWith(n)));
 
     case 'outpostMining':
-      return sysMap.siteMaps.some(s => ["euthenia", "phorcys"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["euthenia", "phorcys"].some(n => s.buildType.startsWith(n)));
 
     case 'relay':
-      return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType.startsWith(n)));
 
     case 'settlementBio':
-      return sysMap.siteMaps.some(s => ["phoebe", "asteria", "caerus", "chronos"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["phoebe", "asteria", "caerus", "chronos"].some(n => s.buildType.startsWith(n)));
 
     case 'settlementTourism':
-      return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].includes(s.buildType));
+      return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType.startsWith(n)));
 
     default:
       console.error(`Unexpected preReq: ${type.preReq}`)
