@@ -477,31 +477,31 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
 export const hasPreReq2 = (sysMap: SysMap2 | SysMap, type: SiteType) => {
   switch (type.preReq) {
     case 'satellite':
-      return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType?.startsWith(n)));
 
     case 'comms':
-      return sysMap.siteMaps.some(s => ["pistis", "soter", "aletheia"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["pistis", "soter", "aletheia"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementAgr':
-      return sysMap.siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].some(n => s.buildType?.startsWith(n)));
 
     case 'installationAgr':
-      return sysMap.siteMaps.some(s => ["demeter"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["demeter"].some(n => s.buildType?.startsWith(n)));
 
     case 'installationMil':
-      return sysMap.siteMaps.some(s => ["vacuna", "alastor"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["vacuna", "alastor"].some(n => s.buildType?.startsWith(n)));
 
     case 'outpostMining':
-      return sysMap.siteMaps.some(s => ["euthenia", "phorcys"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["euthenia", "phorcys"].some(n => s.buildType?.startsWith(n)));
 
     case 'relay':
-      return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementBio':
-      return sysMap.siteMaps.some(s => ["phoebe", "asteria", "caerus", "chronos"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["phoebe", "asteria", "caerus", "chronos"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementTourism':
-      return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
 
     default:
       console.error(`Unexpected preReq: ${type.preReq}`)
