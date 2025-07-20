@@ -26,7 +26,7 @@ interface WhereToBuyProps {
 }
 
 interface WhereToBuyState extends FindMarketsOptions {
-  panelType: PanelType;
+  largePanel: boolean;
   searching: boolean;
   showSearchCriteria: boolean;
   hasSearched?: boolean;
@@ -74,7 +74,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     this.state = {
       ...findMarketsOptions,
-      panelType: PanelType.medium,
+      largePanel: false,
       searching: false,
       showSearchCriteria: sortedRows.length === 0,
       hasSearched: false,
@@ -194,15 +194,14 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   render() {
-    const { foundMarkets, sortedRows, panelType, showSearchCriteria } = this.state;
-
-    const isMedium = panelType === PanelType.medium;
+    const { foundMarkets, sortedRows, largePanel, showSearchCriteria } = this.state;
 
     return <Panel
       isHiddenOnDismiss isFooterAtBottom
       allowTouchBodyScroll={isMobile()}
       isOpen={this.props.visible}
-      type={panelType}
+      type={largePanel ? PanelType.large : PanelType.custom}
+      customWidth='700px'
       onDismiss={() => this.props.onClose()}
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
@@ -212,9 +211,9 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       onRenderHeader={() => {
         return <div style={{ width: '90%', margin: '10px 40px' }}>
           <IconButton
-            iconProps={{ iconName: isMedium ? 'DoubleChevronLeft' : 'DoubleChevronRight', style: { color: appTheme.palette.neutralDark, fontSize: 12 } }}
+            iconProps={{ iconName: largePanel ? 'DoubleChevronRight' : 'DoubleChevronLeft', style: { color: appTheme.palette.neutralDark, fontSize: 12 } }}
             style={{ position: 'absolute', left: 0, top: 0 }}
-            onClick={() => this.setState({ panelType: isMedium ? PanelType.large : PanelType.medium })}
+            onClick={() => this.setState({ largePanel: !largePanel })}
           />
           <h3 style={{ fontSize: 20 }}>
             Where to buy near: {this.props.systemName}

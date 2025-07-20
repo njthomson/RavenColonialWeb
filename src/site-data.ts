@@ -1092,8 +1092,8 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   erebus: [1, 0, 1], // Mining Settlement: Large
   aerecura: [0, 0, 1], // Mining Settlement: Large
   fontus: [1, 0, 0], // Industrial Settlement: Small
-  minthe: [0, 0, 1], // Industrial Settlement: Medium
-  palici: [0, 1, 0], // Industrial Settlement: Medium
+  minthe: [0, 1, 0], // Industrial Settlement: Medium
+  palici: [0, 0, 1], // Industrial Settlement: Medium
   meteope: [1, 0, 1], // Industrial Settlement: Medium
   gaea: [0, 0, 1], // Industrial Settlement: Large
   ioke: [0, 1, 0], // Military Settlement: Small

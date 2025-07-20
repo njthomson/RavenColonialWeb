@@ -2,7 +2,7 @@
 import { ActionButton, Icon, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../theme";
-import { SiteType, siteTypes } from "../site-data";
+import { getSiteType, SiteType, siteTypes } from "../site-data";
 import { CopyButton } from "./CopyButton";
 import { isMobile } from "../util";
 import { BuildEffects } from "./BuildEffects";
@@ -27,14 +27,14 @@ const supportedTypes: Record<string, ImageData> = {
   'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
   'ananke': { cmdr: 'Kai Thoreau', location: `Nakayama Landing - HIP 87968, 4 A` },
   'angelia': { cmdr: 'Grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
-  'annona': { cmdr: 'Kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4` },
+  'annona': { cmdr: 'Kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4`, more: [{ n: 'annona-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'apollo': { cmdr: 'Kai Thoreau', location: `Ore Depot - HIP 87968, 5 A` },
   'artemis': { cmdr: 'Alora Anophis', location: `Besonders Reach - Pru Euq XO-Z d13-11, 2 a` },
   'asteria': { cmdr: 'Kekosummer', location: `Enju genetics laboratory - Col 285 Sector GL-X c1-11, B 4` },
   'asteroid': { cmdr: 'Grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
   'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8` },
   'bacchus': { cmdr: 'Abe Andet', location: `Galouye Vista - Arietis Sector PJ-Q B5-5`, more: [{ n: 'bacchus-2.jpg', l: 'Bus Gateway - HIP 13131', c: 'Cmdr Disnaematter' }] },
-  'bellona': { cmdr: 'Kekosummer', location: `Xie arsenal - Col 285 Sector GL-X c1-11, B 2` },
+  'bellona': { cmdr: 'Kekosummer', location: `Xie arsenal - Col 285 Sector GL-X c1-11, B 2`, more: [{ n: 'belona-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'bia': { cmdr: 'Disnaematter', location: `Wolff Facility - Synuefe EM-M c23-8`, more: [{ n: 'bia-plan.jpg', c: 'Cmdr Kekosummer' }] },
   'caelus': { cmdr: 'Disnaematter', location: `Hooker Horizons - Synuefe CN-Z b46-1` },
   'caerus': { cmdr: 'Kekosummer', location: `Pozandr astrophysics site - Col 285 Sector GL-X c1-11, B 4` },
@@ -43,7 +43,7 @@ const supportedTypes: Record<string, ImageData> = {
   'clotho': { cmdr: 'Abe Andet', location: `Morelli Gateway - Arietis Sector PJ-Q B5-5` },
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
   'comus': { cmdr: 'Disnaematter', location: `Emem's Leisure - Synuefe FI-Z b46-1` },
-  'consus': { cmdr: 'Kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4` },
+  'consus': { cmdr: 'Kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4`, more: [{ n: 'consus-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'decima': { cmdr: 'Kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a` },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'Grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
@@ -52,11 +52,11 @@ const supportedTypes: Record<string, ImageData> = {
   'dysnomia': { cmdr: 'Disnaematter', location: `Campus Hub - Synuefe EM-M c23-8` },
   'eirene': { cmdr: 'Abe Andet', location: `Gibbs Point - Arietis Sector PJ-Q B5-5` },
   'enodia': { cmdr: 'Locke Denman', location: `Glaser Relay - 37 Sextantis, 2 e` },
-  'enyo': { cmdr: 'Abe Andet', location: `Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5` },
+  'enyo': { cmdr: 'Abe Andet', location: `Pasichnyk Arms Garrison, Pegasi Sector MS-T b3-5`, more: [{ n: 'enyo-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'erebus': { cmdr: 'Kekosummer', location: `Dhillion Mineralogic Exchange - LTT 1873, B 1` },
   'eupraxia': { cmdr: 'Abe Andet', location: `Hooper Vison - Arietis Sector PJ-Q B5-5` },
   'euthenia': { cmdr: 'Disnaematter', location: `McMullen's Progress - Synuefe EM-M c23-8` },
-  'fontus': { cmdr: 'Kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6` },
+  'fontus': { cmdr: 'Kekosummer', location: `Ahn's Industrial - Col 285 Sector GL-X c1-11, A 6`, more: [{ n: 'fontus-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'fornax': { cmdr: 'Kekosummer', location: `Hakimi Horticultural Centre - Col 285 Sector GL-X c1-11, A 6` },
   'fufluns': { cmdr: 'Kekosummer', location: `Oliveira Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
   'gaea': { cmdr: 'Grinning2001', location: `Villalba Synthetics Workshop - IC 2391 Sector LH-V b2-5, A 3` },
@@ -67,27 +67,27 @@ const supportedTypes: Record<string, ImageData> = {
   'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5` },
   'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1` },
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
-  'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1` },
+  'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1`, more: [{ n: 'ioke-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3` },
   'laverna': { cmdr: 'Disnaematter', location: `Riess Sanctuary - Synuefe XK-O c22-4` },
   'mantus': { cmdr: 'Kekosummer', location: `Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
   'meteope': { cmdr: 'Kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
   'minerva': { cmdr: 'Kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
-  'minthe': { cmdr: 'Kekosummer', location: `Greko chemical workshop - Col 285 Sector GL-X c1-11, A 6` },
+  'minthe': { cmdr: 'Kekosummer', location: `Tolmie - Col 285 Sector GL-X c1-11, A 6`, more: [{ n: 'minthe-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'necessitas': { cmdr: 'Abe Andet', location: `Lenthall Gateway - Arietis Sector PJ-Q B5-5` },
   'nemesis': { cmdr: 'Grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport - Pegasi Sector DL-y D60` },
   'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5` },
   'opis': { cmdr: 'Kekosummer', location: `Morgan Base - LTT 1873, B 2` },
-  'orcus': { cmdr: 'Kekosummer', location: `Weber metalurgic station - Col 285 Sector GL-X c1-11, B 3` },
-  'ourea': { cmdr: 'Kekosummer', location: `Polubotok drilling station - Col 285 Sector GL-X c1-11, B 3` },
-  'palici': { cmdr: 'Kekosummer', location: `Tolmie - Col 285 Sector GL-X c1-11, A 6` },
+  'orcus': { cmdr: 'Kekosummer', location: `Weber metalurgic station - Col 285 Sector GL-X c1-11, B 3`, more: [{ n: 'orcus-plan.jpg', c: 'Cmdr Grinning2001' }] },
+  'ourea': { cmdr: 'Kekosummer', location: `Polubotok drilling station - Col 285 Sector GL-X c1-11, B 3`, more: [{ n: 'ourea-plan.jpg', c: 'Cmdr Grinning2001' }] },
+  'palici': { cmdr: 'Kekosummer', location: `Greko chemical workshop - Col 285 Sector GL-X c1-11, A 6`, more: [{ n: 'palici-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'pheobe': { cmdr: 'Kekosummer', location: `Vytrebenko Biochemical Centre - Col 285 Sector GL-X c1-11, B 4` },
   'phorcys': { cmdr: 'Artemwaynes', location: ` Montgomery Enterprise - HIP 60611, 7` },
-  'picumnus': { cmdr: 'Kekosummer', location: `Orellana Botanical Nursery - Col 285 Sector GL-X c1-11, A 4` },
+  'picumnus': { cmdr: 'Kekosummer', location: `Orellana Botanical Nursery - Col 285 Sector GL-X c1-11, A 4`, more: [{ n: 'picumnus-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'pistis': { cmdr: 'Disnaematter', location: `Pogue Terminal - Synuefe EM-M c23-8` },
   'plutus': { cmdr: 'Grinning2001', location: `Rahman Town - IC 2391 Sector EL-Y c9, B 10, A 3` },
-  'polemos': { cmdr: 'Kekosummer', location: `Ferreyra Defense Base - Col 285 Sector GL-X c1-11, B 5 a` },
+  'polemos': { cmdr: 'Kekosummer', location: `Ferreyra Defense Base - Col 285 Sector GL-X c1-11, B 5 a`, more: [{ n: 'polemos-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'porrima': { cmdr: 'Disnaematter', location: `Pettitt Nook - Synuefe EM-M c23-8` },
   'poseidon': { cmdr: 'Disnaematter', location: `David Lynch Memorial - Synuefe EM-M c23-8` },
   'prometheus': { cmdr: 'Abe Andet', location: `Fuller Depot - Arietis Sector PJ-Q B5-5` },
@@ -125,9 +125,11 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   constructor(props: VisualIdentifyProps) {
     super(props);
 
+    const isSurface = !!props.buildType && !getSiteType(props.buildType).orbital;
+
     this.state = {
       zoom: props.buildType ?? '',
-      showSurface: false,
+      showSurface: isSurface,
       typeNames: sortedTypes,
       showInGroups: true,
     };
@@ -135,7 +137,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
   componentDidMount(): void {
     // force an initial sort + filter
-    this.setFilter(false, true);
+    this.setFilter(this.state.showSurface, this.state.showInGroups);
   }
 
   componentDidUpdate(prevProps: Readonly<VisualIdentifyProps>, prevState: Readonly<VisualIdentifyState>, snapshot?: any): void {
