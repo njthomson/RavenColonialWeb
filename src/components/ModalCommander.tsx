@@ -124,7 +124,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
           <Label>Large ship max capacity:</Label>
           <Stack horizontal>
-            <Slider showValue={false} min={0} max={794} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
+            <Slider showValue={false} min={0} max={1238} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
             <SpinButton className='spin-slide' value={cargoLargeMax.toString()} onChange={(_, v) => this.setState({ cargoLargeMax: parseInt(v!) })} />
           </Stack>
 
