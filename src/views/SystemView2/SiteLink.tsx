@@ -51,7 +51,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
         {<Link style={{ color: 'unset', fontStyle: site.status === 'plan' ? 'italic' : undefined }}>
           <span style={{ color: nameColor }}>{site.name}</span>
           &nbsp;
-          <span style={{ color: isNotUsed ? appTheme.palette.themeTertiary : undefined, fontSize: props.noPin ? 10 : undefined }}>{getSiteType(site.buildType, true).displayName2}</span>
+          <span style={{ color: isNotUsed ? appTheme.palette.themeTertiary : undefined, fontSize: props.noPin ? 10 : undefined }}>{getSiteType(site.buildType, true)?.displayName2}</span>
         </Link>}
 
         {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} title='Primary port' />}

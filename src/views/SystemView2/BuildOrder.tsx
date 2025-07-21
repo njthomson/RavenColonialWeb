@@ -98,7 +98,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
             {s.name}
           </span>
 
-          <span style={{ fontSize: 12 }}>{getSiteType(s.buildType, true).displayName2} ({s.buildType})</span>
+          <span style={{ fontSize: 12 }}>{getSiteType(s.buildType, true)?.displayName2} ({s.buildType})</span>
           {i === 0 && <Icon iconName='CrownSolid' style={{ marginLeft: 8 }} />}
           {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
           {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}

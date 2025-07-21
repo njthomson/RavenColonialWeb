@@ -155,7 +155,7 @@ const initializeSysMap = (projects: ProjectRef[]) => {
     }
 
     // create site entry and add to bodies surface/orbital collection
-    const site: SiteMap = { ...p, type: getSiteType(p.buildType), body };
+    const site: SiteMap = { ...p, type: getSiteType(p.buildType)!, body };
     siteMaps.push(site);
     body.sites.push(site);
 

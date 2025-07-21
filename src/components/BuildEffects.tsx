@@ -21,7 +21,7 @@ const { tds, tc, tr } = mergeStyleSets({
 export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: boolean, noType?: boolean, heading?: string; noPads?: boolean }> = (props) => {
   const paddingTop = 2;
 
-  const st = getSiteType(props.buildType);
+  const st = getSiteType(props.buildType)!;
   const effectRows = Object.keys(st.effects)
     .map(key => {
       if (!st.effects[key as keyof SysEffects]) return null;

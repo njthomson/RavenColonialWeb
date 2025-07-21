@@ -61,7 +61,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
   }
 
   getFilteredOptions2(selection: string | undefined, location: string | undefined): INavLinkGroup[] {
-    const targetTier = selection ? getSiteType(selection).tier : 0;
+    const targetTier = selection ? getSiteType(selection)?.tier : 0;
 
     const orbital = location === 'orbital';
 

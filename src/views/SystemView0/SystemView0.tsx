@@ -604,7 +604,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
       isPrimaryPort: false,
 
       buildType: SystemView0.lastBuildType,
-      type: getSiteType(SystemView0.lastBuildType),
+      type: getSiteType(SystemView0.lastBuildType)!,
       timeCompleted: '9999' + new Date().toISOString().substring(4),
       buildName: `New #${++SystemView0.countNew}`,
       bodyName: this.lastBodyName,
@@ -698,7 +698,7 @@ export class SystemView0 extends Component<SystemView0Props, SystemView0State> {
                 if (editMockSite) {
                   SystemView0.lastBuildType = newBuildType;
                   editMockSite.buildType = newBuildType;
-                  editMockSite.type = getSiteType(newBuildType);
+                  editMockSite.type = getSiteType(newBuildType)!;
                   this.setState({ editMockSite: editMockSite });
                 }
               }}

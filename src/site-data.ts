@@ -180,10 +180,10 @@ export const economyColors: Record<string, string> = {
 
 export const isOrbital = (buildType: string | undefined): boolean => {
   if (!buildType) return true;
-  return getSiteType(buildType).orbital;
+  return !!getSiteType(buildType)?.orbital;
 };
 
-export const getSiteType = (buildType: string, noThrow?: boolean): SiteType => {
+export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | undefined => {
   if (noThrow && !buildType) { buildType = '' };
   const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType) || buildType === st.subTypes[0] + '?');
   if (!match) {
@@ -197,7 +197,7 @@ export const getSiteType = (buildType: string, noThrow?: boolean): SiteType => {
 export const getBuildTypeDisplayName = (buildType: string | undefined) => {
   if (!buildType) return '?';
 
-  const type = getSiteType(buildType);
+  const type = getSiteType(buildType)!;
   let txt = type.buildClass === 'starport'
     ? `${type.displayName}`
     : `${type.displayName} ${type.buildClass}`;

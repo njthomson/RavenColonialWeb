@@ -125,7 +125,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   constructor(props: VisualIdentifyProps) {
     super(props);
 
-    const isSurface = !!props.buildType && !getSiteType(props.buildType).orbital;
+    const isSurface = !!props.buildType && !getSiteType(props.buildType)?.orbital;
 
     this.state = {
       zoom: props.buildType ?? '',

@@ -29,7 +29,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
     // match the current site's location where if possible
     let defaultLocation = store.viewEditBuiltTypeTab;
-    const isOrbital = props.buildType && getSiteType(props.buildType, true).orbital;
+    const isOrbital = props.buildType && getSiteType(props.buildType, true)?.orbital;
     if (typeof isOrbital === 'boolean') {
       defaultLocation = isOrbital ? 'orbital' : 'surface';
     }
@@ -204,7 +204,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       }, 10);
     }
 
-    const { isValid, msg } = isTypeValid2(this.props.sysMap, type, getSiteType(this.props.buildType));
+    const { isValid, msg } = isTypeValid2(this.props.sysMap, type, getSiteType(this.props.buildType, true));
     const msgElement = <Stack horizontal verticalAlign='center'>
       <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
       <span>{msg}</span>
