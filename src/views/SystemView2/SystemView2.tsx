@@ -1218,8 +1218,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       .filter(s => s.id.startsWith('&') && !s.buildId)
       .map(s => s.id.slice(1));
 
-    const knownCompletedSites = this.state.sysMap?.sites
-      .filter(s => s.id.startsWith('&') || s.buildId)
+    const knownNames = this.state.sysMap?.sites
+      .filter(s => s.status === 'complete' || s.buildId)
       .map(s => s.name);
 
     return <>
@@ -1239,7 +1239,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           noTitle
           systemName={this.props.systemName}
           knownMarketIds={knownMarketIDs}
-          knownCompletedNames={knownCompletedSites}
+          knownNames={knownNames}
           bodies={this.state.sysMap.bodies}
           bodyMap={this.state.sysMap.bodyMap}
           onCancel={() => {

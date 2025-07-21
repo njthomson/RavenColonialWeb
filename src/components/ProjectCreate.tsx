@@ -17,7 +17,7 @@ interface ProjectCreateProps {
   knownMarketIds: string[];
   onCancel: () => void;
   noTitle?: boolean;
-  knownCompletedNames?: string[];
+  knownNames: string[];
   bodies?: Bod[];
   bodyMap?: Record<string, BodyMap2>
 }
@@ -203,14 +203,15 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
                 showMarketId: true
               });
             } else {
+              const newName = name.split(':')[1]?.trim() || name;
+              const siteMatch = foundStations.find(s => s.marketId === i?.key);
+              const bodyMatch = siteMatch && this.props.bodyMap && this.props.bodyMap[siteMatch.body?.name ?? ''];
               this.setState({
                 marketId: i?.key ?? '',
                 showMarketId: false,
+                buildName: newName,
+                bodyNum: bodyMatch?.num ?? -1,
               });
-              if (!this.state.buildName) {
-                let newName = name.split(':')[1]?.trim() || name;
-                this.setState({ buildName: newName, });
-              }
             }
           }} />
       </>;
@@ -257,7 +258,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       const foundStations = data.stations.filter(s => {
         return (s.name.includes('Construction Site:') || s.name.includes('Colonisation'))
           && !this.props.knownMarketIds.includes(s.marketId.toString())
-          && this.props.knownMarketIds.some(n => s.name.endsWith(n))
+          && !this.props.knownNames.some(n => s.name.endsWith(n))
           ;
       });
 

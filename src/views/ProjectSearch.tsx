@@ -174,6 +174,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
         <ProjectCreate
           systemName={systemName}
           knownMarketIds={knownMarketIds}
+          knownNames={[]}
           onCancel={() => this.setState({ showCreate: false })}
         /></div>}
 
