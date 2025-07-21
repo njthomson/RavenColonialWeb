@@ -12,6 +12,7 @@ import { mapName } from '../site-data';
 interface CargoGridProps {
   cargo: Cargo,
   linkedFC: KnownFC[],
+  hideActive?: boolean;
 }
 
 interface CargoGridState {
@@ -38,7 +39,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
 
       sort: store.commoditySort ?? SortMode.alpha,
       hideDoneRows: store.commodityHideCompleted,
-      hideFCColumns: store.commodityHideFCColumns,
+      hideFCColumns: store.commodityHideFCColumns || props.linkedFC.length === 0,
     };
   }
 
@@ -74,7 +75,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         >
           {sort}
         </ActionButton>
-        <ActionButton
+        {!this.props.hideActive && <ActionButton
           iconProps={{ iconName: hideDoneRows ? 'ThumbnailViewMirrored' : 'AllAppsMirrored' }}
           title={hideDoneRows ? 'Hiding completed commodies' : 'Showing all commodities'}
           text={hideDoneRows ? 'Active' : 'All'}
@@ -82,7 +83,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
             this.setState({ hideDoneRows: !hideDoneRows });
             store.commodityHideCompleted = !hideDoneRows;
           }}
-        />
+        />}
         {linkedFC.length > 0 && <ActionButton
           iconProps={{ iconName: hideFCColumns ? 'fleetCarrier' : 'fleetCarrierSolid' }}
           title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}

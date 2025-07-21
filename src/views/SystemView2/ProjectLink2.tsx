@@ -7,6 +7,7 @@ import { mapStatusIcon } from "./ViewEditStatus";
 import { Project } from "../../types";
 import { Site } from '../../types2';
 import { cn } from '../../theme';
+import { HaulList } from './HaulList';
 
 export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 }> = (props) => {
   let showChart = false;
@@ -36,7 +37,11 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 
     setProj(proj);
   });
 
-  if (props.site.status === 'plan' || !props.site.buildId) { return null; }
+  if (props.site.status !== 'complete' && !props.site.buildId) {
+    return <HaulList buildTypes={[props.site.buildType]} />;
+  }
+
+  if (!props.site.buildId) { return null; }
 
   let progressElement = <></>;
   if (proj) {

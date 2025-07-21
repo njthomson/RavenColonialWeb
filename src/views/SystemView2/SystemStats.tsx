@@ -5,10 +5,25 @@ import { mapName, sysEffects, SysEffects } from "../../site-data";
 import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
 import { appTheme } from "../../theme";
+import { HaulList } from "./HaulList";
 
+// //cargoTypes["Asteroid Starport"].items.
+// // const cargoTypes2 = cargoTypes as Record<string, any>;
+// const foo = Object.entries(cargoTypes).reduce((map, [k, v]) => {
+//   map[k] = {};
+//   for (const [x, y] of Object.entries(v.items)) {
+//     map[k][x] = y.avg;
+//   }
+//   return map;
+// }, {} as Record<string, Record<string, number>>);
+// console.log(JSON.stringify(foo));
 
 export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean }> = (props) => {
   const { sysMap } = props;
+
+  const buildTypes = sysMap.siteMaps
+    .filter(s => s.status === 'plan')
+    .reduce((list, s) => ([...list, s.buildType]), [] as string[]);
 
   return <div
     style={{
@@ -53,5 +68,13 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
         </div>,
       ]
     })}
+
+    {!!buildTypes.length && <>
+      <div style={{ alignContent: 'center' }}>Planned haul:</div>
+      <div style={{ gridColumn: '2 / span 3' }}>
+        <HaulList buildTypes={buildTypes} />
+      </div>
+    </>}
+
   </div>;
 }
