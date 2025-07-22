@@ -6,6 +6,8 @@ import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
 import { appTheme } from "../../theme";
 import { HaulList } from "./HaulList";
+import { ProjectLink2 } from "./ProjectLink2";
+import { SystemView2 } from "./SystemView2";
 
 // //cargoTypes["Asteroid Starport"].items.
 // // const cargoTypes2 = cargoTypes as Record<string, any>;
@@ -18,12 +20,18 @@ import { HaulList } from "./HaulList";
 // }, {} as Record<string, Record<string, number>>);
 // console.log(JSON.stringify(foo));
 
-export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean }> = (props) => {
+export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean; sysView: SystemView2 }> = (props) => {
   const { sysMap } = props;
 
   const buildTypes = sysMap.siteMaps
     .filter(s => s.status === 'plan')
     .reduce((list, s) => ([...list, s.buildType]), [] as string[]);
+
+  const activeBuilds = sysMap.siteMaps
+    .filter(s => s.status === 'build' && s.buildId)
+    .map(s => (<div key={`ssab-${s.buildId.slice(1)}`}>
+      <ProjectLink2 site={s} sysView={props.sysView} bigLink />
+    </div>));
 
   return <div
     style={{
@@ -74,6 +82,11 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       <div style={{ gridColumn: '2 / span 3' }}>
         <HaulList buildTypes={buildTypes} />
       </div>
+    </>}
+
+    {!!activeBuilds?.length && <>
+      <div>Active builds:</div>
+      <div style={{ gridColumn: '2 / span 3' }}>{activeBuilds}</div>
     </>}
 
   </div>;

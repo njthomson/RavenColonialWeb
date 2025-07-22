@@ -198,6 +198,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     return <Panel
       isHiddenOnDismiss isFooterAtBottom
+      isLightDismiss
       allowTouchBodyScroll={isMobile()}
       isOpen={this.props.visible}
       type={largePanel ? PanelType.large : PanelType.custom}
@@ -205,6 +206,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       onDismiss={() => this.props.onClose()}
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
+        scrollableContent: { scrollbarGutter: 'stable' },
         footerInner: { padding: 1 }
       }}
 
@@ -303,7 +305,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         <Slider
           showValue={false}
           min={0} max={maxMaxArrival}
-          step={10_000}
+          step={5_000}
           value={maxArrival}
           disabled={searching}
           styles={{

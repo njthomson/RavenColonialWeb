@@ -287,6 +287,13 @@ export const cn = mergeStyleSets({
       border: `1px solid ${appTheme.palette.themeTertiary}`,
     },
   },
+  ibText: {
+    color: appTheme.semanticColors.bodyText,
+    ':hover': {
+      color: appTheme.palette.themePrimary,
+      border: `1px solid ${appTheme.palette.themeTertiary}`,
+    },
+  },
   /** Draw a box around a button on hover */
   bBox: {
     border: `1px solid transparent`,

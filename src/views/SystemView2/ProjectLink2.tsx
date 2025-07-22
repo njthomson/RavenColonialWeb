@@ -1,15 +1,15 @@
 import * as api from '../../api';
-import { ActionButton, Icon, Stack } from "@fluentui/react";
+import { ActionButton, Icon, Link, Stack } from "@fluentui/react";
 import { FunctionComponent, useMemo, useState } from "react";
 import { SystemView2 } from "./SystemView2";
 import { ChartGeneralProgress } from "../../components";
 import { mapStatusIcon } from "./ViewEditStatus";
 import { Project } from "../../types";
 import { Site } from '../../types2';
-import { cn } from '../../theme';
+import { appTheme, cn } from '../../theme';
 import { HaulList } from './HaulList';
 
-export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 }> = (props) => {
+export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2; bigLink?: boolean; }> = (props) => {
   let showChart = false;
   const [proj, setProj] = useState<Project | undefined | null>(undefined);
 
@@ -55,9 +55,30 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 
     showChart = true;
   }
 
+  if (props.bigLink) {
+    return <>
+      <Link
+        title='Open project page'
+        className={`${cn.bBox} ${cn.ibText}`}
+        href={`${window.location.origin}/#build=${props.site.buildId}`}
+        target='build'
+        style={{ display: 'inline-block', padding: '0px 6px', textDecoration: 'none' }}
+      >
+        <Stack horizontal verticalAlign='center'>
+          <span>{props.site.name}</span>
+          <Icon iconName={mapStatusIcon.build} style={{ marginLeft: 4, fontSize: 14, color: appTheme.palette.yellowDark }} />
+        </Stack>
+        <Stack horizontal verticalAlign='center'>
+          {progressElement}
+          {!proj && <span style={{ color: appTheme.palette.themeTertiary, marginRight: 10 }}>Loading ... </span>}
+          <Icon iconName='OpenInNewWindow' style={{ marginLeft: 4, fontSize: 12 }} />
+        </Stack>
+      </Link>
+    </>;
+  }
   return <>
     <ActionButton
-      iconProps={{ iconName: mapStatusIcon[props.site.status] }}
+      iconProps={{ iconName: mapStatusIcon[props.site.status], style: { color: appTheme.palette.yellowDark } }}
       title='Open project page'
       className={cn.bBox}
       href={`${window.location.origin}/#build=${props.site.buildId}`}
@@ -66,6 +87,6 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2 
       {!showChart && <>View project</>}
       {showChart && progressElement}
       <Icon iconName='OpenInNewWindow' style={{ marginLeft: 4, fontSize: 12 }} />
-    </ActionButton >
+    </ActionButton>
   </>;
 }

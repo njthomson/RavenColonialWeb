@@ -922,7 +922,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </div>;
 
     const sysStatsPanel = <div ref={this.sysStatsRef}>
-      <SystemStats sysMap={this.state.sysMap} useIncomplete={this.state.useIncomplete} />
+      <SystemStats sysMap={this.state.sysMap} useIncomplete={this.state.useIncomplete} sysView={this} />
       {this.renderSystemValidationWarnings()}
     </div>;
 
