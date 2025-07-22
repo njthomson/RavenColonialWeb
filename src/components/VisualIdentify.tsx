@@ -473,6 +473,12 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
 
   const [imgIdx, setImgIdx] = useState(0);
 
+  if (imgIdx + 1 > props.imgs.length) {
+    // reset sub-image index and render nothing this time around
+    setImgIdx(0);
+    return null;
+  }
+
   const img = props.imgs[imgIdx];
   const imgUrl = `https://njthomson.github.io/SrvSurvey/colony/${img.n}`;
 

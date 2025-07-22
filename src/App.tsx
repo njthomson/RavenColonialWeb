@@ -43,8 +43,8 @@ export class App extends Component<AppProps, AppState> {
 
   public static resumePageScroll() {
     App.fakeScroll.style.display = 'none';
-    document.body.style.overflow = 'auto';
     document.body.style.marginRight = '0';
+    document.body.style.overflow = 'auto';
   }
 
   constructor(props: AppProps) {
