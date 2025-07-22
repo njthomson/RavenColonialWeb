@@ -1,4 +1,4 @@
-import { Stack, DirectionalHint, ActionButton, IContextualMenuItem, Icon, Callout } from "@fluentui/react";
+import { Stack, DirectionalHint, ActionButton, Icon, Callout } from "@fluentui/react";
 import { Component } from "react";
 import { appTheme, cn } from "../../theme";
 import { Bod } from "../../types2";
