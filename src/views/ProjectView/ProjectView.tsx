@@ -471,7 +471,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <div className='full'>
         <h2 className='project-title'>
           <CopyButton text={proj.systemName} fontSize={16} />
-          <Link href={`#sys=${proj.systemName}`}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
+          <Link href={`#sys=${proj.systemName}`} style={{ marginLeft: 4 }}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
           <span style={{ fontSize: 16 }}><CopyButton text={copyLink} title='Copy a link to this page' /></span>
         </h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
