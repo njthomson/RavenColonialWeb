@@ -283,8 +283,9 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
   render() {
     const { bodyTree, hideEmpties, showBodyFilter, bodyFilter, bodyFilterExclude } = this.state;
 
-    const bodyElements = Object.values(bodyTree).map((n, i) => this.renderBody(n, i).element);
-    const noBodies = bodyElements.every(c => c.key?.startsWith('nobody'));
+    const childPartTree = Object.values(bodyTree).map((n, i) => this.renderBody(n, i));
+    const bodyElements = childPartTree.map(cp => cp.element);
+    const noBodies = !childPartTree.some(cp => cp.hasSome);
 
     return <div style={{ width: 'max-content', marginRight: 32 }}>
       <div
@@ -416,15 +417,17 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     const siblings = Object.keys(node.parent?.children ?? {});
     const parentIsBaryCentre = node.parent?.body.type === 'bc';
 
+    const { bodyFilter } = this.state;
+    const hasSome = bodyFilter.size === 0 || childParts.some(c => c.hasSome);
+
     if (node.body.type === 'bc') {
       const childElements = childParts.length < 3 ? undefined : childParts.slice(2).map(cp => cp.element);
       // was everything filtered out?
-      const empty = childParts.every(c => c.element.key?.startsWith('nobody'));
-      const keyPrefix = empty ? 'nobody' : 'barycentre';
       return {
+        hasSome: hasSome,
         hasSites: hasSites || !!node.map?.sites.length,
         element: <BBaryCentre
-          key={`${keyPrefix}-${node.body.name}${idx}`}
+          key={`barycentre-${node.body.name}${idx}`}
           hasParent={!!node.parent}
           filtering={this.state.bodyFilter.size > 0}
           bodyA={childParts[0]?.element}
@@ -450,21 +453,26 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         ? idx === 0 || (idx > 1 && idx !== siblings.length - 1)
         : siblings.length > 1 && idx !== siblings.length - 1;
 
-      const { bodyFilter } = this.state;
+
       if (bodyFilter.size > 0) {
+        // filtering bodies
         let filterApplies = this.state.bodyFilterExclude
           ? node.body.features.some(f => bodyFilter.has(f))
           : !Array.from(bodyFilter).every(f => node.body.features.includes(f));
 
         if (filterApplies) {
+          // return an element that is not visible itself but still contains the children
           return {
+            hasSome: hasSome,
             hasSites: hasSites || !!node.map?.sites.length,
-            element: <div key={'nobody-' + node.body.num}>{childParts.map(cp => cp.element)}</div>,
+            element: <div key={`filtered-${node.body.num}`}>{childParts.map(cp => cp.element)}</div>,
           };
         }
       }
 
+      // no body filtering or filter does not match
       return {
+        hasSome: true,
         hasSites: hasSites || !!node.map?.sites.length,
         element: <BBody
           sysView={this.props.sysView}
@@ -487,7 +495,10 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 }
 
 type ChildParts = {
+  /** Has some child with sites */
   hasSites: boolean;
+  /** Has some non-filtered child bodies */
+  hasSome: boolean;
   element: JSX.Element;
 }
 
