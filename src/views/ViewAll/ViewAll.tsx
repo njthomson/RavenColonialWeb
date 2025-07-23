@@ -276,7 +276,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
             </Stack>
 
-            <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='end' >
+            <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center'>
               <ChartGeneralProgress maxNeed={p.maxNeed} progress={approxProgress} readyOnFC={countReadyOnFCs} minimal />
               <Label style={{ marginBottom: 2 }}>&nbsp;&nbsp;{percent.toFixed(0)}%</Label>
             </Stack>

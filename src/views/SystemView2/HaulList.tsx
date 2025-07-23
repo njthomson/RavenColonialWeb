@@ -65,6 +65,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
         className={cn.bBox}
         iconProps={{ iconName: 'DeliveryTruck' }}
         text={`~${totalHaul.toLocaleString()} units`}
+        style={{ height: 24 }}
         onClick={() => setShowList(true)}
       />
     </Stack>
