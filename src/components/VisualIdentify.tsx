@@ -32,7 +32,7 @@ const supportedTypes: Record<string, ImageData> = {
   'artemis': { cmdr: 'Alora Anophis', location: `Besonders Reach - Pru Euq XO-Z d13-11, 2 a` },
   'asteria': { cmdr: 'Kekosummer', location: `Enju genetics laboratory - Col 285 Sector GL-X c1-11, B 4` },
   'asteroid': { cmdr: 'Grinning2001', location: `Fairey Mines - Synuefe AN-H d11-120` },
-  'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8` },
+  'atropos': { cmdr: 'Disnaematter', location: `Piazza Enterprise - Synuefe EM-M c23-8`, more: [{ n: 'atropos-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'bacchus': { cmdr: 'Abe Andet', location: `Galouye Vista - Arietis Sector PJ-Q B5-5`, more: [{ n: 'bacchus-2.jpg', l: 'Bus Gateway - HIP 13131', c: 'Cmdr Disnaematter' }] },
   'bellona': { cmdr: 'Kekosummer', location: `Xie arsenal - Col 285 Sector GL-X c1-11, B 2`, more: [{ n: 'belona-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'bia': { cmdr: 'Disnaematter', location: `Wolff Facility - Synuefe EM-M c23-8`, more: [{ n: 'bia-plan.jpg', c: 'Cmdr Kekosummer' }] },
@@ -44,7 +44,7 @@ const supportedTypes: Record<string, ImageData> = {
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
   'comus': { cmdr: 'Disnaematter', location: `Emem's Leisure - Synuefe FI-Z b46-1` },
   'consus': { cmdr: 'Kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4`, more: [{ n: 'consus-plan.jpg', c: 'Cmdr Grinning2001' }] },
-  'decima': { cmdr: 'Kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a` },
+  'decima': { cmdr: 'Kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a`, more: [{ n: 'decima-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'Grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
   'dodona': { cmdr: 'Abe Andet', location: `Karman Vision - Arietis Sector PJ-Q B5-5` },
@@ -62,13 +62,14 @@ const supportedTypes: Record<string, ImageData> = {
   'gaea': { cmdr: 'Grinning2001', location: `Villalba Synthetics Workshop - IC 2391 Sector LH-V b2-5, A 3` },
   'gelos': { cmdr: 'Kekosummer', location: `Burn Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach - Synuefe EM-M c23-8` },
+  //  'hera': { cmdr: 'Grinning2001' }, // , more: [{ n: 'hera-plan.jpg', c: 'Cmdr Grinning2001' }]
   'hephaestus': { cmdr: 'Disnaematter', location: `Chaly Foundry - Synuefe XK-O c22-4` },
   'hermes': { cmdr: 'Grinning2001' },
-  'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5` },
+  'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5`, more: [{ n: 'hestia-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1` },
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1`, more: [{ n: 'ioke-plan.jpg', c: 'Cmdr Grinning2001' }] },
-  'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3` },
+  'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3`, more: [{ n: 'lachesis-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'laverna': { cmdr: 'Disnaematter', location: `Riess Sanctuary - Synuefe XK-O c22-4` },
   'mantus': { cmdr: 'Kekosummer', location: `Jarvis drilling rigs - Col 285 Sector GL-X c1-11, B 3` },
   'meteope': { cmdr: 'Kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
@@ -77,7 +78,8 @@ const supportedTypes: Record<string, ImageData> = {
   'necessitas': { cmdr: 'Abe Andet', location: `Lenthall Gateway - Arietis Sector PJ-Q B5-5` },
   'nemesis': { cmdr: 'Grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport - Pegasi Sector DL-y D60` },
-  'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5` },
+  'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5`, more: [{ n: 'nona-plan.jpg', c: 'Cmdr Grinning2001' }] },
+  'nomos': { cmdr: 'Smartee' },
   'opis': { cmdr: 'Kekosummer', location: `Morgan Base - LTT 1873, B 2` },
   'orcus': { cmdr: 'Kekosummer', location: `Weber metalurgic station - Col 285 Sector GL-X c1-11, B 3`, more: [{ n: 'orcus-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'ourea': { cmdr: 'Kekosummer', location: `Polubotok drilling station - Col 285 Sector GL-X c1-11, B 3`, more: [{ n: 'ourea-plan.jpg', c: 'Cmdr Grinning2001' }] },
@@ -97,7 +99,7 @@ const supportedTypes: Record<string, ImageData> = {
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon - Synuefe EM-M c23-8` },
   'vesta': { cmdr: 'Locke Denman', location: `Kusama Depot - 37 Sextantis, 2 D` },
   'vulcan': { cmdr: 'Grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
-  'zeus': { cmdr: 'EDExplorer', location: `Ascendia City - Col 285 Sector ZX-R b5-0, A 4` },
+  'zeus': { cmdr: 'EDExplorer', location: `Ascendia City - Col 285 Sector ZX-R b5-0, A 4` }, //, more: [{ n: 'zeus-plan.jpg', c: 'Cmdr Grinning2001' }] },
 };
 
 const sortedGroups = siteTypes.slice(1).sort((a, b) => a.displayName2.localeCompare(b.displayName2));
@@ -410,12 +412,12 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
 
       <div style={{ textTransform: 'capitalize', marginBottom: 4, fontSize: onMobile ? 16 : 22 }} >
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
-          <div>{type.displayName2}</div>
+          <div style={{ color: appTheme.palette.themePrimary }}>{type.displayName2}</div>
           <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
           <CopyButton text={copyLink} title='Copy link to this page' fontSize={14} />
           <div style={{ fontWeight: 'bold' }}>{zoom}</div>
           <div style={{ color: 'grey', margin: '0 8px' }}>|</div>
-          <div>Tier:&nbsp;{type.tier}&nbsp;</div>
+          <div style={{ color: appTheme.palette.themePrimary }}>Tier:&nbsp;{type.tier}&nbsp;</div>
         </Stack>
       </div>
 
