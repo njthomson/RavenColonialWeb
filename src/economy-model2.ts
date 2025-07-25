@@ -122,7 +122,7 @@ const finishUp = (map: EconomyMap, site: SiteMap2) => {
   return site.primaryEconomy!;
 }
 
-const adjust = (inf: string, delta: number, reason: string, map: EconomyMap, site: SiteMap2) => {
+const adjust = (inf: Economy, delta: number, reason: string, map: EconomyMap, site: SiteMap2) => {
   const before = map[inf as keyof EconomyMap];
   map[inf as keyof EconomyMap] += delta;
   // round values (why do we get values of "2.2499999999999996"?)
@@ -331,15 +331,16 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
 
     // boost each economy >= 100%
     for (var e in s.economies) {
-      const val = s.economies[e as keyof EconomyMap];
+const ee = e as keyof EconomyMap;
+      const val = s.economies[ee];
       if (val >= 1) {
         // use the ACTUAL economy strength
-        adjust(e, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
-        applyStrongLinkBoost(e as Economy, map, site, 'Strong link');
+        adjust(ee, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
+        applyStrongLinkBoost(ee, map, site, 'Strong link');
 
         // Add a special case: terraforming can be boosted by colony-to-colony strong links.
-        if (e as Economy === 'terraforming') {
-          adjust(e, +0.4, `+ Colony strong link boost (really?)`, map, site);
+        if (ee === 'terraforming') {
+          adjust(ee, +0.4, `+ Colony strong link boost (really?)`, map, site);
         }
       }
     }
