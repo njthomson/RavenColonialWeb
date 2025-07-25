@@ -57,9 +57,8 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     applySpecializedPort(map, site);
   } else {
     // Colony ports start with an economy based on the parent body, but ...
-    // ~~only apply if we are the surface primary or we're an orbital and there is no surface primary or the surface primary is fixed economy type~~
-    // Do not apply if we are an Orbital and the surface primary IS Colony
-    if (!site.type.orbital || site.body?.surfacePrimary?.type.inf !== 'colony') {
+    // apply unless: we are orbital and the surface primary IS Colony, or we are not the orbital primary
+    if (!site.type.orbital || site.body?.surfacePrimary?.type.inf !== 'colony' || site !== site.body?.orbitalPrimary) {
       applyBodyType(map, site);
     }
   }
@@ -331,7 +330,7 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
 
     // boost each economy >= 100%
     for (var e in s.economies) {
-const ee = e as keyof EconomyMap;
+      const ee = e as keyof EconomyMap;
       const val = s.economies[ee];
       if (val >= 1) {
         // use the ACTUAL economy strength
