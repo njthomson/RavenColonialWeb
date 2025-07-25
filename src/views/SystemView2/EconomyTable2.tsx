@@ -11,6 +11,7 @@ import { BodyOverride } from "./BodyOverride";
 import { SystemView2 } from "./SystemView2";
 import { mapBodyTypeNames } from "../../types2";
 import { EconomyBlocks } from "../../components/MarketLinks/MarketLinks";
+import { stellarRemnants } from "../../economy-model2";
 
 export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: boolean; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
   const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site?.id);
@@ -139,7 +140,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
   }
 
   const bodyFeatures = props.site.body?.features?.filter(f => f !== BodyFeature.landable).map(f => mapBodyFeature[f]).join(', ').toUpperCase();
-  const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => ['bh', 'ns', 'wd'].includes(b.type)).map(b => b.type)));
+  const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => stellarRemnants.includes(b.type)).map(b => b.type)));
   const systemFeatures = systemFeatureStarTypes.map(t => mapBodyTypeNames[t]).join(', ').toUpperCase();
   let flip = false;
   return <div style={{ minWidth: 380 }}>
@@ -183,7 +184,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: bool
               &nbsp;
               {props.site.type.displayName2} (Tier: {props.site.type.tier} - {props.site.type.buildClass})
             </div>
-            <div>Body type:&nbsp;{(props.site.body?.type && mapBodyTypeNames[props.site.body?.type])?.toUpperCase() ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
+            <div>Body type:&nbsp;{(props.site.body?.type && mapBodyTypeNames[props.site.body?.type]?.toUpperCase()) ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
             {props.site.body && <Link style={{ float: 'right', fontSize: 10 }} onClick={() => setBodyOverride(true)}>Override?</Link>}
             <div>Body features:&nbsp;{bodyFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>System features:&nbsp;{systemFeatures || <span style={{ color: 'grey' }}>none</span>}</div>

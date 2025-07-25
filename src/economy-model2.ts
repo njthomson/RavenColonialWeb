@@ -2,10 +2,13 @@ import { Economy } from "./site-data";
 import { EconomyMap } from "./system-model";
 import { SiteMap2, SysMap2 } from "./system-model2";
 import { BodyFeature } from "./types";
-import { Bod } from "./types2";
+import { Bod, BT } from "./types2";
 import { asPosNegTxt2 } from "./util";
 
 let showConsoleAudit = Date.now() < 0;
+
+/** Black hole, Neutron star or White Dwarf */
+export const stellarRemnants = [BT.bh, BT.ns, BT.wd];
 
 export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean): Economy => {
   // use pre-computed data?
@@ -165,50 +168,50 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       console.warn(`Unexpected body type: "${site.body?.type}"`);
       return;
 
-    case 'un':
+    case BT.un:
       break;
-    case 'bh':
-    case 'ns':
-    case 'wd':
+    case BT.bh:
+    case BT.ns:
+    case BT.wd:
       adjust('hightech', +1, 'Body type: REMNANT', map, site);
       adjust('tourism', +1, 'Body type: REMNANT', map, site);
       break;
-    case 'st':
+    case BT.st:
       adjust('military', +1, 'Body type: STAR', map, site);
       break;
-    case 'elw':
+    case BT.elw:
       adjust('agriculture', +1, 'Body type: ELW', map, site);
       adjust('hightech', +1, 'Body type: ELW', map, site);
       adjust('military', +1, 'Body type: ELW', map, site);
       adjust('tourism', +1, 'Body type: ELW', map, site);
       break;
-    case 'ww':
+    case BT.ww:
       adjust('agriculture', +1, 'Body type: WW', map, site);
       adjust('tourism', +1, 'Body type: WW', map, site);
       break;
-    case 'aw':
+    case BT.aw:
       adjust('hightech', +1, 'Body type: AMMONIA', map, site);
       adjust('tourism', +1, 'Body type: AMMONIA', map, site);
       break;
-    case 'gg':
+    case BT.gg:
       adjust('hightech', +1, 'Body type: GG', map, site);
       adjust('industrial', +1, 'Body type: GG', map, site);
       break;
-    case 'hmc':
-    case 'mrb':
+    case BT.hmc:
+    case BT.mrb:
       adjust('extraction', +1, 'Body type: HMC', map, site);
       break;
-    case 'ri':
+    case BT.ri:
       adjust('industrial', +1, 'Body type: ROCKY-ICE', map, site);
       adjust('refinery', +1, 'Body type: ROCKY-ICE', map, site);
       break;
-    case 'rb':
+    case BT.rb:
       adjust('refinery', +1, 'Body type: ROCKY', map, site);
       break;
-    case 'ib':
+    case BT.ib:
       adjust('industrial', +1, 'Body type: ICY', map, site);
       break;
-    case 'ac':
+    case BT.ac:
       // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
       adjust('extraction', +1, 'Body type: HMC', map, site);
       break;
@@ -216,19 +219,19 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
 
   // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
   if (site.body.features.includes(BodyFeature.rings)) {
-    if (!['hmc', 'mrb'].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site); }
+    if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site); }
   }
 
   // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
   if (site.body.features.includes(BodyFeature.bio)) {
-    if (!['elw', 'ww'].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site); }
+    if (![BT.elw, BT.ww].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site); }
     adjust('terraforming', +1, 'Body has: BIO', map, site);
   }
 
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.body.features.includes(BodyFeature.geo)) {
-    if (!['hmc', 'mrb'].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site); }
-    if (!['gg', 'ri', 'ib'].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site); }
+    if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site); }
+    if (![BT.gg, BT.ri, BT.ib].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site); }
   }
 };
 
@@ -352,10 +355,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
     default: return 0;
 
     case 'agriculture':
-      if (matches(['elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
+      if (matches([BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
         adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO/TERRAFORMABLE`, map, site);
       }
-      if (matches(['icy'], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
+      if (matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
         adjust(inf, -0.4, `- ${reason} boost: Body is ICY or has TIDAL`, map, site);
       }
       break;
@@ -373,7 +376,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
       return;
 
     case 'hightech':
-      if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+      if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
         return adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA/ELW/WW or has has BIO/GEO`, map, site);
       }
       return;
@@ -389,10 +392,10 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
       return;
 
     case 'tourism':
-      if (matches(['ammonia', 'elw', 'ww'], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+      if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
         adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA/ELW/WW or has BIO/GEO`, map, site);
       }
-      if (site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
+      if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
         adjust(inf, +0.4, `+ ${reason} boost: System has System has Black Hole/Neutron Star/White Dwarf`, map, site);
       }
       return;
@@ -412,7 +415,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
     if (map[key] > 0) {
       if (reserveLevel === 'major' || reserveLevel === 'pristine') {
         // this is a dirty hack to prevent refinery from over applying :(
-        if (key === 'refinery' && site.body?.type !== 'rb' && site.type.inf === 'colony') {
+        if (key === 'refinery' && site.body?.type !== BT.rb && site.type.inf === 'colony') {
           continue;
         }
 
@@ -432,11 +435,11 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
     }
     // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
     // If the Body is a Water World (+0.40) for Tourism and Agriculture
-    else if (matches(['elw', 'ww'], site.body?.type)) {
+    else if (matches([BT.elw, BT.ww], site.body?.type)) {
       adjust('agriculture', +0.4, 'Buff: body is ELW or WW', map, site);
     }
 
-    if ((matches(['ib'], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && !isSettlement) {
+    if ((matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && !isSettlement) {
       // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
       // If the Body is Tidally Locked (-0.40) for Agriculture
       adjust('agriculture', -0.4, 'Buff: body is ICY or has TIDAL', map, site);
@@ -448,7 +451,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
       // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
       // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
       adjust('hightech', +0.4, 'Buff: body has BIO or GEO', map, site);
-    } else if (matches(['elw', 'aw'], site.body?.type)) {
+    } else if (matches([BT.elw, BT.aw], site.body?.type)) {
       // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
       // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
       adjust('hightech', +0.4, 'Buff: body is ELW or AMMONIA', map, site);
@@ -463,7 +466,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
   }
 
   if (map.tourism > 0) {
-    if (site.sys.bodies.some(b => ['bh', 'ns', 'wd'].includes(b.type))) {
+    if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
       // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
       adjust('tourism', +0.4, 'Buff: system has Black Hole or Neutron Star or White Dwarf', map, site);
     }
@@ -471,7 +474,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
       // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
       // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
       adjust('tourism', +0.4, 'Buff: body has BIO or GEO', map, site);
-    } else if (matches(['elw', 'ww', 'aw'], site.body?.type)) {
+    } else if (matches([BT.elw, BT.ww, BT.aw], site.body?.type)) {
       // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
       // If the Body is a Water World (+0.40) for Tourism and Agriculture
       // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
@@ -532,11 +535,11 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined): boolean => {
   if (!parentBody) { throw new Error(`Why no parent from: ${body.name}`); }
 
   // if body is a star - return TRUE say yes as we recursed here
-  if (matches(['bh', 'hs', 'wd', 'st'], parentBody.type)) {
+  if (matches([...stellarRemnants, BT.st], parentBody.type)) {
     return true;
   }
 
-  if (parentBody.type === 'bc') {
+  if (parentBody.type === BT.bc) {
     /* TODO: Implement this ...
       - If **immediate** parent is a barycenter: apply penalty only if sibling is a star
         - If sibling is not a star: do not walk parent chain, do not apply penalty

@@ -2,7 +2,7 @@ import { calculateColonyEconomies2 } from './economy-model2';
 import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
 import { SysMap } from './system-model';
 import { BodyFeature } from './types';
-import { Bod, Site, Sys } from './types2';
+import { Bod, BT, Site, Sys } from './types2';
 
 export const unknown = 'Unknown';
 
@@ -143,7 +143,7 @@ export const getUnknownBody = (): Bod => {
     features: [BodyFeature.landable],
     parents: [],
     subType: 'Unknown',
-    type: 'un',
+    type: BT.un,
   };
 }
 

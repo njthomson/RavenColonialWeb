@@ -1,5 +1,5 @@
 import { Component, FunctionComponent } from "react";
-import { Bod, BodyType } from "../../types2";
+import { Bod, BT } from "../../types2";
 import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack } from "@fluentui/react";
 import { appTheme, cn } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
@@ -7,6 +7,7 @@ import { SitesViewProps, SystemView2 } from "./SystemView2";
 import { store } from "../../local-storage";
 import { BodyFeature, mapBodyFeature } from "../../types";
 import { SiteLink } from "./SiteLink";
+import { stellarRemnants } from "../../economy-model2";
 
 let nnn = 0;
 const indent = 20;
@@ -18,7 +19,7 @@ const rootBC = {
   features: [],
   parents: [],
   subType: 'barycentre',
-  type: 'bc',
+  type: BT.bc,
 } as Bod;
 
 class BodyMapTreeNode {
@@ -101,7 +102,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     //const tree = Object.values(sysMap.bodyMap).reduce((map, bm) => {
     const tree = sysMap.bodies.reduce((map, b) => {
-      if (b.type === 'bc') { return map; }
+      if (b.type === BT.bc) { return map; }
       let bm = sysMap.bodyMap[b.name] ?? b;
 
       let bpn: BodyMapTreeNode | undefined = undefined;
@@ -138,7 +139,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
               bp = {
                 num: p,
                 name: `Assumed bary-center ${Date.now()}`,
-                type: 'bc',
+                type: BT.bc,
                 subType: 'Barycenter?',
                 parents: fakeParents,
               } as Bod;
@@ -224,7 +225,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     for (const { key, childNode, childHasSites } of processed) {
       if (hideEmpties) {
-        if (childNode.parent?.body.type !== 'bc') {
+        if (childNode.parent?.body.type !== BT.bc) {
           // parent not barycenter - skip if no sites
           if (!childHasSites) {
             continue;
@@ -235,7 +236,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           if (idx < 2) {
             // ideally: keep the alternate if either of the 1st two bodies have sites
             // but this requires us to pre-process the whole tree, not just immediate siblings
-            if ((!processed[0].childHasSites && processed[0].childNode.body.type === 'bc') && (!processed[1].childHasSites && processed[1].childNode.body.type === 'bc')) {
+            if ((!processed[0].childHasSites && processed[0].childNode.body.type === BT.bc) && (!processed[1].childHasSites && processed[1].childNode.body.type === BT.bc)) {
               continue;
             }
           } else {
@@ -415,12 +416,12 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     // console.log(`** ${node.body.name}: ${hasSites} / ${!!node.map?.sites.length}`);
 
     const siblings = Object.keys(node.parent?.children ?? {});
-    const parentIsBaryCentre = node.parent?.body.type === 'bc';
+    const parentIsBaryCentre = node.parent?.body.type === BT.bc;
 
     const { bodyFilter } = this.state;
     const hasSome = bodyFilter.size === 0 || childParts.some(c => c.hasSome);
 
-    if (node.body.type === 'bc') {
+    if (node.body.type === BT.bc) {
       const childElements = childParts.length < 3 ? undefined : childParts.slice(2).map(cp => cp.element);
       // was everything filtered out?
       return {
@@ -441,7 +442,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     } else {
 
-      const name = ['bh', 'ns', 'wd', 'st'].includes(node.body.type)
+      const name = [...stellarRemnants, BT.st].includes(node.body.type)
         ? node.body.name
         : node.body.name.replace(this.props.systemName + ' ', '');
 
@@ -687,12 +688,12 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
             </>}
 
             {/* A basic circle for all but asteroid clusters */}
-            {node.body.type !== 'ac' && <>
+            {node.body.type !== BT.ac && <>
               <circle cx={indent + sz} cy={1 + sz} r={sz} fill={c1} stroke={c2} strokeWidth={2} />
               {/* TODO: Use an ellipse for rings? */}
             </>}
             {/* A basic circle for all but asteroid clusters */}
-            {node.body.type === 'ac' && <>
+            {node.body.type === BT.ac && <>
               <ellipse cx={indent + sz + 2} cy={1 + sz + 4} rx={sz / 4} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
               <ellipse cx={indent + sz - 4} cy={1 + sz} rx={sz / 2.5} ry={sz / 2.5} fill={c1} stroke={c2} strokeWidth={2} />
               <ellipse cx={indent + sz + 5} cy={1 + sz - 7} rx={sz / 3} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
@@ -800,38 +801,38 @@ const mapBodyFeatureColor = {
 };
 
 // c1 is fill / c2 is stroke
-const getBodyColour = (bodyType?: BodyType, subType?: string) => {
+const getBodyColour = (bodyType?: BT, subType?: string) => {
   switch (bodyType) {
     default:
       return { c1: 'blue', c2: 'red' };
-    case 'bh':// Black Hole
+    case BT.bh:
       return { c1: 'rgb(38, 0, 43)', c2: 'rgb(255, 255, 255)' };
-    case 'ns':// Neutron Star
+    case BT.ns:
       return { c1: 'rgb(185, 255, 255)', c2: 'rgb(255, 255, 255)' };
-    case 'wd':// White Dwarf
+    case BT.wd:
       return { c1: 'rgb(255, 255, 255)', c2: 'rgb(255, 255, 255)' };
-    case 'gg':
+    case BT.gg:
       return { c1: 'rgb(233, 73, 121)', c2: 'rgb(173, 97, 117)' };
-    case 'ww':
-    case 'wg':
+    case BT.ww:
+    case BT.wg:
       return { c1: 'rgb(25, 64, 236)', c2: 'rgb(10, 47, 126)' };
-    case 'elw':
+    case BT.elw:
       return { c1: 'rgb(23, 212, 16)', c2: 'rgb(34, 138, 13)' };
-    case 'aw':
+    case BT.aw:
       return { c1: 'rgb(202, 108, 31)', c2: 'rgb(255, 255, 255)' };
-    case 'hmc':
+    case BT.hmc:
       return { c1: 'rgb(119, 117, 115)', c2: 'rgb(87, 72, 59)' };
-    case 'mrb':
+    case BT.mrb:
       return { c1: 'rgb(150, 110, 73)', c2: 'rgb(73, 45, 22)' };
-    case 'rb':
+    case BT.rb:
       return { c1: 'rgb(94, 69, 48)', c2: 'rgb(75, 61, 49)' };
-    case 'ib':
+    case BT.ib:
       return { c1: 'rgb(126, 213, 219)', c2: 'rgb(196, 234, 236)' };
-    case 'ri':
+    case BT.ri:
       return { c1: 'rgb(114, 145, 146)', c2: 'rgb(134, 166, 168)' };
-    case 'un':
+    case BT.un:
       return { c1: 'rgb(46, 46, 45)', c2: 'rgb(70, 69, 67)' };
-    case 'ac':
+    case BT.ac:
       switch (subType) {
         default:
         case 'Icy':
@@ -843,7 +844,7 @@ const getBodyColour = (bodyType?: BodyType, subType?: string) => {
         case 'Rocky':
           return { c1: 'rgb(92, 79, 64)', c2: 'rgb(150, 123, 102)' };
       }
-    case 'st': // some kind of star
+    case BT.st:
       if (subType?.includes('Blue')) {
         return { c1: 'rgb(167, 227, 245)', c2: 'rgb(176, 241, 243)' };
       } else if (subType?.includes('Yellow-Orange')) {
@@ -860,48 +861,48 @@ const getBodyColour = (bodyType?: BodyType, subType?: string) => {
   }
 };
 
-const getBodySize = (bodyType?: BodyType) => {
+const getBodySize = (bodyType?: BT) => {
   switch (bodyType) {
     default:
       return 20;
 
-    case 'bh':// Black Hole
-    case 'ns':// Neutron Star
-    case 'wd':// White Dwarf
+    case BT.bh:
+    case BT.ns:
+    case BT.wd:
       return 5;
 
-    case 'st': // some kind of star
+    case BT.st:
       return 30;
 
-    case 'gg':
+    case BT.gg:
       return 22;
 
-    case 'wg':
+    case BT.wg:
       return 18;
 
-    case 'ww':
-    case 'elw':
-    case 'aw':
+    case BT.ww:
+    case BT.elw:
+    case BT.aw:
       return 15;
 
-    case 'hmc':
+    case BT.hmc:
       return 14;
-    case 'mrb':
+    case BT.mrb:
       return 13;
 
-    case 'rb':
+    case BT.rb:
       return 12;
 
-    case 'ri':
+    case BT.ri:
       return 12;
 
-    case 'ib':
+    case BT.ib:
       return 6;
 
-    case 'un':
+    case BT.un:
       return 30;
 
-    case 'ac':
+    case BT.ac:
       return 10;
   }
 };

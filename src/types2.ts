@@ -19,50 +19,68 @@ export interface Bod {
   num: number;
   distLS: number;
   parents: number[];
-  type: BodyType;
+  type: BT;
   subType: string;
   features: BodyFeature[];
   // max: { orbit: number; surfaace: number; }
 }
 
-export type BodyType =
-  | 'un'// unknown
-  | 'bh'// Black Hole
-  | 'ns'// Neutron Star
-  | 'wd'// White Dwarf
-  | 'st'// some kind of star
-  | 'aw'// Ammonia World
-  | 'elw'// Earth Like Body
-  | 'gg'// Gas Giant
-  | 'hmc'// High Metal Content Body
-  | 'ib'// Icy Body
-  | 'mrb'// Metal Rich Body
-  | 'rb'// Rock Body
-  | 'ri'// Rocky Ice Body
-  | 'wg'// Water Giant
-  | 'ww'// Water World
-  | 'ac'// Asteroid cluster
-  | 'bc'// Barycentre
-  ;
+/** Body Type */
+export enum BT {
+  /** unknown */
+  un = 'un',
+  /** Black Hole */
+  bh = 'bh',
+  /** Neutron Star */
+  ns = 'ns',
+  /** White Dwarf */
+  wd = 'wd',
+  /** some kind of star */
+  st = 'st',
+  /** Ammonia World */
+  aw = 'aw',
+  /** Earth Like World */
+  elw = 'elw',
+  /** Gas Giant */
+  gg = 'gg',
+  /** High Metal Content Body */
+  hmc = 'hmc',
+  /** Icy Body */
+  ib = 'ib',
+  /** Metal Rich Body */
+  mrb = 'mrb',
+  /** Rock Body */
+  rb = 'rb',
+  /** Rocky Ice Body */
+  ri = 'ri',
+  /** Water Giant */
+  wg = 'wg',
+  /** Water World */
+  ww = 'ww',
+  /** Asteroid cluster */
+  ac = 'ac',
+  /** Barycentre */
+  bc = 'bc',
+}
 
-export const mapBodyTypeNames: Record<BodyType, string> = {
-  'bh': 'Black hole',
-  'ns': 'Neutron star',
-  'wd': 'White dwarf',
-  'st': 'A star',
-  'aw': 'Ammonia World',
-  'elw': 'Earth Like Body',
-  'gg': 'Gas Giant',
-  'hmc': 'High Metal Content Body',
-  'ib': 'Icy Body',
-  'mrb': 'Metal Rich Body',
-  'rb': 'Rock Body',
-  'ri': 'Rocky Ice Body',
-  'wg': 'Water Giant',
-  'ww': 'Water World',
-  'ac': 'Asteroid cluster',
-  'bc': 'Barycentre',
-  'un': 'Unknown',
+export const mapBodyTypeNames: Record<BT, string> = {
+  [BT.bh]: 'Black hole',
+  [BT.ns]: 'Neutron star',
+  [BT.wd]: 'White dwarf',
+  [BT.st]: 'A star',
+  [BT.aw]: 'Ammonia World',
+  [BT.elw]: 'Earth Like Body',
+  [BT.gg]: 'Gas Giant',
+  [BT.hmc]: 'High Metal Content Body',
+  [BT.ib]: 'Icy Body',
+  [BT.mrb]: 'Metal Rich Body',
+  [BT.rb]: 'Rock Body',
+  [BT.ri]: 'Rocky Ice Body',
+  [BT.wg]: 'Water Giant',
+  [BT.ww]: 'Water World',
+  [BT.ac]: 'Asteroid cluster',
+  [BT.bc]: 'Barycentre',
+  [BT.un]: 'Unknown',
 };
 
 /** Represents a station in a system */

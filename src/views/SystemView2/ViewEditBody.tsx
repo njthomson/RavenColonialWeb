@@ -1,7 +1,7 @@
 import { Stack, DirectionalHint, ActionButton, Icon, Callout } from "@fluentui/react";
 import { Component } from "react";
 import { appTheme, cn } from "../../theme";
-import { Bod } from "../../types2";
+import { Bod, BT } from "../../types2";
 import { BodyMap2 } from "../../system-model2";
 import { App } from "../../App";
 import { BodyFeature } from "../../types";
@@ -60,7 +60,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
       </span>;
     }
 
-    const rows = bodies.filter(b => b.type !== 'bc').map((body, i) => {
+    const rows = bodies.filter(b => b.type !== BT.bc).map((body, i) => {
       if (!body) return null;
 
       const sites = bodyMap[body.name]?.sites;
