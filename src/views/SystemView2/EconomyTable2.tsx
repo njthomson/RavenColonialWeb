@@ -13,7 +13,7 @@ import { mapBodyTypeNames } from "../../types2";
 import { EconomyBlocks } from "../../components/MarketLinks/MarketLinks";
 import { stellarRemnants } from "../../economy-model2";
 
-export const EconomyTable2: FunctionComponent<{ site: SiteMap2; noCompare?: boolean; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
+export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
   const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site?.id);
   const realEconomy = realMatch?.economies;
 

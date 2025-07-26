@@ -71,6 +71,9 @@ export interface SiteMap2 extends Site {
   primaryEconomy?: Economy;
   parentLink?: SiteMap2;
   body?: BodyMap2;
+
+  bodyBuffed?: Set<string>;
+  systemBuffed?: Set<string>;
 }
 
 export type EconomyMap = Record<Exclude<Economy, 'colony' | 'none'>, number>;

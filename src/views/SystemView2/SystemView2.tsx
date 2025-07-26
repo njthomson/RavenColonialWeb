@@ -84,7 +84,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (!!this.props.systemName) {
       // reload a new system
       window.document.title = 'Sys: ' + this.props.systemName;
-      this.loadData();
+      const promise = this.loadData()
+      if (store.autoCheckSpanshEconomies) {
+        promise.then(() => this.doGetRealEconomies());
+      }
     } else {
       this.doSystemSearch();
     }
@@ -160,7 +163,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       errorMsg: '',
     });
 
-    api.systemV2.getSys(this.props.systemName, true)
+    return api.systemV2.getSys(this.props.systemName, true)
       .then(newSys => {
 
         if (newSys.v < api.systemV2.currentSchemaVersion) {
@@ -210,6 +213,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   doGetRealEconomies = () => {
+    this.setState({ auditWholeSystem: true });
+
     api.systemV2.getRealEconomies(this.state.sysMap.id64.toString())
       .then(realEconomies => {
         this.setState({ realEconomies });
@@ -812,7 +817,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             disabled: !!processingMsg,
             onClick: () => {
               this.doGetRealEconomies();
-              this.setState({ auditWholeSystem: true });
             }
           },
 

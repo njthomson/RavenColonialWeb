@@ -26,6 +26,7 @@ enum Stored {
   sysViewHideEmpties = 'sysViewHideEmpties',
   viewEditBuiltTypeTab = 'viewEditBuiltTypeTab',
   siteGraphType = 'siteGraphType',
+  autoCheckSpanshEconomies = 'autoCheckSpanshEconomies',
 }
 
 interface CmdrData {
@@ -196,6 +197,8 @@ class LocalStorage {
   get siteGraphType(): SiteGraphType { return readString(Stored.siteGraphType) as SiteGraphType || 'major'; }
   set siteGraphType(newValue: SiteGraphType) { writeValue(Stored.siteGraphType, newValue); }
 
+  get autoCheckSpanshEconomies(): boolean { return readBoolean(Stored.autoCheckSpanshEconomies); }
+  set autoCheckSpanshEconomies(newValue: boolean) { writeValue(Stored.autoCheckSpanshEconomies, newValue); }
 }
 
 export const store = new LocalStorage();
