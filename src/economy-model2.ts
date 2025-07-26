@@ -135,11 +135,11 @@ const adjust = (inf: Economy, delta: number, reason: string, map: EconomyMap, si
   site.economyAudit?.push({ inf, delta, reason, before, after });
 
   if (source === 'body') {
-    if (!site.bodyBuffed) { site.bodyBuffed = new Set<string>(); }
+    if (!site.bodyBuffed) { site.bodyBuffed = new Set<Economy>(); }
     site.bodyBuffed.add(inf);
   }
   if (source === 'sys') {
-    if (!site.systemBuffed) { site.systemBuffed = new Set<string>(); }
+    if (!site.systemBuffed) { site.systemBuffed = new Set<Economy>(); }
     site.systemBuffed.add(inf);
   }
 };
@@ -344,7 +344,7 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
       if (val >= 1) {
         // use the ACTUAL economy strength
         adjust(ee, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
-        applyStrongLinkBoost(ee, map, site, 'Strong link');
+        applyStrongLinkBoost(ee, map, site, 'Strong links');
 
         // Add a special case: terraforming can be boosted by colony-to-colony strong links.
         if (ee === 'terraforming') {
@@ -386,7 +386,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
 
     case 'hightech':
       if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        return adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA/ELW/WW or has has BIO/GEO`, map, site, 'body');
+        return adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has has BIO/GEO`, map, site, 'body');
       }
       return;
 
@@ -402,7 +402,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
 
     case 'tourism':
       if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        adjust(inf, +0.4, `+ ${reason} boost: Body is AMMONIA/ELW/WW or has BIO/GEO`, map, site, 'body');
+        adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has BIO/GEO`, map, site, 'body');
       }
       if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
         adjust(inf, +0.4, `+ ${reason} boost: System has System has Black Hole/Neutron Star/White Dwarf`, map, site, 'sys');
@@ -438,9 +438,11 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
   }
 
   if (map.agriculture > 0) {
-    if (matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
+    let buffed = false;
+    if (matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {// && (!isSettlement || !debuff)) {
       // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
       adjust('agriculture', +0.4, 'Buff: body has BIO or TERRAFORMABLE', map, site, 'body');
+      buffed = true;
     }
 
     // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
@@ -449,7 +451,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
       adjust('agriculture', +0.4, 'Buff: body is ELW or WW', map, site, 'body');
     }
 
-    if ((matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && !isSettlement) {
+    if ((matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && (!isSettlement || buffed)) {
       // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
       // If the Body is Tidally Locked (-0.40) for Agriculture
       adjust('agriculture', -0.4, 'Buff: body is ICY or has TIDAL', map, site, 'body');
@@ -464,7 +466,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
     } else if (matches([BT.elw, BT.aw], site.body?.type)) {
       // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
       // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
-      adjust('hightech', +0.4, 'Buff: body is ELW or AMMONIA', map, site, 'body');
+      adjust('hightech', +0.4, 'Buff: body is ELW or AW', map, site, 'body');
     }
   }
 
@@ -476,19 +478,21 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
   }
 
   if (map.tourism > 0) {
-    if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
+    if (!site.systemBuffed?.has('tourism') && site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
       // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
       adjust('tourism', +0.4, 'Buff: system has Black Hole or Neutron Star or White Dwarf', map, site, 'sys');
     }
-    if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-      // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
-      // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
-      adjust('tourism', +0.4, 'Buff: body has BIO or GEO', map, site, 'body');
-    } else if (matches([BT.elw, BT.ww, BT.aw], site.body?.type)) {
-      // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
-      // If the Body is a Water World (+0.40) for Tourism and Agriculture
-      // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
-      adjust('tourism', +0.4, 'Buff: body is ELW or WW or AMMONIA', map, site, 'body');
+    if (!site.bodyBuffed?.has('tourism')) {
+      if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+        // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
+        // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
+        adjust('tourism', +0.4, 'Buff: body has BIO or GEO', map, site, 'body');
+      } else if (matches([BT.elw, BT.ww, BT.aw], site.body?.type)) {
+        // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
+        // If the Body is a Water World (+0.40) for Tourism and Agriculture
+        // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
+        adjust('tourism', +0.4, 'Buff: body is ELW or WW or AW', map, site, 'body');
+      }
     }
   }
 };
