@@ -33,6 +33,18 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       <ProjectLink2 site={s} sysView={props.sysView} bigLink />
     </div>));
 
+  const maxEffectCount = Math.max(...Object.values(sysMap.sumEffects));
+  let cw = 5;
+  if (maxEffectCount > 64) {
+    cw = 2.5;
+  } else if (maxEffectCount > 50) {
+    cw = 2.5;
+  } else if (maxEffectCount > 42) {
+    cw = 3;
+  } else if (maxEffectCount > 30) {
+    cw = 4;
+  }
+
   return <div
     style={{
       display: 'grid',
@@ -68,11 +80,11 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       return [
         <div key={`se${key}1`}>{mapName[key]}:</div>,
         <div key={`se${key}2`}>
-          {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} />}
+          {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
         </div>,
         <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
         <div key={`se${key}4`}>
-          {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} />}
+          {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
         </div>,
       ]
     })}

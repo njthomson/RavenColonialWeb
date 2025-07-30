@@ -40,13 +40,16 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
     const { strong, weak } = props.site.links.economies[key];
     const color = economyColors[key] ?? '#FFF';
 
+    const strongNames = props.site.links.strongSites.filter(s => s.type.inf === key || s.primaryEconomy === key).map((s: any) => `» ${s.name}`);
+    const weakNames = props.site.links.weakSites.filter(s => s.type.inf === key || s.primaryEconomy === key).map((s: any) => `» ${s.name}`);
+
     linkRows.push(<tr key={`link${props.site.buildId}-${key}`}>
       <td className={cn.br}>
         <div style={{ display: 'inline-block', width: 10, height: 10, marginRight: 8, backgroundColor: color, border: '1px solid rgba(0,0,0,0.3)' }}></div>
         {mapName[key]}
       </td>
-      <td className={cn.br} style={{ textAlign: 'center' }}>{getLinkCountSpan(strong)}</td>
-      <td style={{ textAlign: 'center' }}>{getLinkCountSpan(weak)}</td>
+      <td className={cn.br} style={{ textAlign: 'center', cursor: 'default' }} title={strongNames.join(`\n`)}>{getLinkCountSpan(strong)}</td>
+      <td style={{ textAlign: 'center', cursor: 'default' }} title={weakNames.join(`\n`)}>{getLinkCountSpan(weak)}</td>
     </tr>);
   };
 

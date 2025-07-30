@@ -81,6 +81,18 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
     if (statusCountMap.build) { statusCounts.push(`${statusCountMap.build} ${mapStatus.build}`) }
     if (statusCountMap.plan) { statusCounts.push(`${statusCountMap.plan} ${mapStatus.plan}`) }
 
+    const maxEffectCount = Math.max(...Object.values(snapshot.sumEffects));
+    let cw = 5;
+    if (maxEffectCount > 64) {
+      cw = 2.5;
+    } else if (maxEffectCount > 50) {
+      cw = 2.5;
+    } else if (maxEffectCount > 42) {
+      cw = 3;
+    } else if (maxEffectCount > 30) {
+      cw = 4;
+    }
+
     return <div
       key={`snap-${snapshot.id64}`}
       className={css.siteCard}
@@ -112,11 +124,11 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
           return [
             <div key={`se${key}1`}>{mapName[key]}:</div>,
             <div key={`se${key}2`}>
-              {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} />}
+              {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
             </div>,
             <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
             <div key={`se${key}4`}>
-              {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} />}
+              {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
             </div>,
           ]
         })}
