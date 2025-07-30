@@ -811,7 +811,7 @@ const getBodyColour = (bodyType?: BT, subType?: string) => {
     default:
       return { c1: 'blue', c2: 'red' };
     case BT.bh:
-      return { c1: 'rgb(38, 0, 43)', c2: 'rgb(255, 255, 255)' };
+      return { c1: 'rgba(23, 0, 26, 1)', c2: 'rgba(46, 46, 46, 1)' };
     case BT.ns:
       return { c1: 'rgb(185, 255, 255)', c2: 'rgb(255, 255, 255)' };
     case BT.wd:
@@ -874,7 +874,7 @@ const getBodySize = (bodyType?: BT) => {
     case BT.bh:
     case BT.ns:
     case BT.wd:
-      return 5;
+      return 10;
 
     case BT.st:
       return 30;
