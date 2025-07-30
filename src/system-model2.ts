@@ -361,8 +361,21 @@ const calcBodyLinks = (allBodies: BodyMap2[], body: BodyMap2, sys: Sys, useIncom
 
 const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteMap2, useIncomplete: boolean) => {
 
+  // start with sites directly on the body
+  const siblingSites = body.sites;
+  // and if it's an asteroid cluster: include sites directly around the parent star
+  const sys = primarySite.sys;
+  if (body.type === BT.ac && sys.bodyMap) {
+    const parentStar = sys.bodies.find(b => b.num === body.parents[0]);
+    if (!parentStar) { throw new Error(`No parent star found for asteroid cluster ${body.name}`); }
+    const moreSites = sys.bodyMap[parentStar.name]?.sites;
+    if (moreSites) {
+      siblingSites.push(...moreSites);
+    }
+  }
+
   // strong links are everything else tied to the current body, alpha sort by name
-  const strongSites = body.sites
+  const strongSites = siblingSites
     .filter(s => {
       if (s.parentLink || s.type.inf === 'none' || s === primarySite || (s.status !== 'complete' && !useIncomplete)) {
         // skip anything already strong-linked, things without influence, ourself or incompletes
@@ -378,8 +391,6 @@ const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteM
         // surface sites cannot claim orbital facilities if there's an orbital port
         return false;
       }
-
-      // TODO: something about tier's ... or pre-sort so higher tier's go first?
 
       // set the link to the primary
       s.parentLink = primarySite;

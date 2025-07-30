@@ -1,3 +1,4 @@
+import { store } from "./local-storage";
 import { Economy } from "./site-data";
 import { EconomyMap } from "./system-model";
 import { SiteMap2, SysMap2 } from "./system-model2";
@@ -6,6 +7,9 @@ import { Bod, BT } from "./types2";
 import { asPosNegTxt2 } from "./util";
 
 let showConsoleAudit = Date.now() < 0;
+
+const useNewModel = store.useNewModel;
+console.log(`useNewModel: ${useNewModel}`);
 
 /** Black hole, Neutron star or White Dwarf */
 export const stellarRemnants = [BT.bh, BT.ns, BT.wd];
@@ -58,27 +62,35 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
   } else {
     // Colony ports start with an economy based on the parent body, but ...
     // apply unless: we are orbital and the surface primary IS Colony, or we are not the orbital primary
-    if (!site.type.orbital || site.body?.surfacePrimary?.type.inf !== 'colony' || site !== site.body?.orbitalPrimary) {
+    if (!site.type.orbital || site.body?.surfacePrimary?.type.inf !== 'colony' || site !== site.body?.orbitalPrimary || useNewModel) {
       applyBodyType(map, site);
+    }
+
+    if (useNewModel) {
+      applyBuffs(map, site, false, false);
     }
   }
 
-  if (site.type.fixed) {
+  if (site.type.fixed && !useNewModel) {
     applyStrongLinkBoost(site.type.fixed, map, site, 'Self');
   }
 
   // these apply for fixed and economy ports
-  applyStrongLinks2(map, site, useIncomplete);
-  if (!site.type.fixed) {
-    applyBuffs(map, site, false);
+  if (site.links) {
+    const isC2C = applyStrongLinks2(map, site.links!.strongSites, site, useIncomplete);
 
-    // // identical to buffs?
-    // for (const inf in map) {
-    //   if (map[inf as keyof EconomyMap] < 1) continue;
-    //   applyStrongLinkBoost(inf as keyof EconomyMap, map, site, 'Self2');
-    // }
+    if (!site.type.fixed) {
+      if (!useNewModel) {
+        applyBuffs(map, site, false, isC2C);
+      }
+      // // identical to buffs?
+      // for (const inf in map) {
+      //   if (map[inf as keyof EconomyMap] < 1) continue;
+      //   applyStrongLinkBoost(inf as keyof EconomyMap, map, site, 'Self2');
+      // }
+    }
+    applyWeakLinks(map, site, useIncomplete);
   }
-  applyWeakLinks(map, site, useIncomplete);
 
   return finishUp(map, site);
 };
@@ -160,7 +172,9 @@ const applySpecializedPort = (map: EconomyMap, site: SiteMap2) => {
 
   // apply boost as if it were a strong link
   // applyStrongLinkBoost(site.type.fixed, map, site, 'Specialized port');
-  // applyBuffs(map, site);
+  if (useNewModel) {
+    applyBuffs(map, site, false, false);
+  }
 };
 
 const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
@@ -303,28 +317,37 @@ export const applyStrongLinks0 = (map: EconomyMap, site: SiteMap2, useIncomplete
 };
 */
 
-export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete: boolean) => {
-  if (!site.links?.strongSites) { return; }
-
+export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, useIncomplete: boolean, nested?: boolean) => {
   // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
   // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
+  let isC2C = false;
 
-  for (let s of site.links.strongSites) {
+  for (let s of strongSites) {
     if (s.type.inf === 'none') { continue; }
 
     // skip incomplete sites ?
     if (s.status !== 'complete' && !useIncomplete) { continue; }
 
     // size of impact varies by Tier: 0.4 / 0.8 / 1.2
-    const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2)
+    const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2);
+    const prefix = nested ? 'SUB-strong link' : 'strong link';
 
     // apply single adjustment for non-colony types
     if (s.type.inf !== 'colony') {
       // apply single fixed economy influences
       if (s.type.inf in map) {
-        adjust(s.type.inf, infSize, `Apply strong link from: ${s.name} (T${s.type.tier})`, map, site);
+        adjust(s.type.inf, infSize, `Apply ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
 
-        applyStrongLinkBoost(s.type.inf, map, site, 'Strong link');
+        applyStrongLinkBoost(s.type.inf, map, site, prefix);
+
+        const stronglyLinkedEconomies = s.links?.economies && Object.keys(s.links.economies)?.filter(k => k !== s.type.inf && s.links?.economies && s.links.economies[k]?.strong > 0);
+        if (stronglyLinkedEconomies) {
+          for (const linkedInf of stronglyLinkedEconomies) {
+            console.log("@@", s.name, site.name, stronglyLinkedEconomies);
+            adjust(linkedInf as Economy, infSize, `Apply ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
+            applyStrongLinkBoost(linkedInf as Economy, map, site, prefix);
+          }
+        }
       } else {
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name} - ${s.type.displayName2} (${s.buildType})`);
       }
@@ -341,18 +364,31 @@ export const applyStrongLinks2 = (map: EconomyMap, site: SiteMap2, useIncomplete
     for (var e in s.economies) {
       const ee = e as keyof EconomyMap;
       const val = s.economies[ee];
-      if (val >= 1) {
-        // use the ACTUAL economy strength
-        adjust(ee, val, `Apply colony strong link from: ${s.name} (T${s.type.tier})`, map, site);
-        applyStrongLinkBoost(ee, map, site, 'Strong links');
+      if (val >= 0.5) {
+        isC2C = site.type.inf === 'colony' && s.type.inf === 'colony';
+        if (useNewModel /* && s.type.tier === site.type.tier*/) {
+          const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2)
+          adjust(ee, infSize, `Apply colony ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
+        } else {
+          // use the ACTUAL economy strength
+          adjust(ee, val, `Apply colony ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
+        }
+        applyStrongLinkBoost(ee, map, site, `${prefix}s`);
 
         // Add a special case: terraforming can be boosted by colony-to-colony strong links.
-        if (ee === 'terraforming') {
-          adjust(ee, +0.4, `+ Colony strong link boost (really?)`, map, site, 'body');
+        if (ee === 'terraforming' && !useNewModel) {
+          adjust(ee, +0.4, `+ Colony ${prefix} boost (really?)`, map, site, 'body');
         }
       }
     }
+
+    // also apply strong links from the emitting port
+    if (useNewModel && isC2C && s.links?.strongSites && !nested) {
+      applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, true);
+    }
   }
+
+  return isC2C;
 };
 
 const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, reason: string) => {
@@ -364,8 +400,20 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
     default: return 0;
 
     case 'agriculture':
-      if (matches([BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
-        adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO/TERRAFORMABLE`, map, site, 'body');
+      if (useNewModel && false) { // disable for now
+        if (matches([BT.elw, BT.ww], site.body?.type)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW`, map, site, 'body');
+        }
+        if (matches([BodyFeature.bio], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has BIO`, map, site, 'body');
+        }
+        if (matches([BodyFeature.terraformable], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has TERRAFORMABLE`, map, site, 'body');
+        }
+      } else {
+        if (matches([BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO/TERRAFORMABLE`, map, site, 'body');
+        }
       }
       if (matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
         adjust(inf, -0.4, `- ${reason} boost: Body is ICY or has TIDAL`, map, site, 'body');
@@ -385,8 +433,21 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
       return;
 
     case 'hightech':
-      if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        return adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has has BIO/GEO`, map, site, 'body');
+      if (useNewModel) { // unlike the others - enable this one
+        if (matches([BT.aw, BT.elw, BT.ww], site.body?.type)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW`, map, site, 'body');
+        }
+        if (matches([BodyFeature.bio], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has BIO`, map, site, 'body');
+        }
+        if (matches([BodyFeature.geo], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has GEO`, map, site, 'body');
+        }
+      }
+      else {
+        if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has BIO/GEO`, map, site, 'body');
+        }
       }
       return;
 
@@ -401,8 +462,20 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
       return;
 
     case 'tourism':
-      if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-        adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has BIO/GEO`, map, site, 'body');
+      if (useNewModel && false) { // disable for now
+        if (matches([BT.aw, BT.elw, BT.ww], site.body?.type)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW`, map, site, 'body');
+        }
+        if (matches([BodyFeature.bio], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has BIO`, map, site, 'body');
+        }
+        if (matches([BodyFeature.geo], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has GEO`, map, site, 'body');
+        }
+      } else {
+        if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has BIO/GEO`, map, site, 'body');
+        }
       }
       if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
         adjust(inf, +0.4, `+ ${reason} boost: System has System has Black Hole/Neutron Star/White Dwarf`, map, site, 'sys');
@@ -411,7 +484,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
   }
 }
 
-const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
+const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean, isC2C?: boolean) => {
 
   // Do not apply any negative buffs to Odyssey settlements
 
@@ -424,7 +497,7 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
     if (map[key] > 0) {
       if (reserveLevel === 'major' || reserveLevel === 'pristine') {
         // this is a dirty hack to prevent refinery from over applying :(
-        if (key === 'refinery' && site.body?.type !== BT.rb && site.type.inf === 'colony') {
+        if (key === 'refinery' && site.body?.type !== BT.rb && site.type.inf === 'colony' && !useNewModel) {
           continue;
         }
 
@@ -459,19 +532,38 @@ const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
   }
 
   if (map.hightech > 0) {
-    if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
-      // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
-      // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
-      adjust('hightech', +0.4, 'Buff: body has BIO or GEO', map, site, 'body');
-    } else if (matches([BT.elw, BT.aw], site.body?.type)) {
-      // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
-      // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
-      adjust('hightech', +0.4, 'Buff: body is ELW or AW', map, site, 'body');
+    if (isSettlement && useNewModel) {
+      // Allow high-tech body features to stack on Odyssey settlements
+      if (matches([BodyFeature.bio], site.body?.features)) {
+        // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
+        // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
+        adjust('hightech', +0.4, 'Buff: body has BIO', map, site, 'body');
+      }
+      if (matches([BodyFeature.geo], site.body?.features)) {
+        // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
+        // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
+        adjust('hightech', +0.4, 'Buff: body has GEO', map, site, 'body');
+      }
+      if (matches([BT.elw, BT.aw], site.body?.type)) {
+        // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
+        // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
+        adjust('hightech', +0.4, 'Buff: body is ELW or AW', map, site, 'body');
+      }
+    } else {
+      if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
+        // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
+        // If the Body has Geologicals (+0.40) for High Tech and Tourism - the type of Geologicals doesn't matter
+        adjust('hightech', +0.4, 'Buff: body has BIO or GEO', map, site, 'body');
+      } else if (matches([BT.elw, BT.aw], site.body?.type)) {
+        // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
+        // If the Body is an Ammonia World (+0.40) for High Tech and Tourism
+        adjust('hightech', +0.4, 'Buff: body is ELW or AW', map, site, 'body');
+      }
     }
   }
 
   if (map.extraction > 0) {
-    if (matches([BodyFeature.volcanism], site.body?.features)) {
+    if (matches([BodyFeature.volcanism], site.body?.features)) { // maybe ??? && (!isC2C || !site.bodyBuffed?.has('extraction')) // && !site.bodyBuffed?.has('extraction')
       // If the Body has Volcanism (+0.40) for Extraction - the type of Volcanism doesn't matter
       adjust('extraction', +0.4, 'Buff: body has VOLCANISM', map, site, 'body');
     }
@@ -536,15 +628,19 @@ const matches = <T>(listRequired: T[], check: T | T[] | undefined, avoid?: T[]) 
   }
 }
 
-const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined): boolean => {
+const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number[]): boolean => {
 
-  // stop if this body is not tidally locked
-  if (!body?.features.includes(BodyFeature.tidal)) {
+  if (!parents) {
+    parents = [...body?.parents ?? []];
+  }
+
+  // stop if this body is not tidally locked (but bypass Barycenters)
+  if (!body?.features.includes(BodyFeature.tidal) && body?.type !== BT.bc) {
     return false;
   }
 
   // otherwise recurse up parents until we reach a star
-  let parentNum = body.parents[0];
+  let parentNum = parents.shift();
   let parentBody = sys.bodies.find(b => b.num === parentNum);
   if (!parentBody) { throw new Error(`Why no parent from: ${body.name}`); }
 
@@ -553,15 +649,15 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined): boolean => {
     return true;
   }
 
-  if (parentBody.type === BT.bc) {
-    /* TODO: Implement this ...
-      - If **immediate** parent is a barycenter: apply penalty only if sibling is a star
-        - If sibling is not a star: do not walk parent chain, do not apply penalty
-      - If barycenter encountered in parent chain: apply no penalty
-    */
-    console.log(`TODO: fully implement barycenters: ${body.name}`);
-    return false;
-  }
+  // if (parentBody.type === BT.bc) {
+  //   /* TODO: Implement this ...
+  //     - If **immediate** parent is a barycenter: apply penalty only if sibling is a star
+  //       - If sibling is not a star: do not walk parent chain, do not apply penalty
+  //     - If barycenter encountered in parent chain: apply no penalty
+  //   */
+  //   console.log(`TODO: fully implement barycenters: ${body.name}`);
+  //   return false;
+  // }
 
-  return bodyIsTidalToStar(sys, parentBody);
+  return bodyIsTidalToStar(sys, parentBody, parents);
 }

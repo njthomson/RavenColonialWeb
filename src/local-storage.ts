@@ -27,6 +27,7 @@ enum Stored {
   viewEditBuiltTypeTab = 'viewEditBuiltTypeTab',
   siteGraphType = 'siteGraphType',
   autoCheckSpanshEconomies = 'autoCheckSpanshEconomies',
+  useNewModel = 'useNewModel',
 }
 
 interface CmdrData {
@@ -199,6 +200,9 @@ class LocalStorage {
 
   get autoCheckSpanshEconomies(): boolean { return readBoolean(Stored.autoCheckSpanshEconomies); }
   set autoCheckSpanshEconomies(newValue: boolean) { writeValue(Stored.autoCheckSpanshEconomies, newValue); }
+
+  get useNewModel(): boolean { return readBoolean(Stored.useNewModel, true); }
+  set useNewModel(newValue: boolean) { writeValue(Stored.useNewModel, newValue); }
 }
 
 export const store = new LocalStorage();

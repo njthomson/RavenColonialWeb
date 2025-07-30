@@ -287,6 +287,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     const childPartTree = Object.values(bodyTree).map((n, i) => this.renderBody(n, i));
     const bodyElements = childPartTree.map(cp => cp.element);
     const noBodies = !childPartTree.some(cp => cp.hasSome);
+    const noSites = hideEmpties && !childPartTree.some(cp => cp.hasSites);
 
     return <div style={{ width: 'max-content', marginRight: 32 }}>
       <div
@@ -317,6 +318,10 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         {noBodies && <div style={{ marginLeft: 40, }}>
           <div>No bodies meet the filter criteria</div>
           <div style={{ marginTop: 20, color: appTheme.palette.themePrimary }}>Try toggling "Including matches" to match bodies without the criteria</div>
+        </div>}
+        {noSites && <div style={{ marginLeft: 40, marginTop: 20 }}>
+          <div>There are no sites in the system</div>
+          <div style={{ marginTop: 20, color: appTheme.palette.themePrimary }}>Toggle "Hide empty bodies"</div>
         </div>}
       </div>
       {showBodyFilter && <ContextualMenu
@@ -505,11 +510,11 @@ type ChildParts = {
 
 export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean, filtering: boolean, leftDotted?: boolean }> = (props) => {
   // calculate a rough ratio of the size of each body and adjust how far down is the bottom line connecting to the children
-  const na = (props.bodyA.props as BodyBlockProps).node;
+  const na = (props.bodyA?.props as BodyBlockProps)?.node;
   const sa = na?.map?.sites.length || 0;
   const szA = Math.max(getBodySize(na?.body.type), sa * 20);
 
-  const nb = (props.bodyB.props as BodyBlockProps).node;
+  const nb = (props.bodyB?.props as BodyBlockProps)?.node;
   const sb = nb?.map?.sites.length || 0;
   const szB = Math.max(getBodySize(nb?.body.type), sb * 20);
   const r = szA / szB;
