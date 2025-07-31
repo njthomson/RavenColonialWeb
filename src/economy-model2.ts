@@ -642,7 +642,13 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number
   // otherwise recurse up parents until we reach a star
   let parentNum = parents.shift();
   let parentBody = sys.bodies.find(b => b.num === parentNum);
-  if (!parentBody) { throw new Error(`Why no parent from: ${body.name}`); }
+  if (!parentBody) {
+    if (parentNum === 0) {
+      return false; // reached the system barycenter? no star found
+    } else {
+      throw new Error(`Why no parent from: ${body.name}`);
+    }
+  }
 
   // if body is a star - return TRUE say yes as we recursed here
   if (matches([...stellarRemnants, BT.st], parentBody.type)) {
