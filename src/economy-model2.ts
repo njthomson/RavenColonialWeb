@@ -135,9 +135,10 @@ const finishUp = (map: EconomyMap, site: SiteMap2) => {
 
 const adjust = (inf: Economy, delta: number, reason: string, map: EconomyMap, site: SiteMap2, source?: 'body' | 'sys') => {
   const before = map[inf as keyof EconomyMap];
-  map[inf as keyof EconomyMap] += delta;
+  let newValue = map[inf as keyof EconomyMap] + delta;
+  // if (newValue <= 0) { newValue = 0.1; }
   // round values (why do we get values of "2.2499999999999996"?)
-  map[inf as keyof EconomyMap] = Math.round(map[inf as keyof EconomyMap] * 100) / 100;
+  map[inf as keyof EconomyMap] = Math.round(newValue * 100) / 100;
   const after = map[inf as keyof EconomyMap];
 
   if (inf === 'colony') {
@@ -235,7 +236,7 @@ const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       break;
     case BT.ac:
       // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
-      adjust('extraction', +1, 'Body type: HMC', map, site);
+      adjust('extraction', +1, 'Body type: ASTEROID', map, site);
       break;
   }
 

@@ -8,7 +8,7 @@ import { callAPI } from "./api-util";
 
 /** System level APIs */
 export const systemV2 = {
-  currentSchemaVersion: 4,
+  currentSchemaVersion: 5,
   cache: {
     sys: {} as Record<string, Sys>,
     economies: {} as Record<string, GetRealEconomies[]>,
