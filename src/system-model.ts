@@ -464,7 +464,7 @@ export const hasPreReq = (sysMap: SysMap, type: SiteType) => {
       return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementBio':
-      return sysMap.siteMaps.some(s => ["phoebe", "asteria", "caerus", "chronos"].some(n => s.buildType?.startsWith(n)));
+      return sysMap.siteMaps.some(s => ["pheobe", "asteria", "caerus", "chronos"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementTourism':
       return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
