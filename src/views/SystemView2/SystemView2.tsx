@@ -746,7 +746,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
           {
             key: 'sys-graph-type1',
-            title: `Toggle showing charts between ratios of:\n- Market links\n- rimary site economies\n- All site economies\n- No charts`,
+            title: `Toggle showing charts between ratios of:\n- Market links\n- Primary site economies\n- All site economies\n- No charts`,
             className: cn.bBox,
             iconProps: { iconName: mapSiteGraphTypeIcon[siteGraphType] },
             disabled: !!processingMsg,
