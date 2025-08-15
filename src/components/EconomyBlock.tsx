@@ -84,6 +84,7 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
   }
 
   const isSurface = economies[0].endsWith('/surface');
+  const isOrbital = economies[0].endsWith('/orbital');
   const bgColor0 = economyColors[economies[0].split('/', 1)[0]] ?? '#FFF';
   const titleTxt = (titleRatios ?? economies.map(t => mapName[t]).join(', ')) || 'Unknown';
 
@@ -100,7 +101,8 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
     }}
   >
     {innerBlock}
-    {isSurface && <Icon
-      iconName='GlobeFavorite' style={{ position: 'absolute', left: 3, top: 3, color: 'black' }} />}
+    {isSurface && <Icon iconName='GlobeFavorite' style={{ position: 'absolute', left: 3, top: 3, color: 'black' }} />}
+    {isOrbital && <Icon iconName='ProgressRingDots' style={{ position: 'absolute', left: 3, top: 3, color: 'black' }} />}
   </div>;
 };
+  

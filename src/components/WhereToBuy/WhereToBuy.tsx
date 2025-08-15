@@ -349,7 +349,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         />
       </Stack>
 
-      <div className='small' style={{ margin: '20px 0' }}>Data sourced from <Link href='https://spansh.co.uk' target='spansh'>spansh.co.uk</Link>, updated once a day.</div>
+      <div className='small' style={{ margin: '20px 0' }}>Data sourced from <Link href='https://spansh.co.uk' target='spansh'>spansh.co.uk</Link>, updated hourly.</div>
 
       {noMarketsFound && <MessageBar messageBarType={MessageBarType.blocked}>
         No markets found by these criteria
