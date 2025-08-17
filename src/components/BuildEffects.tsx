@@ -129,6 +129,15 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
             {st.preReq && <div style={{ marginTop: 4 }}>
               <Icon className="icon-inline" iconName='Lightbulb' style={{ color: appTheme.palette.accent }} /> Requires {mapName[st.preReq]}
             </div>}
+
+            {st.unlocks?.length && <>
+              {st.unlocks.map(t => {
+                return <div style={{ marginTop: 4 }}>
+                  <Icon className="icon-inline" iconName='Lightbulb' style={{ color: appTheme.palette.accent }} />
+                  &nbsp;{t}
+                </div>;
+              })}
+            </>}
           </td>
         </tr>
 

@@ -485,6 +485,13 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
     };
   }
 
+  if (type.unlocks) {
+    return {
+      isValid: true,
+      msg: type.unlocks.join('|'),
+    };
+  }
+
   return { isValid: true };
 }
 
@@ -516,6 +523,9 @@ export const hasPreReq2 = (sysMap: SysMap2 | SysMap, type: SiteType) => {
 
     case 'settlementTourism':
       return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
+
+    case 'settlementMilitary':
+      return sysMap.siteMaps.some(s => ["ioke", "bellona", "enyo", "polemos", "minerva"].some(n => s.buildType?.startsWith(n)));
 
     default:
       console.error(`Unexpected preReq: ${type.preReq}`)

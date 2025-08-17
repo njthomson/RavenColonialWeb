@@ -81,7 +81,8 @@ export interface SiteType {
   /** Effects upon the system */
   effects: SysEffects;
 
-  preReq?: 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourism';
+  preReq?: 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourism' | 'settlementMilitary';
+  unlocks?: string[];
 }
 
 export const mapName: Record<string, string> = {
@@ -127,6 +128,7 @@ export const mapName: Record<string, string> = {
   relay: 'a relay installation',
   settlementBio: 'a bio research settlement',
   settlementTourism: 'a tourism settlement',
+  settlementMilitary: 'a military settlement',
 
   // body and system feature names
   bio: 'Bio signals',
@@ -494,7 +496,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "military",
-    "effects": { pop: 0, mpop: 0, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 0 },
+    "preReq": 'settlementMilitary'
   },
   {
     "displayName": "Security",
@@ -782,7 +785,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "military",
-    "effects": { pop: 1, mpop: 1, sec: 2, wealth: 0, tech: 0, sol: 0, dev: 0 }
+    "effects": { pop: 1, mpop: 1, sec: 2, wealth: 0, tech: 0, sol: 0, dev: 0 },
+    "unlocks": ['Unlocks military installations']
   },
   {
     "displayName": "Medium Military",
@@ -797,7 +801,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "military",
-    "effects": { pop: 1, mpop: 1, sec: 4, wealth: 0, tech: 0, sol: 0, dev: 0 }
+    "effects": { pop: 1, mpop: 1, sec: 4, wealth: 0, tech: 0, sol: 0, dev: 0 },
+    "unlocks": ['Unlocks military installations']
   },
   {
     "displayName": "Large Military",
@@ -811,7 +816,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "military",
-    "effects": { pop: 1, mpop: 1, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 3 }
+    "effects": { pop: 1, mpop: 1, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 3 },
+    "unlocks": ['Unlocks military installations']
   },
   {
     "displayName": "Small Bio",

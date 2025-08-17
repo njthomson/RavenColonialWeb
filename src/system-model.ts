@@ -469,6 +469,9 @@ export const hasPreReq = (sysMap: SysMap, type: SiteType) => {
     case 'settlementTourism':
       return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
 
+    case 'settlementMilitary':
+      return sysMap.siteMaps.some(s => ["ioke", "bellona", "enyo", "polemos", "minerva"].some(n => s.buildType?.startsWith(n)));
+
     default:
       console.error(`Unexpected preReq: ${type.preReq}`)
       return false;
