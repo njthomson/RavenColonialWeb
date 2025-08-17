@@ -204,11 +204,22 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       }, 10);
     }
 
-    const { isValid, msg } = isTypeValid2(this.props.sysMap, type, getSiteType(this.props.buildType, true));
-    const msgElement = <Stack horizontal verticalAlign='center'>
+    const { isValid, msg, unlocks } = isTypeValid2(this.props.sysMap, type, getSiteType(this.props.buildType, true));
+    let msgElement = <Stack horizontal verticalAlign='center'>
       <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
       <span>{msg}</span>
     </Stack>;
+
+    if (unlocks) {
+      msgElement = <Stack horizontal verticalAlign='center'>
+        {unlocks.map(t => {
+          return <div>
+            <Icon iconName={'LightBulb'} style={{ marginRight: 4}} />
+            <span>{t}</span>
+          </div>;
+        })}
+      </Stack>;
+    }
 
     return <div
       key={id}
@@ -233,7 +244,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
       <Stack horizontal verticalAlign='center' style={{ color: appTheme.palette.themePrimary }}>
         <span>{type.displayName2}</span>
-        {msg && <span style={{ marginLeft: 8, marginTop: 4, }}>
+        {(msg || unlocks) && <span style={{ marginLeft: 8, marginTop: 4, }}>
           <CalloutMsg
             directionalHint={DirectionalHint.rightCenter}
             msg={msgElement}

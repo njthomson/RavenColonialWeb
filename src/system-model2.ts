@@ -459,22 +459,24 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
 };
 
 export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType | undefined, priorType: SiteType | undefined) => {
-  if (!sysMap || !type) { return { isValid: true }; }
+  if (!type) { return { isValid: true }; }
 
-  // give credit for points already spent for priorType
-  let neededT2 = sysMap.tierPoints.tier2;
-  let neededT3 = sysMap.tierPoints.tier3;
-  if (priorType) {
-    if (priorType.needs.tier === 2) { neededT2 += priorType.needs.count; }
-    if (priorType.needs.tier === 3) { neededT3 += priorType.needs.count; }
-  }
+  if (sysMap) {
+    // give credit for points already spent for priorType
+    let neededT2 = sysMap.tierPoints.tier2;
+    let neededT3 = sysMap.tierPoints.tier3;
+    if (priorType) {
+      if (priorType.needs.tier === 2) { neededT2 += priorType.needs.count; }
+      if (priorType.needs.tier === 3) { neededT3 += priorType.needs.count; }
+    }
 
-  if (type.needs.tier === 2 && neededT2 < type.needs.count) {
-    return { isValid: false, msg: 'Not enough Tier 2 points' };
-  }
+    if (type.needs.tier === 2 && neededT2 < type.needs.count) {
+      return { isValid: false, msg: 'Not enough Tier 2 points' };
+    }
 
-  if (type.needs.tier === 3 && neededT3 < type.needs.count) {
-    return { isValid: false, msg: 'Not enough Tier 3 points' };
+    if (type.needs.tier === 3 && neededT3 < type.needs.count) {
+      return { isValid: false, msg: 'Not enough Tier 3 points' };
+    }
   }
 
   if (type.preReq) {
@@ -488,14 +490,16 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
   if (type.unlocks) {
     return {
       isValid: true,
-      msg: type.unlocks.join('|'),
+      unlocks: type.unlocks,
     };
   }
 
   return { isValid: true };
 }
 
-export const hasPreReq2 = (sysMap: SysMap2 | SysMap, type: SiteType) => {
+export const hasPreReq2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType) => {
+  if (!sysMap) { return true; }
+
   switch (type.preReq) {
     case 'satellite':
       return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType?.startsWith(n)));

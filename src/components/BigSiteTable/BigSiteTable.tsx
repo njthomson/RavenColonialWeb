@@ -443,6 +443,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
     const showValid = this.props.sysMap || this.props.sysMap2;
     const { isValid, msg } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
+    console.log(`${type.displayName2} => ${isValid} / ${msg}`);
 
     const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
 
