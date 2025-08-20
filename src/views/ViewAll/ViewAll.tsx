@@ -1,6 +1,6 @@
 import './ViewAll.css';
 import '../ProjectView/ProjectView.css';
-import { ActionButton, CommandBar, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ActionButton, CommandBar, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
@@ -29,6 +29,7 @@ interface ViewAllState {
   autoUpdateUntil: number;
   fcEditMarketId?: string;
   cmdrEdit?: boolean;
+  hideLoginPrompt?: boolean;
 }
 
 export class ViewAll extends Component<ViewAllProps, ViewAllState> {
@@ -60,6 +61,10 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   async fetchAll() {
+    if (!store.cmdrName) {
+      console.warn('You need to sign in in for this');
+      return;
+    }
     this.setState({ loading: true });
 
     try {
@@ -162,11 +167,44 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
     const fcRemaining = cargoRemaining - cargoOnHand;
+
+    if (!store.cmdrName) {
+      return <div className='view-all'>
+
+        <div style={{ margin: 20 }}>
+          Commander name needed
+        </div>
+
+        {!hideLoginPrompt && <TeachingBubble
+          target={'#current-cmdr'}
+          headline='Greetings'
+          calloutProps={{
+            preventDismissOnResize: true,
+            directionalHint: DirectionalHint.bottomLeftEdge,
+          }}
+          onDismiss={() => this.setState({ hideLoginPrompt: true })}
+          primaryButtonProps={{
+            text: 'Okay',
+            onClick: () => {
+              document.getElementById('current-cmdr')?.click();
+              this.setState({ hideLoginPrompt: true });
+            }
+          }}
+          secondaryButtonProps={{
+            text: 'Maybe later',
+            onClick: () => this.setState({ hideLoginPrompt: true }),
+          }}
+        >
+          You must enter a Commander name to use this tool.
+        </TeachingBubble>}
+      </div>;
+    }
+
 
     return <div className='view-all'>
       <div>
@@ -290,11 +328,16 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     const cmdrLinkedFC: KnownFC[] = [];
     const projectLinkedFC: KnownFC[] = [];
 
+    const cmdrLinkedFCs = store.cmdrLinkedFCs;
+
     for (let fc of linkedFC) {
       let projLinked = projects.some(p => p.linkedFC.map(_ => _.marketId).includes(fc.marketId));
       if (projLinked) {
         projectLinkedFC.push(fc);
-      } else {
+      } else if (!cmdrLinkedFCs) {
+        cmdrLinkedFC.push(fc);
+      }
+      if (fc.marketId in cmdrLinkedFCs) {
         cmdrLinkedFC.push(fc);
       }
     }
@@ -311,11 +354,6 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         <h3 className={cn.h3}>
           {linkedFC.length} Fleet Carriers:
         </h3>
-        <h4 style={{ color: appTheme.palette.themePrimary }}>Project linked:</h4>
-        <div className='hint small'>These Fleet Carriers may also be linked to your commander</div>
-        <ul>
-          {this.getLinkedFCRows(projectLinkedFC)}
-        </ul>
         <h4 style={{ color: appTheme.palette.themePrimary }}>
           <Stack horizontal>
             <span>Commander linked only:</span>
@@ -337,6 +375,11 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         </h4>
         <ul>
           {this.getLinkedFCRows(cmdrLinkedFC)}
+        </ul>
+        <h4 style={{ color: appTheme.palette.themePrimary }}>Project linked:</h4>
+        <div className='hint small'>These Fleet Carriers may also be linked to your commander</div>
+        <ul>
+          {this.getLinkedFCRows(projectLinkedFC)}
         </ul>
       </div>
     </>;

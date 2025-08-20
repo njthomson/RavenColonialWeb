@@ -3,7 +3,7 @@ import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
 import { Cargo, KnownFC, mapCommodityNames, SortMode } from '../types';
-import { flattenObj, getGroupedCommodities, mergeCargo, nextSort } from '../util';
+import { flattenObj, getGroupedCommodities, mergeCargo, nextSort, sumCargo } from '../util';
 import { CommodityIcon } from './CommodityIcon/CommodityIcon';
 import { FleetCarrier } from '../views';
 import { EconomyBlock } from './EconomyBlock';
@@ -17,6 +17,7 @@ interface CargoGridProps {
 
 interface CargoGridState {
   cargo: Cargo,
+  zeroNeed: boolean;
   linkedFC: KnownFC[],
   fcCargo: Cargo;
 
@@ -32,21 +33,26 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     super(props);
 
     const fcCargo = mergeCargo(props.linkedFC.map(fc => fc.cargo));
+    const defaultHideFCColumns = store.commodityHideFCColumns;
     this.state = {
-      cargo: props.cargo,
+      cargo: this.getDefaultCargo(props.linkedFC, defaultHideFCColumns),
+      zeroNeed: Object.keys(props.cargo).length === 0,
       linkedFC: props.linkedFC,
       fcCargo: fcCargo,
 
       sort: store.commoditySort ?? SortMode.alpha,
       hideDoneRows: store.commodityHideCompleted,
-      hideFCColumns: store.commodityHideFCColumns || props.linkedFC.length === 0,
+      hideFCColumns: defaultHideFCColumns,
     };
   }
 
   componentDidUpdate(prevProps: Readonly<CargoGridProps>, prevState: Readonly<CargoGridState>, snapshot?: any): void {
 
     if (prevProps.cargo !== this.props.cargo) {
-      this.setState({ cargo: this.props.cargo });
+      this.setState({
+        cargo: this.getDefaultCargo(this.props.linkedFC, this.state.hideFCColumns),
+        zeroNeed: Object.keys(this.props.cargo).length === 0
+      });
     }
 
     if (prevProps.linkedFC !== this.props.linkedFC) {
@@ -54,13 +60,34 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
 
       this.setState({
         linkedFC: this.props.linkedFC,
+        cargo: this.getDefaultCargo(this.props.linkedFC, this.state.hideFCColumns),
+        zeroNeed: Object.keys(this.props.cargo).length === 0,
         fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
       });
     }
   }
 
+  getDefaultCargo(linkedFC: KnownFC[], hideFCColumns: boolean) {
+    const defaultCargo: Cargo = {
+      ...this.props.cargo,
+      // always show tritium
+      tritium: 0,
+    };
+
+    if (!hideFCColumns || this.state?.zeroNeed) {
+      for (const fc of linkedFC) {
+        for (const cargo in fc.cargo) {
+          if (cargo in defaultCargo) { continue; }
+          defaultCargo[cargo] = 0;
+        }
+      }
+    }
+
+    return defaultCargo;
+  }
+
   render() {
-    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId } = this.state;
+    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed } = this.state;
 
     return <>
       <h3 className={cn.h3}>
@@ -88,7 +115,11 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           iconProps={{ iconName: hideFCColumns ? 'fleetCarrier' : 'fleetCarrierSolid' }}
           title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}
           onClick={() => {
-            this.setState({ hideFCColumns: !hideFCColumns });
+            this.setState({
+              cargo: this.getDefaultCargo(this.props.linkedFC, this.state.hideFCColumns),
+              zeroNeed: Object.keys(this.props.cargo).length === 0,
+              hideFCColumns: !hideFCColumns,
+            });
             store.commodityHideFCColumns = !hideFCColumns;
           }}
         />}
@@ -98,7 +129,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         <thead>
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
-            <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>
+            {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>}
             {!hideFCColumns && this.getCargoFCHeaders()}
             {/* {!editCommodities && hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>} */}
           </tr>
@@ -128,9 +159,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   getCargoFCHeaders() {
-    return [
-      <th key={`fcc-have`} className={`commodity-need ${cn.bb} ${cn.br}`} title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
-
+    const { zeroNeed } = this.state;
+    const cells = [
       ...this.state.linkedFC.map(fc => {
         //const fc = this.state.linkedFC.find(fc => fc.marketId.toString() === k);
         return fc && <th key={`fcc${fc.marketId}`} className={`commodity-need ${cn.bb} ${cn.br}`} title={`${fc.displayName} (${fc.name})`} >
@@ -143,10 +173,16 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         </th>;
       })
     ];
+
+    if (!zeroNeed) {
+      cells.unshift(<th key={`fcc-have`} className={`commodity-need ${cn.bb} ${cn.br}`} title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>);
+    }
+
+    return cells;
   }
 
   getTableRows() {
-    const { sort, linkedFC, hideFCColumns, cargo, hideDoneRows } = this.state;
+    const { sort, linkedFC, hideFCColumns, cargo, hideDoneRows, zeroNeed } = this.state;
 
     const validCargoNames = Object.keys(cargo).filter(k => !hideDoneRows || cargo[k] !== 0)
     const groupedCommodities = getGroupedCommodities(validCargoNames, sort);
@@ -175,6 +211,23 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       // }
     }
 
+    // generate a totals row at the bottom
+    const totals: string[] = []
+    if (!zeroNeed) { totals.push(sumCargo(cargo).toLocaleString()); }
+    if (!hideFCColumns) {
+      if (!zeroNeed) { totals.push(''); }
+      for (const fc of linkedFC) {
+        totals.push(sumCargo(fc.cargo).toLocaleString() ?? '');
+      }
+    }
+    let nn = 0;
+    const totalsRow = <tr key='tr-sum'>
+      <td className={`commodity-name ${cn.br} ${cn.bt}`} style={{ textAlign: 'right' }}>Sum total:&nbsp;</td>
+      {totals.map(t => (<td key={`tr-${++nn}`} className={`commodity-need ${cn.br} ${cn.bt}`}>{t}</td>))}
+    </tr>;
+
+    rows.push(totalsRow);
+
     return rows;
   }
 
@@ -202,9 +255,9 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   getCommodityRow(key: string, flip: boolean): JSX.Element {
-    const { cargo, linkedFC, fcCargo, hideFCColumns } = this.state;
+    const { cargo, linkedFC, fcCargo, hideFCColumns, zeroNeed } = this.state;
 
-    const displayName = mapCommodityNames[key];
+    const displayName = mapCommodityNames[key] ?? key;
     // const currentCmdr = store.cmdrName;
 
     // const assigned = cmdrs
@@ -281,7 +334,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
 
     // const fcMarketIds = Object.keys(linkedFC);
 
-    const className = need !== 0 ? '' : 'done ';
+    const className = need !== 0 || zeroNeed ? '' : 'done ';
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
 
     return <tr key={`cc-${key}`} className={className} style={style}>
@@ -316,21 +369,21 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         </Stack>
       </td>
 
-      <td className={`commodity-need ${cn.br}`} >
+      {!zeroNeed && <td className={`commodity-need ${cn.br}`} >
         <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
-      </td>
+      </td>}
 
       {!hideFCColumns && <>
         {/* The FC Diff cell */}
-        <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
+        {!zeroNeed && <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
           <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: appTheme.palette.teal }} >
             {fcSumElement}
           </div>
-        </td>
+        </td>}
 
         {/* A cell for each FC */}
         {linkedFC.map(fc => <td key={`fcc${fc.marketId}`} className={`commodity-need ${cn.br}`} >
-          <span>{fc.cargo[key]?.toLocaleString()}</span>
+          {fc.cargo[key] ? <span>{fc.cargo[key].toLocaleString()}</span> : <span style={{color: 'grey'}}>-</span>}
         </td>)}
       </>}
 

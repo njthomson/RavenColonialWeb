@@ -23,6 +23,11 @@ export const systemV2 = {
     return result;
   },
 
+  getSysRev: async (systemName: string, rev: number): Promise<Sys> => {
+    const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/.${rev}`);
+    return result;
+  },
+
   getBodies: async (systemName: string): Promise<Site> => {
     return await callAPI<Site>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`);
   },
@@ -54,6 +59,10 @@ export const systemV2 = {
     const result = await callAPI<SysSnapshot[]>(`/api/v2/system/snapshots/`);
     systemV2.cache.snapshots[cmdr] = result;
     return result;
+  },
+
+  getCmdrRevs: async (): Promise<Record<string, number>> => {
+    return await callAPI<Record<string, number>>(`/api/v2/system/revs`);
   },
 
   getSnapshot: async (id64: number): Promise<SysSnapshot> => {

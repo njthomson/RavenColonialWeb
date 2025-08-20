@@ -176,15 +176,26 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
         const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
         const orderIDs = newSysMap.sites.map(s => s.id);
+
+        const dirties: Record<string, Site> = {};
+        if (newSys.updateIDs) {
+          for (var id of newSys.updateIDs) {
+            const ds = newSys.sites.find(s => s.id === id)
+            if (ds) dirties[ds.id] = ds;
+          }
+        }
+
         this.setState({
           processingMsg: undefined,
           sysOriginal: newSys,
           sysMap: newSysMap,
-          dirtySites: {},
-          deletedIDs: [],
+          dirtySites: dirties,
+          deletedIDs: newSys.deleteIDs ?? [],
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
         });
+
+        //api.systemV2.getCmdrRevs().then(revs => console.warn(revs));
 
         // Temporary - until current users have visited their sites?
         if (!!store.cmdrName && !!newSys.architect) {

@@ -3,6 +3,7 @@ import { BodyFeature, ReserveLevel } from "./types";
 /** Represents an architected system system */
 export interface Sys {
   v: number;
+  rev: number;
   name: string;
   id64: number;
   architect: string;
@@ -11,6 +12,8 @@ export interface Sys {
   primaryPortId?: string;
   bodies: Bod[];
   sites: Site[];
+  deleteIDs?: string[];
+  updateIDs?: string[];
 }
 
 /** Represents a body in a system */
