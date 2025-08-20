@@ -179,7 +179,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
         const dirties: Record<string, Site> = {};
         if (newSys.updateIDs) {
-          for (var id of newSys.updateIDs) {
+          for (const id of newSys.updateIDs) {
             const ds = newSys.sites.find(s => s.id === id)
             if (ds) dirties[ds.id] = ds;
           }
