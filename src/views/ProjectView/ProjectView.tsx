@@ -635,6 +635,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy } = this.state;
     if (!proj?.commodities) { return <div />; }
 
+    // start with commodities from project, adding things on FCs (if they are visible)
+    const cargo: Cargo = {
+      ...proj.commodities,
+      // always show tritium
+      tritium: 0,
+    };
+    if (!hideFCColumns) {
+      for (const fcc of Object.values(fcCargo)) {
+        for (const key in fcc) {
+          if (key in cargo || fcc[key] === 0) { continue; }
+          cargo[key] = 0;
+        }
+      }
+    }
+
     // do not render list if nothing left to deliver
     if (sumTotal === 0) {
       return <>
@@ -648,7 +663,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
 
     let flip = false;
-    const validCargoNames = Object.keys(proj.commodities).filter(k => !hideDoneRows || proj.commodities[k] !== 0 || proj.complete);
+    const validCargoNames = Object.keys(cargo).filter(k => !hideDoneRows || cargo[k] !== 0 || proj.complete);
     const groupedCommodities = getGroupedCommodities(validCargoNames, sort);
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
 
@@ -660,14 +675,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     // calculate sum cargo diff for all FCs per commodity name
     const fcMarketIds = Object.keys(fcCargo);
     const mapSumCargoDiff = Object.keys(mapCommodityNames).reduce((map, key) => {
-      const need = proj.commodities[key] ?? 0;
+      const need = cargo[key] ?? 0;
       if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
       return map;
     }, {} as Cargo);
 
     // as we have the FC cargo diff's known here, calculate how much they have ready for the total progress chart. Meaning: count the needs where FCs have a surplus, otherwise count what is on the FC
     const fcMergedCargo = mergeCargo(Object.values(fcCargo))
-    this.countReadyOnFCs = getCargoCountOnHand(proj.commodities, fcMergedCargo);
+    this.countReadyOnFCs = getCargoCountOnHand(cargo, fcMergedCargo);
 
     // calculate sum of diffs that are negative
     const fcSumCargoDeficit = Object.values(mapSumCargoDiff)
@@ -704,6 +719,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         rows.push(this.getCommodityAssignmentRow(key, proj, cmdrs));
       }
     }
+
+    // generate a totals row at the bottom
+    const totals: string[] = [sumTotal.toLocaleString()];
+    if (!hideFCColumns) {
+      totals.push('');
+      for (const fcc of Object.values(fcCargo)) {
+        totals.push(sumCargo(fcc).toLocaleString() ?? '');
+      }
+    }
+    let nn = 0;
+    const totalsRow = <tr key='tr-sum'>
+      <td className={`commodity-name ${cn.br} ${cn.bt}`} style={{ textAlign: 'right' }}>Sum total:&nbsp;</td>
+      {totals.map(t => (<td key={`tr-${++nn}`} className={`commodity-need ${cn.br} ${cn.bt}`}>{t}</td>))}
+      {hasAssignments && <td className={cn.bt} style={{ textAlign: 'right' }}>&nbsp;</td>}
+    </tr>;
 
     return <>
       {mode === Mode.view && <h3 className={cn.h3}>
@@ -755,7 +785,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             {hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>}
           </tr>
         </thead>
-        <tbody>{rows}</tbody>
+        <tbody>
+          {rows}
+          {totalsRow}
+        </tbody>
       </table>
 
       {sumTotal > 0 && <div className='cargo-remaining'>
@@ -836,7 +869,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </span>;
       });
 
-    const need = proj.commodities![key];
+    const need = proj.commodities[key] ?? 0;
 
 
     const isContextTarget = this.state.cargoContext === key;
@@ -939,7 +972,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           </div>
         </td>
         {fcMarketIds.map(marketId => <td key={`fcc${marketId}`} className={`commodity-need ${cn.br}`} >
-          <span>{this.state.fcCargo[marketId][key]?.toLocaleString()}</span>
+          {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
         </td>)}
       </>
       }

@@ -212,7 +212,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     }
 
     // generate a totals row at the bottom
-    const totals: string[] = []
+    const totals: string[] = [];
     if (!zeroNeed) { totals.push(sumCargo(cargo).toLocaleString()); }
     if (!hideFCColumns) {
       if (!zeroNeed) { totals.push(''); }
