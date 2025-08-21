@@ -53,6 +53,7 @@ interface SystemView2State {
   auditWholeSystem?: boolean;
   showCreateBuildProject?: boolean;
   siteGraphType: SiteGraphType;
+  fssNeeded?: boolean;
 }
 
 const viewTypes = [
@@ -239,7 +240,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return;
     }
 
-    this.setState({ processingMsg: 'Importing ...', errorMsg: '' });
+    this.setState({ processingMsg: 'Importing ...', errorMsg: '', fssNeeded: false });
 
     api.systemV2.import(this.props.systemName, type)
       .then(newSys => {
@@ -624,6 +625,24 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           </div>;
         }),
         onClick: () => this.doImport(),
+      },
+      {
+        key: 'sys-do-import-bodies',
+        text: 'Import bodies only',
+        className: anonymous ? undefined : cn.bBox,
+        iconProps: { iconName: 'Build' },
+        disabled: !!processingMsg || anonymous,
+        style: { height: 72 },
+        onRenderContent: ((p, d) => {
+          return <div style={{ justifyContent: 'left' }}>
+            <span>
+              {d.renderItemIcon(p)}
+              {d.renderItemName(p)}
+            </span>
+            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Update bodies from spansh.co.uk</div>
+          </div>;
+        }),
+        onClick: () => this.doImport('no-sites'),
       },
       {
         key: 'sys-add-div',

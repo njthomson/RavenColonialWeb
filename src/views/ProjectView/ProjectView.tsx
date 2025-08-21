@@ -644,7 +644,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (!hideFCColumns) {
       for (const fcc of Object.values(fcCargo)) {
         for (const key in fcc) {
-          if (key in cargo || fcc[key] === 0) { continue; }
+          if (key in cargo || fcc[key] === 0 || !mapCommodityNames[key]) { continue; }
           cargo[key] = 0;
         }
       }
@@ -851,7 +851,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo): JSX.Element {
-    const displayName = mapCommodityNames[key];
+    const displayName = mapCommodityNames[key] ?? key;
     const currentCmdr = store.cmdrName;
 
     const assigned = cmdrs

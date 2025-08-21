@@ -1,6 +1,6 @@
 import { Component, FunctionComponent } from "react";
 import { Bod, BT } from "../../types2";
-import { ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IconButton, IContextualMenuItem, Stack } from "@fluentui/react";
+import { ActionButton, ContextualMenu, ContextualMenuItemType, DefaultButton, Icon, IconButton, IContextualMenuItem, Link, Stack } from "@fluentui/react";
 import { appTheme, cn } from "../../theme";
 import { BodyMap2, SysMap2 } from "../../system-model2";
 import { SitesViewProps, SystemView2 } from "./SystemView2";
@@ -159,7 +159,9 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           }
 
           if (!bpn) {
-            throw new Error(`Why no BPN? p:${p}`);
+            this.props.sysView.setState({ fssNeeded: true });
+            console.warn(`Why no BPN? p:${p}`);
+            return map;
           }
         }
 
@@ -290,6 +292,36 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     const noSites = hideEmpties && !childPartTree.some(cp => cp.hasSites);
 
     return <div style={{ width: 'max-content', marginRight: 32 }}>
+      {this.props.sysView.state.fssNeeded && <div style={{ margin: 10 }}>
+        <Stack horizontal verticalAlign='center'>
+          <Icon iconName='Warning' style={{ fontSize: 32 }} />
+          <span style={{ marginLeft: 10 }}>
+            According to <Link href={`https://spansh.co.uk/system/${this.props.sysView.state.sysMap.id64}`} target='_blank'>spansh.co.uk</Link> this system has not been fully explored.
+            <br />
+            With an EDDN client running, please FSS the whole system then re-import.
+          </span>
+        </Stack>
+        <Stack horizontal verticalAlign='center'>
+
+          <DefaultButton
+            style={{ margin: '8px 0px 8px 42px' }}
+            onClick={() => {
+              this.props.sysView.doImport();
+            }}
+          >
+            Import bodies and stations
+          </DefaultButton>
+          <DefaultButton
+            style={{ margin: 8 }}
+            onClick={() => {
+              this.props.sysView.doImport('no-sites');
+            }}
+          >
+            Import bodies only
+          </DefaultButton>
+        </Stack>
+      </div>}
+
       <div
         style={{
           marginTop: 8,
