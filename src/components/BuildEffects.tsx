@@ -129,15 +129,6 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
             {st.preReq && <div style={{ marginTop: 4 }}>
               <Icon className="icon-inline" iconName='Lightbulb' style={{ color: appTheme.palette.accent }} /> Requires {mapName[st.preReq]}
             </div>}
-
-            {st.unlocks?.length && <>
-              {st.unlocks.map(t => {
-                return <div style={{ marginTop: 4 }}>
-                  <Icon className="icon-inline" iconName='Lightbulb' style={{ color: appTheme.palette.accent }} />
-                  &nbsp;{t}
-                </div>;
-              })}
-            </>}
           </td>
         </tr>
 
@@ -148,5 +139,16 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
 
       </tbody>
     </table>
+
+    <div style={{ marginLeft: 4 }}>
+      {st.unlocks?.length && <>
+        {st.unlocks.map(t => {
+          return <div style={{ marginTop: 4 }}>
+            <Icon className="icon-inline" iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ color: appTheme.palette.accent }} />
+            &nbsp;{t}
+          </div>;
+        })}
+      </>}
+    </div>
   </div>;
 };

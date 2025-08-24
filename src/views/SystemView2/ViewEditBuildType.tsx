@@ -205,21 +205,20 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
     }
 
     const { isValid, msg, unlocks } = isTypeValid2(this.props.sysMap, type, getSiteType(this.props.buildType, true));
-    let msgElement = <Stack horizontal verticalAlign='center'>
-      <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
-      <span>{msg}</span>
-    </Stack>;
-
-    if (unlocks) {
-      msgElement = <Stack horizontal verticalAlign='center'>
+    let msgElement = <div>
+      {msg && <Stack horizontal verticalAlign='center'>
+        <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
+        <span>{msg}</span>
+      </Stack>}
+      {unlocks && <>
         {unlocks.map(t => {
           return <div>
-            <Icon iconName={'LightBulb'} style={{ marginRight: 4}} />
+            <Icon iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ marginRight: 4 }} />
             <span>{t}</span>
           </div>;
         })}
-      </Stack>;
-    }
+      </>}
+    </div>;
 
     return <div
       key={id}

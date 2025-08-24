@@ -471,11 +471,19 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
     }
 
     if (type.needs.tier === 2 && neededT2 < type.needs.count) {
-      return { isValid: false, msg: 'Not enough Tier 2 points' };
+      return {
+        isValid: false,
+        msg: 'Not enough Tier 2 points',
+        unlocks: type.unlocks,
+      };
     }
 
     if (type.needs.tier === 3 && neededT3 < type.needs.count) {
-      return { isValid: false, msg: 'Not enough Tier 3 points' };
+      return {
+        isValid: false,
+        msg: 'Not enough Tier 3 points',
+        unlocks: type.unlocks,
+      };
     }
   }
 
@@ -484,6 +492,7 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
     return {
       isValid: isValid,
       msg: 'Requires ' + mapName[type.preReq],
+      unlocks: type.unlocks,
     };
   }
 

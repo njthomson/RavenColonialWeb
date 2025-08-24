@@ -442,7 +442,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
     const showValid = this.props.sysMap || this.props.sysMap2;
-    const { isValid, msg } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
+    const { isValid, msg, unlocks } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
     console.log(`${type.displayName2} => ${isValid} / ${msg}`);
 
     const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
@@ -519,7 +519,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       </td>
 
       <td className={`${cn.br}`}>
-        {this.renderPreReq(isValid, msg)}
+        {this.renderPreReq(isValid, msg, unlocks)}
       </td>
 
       {showValid && <td className={`${cn.br}`}>{this.renderValid(isValid)}</td>}
@@ -557,15 +557,25 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     </tr>;
   }
 
-  renderPreReq(isValid: boolean, msg?: string) {
-    if (!msg) {
+  renderPreReq(isValid: boolean, msg: string | undefined, unlocks: string[] | undefined) {
+    if (!msg && !unlocks) {
       return <div style={{ width: 15 }} />
     }
 
-    const msgElement = <Stack horizontal verticalAlign='center'>
-      <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
-      <span>{msg}</span>
-    </Stack>;
+    const msgElement = <div>
+      {msg && <Stack horizontal verticalAlign='center'>
+        <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
+        <span>{msg}</span>
+      </Stack>}
+      {unlocks && <>
+        {unlocks.map(t => {
+          return <div>
+            <Icon iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ marginRight: 4, }} />
+            {t}
+          </div>;
+        })}
+      </>}
+    </div>;
 
     return <CalloutMsg
       directionalHint={DirectionalHint.rightCenter}

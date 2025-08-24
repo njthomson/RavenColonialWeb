@@ -237,6 +237,7 @@ export const sumEconomies = (economies: string[]): Record<string, number> => {
   return map;
 }
 
+// Unlocks are from: https://forums.frontier.co.uk/threads/elite-dangerous-trailblazers-update-3-3.638196/
 
 export const siteTypes: SiteType[] = [
   {
@@ -412,7 +413,12 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "none",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 1, tech: 0, sol: 2, dev: 1 }
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 1, tech: 0, sol: 2, dev: 1 },
+    "unlocks": [
+      'System unlock: Tourist Settlements',
+      'Strong link unlock: Vista Genomics at T1 Surface or T2 orbital ports',
+      'Strong link unlock: Universal Cartographics at T1 Surface or T2 orbital ports'
+    ]
   },
   {
     "displayName": "Communication",
@@ -426,7 +432,13 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "none",
-    "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 3, sol: 0, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 3, sol: 0, dev: 0 },
+    "unlocks": [
+      'System unlock: Exploration Hub',
+      'Strong link unlock: Vista Genomics at T1 Surface or T2 orbital ports',
+      'Strong link unlock: Universal Cartographics at T1 Surface or T2 orbital ports',
+      'Strong link unlock: Commodities at Pirate, Scientific or Military Outposts'
+    ]
   },
   {
     "displayName": "Space Farm",
@@ -440,7 +452,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "agriculture",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 5, dev: 1 }
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 5, dev: 1 },
+    "unlocks": ['System unlock: Outpost Hub']
   },
   {
     "displayName": "Pirate Base",
@@ -454,7 +467,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "service",
-    "effects": { pop: 0, mpop: 0, sec: -4, wealth: 4, tech: 0, sol: 0, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: -4, wealth: 4, tech: 0, sol: 0, dev: 0 },
+    "unlocks": ['Strong link unlock: Black Market']
   },
   {
     "displayName": "Mining",
@@ -468,7 +482,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "extraction",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 4, tech: 0, sol: -2, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 4, tech: 0, sol: -2, dev: 0 },
+    "unlocks": ['System unlock: Industrial Hub']
   },
   {
     "displayName": "Relay",
@@ -482,7 +497,12 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 0, sol: 0, dev: 1 }
+    "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 0, sol: 0, dev: 1 },
+    "unlocks": [
+      'Strong link unlock: Vista Genomics at T1 Surface or T2 orbital ports',
+      'Strong link unlock: Universal Cartographics at T1 Surface or T2 orbital ports',
+      'Strong link unlock: Commodities at Pirate, Scientific or Military Outposts'
+    ]
   },
   {
     "displayName": "Military",
@@ -497,7 +517,13 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "military",
     "effects": { pop: 0, mpop: 0, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 0 },
-    "preReq": 'settlementMilitary'
+    "preReq": 'settlementMilitary',
+    "unlocks": [
+      'System unlock: Military Hub',
+      'System unlock: Shipyard at T1 surface ports',
+      'System unlock: Outfitting at non-Military Outposts',
+      'System unlock: Outfitting at non-Industrial T1 surface ports',
+    ]
   },
   {
     "displayName": "Security",
@@ -540,7 +566,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 3, sol: 5, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 3, sol: 5, dev: 0 },
+    "unlocks": ['System unlock: Vista Genomics at T1 Surface or T2 orbital ports']
   },
   {
     "displayName": "Research",
@@ -555,7 +582,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 8, sol: 0, dev: 3 },
-    "preReq": 'settlementBio'
+    "preReq": 'settlementBio',
+    "unlocks": ['System unlock: Universal Cartographics at T1 Surface or T2 orbital ports']
   },
   {
     "displayName": "Tourist",
@@ -570,7 +598,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
     "effects": { pop: 0, mpop: 0, sec: -3, wealth: 6, tech: 0, sol: 0, dev: 3 },
-    "preReq": 'settlementTourism'
+    "preReq": 'settlementTourism',
+    "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
   },
   {
     "displayName": "Bar",
@@ -584,7 +613,11 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
-    "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 0, sol: 3, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 0, sol: 3, dev: 0 },
+    "unlocks": [
+      'System unlock: Commodities at Pirate, Scientific or Military Outposts',
+      'System unlock: Crew Lounge at non-Civilian T1 ports',
+    ]
   },
   {
     "displayName": "Civilian",
@@ -786,7 +819,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "military",
     "effects": { pop: 1, mpop: 1, sec: 2, wealth: 0, tech: 0, sol: 0, dev: 0 },
-    "unlocks": ['Unlocks military installations']
+    "unlocks": ['System unlock: Military Installations']
   },
   {
     "displayName": "Medium Military",
@@ -802,7 +835,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "military",
     "effects": { pop: 1, mpop: 1, sec: 4, wealth: 0, tech: 0, sol: 0, dev: 0 },
-    "unlocks": ['Unlocks military installations']
+    "unlocks": ['System unlock: Military Installations']
   },
   {
     "displayName": "Large Military",
@@ -817,7 +850,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 2 },
     "inf": "military",
     "effects": { pop: 1, mpop: 1, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 3 },
-    "unlocks": ['Unlocks military installations']
+    "unlocks": ['System unlock: Military Installations']
   },
   {
     "displayName": "Small Bio",
@@ -831,7 +864,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 1 }
+    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 1 },
+    "unlocks": ['System unlock: Scientific Installations']
   },
   {
     "displayName": "Medium Bio",
@@ -845,7 +879,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 7, sol: 0, dev: 1 }
+    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 7, sol: 0, dev: 1 },
+    "unlocks": ['System unlock: Scientific Installations']
   },
   {
     "displayName": "Large Bio",
@@ -859,7 +894,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "hightech",
-    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 3 }
+    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 3 },
+    "unlocks": ['System unlock: Scientific Installations']
   },
   {
     "displayName": "Small Tourist",
@@ -874,7 +910,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 1, tech: 0, sol: 0, dev: 0 },
-    "preReq": 'satellite'
+    "preReq": 'satellite',
+    "unlocks": ['System unlock: Tourist Installations']
   },
   {
     "displayName": "Medium Tourist",
@@ -890,7 +927,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 3, tech: 0, sol: 0, dev: 0 },
-    "preReq": 'satellite'
+    "preReq": 'satellite',
+    "unlocks": ['System unlock: Tourist Installations']
   },
   {
     "displayName": "Large Tourist",
@@ -905,7 +943,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 2 },
     "inf": "tourism",
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 5, tech: 0, sol: 0, dev: 0 },
-    "preReq": 'satellite'
+    "preReq": 'satellite',
+    "unlocks": ['System unlock: Tourist Installations']
   },
   {
     "displayName": "Extraction",
@@ -949,7 +988,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
     "effects": { pop: 0, mpop: 0, sec: -1, wealth: 0, tech: 7, sol: 0, dev: 3 },
-    "preReq": 'comms'
+    "preReq": 'comms',
+    "unlocks": ['System unlock: Universal Cartographics at T1 Surface or T2 orbital ports']
   },
   {
     "displayName": "Outpost",
@@ -964,7 +1004,8 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "none",
     "effects": { pop: 0, mpop: 0, sec: -2, wealth: 0, tech: 0, sol: 3, dev: 3 },
-    "preReq": 'installationAgr'
+    "preReq": 'installationAgr',
+    "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
   },
   {
     "displayName": "Scientific",
@@ -978,7 +1019,8 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 0 },
+    "unlocks": ['System unlock: Vista Genomics at T1 Surface or T2 orbital ports']
   },
   {
     "displayName": "Military",
@@ -1021,7 +1063,12 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 10, sol: 0, dev: 0 }
+    "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 10, sol: 0, dev: 0 },
+    "unlocks": [
+      'System unlock: Outfitting at non-Military Outposts',
+      'System unlock: Outfitting at non-Industrial T1 surface ports',
+      'Strong link unlock: Shipyard at T1 surface ports',
+    ]
   },
   {
     "displayName": "Industrial",
@@ -1037,7 +1084,12 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "industrial",
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 5, tech: 3, sol: -4, dev: 3 },
-    "preReq": 'outpostMining'
+    "preReq": 'outpostMining',
+    "unlocks": [
+      'System unlock: Shipyard at T1 surface ports',
+      'Strong link unlock: Outfitting at non-Military Outposts',
+      'Strong link unlock: Outfitting at non-Industrial T1 surface ports',
+    ]
   }
 ];
 
