@@ -1,14 +1,13 @@
 import './EditProject.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, DatePicker, DefaultButton, DirectionalHint, Dropdown, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker, Toggle } from "@fluentui/react";
+import { ActionButton, DatePicker, DefaultButton, DirectionalHint, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker, Toggle } from "@fluentui/react";
 import { Component } from "react";
-import { BodyFeature, CreateProject, mapBodyTypeNames, mapReserveLevel, Project, ProjectRef, SystemFeature } from "../../types";
+import { CreateProject, Project, ProjectRef } from "../../types";
 import { cn, appTheme } from "../../theme";
 import { BuildType } from "../BuildType/BuildType";
 import { ChooseBody } from "../ChooseBody";
 import { TimeRemaining } from "../TimeRemaining";
 import { delay, isMobile } from '../../util';
-import { mapName } from '../../site-data';
 import { CalloutMsg } from '../CalloutMsg';
 import { SysMap } from '../../system-model';
 
@@ -78,7 +77,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
   }
 
   render() {
-    const { editProject, errorMsg, showAdvanced, bodyFeatures, systemFeatures } = this.state;
+    const { editProject, errorMsg, showAdvanced } = this.state;
     const disableSave = !editProject.buildName || !editProject.buildType;
 
     const dateCompletedHelpElement = <span>
@@ -266,7 +265,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
               <ActionButton
                 className='small'
                 iconProps={{ iconName: showAdvanced ? 'ChevronDownSmall' : 'ChevronUpSmall', style: { fontSize: 8 } }}
-                text='Economy modelling fields'
+                text='Advanced'
                 style={{ height: 22, paddingLeft: 0, }}
                 onClick={() => this.setState({ showAdvanced: !showAdvanced })}
               />
@@ -277,99 +276,12 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             {!editProject.complete && rowTimeCompleted}
 
             <tr>
-              <td><Label>Body type:</Label></td>
+              <td><Label>Market ID:</Label></td>
               <td>
-                <Dropdown
-                  openOnKeyboardFocus
-                  placeholder='...'
-                  options={Object.entries(mapBodyTypeNames).map(([key, text]) => ({ key, text }))}
-                  selectedKey={this.state.editProject.bodyType}
-                  onChange={(_, o) => this.updateProjData('bodyType', o?.key)}
-                  styles={{
-                    title: { height: 22, lineHeight: 22 },
-                    caretDownWrapper: { height: 22, lineHeight: 22 },
-                    callout: { border: '1px solid ' + appTheme.palette.themePrimary }
-                  }}
-                />
+                <input className='tinput' type='text' value={editProject.marketId} onChange={(ev) => this.updateProjData('marketId', parseInt(ev.target.value))} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.black }} />
               </td>
             </tr>
 
-            <tr>
-              <td style={{ alignContent: 'start' }}><Label>Body features:</Label></td>
-              <td>
-                <Stack
-                  horizontal wrap
-                  verticalAlign='center'
-                  tokens={{ childrenGap: '2px 8px' }}
-                  style={{ width: 340, padding: 0, marginBottom: 8, marginRight: 4 }}
-                >
-                  {Object.values(BodyFeature).map(f => <Checkbox
-                    key={`bf${f}`}
-                    checked={bodyFeatures.has(f)}
-                    label={mapName[f]}
-                    onChange={(_ev, checked) => {
-                      const { bodyFeatures } = this.state;
-                      if (checked) {
-                        bodyFeatures.add(f);
-                      } else {
-                        bodyFeatures.delete(f);
-                      }
-                      this.setState({ bodyFeatures });
-                    }}
-                  />)}
-                </Stack>
-              </td>
-            </tr>
-
-            <tr>
-              <td style={{ alignContent: 'start' }}><Label>System features:</Label></td>
-              <td>
-                <Stack
-                  horizontal wrap
-                  verticalAlign='center'
-                  tokens={{ childrenGap: '2px 8px' }}
-                  style={{ width: 340, padding: 0, marginBottom: 8, marginRight: 4 }}
-                >
-                  {Object.values(SystemFeature).map(f => <Checkbox
-                    key={`sf${f}`}
-                    checked={systemFeatures.has(f)}
-                    label={mapName[f]}
-                    onChange={(_ev, checked) => {
-                      const { systemFeatures } = this.state;
-                      if (checked) {
-                        systemFeatures.add(f);
-                      } else {
-                        systemFeatures.delete(f);
-                      }
-                      this.setState({ systemFeatures });
-                    }}
-                  />)}
-                </Stack>
-              </td>
-            </tr>
-
-            <tr>
-              <td>
-                <Label style={{ color: this.props.fieldHighlight === 'reserveLevel' ? appTheme.palette.yellowDark : undefined }}>
-                  System reserves:
-                  {this.props.fieldHighlight === 'reserveLevel' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
-                </Label>
-              </td>
-              <td>
-                <Dropdown
-                  openOnKeyboardFocus
-                  placeholder='...'
-                  options={Object.entries(mapReserveLevel).map(([key, text]) => ({ key, text }))}
-                  selectedKey={this.state.editProject.reserveLevel}
-                  onChange={(_, o) => this.updateProjData('reserveLevel', o?.key)}
-                  styles={{
-                    title: { height: 22, lineHeight: 22 },
-                    caretDownWrapper: { height: 22, lineHeight: 22 },
-                    callout: { border: '1px solid ' + appTheme.palette.themePrimary }
-                  }}
-                />
-              </td>
-            </tr>
           </>}
 
         </tbody>

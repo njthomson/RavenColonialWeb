@@ -59,9 +59,13 @@ export interface ProjectRef extends ProjectRefComplete {
   maxNeed: number;
   notes?: string;
 
+  /** @deprecated */
   bodyType?: BodyType;
+  /** @deprecated */
   bodyFeatures?: BodyFeature[];
+  /** @deprecated */
   systemFeatures?: SystemFeature[];
+  /** @deprecated */
   reserveLevel?: ReserveLevel;
 }
 

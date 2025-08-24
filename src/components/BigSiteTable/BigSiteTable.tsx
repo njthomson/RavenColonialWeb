@@ -689,10 +689,10 @@ export const HaulSize: FunctionComponent<{ haul: number }> = (props) => {
     }}
   >
     <div style={{ position: 'absolute', left: 0, bottom: 0, width: 4, height: 4, backgroundColor: 'lime', }} />
-    <div style={{ position: 'absolute', left: 5, bottom: 0, width: 4, height: 8, backgroundColor: haul > 4_000 ? 'lightgreen' : dark, }} />
-    <div style={{ position: 'absolute', left: 10, bottom: 0, width: 4, height: 12, backgroundColor: haul > 8_000 ? 'yellow' : dark }} />
-    <div style={{ position: 'absolute', left: 15, bottom: 0, width: 4, height: 16, backgroundColor: haul > 20_000 ? 'orange' : dark }} />
-    <div style={{ position: 'absolute', left: 20, bottom: 0, width: 4, height: 20, backgroundColor: haul > 50_000 ? 'red' : dark }} />
-    <div style={{ position: 'absolute', left: 25, bottom: 0, width: 4, height: 24, backgroundColor: haul > 200_000 ? 'darkred' : dark }} />
+    <div style={{ position: 'absolute', left: 5, bottom: 0, width: 4, height: 8, backgroundColor: haul >= 4_000 ? 'lightgreen' : dark, }} />
+    <div style={{ position: 'absolute', left: 10, bottom: 0, width: 4, height: 12, backgroundColor: haul >= 8_000 ? 'yellow' : dark }} />
+    <div style={{ position: 'absolute', left: 15, bottom: 0, width: 4, height: 16, backgroundColor: haul >= 20_000 ? 'orange' : dark }} />
+    <div style={{ position: 'absolute', left: 20, bottom: 0, width: 4, height: 20, backgroundColor: haul >= 50_000 ? 'red' : dark }} />
+    <div style={{ position: 'absolute', left: 25, bottom: 0, width: 4, height: 24, backgroundColor: haul >= 200_000 ? 'darkred' : dark }} />
   </div>;
 }

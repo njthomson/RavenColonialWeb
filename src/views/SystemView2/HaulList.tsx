@@ -3,13 +3,14 @@ import { Stack, ActionButton, Panel, PanelType, Link, Modal } from "@fluentui/re
 import { FunctionComponent, useMemo, useState } from "react";
 import { CargoGrid, CargoRemaining } from "../../components";
 import { HaulSize } from "../../components/BigSiteTable/BigSiteTable";
-import { getSiteType, averageHauls } from "../../site-data";
+import { getSiteType, averageHauls, primaryPortsT1, primaryPortsT2, primaryPortsT3 } from "../../site-data";
 import { appTheme, cn } from "../../theme";
 import { mergeCargo, isMobile, getCargoCountOnHand, sumCargo } from "../../util";
 import { avgHaulCosts } from "../../avg-haul-costs";
 import { store } from "../../local-storage";
 import { KnownFC } from '../../types';
 import { ModalCommander } from '../../components/ModalCommander';
+import { CalloutMsg } from '../../components/CalloutMsg';
 
 export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => {
   const [showList, setShowList] = useState(false);
@@ -57,8 +58,22 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
   }, []);
 
   const width = 480 + knownFC.length * 80;
+  let msg = undefined;
+  if (props.buildTypes.length === 1) {
+
+    if (primaryPortsT1.includes(props.buildTypes[0])) {
+      msg = "Tier 1 primary ports will be more expensive by ~16%";
+    }
+    else if (primaryPortsT2.includes(props.buildTypes[0])) {
+      msg = "Tier 2 primary ports will be more expensive by ~33%";
+    }
+    else if (primaryPortsT3.includes(props.buildTypes[0])) {
+      msg = "Tier 3 primary ports will be more expensive by ~20%";
+    }
+  }
+
   return <>
-    <Stack horizontal verticalAlign='center'>
+    <Stack horizontal verticalAlign='center' style={{ width: 200 }}>
       <HaulSize haul={totalHaul} />
 
       <ActionButton
@@ -68,6 +83,8 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
         style={{ height: 24 }}
         onClick={() => setShowList(true)}
       />
+
+      {msg && <CalloutMsg msg={msg} style={{ marginTop: 6 }} />}
     </Stack>
 
     {showList && <>

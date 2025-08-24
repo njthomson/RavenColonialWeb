@@ -93,9 +93,10 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
 
   // if not complete: add an extra empty entry so the chart extends to the current time
   if (!props.complete) {
-    maxTime = Date.now();
+    // the next hour mark
+    maxTime = new Date(new Date().toISOString().substring(0, 14) + '00:00Z').getTime() + (1000 * 60 * 60);
     data.push({
-      xAxisPoint: new Date(),
+      xAxisPoint: new Date(maxTime),
       chartData: [],
     });
   }
@@ -104,7 +105,7 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
   const width = 400;
   const timeDiffHours = 2 + ((maxTime - minTime) / 1000 / 60 / 60);
   let widthHour = ((width - 60) / timeDiffHours) - 1;
-  // console.log(`timeDiffHours: ${timeDiffHours} /widthHour: ${widthHour}`);
+  // console.log(`${maxTime} // timeDiffHours: ${timeDiffHours} /widthHour: ${widthHour}`);
   if (widthHour < 1) widthHour = 1; // with a minimum of 1px
 
   return <div style={{ width: `${width}px` }}>
