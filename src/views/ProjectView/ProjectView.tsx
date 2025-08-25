@@ -722,7 +722,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // generate a totals row at the bottom
     const totals: string[] = [sumTotal.toLocaleString()];
-    if (!hideFCColumns) {
+    if (!hideFCColumns && Object.keys(fcCargo).length > 0) {
       totals.push('');
       for (const fcc of Object.values(fcCargo)) {
         totals.push(sumCargo(fcc).toLocaleString() ?? '');
@@ -781,7 +781,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
             <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>
-            {!hideFCColumns && colSpan > 0 && this.getCargoFCHeaders()}
+            {!hideFCColumns && colSpan > 0 && Object.keys(fcCargo).length > 0 && this.getCargoFCHeaders()}
             {hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>}
           </tr>
         </thead>
