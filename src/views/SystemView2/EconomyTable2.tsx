@@ -106,7 +106,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
             href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
             target='spansh'
           >
-            Spansh <Icon iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
+            Spansh <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
           </Link>
 
           {realMatch?.updated && <>

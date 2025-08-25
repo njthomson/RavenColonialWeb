@@ -1,4 +1,7 @@
 import * as api from '../../api';
+import rcc32 from '../../assets/rcc-32.png';
+import spansh16 from '../../assets/spansh-16x16.png';
+import inara16 from '../../assets/inara-16x16.png';
 import { ActionButton, Icon, Link, Stack } from "@fluentui/react";
 import { FunctionComponent, useMemo, useState } from "react";
 import { SystemView2 } from "./SystemView2";
@@ -76,6 +79,33 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
       </Link>
     </>;
   }
+
+  if (!showChart) {
+    return <>
+      {props.site.id.startsWith('&') && <ActionButton
+        iconProps={{ imageProps: { src: spansh16 } }}
+        title='View on Spansh'
+        className={cn.bBox}
+        href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
+        target='spansh'
+      />}
+      <ActionButton
+        iconProps={{ imageProps: { src: inara16 } }}
+        title='View on Inara'
+        className={cn.bBox}
+        href={`https://inara.cz/elite/station-market/?search=${props.site.name} [${props.sysView.props.systemName}]`}
+        target='inara'
+      />
+      <ActionButton
+        iconProps={{ imageProps: { src: rcc32, width: 16, height: 16 } }}
+        title='Open project page'
+        className={cn.bBox}
+        href={`${window.location.origin}/#build=${props.site.buildId}`}
+        target='build'
+      />
+    </>;
+  }
+
   return <>
     <ActionButton
       iconProps={{ iconName: mapStatusIcon[props.site.status], style: { color: appTheme.palette.yellowDark } }}
@@ -84,8 +114,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
       href={`${window.location.origin}/#build=${props.site.buildId}`}
       target='build'
     >
-      {!showChart && <>View project</>}
-      {showChart && progressElement}
+      {progressElement}
       <Icon iconName='OpenInNewWindow' style={{ marginLeft: 4, fontSize: 12 }} />
     </ActionButton>
   </>;

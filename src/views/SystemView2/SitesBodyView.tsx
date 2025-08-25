@@ -168,12 +168,12 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         if (!bpn && bm.num > 0 && bm.parents.length === 0) {
           // find the barycentre somewhere in the tree?
           bpn = Object.values(map).map(n => this.findInTree(n, bm.name))[0];
-          console.error(bpn);
         }
 
         if (!bpn) {
-          console.error(`Why no Body Parent Node? "${bm.name}" [${bm.parents}]\n`, map, `\n`, bm);
-          throw new Error(`Why no Body Parent Node? "${bm.name}" [${bm.parents}]`);
+          this.props.sysView.setState({ fssNeeded: true });
+          console.warn(`Why no Body Parent Node? "${bm.name}" [${bm.parents}]\n`, map, `\n`, bm);
+          return map;
         }
 
         // once finished processing parents, add ourself to the immediate parent

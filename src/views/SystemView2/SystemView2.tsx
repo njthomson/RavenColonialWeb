@@ -1,5 +1,7 @@
 import './SystemView2.css';
 import * as api from '../../api';
+import spansh16 from '../../assets/spansh-16x16.png';
+import inara16 from '../../assets/inara-16x16.png';
 import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
@@ -876,6 +878,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 {
                   key: 'btn-open-inara',
                   text: 'View on Inara',
+                  iconProps: { imageProps: { src: inara16 } },
                   className: cn.bBox,
                   onClick: () => {
                     window.open(`https://inara.cz/elite/starsystem/?search=${systemName}`, 'Inara');
@@ -884,6 +887,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                 {
                   key: 'btn-open-spansh',
                   text: 'View on Spansh',
+                  iconProps: { imageProps: { src: spansh16 } },
                   className: cn.bBox,
                   onClick: () => {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
