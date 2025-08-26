@@ -299,7 +299,7 @@ const coachingContent: Record<string, {
         </div>
       </Stack>
       <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }}>
-        <div>When sites are present, these buttons move be above and below, as shown:</div>
+        <div>When sites are present, these buttons will move above and below, as shown:</div>
         <Stack tokens={{ childrenGap: 2 }}>
           <div style={{ marginLeft: 4, color: appTheme.palette.red }}>?</div>
           <Icon className='icon-inline' iconName='CircleAddition' style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
