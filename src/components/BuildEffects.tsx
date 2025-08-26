@@ -56,6 +56,7 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
 
   const padMap = mapSitePads[props.buildType];
 
+  let nnu = 0;
   return <div style={{ cursor: 'default' }}>
     {!props.noTitle && <h3 className={cn.h3}>{props.heading ?? 'System effects:'}</h3>}
 
@@ -140,10 +141,10 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
       </tbody>
     </table>
 
-    <div style={{ marginLeft: 4 }}>
+    <div style={{ marginLeft: 4, fontSize: 12 }}>
       {st.unlocks?.length && <>
         {st.unlocks.map(t => {
-          return <div style={{ marginTop: 4 }}>
+          return <div key={`beu-${++nnu}`} style={{ marginTop: 4 }}>
             <Icon className="icon-inline" iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ color: appTheme.palette.accent }} />
             &nbsp;{t}
           </div>;

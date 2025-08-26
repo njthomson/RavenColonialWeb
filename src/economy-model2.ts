@@ -647,7 +647,8 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number
     if (parentNum === 0) {
       return false; // reached the system barycenter? no star found
     } else {
-      throw new Error(`Why no parent from: ${body.name}`);
+      console.error(`Why no parent bodyNum: #${parentNum} for: ${body.name}`);
+      return false;
     }
   }
 
