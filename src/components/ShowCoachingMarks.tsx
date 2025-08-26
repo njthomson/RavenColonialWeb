@@ -1,8 +1,15 @@
 import { FunctionComponent, useState } from "react";
 import { appTheme } from "../theme";
-import { Coachmark, DirectionalHint, TeachingBubbleContent, Icon, Checkbox, Link } from "@fluentui/react";
+import { Coachmark, DirectionalHint, TeachingBubbleContent, Icon, Checkbox, Link, Stack, mergeStyles } from "@fluentui/react";
 import { store } from "../local-storage";
 import { LinkSrvSurvey } from "./LinkSrvSurvey";
+
+/** Button Slot number (showing icon) */
+const bsni2 = mergeStyles({
+  color: appTheme.palette.red,
+  border: `1px solid ${appTheme.palette.neutralQuaternary}`,
+  cursor: 'default',
+});
 
 export const ShowManyCoachingMarks: FunctionComponent<{ targets: string[] }> = (props) => {
   const notAgainId = props.targets[0];
@@ -276,5 +283,29 @@ const coachingContent: Record<string, {
       </div>
     </div>,
   },
+  sysView2_BodySlots: {
+    headline: 'Track slot counts per body',
+    directionalHint: DirectionalHint.leftTopEdge,
+    body: <div>
+      <div>When a body has no sites: use these buttons to set how many orbital and surface slots there are:</div>
+      <Stack horizontal horizontalAlign='center' tokens={{ childrenGap: 8 }} style={{ margin: '4px 0' }}>
+        <div className={bsni2} style={{ width: 30, padding: '1px 2px' }}>
+          <Icon className='icon-inline' iconName='ProgressRingDots' style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+          <span>?</span>
+        </div>
+        <div className={bsni2} style={{ width: 30, padding: '1px 2px' }}>
+          <Icon className='icon-inline' iconName='GlobeFavorite' style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+          <span>?</span>
+        </div>
+      </Stack>
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }}>
+        <div>When sites are present, these buttons move be above and below, as shown:</div>
+        <Stack tokens={{ childrenGap: 2 }}>
+          <div style={{ marginLeft: 4, color: appTheme.palette.red }}>?</div>
+          <Icon className='icon-inline' iconName='CircleAddition' style={{ marginRight: 4, fontSize: 16, color: appTheme.palette.accent }} />
+          <div style={{ marginLeft: 4, color: appTheme.palette.red }}>?</div>
+        </Stack>
+      </Stack>
+    </div>,
+  },
 }
-

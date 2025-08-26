@@ -86,6 +86,7 @@ export interface SitesPut {
   architect?: string;
   reserveLevel?: ReserveLevel;
   snapshot?: SysSnapshot;
+  slots?: Record<number, number[]>,
 }
 
 export interface GetRealEconomies {

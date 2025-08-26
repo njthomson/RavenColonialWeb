@@ -14,6 +14,7 @@ export interface Sys {
   sites: Site[];
   deleteIDs?: string[];
   updateIDs?: string[];
+  slots: Record<number, number[]>;
 }
 
 /** Represents a body in a system */

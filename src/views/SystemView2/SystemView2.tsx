@@ -6,13 +6,13 @@ import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
-import { buildSystemModel2, getMaxOrbitalSiteCount, getMaxSurfaceSiteCount, hasPreReq2, SiteMap2, SysMap2, unknown } from '../../system-model2';
+import { buildSystemModel2, hasPreReq2, SiteMap2, SysMap2, unknown } from '../../system-model2';
 import { TierPoint } from '../../components/TierPoints';
 import { SystemStats } from './SystemStats';
 import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
-import { Site, SiteGraphType, Sys } from '../../types2';
+import { Bod, BT, Site, SiteGraphType, Sys } from '../../types2';
 import { GetRealEconomies, SitesPut, SysSnapshot } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
@@ -20,12 +20,12 @@ import { SystemCard } from './SystemCard';
 import { FindSystemName, ProjectCreate } from '../../components';
 import { createRandomPhoneticName, delayFocus, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
-import { ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
+import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
 import { ArchitectSummery } from './ArchitectSummary';
 import { mapName } from '../../site-data';
-import { SitePill } from './SitePill';
+import { BodyPill, SitePill } from './SitePill';
 
 interface SystemView2Props {
   systemName: string;
@@ -48,6 +48,8 @@ interface SystemView2State {
   viewType: string;
   orderIDs: string[];
   originalSiteIDs: string[];
+  bodySlots: Record<number, number[]>;
+  originalBodySlots: string;
   showEditSys?: boolean;
   showConfirmAction?: () => void;
   activeProjects: Record<string, Project | null>
@@ -71,6 +73,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   static lastBodyNum?: number;
   private snapshotRef = createRef<HTMLDivElement>();
   private sysStatsRef = createRef<HTMLDivElement>();
+  private sitesBodyViewRef = createRef<SitesBodyView>();
 
   constructor(props: SystemView2Props) {
     super(props);
@@ -142,6 +145,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       // skip: viewType,
       orderIDs: [],
       originalSiteIDs: [],
+      bodySlots: {},
+      originalBodySlots: '{}',
       showEditSys: false,
       showConfirmAction: undefined,
       activeProjects: {},
@@ -196,6 +201,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           deletedIDs: newSys.deleteIDs ?? [],
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
+          bodySlots: newSys.slots,
+          originalBodySlots: JSON.stringify(newSys.slots),
         });
 
         //api.systemV2.getCmdrRevs().then(revs => console.warn(revs));
@@ -264,7 +271,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       });
   };
 
-  saveData = () => {
+  doSaveData = () => {
 
     if (!store.cmdrName) {
       console.warn('You need to sign in in for this');
@@ -280,6 +287,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       delete: this.state.deletedIDs,
       orderIDs: this.state.orderIDs,
       snapshot: this.state.sysMap.architect ? this.getSnapshot(this.state.sysMap) : undefined,
+      slots: this.state.bodySlots,
     };
 
     if (this.state.sysOriginal.architect !== this.state.sysMap.architect) {
@@ -299,6 +307,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           sysMap: newSysMap,
           dirtySites: {},
           deletedIDs: [],
+          bodySlots: newSys.slots,
+          originalBodySlots: JSON.stringify(newSys.slots),
         });
 
         // clear this cache any time we save a system
@@ -479,7 +489,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   isDirty() {
-    const { sysMap, dirtySites, deletedIDs, sysOriginal, orderIDs } = this.state;
+    const { sysMap, dirtySites, deletedIDs, sysOriginal, orderIDs, bodySlots, originalBodySlots } = this.state;
 
     // we cannot be dirty if either of these are missing
     if (!sysMap || !sysOriginal) return false;
@@ -489,10 +499,31 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || orderIDs.length !== sysOriginal.sites?.length
       || sysMap.architect !== sysOriginal.architect
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
+      || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
       ;
     return dirty;
   };
+
+  setBodySlot(num: number, newCount: number, isOrbital: boolean) {
+    const bodySlots = this.state.bodySlots;
+
+    if (!bodySlots[num]) { bodySlots[num] = [-1, -1]; }
+    const body = bodySlots[num];
+
+    if (isOrbital) {
+      body[0] = newCount;
+    } else {
+      body[1] = newCount;
+    }
+
+    // remove entry if both are unknown
+    if (body[0] === -1 && body[1] === -1) {
+      delete bodySlots[num];
+    }
+
+    this.setState({ bodySlots });
+  }
 
   render() {
     if (!this.props.systemName) {
@@ -758,7 +789,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               color: !enableSave || anonymous ? 'grey' : appTheme.palette.yellowDark,
               border: !enableSave || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
             },
-            onClick: this.saveData,
+            onClick: this.doSaveData,
           },
 
           {
@@ -1116,34 +1147,67 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       validations.push(<div key={`valTier3`}>» System needs <TierPoint tier={3} count={-tierPoints.tier3} /></div>);
     }
 
-    for (const bm of Object.values(bodyMap)) {
+    // process each body, checking if slot-counts are known
+    let slotCountUnknown = [];
+    const slotTooMany = new Set<Bod>();
+    for (const b of sysMap.bodies) {
+      if (b.type === BT.bc) { continue; }
+      const isLandable = b.features.includes(BodyFeature.landable);
+      const bodySlots = sysMap.slots[b.num];
+
+      // warn if a body has some unknown slots
+      let slotsUnknown = !bodySlots || bodySlots[0] === -1 || (isLandable && bodySlots[1] === -1);
+      if (slotsUnknown && b.num !== -1) {
+        slotCountUnknown.push(b);
+      }
+
+      // stop here if no sites on this body
+      const bm = bodyMap[b.name];
+      if (!bm) { continue; }
+
+      const bodyShortName = bm.name.replace(this.props.systemName + ' ', '');
 
       // warn if a non-landable body has surface sites
-      if (bm.surface.length > 0 && !bm.features.includes(BodyFeature.landable)) {
+      if (bm.surface.length > 0 && !isLandable) {
         const key = `valBodyNotLandable-${bm.num}`;
         validations.push(<div key={key}>
-          » <b>{bm.name}</b> has surface sites but it is not landable:
+          » <b>{bodyShortName}</b> has surface sites but it is not landable:
           <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
             {bm.surface.map(s => <SitePill key={`notlandable-${s.id.slice(1)}`} site={s} fieldHighlight='bodyName' keyPrefix='notlandable' sysView={this} />)}
           </Stack>
         </div>);
       }
 
-      // warn if a body has 4+ orbitals // TODO: figure out the logic for this
-      const maxOrbitalSites = getMaxOrbitalSiteCount(this.state.sysMap, bm);
-      if (bm.orbital.length > maxOrbitalSites) {
-        validations.push(<div key={`valBodyTooManyOribtals-${bm.num}`}>
-          » <b>{bm.name}</b> has too many orbital sites
-        </div>);
+      // warn if there are more sites than slots
+      if (bodySlots) {
+        if (bodySlots[0] >= 0 && bm.orbital.length > bodySlots[0]) {
+          slotTooMany.add(b);
+        }
+        if (bodySlots[1] >= 0 && bm.surface.length > bodySlots[1]) {
+          slotTooMany.add(b);
+        }
       }
+    }
 
-      // warn if there's too many surface sites on a body? (Assuming we can know how that is determines)
-      const maxSurfaceSites = getMaxSurfaceSiteCount(this.state.sysMap, bm);
-      if (bm.surface.length > maxSurfaceSites) {
-        validations.push(<div key={`valBodyTooManyOribtals-${bm.num}`}>
-          » <b>{bm.name}</b> has too many surface sites
-        </div>);
-      }
+    if (slotCountUnknown.length > 0) {
+      slotCountUnknown.sort((ba, bb) => ba.num - bb.num);
+      validations.push(<div key={`valSlotsUnknown`} id={`valSlotsUnknown`}>
+        » There are {slotCountUnknown.length} bodies with unknown slot counts:
+        <Stack horizontal wrap tokens={{ childrenGap: 4 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {slotCountUnknown.map(b => <BodyPill key={`valNoBody-${b.num}`} bod={b} sysView={this} sitesBodyViewRef={this.sitesBodyViewRef} />)}
+        </Stack>
+        <ShowCoachingMarks id='sysView2_BodySlots' target='#valSlotsUnknown' />
+      </div>);
+    }
+
+    if (slotTooMany.size > 0) {
+      const sorted = Array.from(slotTooMany).sort((ba, bb) => ba.num - bb.num);
+      validations.push(<div key={`valBodyTooManySites`}>
+        » There are {sorted.length} bodies with too many sites:
+        <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {sorted.map(b => <BodyPill key={`valTooManySites-${b.num}`} bod={b} sysView={this} sitesBodyViewRef={this.sitesBodyViewRef} />)}
+        </Stack>
+      </div>);
     }
 
     if (unknown in bodyMap) {
@@ -1231,6 +1295,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         width: 'max-content',
       }}>
       <SitesBodyView
+        ref={this.sitesBodyViewRef}
         systemName={this.props.systemName}
         sysMap={sysMap}
         sysView={this}

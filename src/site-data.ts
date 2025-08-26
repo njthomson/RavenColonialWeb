@@ -1212,7 +1212,7 @@ export const averageHauls: Record<string, number> = {
   "Mining/Industrial Installation": 6725,
   "Ocellus Starport": 205000,
   "Orbis Starport": 205000,
-  "Outpost Hub": 205000,
+  "Outpost Hub": 9853,
   "Pirate Base Installation": 6711,
   "Pirate Outpost": 20000,
   "Refinery Hub": 9921,

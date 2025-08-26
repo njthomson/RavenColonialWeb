@@ -12,7 +12,7 @@ import { buildSystemModel2 } from '../../system-model2';
 const rs = mergeStyles({
   marginLeft: 8,
   marginTop: 4,
-})
+});
 
 export const BodyOverride: FunctionComponent<{ body: Bod; sysView: SystemView2; onClose: (newData?: BodyPut) => void }> = (props) => {
 

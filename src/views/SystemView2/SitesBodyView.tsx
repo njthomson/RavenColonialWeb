@@ -8,6 +8,7 @@ import { store } from "../../local-storage";
 import { BodyFeature, mapBodyFeature } from "../../types";
 import { SiteLink } from "./SiteLink";
 import { stellarRemnants } from "../../economy-model2";
+import { ViewEditSlotCount } from "./ViewEditSlotCount";
 
 let nnn = 0;
 const indent = 20;
@@ -283,6 +284,18 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
     this.setState({ lastSiteId: id });
   }
 
+  public clearAllFilters() {
+    const { bodyFilter } = this.state;
+    bodyFilter.clear();
+
+    this.setState({
+      bodyTree: this.prepBodyTree(this.props.sysMap, false),
+      hideEmpties: false,
+      showBodyFilter: false,
+      bodyFilterExclude: false,
+    });
+  }
+
   render() {
     const { bodyTree, hideEmpties, showBodyFilter, bodyFilter, bodyFilterExclude } = this.state;
 
@@ -325,6 +338,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       <div
         style={{
           marginTop: 8,
+          marginLeft: 500,
           position: 'sticky',
           zIndex: 2,
           top: 54,
@@ -644,8 +658,9 @@ interface BodyBlockProps {
 }
 
 export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
-  const { node, name, up, down, leftDotted, root, filtering } = props;
+  const { sysView, node, name, up, down, leftDotted, root, filtering } = props;
 
+  const bodyNum = node.body.num;
   const orbitals = node.map?.orbital;
   const surfaces = node.map?.surface;
   const hasSites = !!orbitals?.length || !!surfaces?.length;
@@ -662,7 +677,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     style={{ fontSize: 10, paddingTop: 0, color: hasSites ? appTheme.palette.themeTertiary : appTheme.palette.themeTertiary }}
   >
     {node.body.features.map(f => <Icon
-      key={`bfi-${node.body.num}${f}`}
+      key={`bfi-${bodyNum}${f}`}
       title={mapBodyFeature[f]}
       iconName={mapBodyFeatureIcon[f]}
       style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.4)' }}
@@ -686,9 +701,24 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
       title={`Add a new site to: ${node.body.name}`}
       style={{ marginLeft: 4, paddingTop: 2 }}
       onClick={() => {
-        props.sysView.createNewSite(node.body.num);
+        sysView.createNewSite(bodyNum);
       }}
     />;
+  const bodySlots = sysView.state.sysMap.slots[bodyNum] ?? [-1, -1];
+  const btnSlotsOrbital = <ViewEditSlotCount
+    max={bodySlots[0]}
+    current={orbitals?.length ?? 0}
+    isOrbital={true}
+    showIcon={!hasSites}
+    onChange={newCount => sysView.setBodySlot(bodyNum, newCount, true)}
+  />;
+  const btnSlotsSurface = <ViewEditSlotCount
+    max={bodySlots[1]}
+    current={surfaces?.length ?? 0}
+    isOrbital={false}
+    showIcon={!hasSites}
+    onChange={newCount => sysView.setBodySlot(bodyNum, newCount, false)}
+  />
 
   return <div
     style={{
@@ -738,10 +768,15 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           </svg>
 
           <div style={{ position: 'relative', borderBottom: innerBorders, paddingRight: 20 }} >
+            <span id={`sbv-${bodyNum}`} style={{ position: 'absolute', left: 0, top: -64, width: 0, height: 0, backgroundColor: 'transparent' }} />
             <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 0 }}>
               <span style={{ marginRight: 6, width: 'max-content' }}>{name}</span>
               {(!hasSites || !canHaveBodySites) && featureIcons}
-              {!hasSites && btnAddSite}
+              {!hasSites && <Stack horizontal verticalAlign='center'>
+                {btnAddSite}
+                {btnSlotsOrbital}
+                {isLandable && btnSlotsSurface}
+              </Stack>}
             </Stack>
             {hasSites && canHaveBodySites && <div style={{ position: 'absolute', right: 10, top: 30 }}>{featureIcons}</div>}
 
@@ -757,9 +792,11 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           <div style={{ position: 'relative', fontSize: 14, padding: '2px 8px 4px 8px', borderBottom: innerBorders }}>
             {!orbitals?.length && <div style={{ paddingLeft: 4, fontSize: 10, color: 'grey', userSelect: 'none' }} ><Icon iconName='ProgressRingDots' /> No orbital sites</div>}
             {orbitals && orbitals.map(s => <SiteLink key={`orbitalsite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' siteGraphType={props.sysView.state.siteGraphType} />)}
-            <div style={{ position: 'absolute', right: -24, bottom: -13 }}>
+            <Stack style={{ position: 'absolute', right: -24, bottom: isLandable ? -34 : -12 }}>
+              {hasSites && btnSlotsOrbital}
               {btnAddSite}
-            </div>
+              {hasSites && isLandable && btnSlotsSurface}
+            </Stack>
           </div>
 
           {canHaveBodySites && <div style={{ fontSize: 14, backgroundColor: appTheme.palette.neutralLight, padding: '2px 8px 3px 8px' }}>
@@ -809,8 +846,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           bottom: 0,
         }} />
       </>}
-    </>
-    }
+    </>}
 
   </div >;
 };

@@ -266,6 +266,11 @@ export const cn = mergeStyleSets({
     scrollbarWidth: 10,
     scrollbarColor: appTheme.palette.themeTertiary + ' ' + appTheme.palette.neutralQuaternaryAlt,
   },
+  /** Floating panel. Callout, ContextMenu, etc */
+  fp: {
+    border: '1px solid ' + appTheme.palette.themePrimary,
+    padding: 0,
+  },
   /** ActionButton, as ContextMenu trigger */
   abm: {
     selectors: { '.arr': { color: 'grey', marginLeft: 4, fontSize: 10 } },
@@ -327,7 +332,14 @@ export const cn = mergeStyleSets({
       fontWeight: 'bold',
     },
   },
-
+  pillSmall: {
+    borderRadius: 5,
+    height: '18px!important',
+    padding: '0 3px',
+    margin: 1,
+    fontSize: 12,
+    backgroundColor: appTheme.palette.neutralTertiaryAlt,
+  },
 });
 
 
