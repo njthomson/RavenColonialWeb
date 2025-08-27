@@ -15,6 +15,14 @@ export interface Sys {
   deleteIDs?: string[];
   updateIDs?: string[];
   slots: Record<number, number[]>;
+  revs: Rev[];
+}
+
+/** Info about a saved revision */
+export interface Rev {
+  rev: number;
+  cmdr: string;
+  time: string;
 }
 
 /** Represents a body in a system */
@@ -26,7 +34,6 @@ export interface Bod {
   type: BT;
   subType: string;
   features: BodyFeature[];
-  // max: { orbit: number; surfaace: number; }
 }
 
 /** Body Type */

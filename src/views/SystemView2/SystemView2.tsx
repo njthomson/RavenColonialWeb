@@ -18,7 +18,7 @@ import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName, ProjectCreate } from '../../components';
-import { createRandomPhoneticName, delayFocus, isMobile } from '../../util';
+import { createRandomPhoneticName, delayFocus, getRelativeDuration, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
@@ -166,7 +166,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     delayFocus('find-system-input');
   }
 
-  loadData = (reset?: boolean) => {
+  doLoad = (rev?: number) => {
+    if (this.isDirty()) {
+      this.setState({ showConfirmAction: () => this.loadData(false, rev) });
+    } else {
+      this.loadData(false, rev);
+    }
+  };
+
+  loadData = (reset?: boolean, rev?: number) => {
     this.setState({
       ...(reset ? this.getResetState() : {} as any),
       processingMsg: 'Loading ...',
@@ -174,12 +182,12 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       errorMsg: '',
     });
 
-    return api.systemV2.getSys(this.props.systemName, true)
+    return api.systemV2.getSys(this.props.systemName, true, rev)
       .then(newSys => {
 
         if (newSys.v < api.systemV2.currentSchemaVersion) {
           console.warn(`System schema: ${newSys.v} ... re-import is needed`);
-          return this.doImport('no-sites');
+          return this.doImport('bodies');
         }
 
         const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
@@ -499,6 +507,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || orderIDs.length !== sysOriginal.sites?.length
       || sysMap.architect !== sysOriginal.architect
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
+      // consider any older revision to be dirty
+      || sysMap.rev < sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0)
       || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
       ;
@@ -675,7 +685,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Update bodies from spansh.co.uk</div>
           </div>;
         }),
-        onClick: () => this.doImport('no-sites'),
+        onClick: () => this.doImport('bodies'),
       },
       {
         key: 'sys-add-div',
@@ -722,6 +732,30 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const onMobile = isMobile();
 
+    const loadRevisionItems = sysMap?.revs?.map(r => {
+      const d = new Date(r.time);
+      return {
+        key: `load-rev-${r.rev}`,
+        text: `#${r.rev} by ${r.cmdr} ${getRelativeDuration(d)}`,
+        title: `#${r.rev} by ${r.cmdr} - ${d.toLocaleString()}`,
+        className: anonymous ? undefined : cn.bBox,
+        disabled: !!processingMsg || anonymous,
+        canCheck: true,
+        checked: sysMap.rev === r.rev,
+        onClick: () => this.doLoad(r.rev),
+      } as IContextualMenuItem;
+    }) ?? [];
+    // inject a header row between the first 2 entries
+    if (loadRevisionItems.length > 1) {
+      loadRevisionItems.splice(1, 0, {
+        key: `load-rev-header`,
+        itemType: ContextualMenuItemType.Header,
+        className: anonymous ? undefined : cn.bBox,
+        disabled: !!processingMsg || anonymous,
+        text: `Prior revisions:`,
+      } as IContextualMenuItem);
+    }
+
     return <>
       {!onMobile && <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>}
       <h2 style={{ margin: 10, height: 32, fontSize: onMobile ? 18 : undefined }}>
@@ -766,16 +800,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-load',
             title: 'Abandon your current changes and reload',
             text: 'Load',
+            split: !onMobile,
             className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'OpenFolderHorizontal' },
             disabled: !!processingMsg || anonymous,
-            onClick: () => {
-              if (this.isDirty()) {
-                this.setState({ showConfirmAction: () => this.loadData() });
-              } else {
-                this.loadData();
-              }
-            },
+            onClick: () => this.doLoad(),
+            subMenuProps: loadRevisionItems.length < 2 ? undefined : {
+              calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
+              items: loadRevisionItems,
+            }
           },
 
           {
@@ -1355,7 +1388,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </>;
   }
 }
-
 
 export const mapSiteGraphTypeIcon = {
   links: 'Link12',

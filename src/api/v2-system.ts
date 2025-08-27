@@ -15,16 +15,17 @@ export const systemV2 = {
     snapshots: {} as Record<string, SysSnapshot[]>,
   },
 
-  getSys: async (systemName: string, force?: boolean): Promise<Sys> => {
+  getSys: async (systemName: string, force?: boolean, rev?: number): Promise<Sys> => {
     if (systemName in systemV2.cache.sys && !force) { return systemV2.cache.sys[systemName]; }
+
+    if (rev) {
+      // do not cache older revisions
+      const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/.${rev}`);
+      return result;
+    }
 
     const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}`);
     systemV2.cache.sys[systemName] = result;
-    return result;
-  },
-
-  getSysRev: async (systemName: string, rev: number): Promise<Sys> => {
-    const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/.${rev}`);
     return result;
   },
 

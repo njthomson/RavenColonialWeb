@@ -327,7 +327,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           <DefaultButton
             style={{ margin: 8 }}
             onClick={() => {
-              this.props.sysView.doImport('no-sites');
+              this.props.sysView.doImport('bodies');
             }}
           >
             Import bodies only

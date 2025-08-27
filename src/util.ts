@@ -231,3 +231,24 @@ export const createRandomPhoneticName = () => {
   const name = phonetics[n1] + ' ' + phonetics[n2];
   return name;
 }
+
+export const getRelativeDuration = (time: Date) => {
+  const seconds = (Date.now() - time.getTime()) / 1000;
+  if (seconds < 10) { return 'just now'; }
+  if (seconds < 60) { return `~${Math.round(seconds)} second(s) ago`; }
+
+  const minutes = seconds / 60;
+  if (minutes < 1.5) { return `~ a moment ago`; }
+  if (minutes < 60) { return `~${Math.round(minutes)} minute(s) ago`; }
+
+  const hours = minutes / 60;
+  if (hours < 1.5) { return `~ an hour ago`; }
+  if (hours < 6) { return `~${hours.toFixed(1)} hour(s) ago`; }
+  if (hours < 24) { return `~${Math.round(hours)} hour(s) ago`; }
+
+  const days = hours / 24;
+  if (days < 1.5) { return `~ a day ago`; }
+  if (days < 14) { return `~${Math.round(days)} day(s) ago`; }
+
+  return time.toLocaleString();
+}

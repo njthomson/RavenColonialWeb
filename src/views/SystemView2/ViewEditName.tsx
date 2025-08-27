@@ -1,6 +1,7 @@
 import { ActionButton, IconButton } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
+import { delayFocus } from "../../util";
 
 export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean }> = (props) => {
   const [editing, setEditing] = useState(false);
@@ -26,6 +27,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
           ev.preventDefault();
           setEditName(props.name);
           setEditing(true);
+          delayFocus(id);
         }}
       />
     </>}
@@ -40,12 +42,16 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
           width: 200,
           color: appTheme.palette.black,
           backgroundColor: appTheme.palette.white,
+          marginBottom: 3,
         }}
         onClick={ev => ev.preventDefault()}
         onChange={(ev) => setEditName(ev.target.value)}
         onKeyDown={(ev) => {
           if (ev.key === 'Enter') { props.onChange(editName); setEditing(false); }
           if (ev.key === 'Escape') { ev.preventDefault(); setEditing(false); }
+        }}
+        onFocus={(ev) => {
+          ev.target.setSelectionRange(0, -1);
         }}
       />
 
