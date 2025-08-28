@@ -60,7 +60,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
           case HistoryEvent.build:
             events.push({
               date: dd,
-              event: JSON.parse(entry.json),
+              event: JSON.parse(entry.json).name,
             });
             break;
         }
