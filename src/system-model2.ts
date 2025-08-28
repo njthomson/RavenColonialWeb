@@ -155,6 +155,7 @@ const initializeSysMap = (sys: Sys) => {
   let siteMaps: SiteMap2[] = [];
 
   // first: group sites by their bodies
+  if (!sys.sites) { sys.sites = []; }
   const bodyMap = sys.sites.reduce((map, s) => {
     let bodyNum = s.bodyNum ?? -1;
     const rawBody = sys.bodies.find(b => b.num === bodyNum) ?? getUnknownBody();

@@ -12,7 +12,7 @@ import { SystemStats } from './SystemStats';
 import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
-import { Bod, BT, Site, SiteGraphType, Sys } from '../../types2';
+import { Bod, BT, Pop, Site, SiteGraphType, Sys } from '../../types2';
 import { GetRealEconomies, SitesPut, SysSnapshot } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
@@ -288,6 +288,19 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return;
     }
 
+    const isAllowed = !!this.state.sysOriginal?.open || !this.state.sysOriginal?.architect || this.state.sysOriginal?.architect?.toLowerCase() === store.cmdrName.toLowerCase();
+    if (!isAllowed) {
+      console.warn('Edit permission is denied');
+      return;
+    }
+
+    // warn before lockout
+    if (!this.state.sysMap.open && this.state.sysMap?.architect?.toLowerCase() !== store.cmdrName.toLowerCase()) {
+      if (!window.confirm(`Are you sure?\n\nYou are not the system architect. You are about to lose permission to save future changes`)) {
+        return;
+      }
+    }
+
     this.setState({ processingMsg: 'Saving ...', errorMsg: '' });
 
     const payload: SitesPut = {
@@ -303,6 +316,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
     if (this.state.sysOriginal.reserveLevel !== this.state.sysMap.reserveLevel) {
       payload.reserveLevel = this.state.sysMap.reserveLevel;
+    }
+    if (this.state.sysOriginal.open !== this.state.sysMap.open) {
+      payload.open = this.state.sysMap.open;
     }
 
     api.systemV2.saveSites(
@@ -324,7 +340,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       })
       .catch(err => {
         console.error(`saveData failed:`, err.stack);
-        this.setState({ errorMsg: err.message });
+        if (err.statusCode === 401) {
+          this.setState({ errorMsg: 'Edit permission is denied.' });
+        } else {
+          this.setState({ errorMsg: err.message });
+        }
       });
   };
 
@@ -340,9 +360,22 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       tierPoints: snapshotFull.tierPoints,
       sumEffects: snapshotFull.sumEffects,
       sites: newSys.sites,
+      pop: newSys.pop,
     };
     return snapshot;
   }
+
+  updatePop = (newPop: Pop) => {
+    const { sysMap } = this.state;
+    sysMap.pop = newPop;
+    this.setState({ sysMap });
+  };
+
+  updateOpen = (newOpen: boolean) => {
+    const { sysMap } = this.state;
+    sysMap.open = newOpen;
+    this.setState({ sysMap });
+  };
 
   recalc = () => {
     // console.log(this.state.sysMap);
@@ -506,6 +539,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || deletedIDs.length > 0
       || orderIDs.length !== sysOriginal.sites?.length
       || sysMap.architect !== sysOriginal.architect
+      || sysMap.open !== sysOriginal.open
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
       // consider any older revision to be dirty
       || sysMap.rev < sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0)
@@ -630,12 +664,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   renderTitleAndCommands() {
     const { systemName } = this.props;
-    const { processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType } = this.state;
+    const { processingMsg, sysMap, sysOriginal, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${systemName}`;
 
-    const enableSave = this.isDirty() && !processingMsg;
+    const isAllowed = !!sysOriginal?.open || !sysOriginal?.architect || sysOriginal?.architect?.toLowerCase() === store.cmdrName.toLowerCase();
+    const enableSave = isAllowed && this.isDirty() && !processingMsg;
     const noSplitAddButton = isMobile();
 
     const itemAddNewSite = {
@@ -813,7 +848,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
           {
             key: 'sys-save',
-            title: 'Save changes to this system',
+            title: isAllowed ? 'Save changes to this system' : 'Edit permission is denied',
             text: 'Save',
             className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },

@@ -1,12 +1,17 @@
 import { Callout, DirectionalHint, ActionButton, Icon, ContextualMenu } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
 import { ReserveLevel } from "../../types";
+import { store } from "../../local-storage";
 
 export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemView2, onClose: () => void }> = (props) => {
+  const { sysMap, sysOriginal } = props.sysView.state;
   const [dropDown, setDropDown] = useState(false);
+
+  const isOpen = sysMap.open;
+  const canEditOpen = !!store.cmdrName && (sysOriginal.open || !sysOriginal.architect || store.cmdrName.toLowerCase() === sysOriginal.architect?.toLowerCase());
 
   return <div>
 
@@ -41,10 +46,10 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
           <div>Architect:</div>
           <div>
             <ViewEditName
-              name={props.sysView.state.sysMap.architect}
+              name={sysMap.architect ?? '?'}
               onChange={newName => {
-                props.sysView.state.sysMap.architect = newName;
-                props.sysView.setState({ sysMap: props.sysView.state.sysMap });
+                sysMap.architect = newName;
+                props.sysView.setState({ sysMap: sysMap });
               }}
             />
           </div>
@@ -58,11 +63,83 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
               setDropDown(!dropDown);
             }}
           >
-            {props.sysView.state.sysMap.reserveLevel ?? 'Unknown'}
+            {sysMap.reserveLevel ?? 'Unknown'}
             <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
           </ActionButton>
 
         </div>
+
+        {canEditOpen && <><div
+          className={cn.bt}
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            display: 'grid',
+            gridTemplateColumns: 'max-content max-content',
+            gap: '2px 10px',
+            fontSize: '14px',
+            alignItems: 'baseline',
+          }}>
+
+          <div>Edit security:</div>
+          <div>
+            <ActionButton
+              className={cn.bBox}
+              iconProps={{ iconName: isOpen ? 'Unlock' : 'LockSolid', style: { fontSize: 12 } }}
+              text={isOpen ? 'Open' : 'Secured'}
+              title='Only architects can edit a secured system'
+              onClick={() => {
+                props.sysView.updateOpen(!isOpen);
+              }}
+            />
+          </div>
+
+          <div />
+          <div>
+            <ActionButton
+              className={cn.bBox}
+              iconProps={{ iconName: 'Download', style: { fontSize: 12 } }}
+              text='Download'
+              title='Download a copy of data for this system'
+              onClick={() => {
+                // download original state
+                const blob = new Blob([JSON.stringify(sysOriginal, null, 2)], { type: 'text/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup-${props.sysView.props.systemName}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+            />
+            {false && <>
+              <ActionButton
+                className={cn.bBox}
+                iconProps={{ iconName: 'Upload', style: { fontSize: 12 } }}
+                text='Restore'
+                title='Restore data from a download'
+                onClick={() => {
+                  document.getElementById('backupRestore')?.click();
+                }}
+              />
+              <input
+                type="file"
+                id="backupRestore"
+                style={{ display: 'none' }}
+                onChange={async (ev) => {
+                  if (ev.target.files?.length !== 1) { return; }
+                  const json = await ev.target.files[0].text();
+                  console.log(json);
+                  // TODO: do something with this .json
+                }}
+              />
+            </>}
+          </div>
+
+        </div>
+        </>}
       </div>
 
       {<ContextualMenu
@@ -77,8 +154,8 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
           setDropDown(false);
         }}
         onItemClick={(ev, item) => {
-          props.sysView.state.sysMap.reserveLevel = item?.key.replace('reserve-', '') as ReserveLevel;
-          props.sysView.setState({ sysMap: props.sysView.state.sysMap });
+          sysMap.reserveLevel = item?.key.replace('reserve-', '') as ReserveLevel;
+          props.sysView.setState({ sysMap: sysMap });
         }}
         items={[
           {

@@ -47,7 +47,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
         onClick={ev => ev.preventDefault()}
         onChange={(ev) => setEditName(ev.target.value)}
         onKeyDown={(ev) => {
-          if (ev.key === 'Enter') { props.onChange(editName); setEditing(false); }
+          if (ev.key === 'Enter') { props.onChange(editName.trim()); setEditing(false); }
           if (ev.key === 'Escape') { ev.preventDefault(); setEditing(false); }
         }}
         onFocus={(ev) => {
@@ -61,7 +61,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
         style={{ marginLeft: 4 }}
         onClick={(ev) => {
           ev.preventDefault();
-          props.onChange(editName);
+          props.onChange(editName.trim());
           setEditing(false);
         }}
       />

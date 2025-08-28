@@ -301,7 +301,7 @@ export class App extends Component<AppProps, AppState> {
         </Modal>}
         <br />
         <footer className={cn.footer}>
-          <div>© 2025  Raven Colonial Corporation <span style={{ color: 'grey' }}>|</span> <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> <span style={{ color: 'grey' }}>|</span> <LinkSrvSurvey text='About SrvSurvey' /></div>
+          <div>©2025 Raven Colonial Corporation <span style={{ color: 'grey' }}>|</span> <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> <span style={{ color: 'grey' }}>|</span> <LinkSrvSurvey text='About SrvSurvey' /></div>
         </footer>
 
         <Dialog
@@ -315,6 +315,9 @@ export class App extends Component<AppProps, AppState> {
           <br />
           <br />
           Thank you 😎
+          <br />
+          <br />
+          ~ CMDR Grinning2001
           <DialogFooter>
             <PrimaryButton text="Close" onClick={() => this.setState({ showDonate: false })} />
           </DialogFooter>

@@ -16,6 +16,14 @@ export interface Sys {
   updateIDs?: string[];
   slots: Record<number, number[]>;
   revs: Rev[];
+  pop?: Pop;
+  open?: boolean;
+}
+
+export interface Pop {
+  pop: number;
+  timeSpansh: string;
+  timeSaved: string;
 }
 
 /** Info about a saved revision */

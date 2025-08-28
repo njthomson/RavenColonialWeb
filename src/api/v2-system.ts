@@ -3,7 +3,7 @@ import { store } from "../local-storage";
 import { SysEffects } from "../site-data";
 import { EconomyMap, TierPoints } from "../system-model2";
 import { BodyFeature, ReserveLevel } from "../types";
-import { Bod, Site, Sys } from "../types2";
+import { Bod, Pop, Site, Sys } from "../types2";
 import { callAPI } from "./api-util";
 
 /** System level APIs */
@@ -73,6 +73,14 @@ export const systemV2 = {
   saveSnapshot: async (id64: number, data: SysSnapshot): Promise<void> => {
     return await callAPI<void>(`/api/v2/system/${encodeURIComponent(id64)}/snapshot`, 'PUT', JSON.stringify(data));
   },
+
+  refreshPop: async (id64: number): Promise<Pop> => {
+    return await callAPI<Pop>(`/api/v2/system/${encodeURIComponent(id64)}/refreshPop`, 'POST');
+  },
+
+  popHistory: async (id64: number): Promise<History[]> => {
+    return await callAPI<History[]>(`/api/v2/system/${encodeURIComponent(id64)}/popHistory`);
+  },
 };
 
 export interface BodyPut {
@@ -88,6 +96,7 @@ export interface SitesPut {
   reserveLevel?: ReserveLevel;
   snapshot?: SysSnapshot;
   slots?: Record<number, number[]>,
+  open?: boolean;
 }
 
 export interface GetRealEconomies {
@@ -106,4 +115,17 @@ export interface SysSnapshot {
   sites: Site[];
   tierPoints: TierPoints;
   sumEffects: SysEffects;
+  stale?: boolean;
+  pop?: Pop;
+}
+
+export interface History {
+  time: string;
+  event: HistoryEvent;
+  json: string;
+}
+
+export enum HistoryEvent {
+  pop = 'pop',
+  build = 'build',
 }

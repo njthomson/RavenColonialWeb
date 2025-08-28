@@ -10,6 +10,7 @@ import { TierPoint } from '../../components/TierPoints';
 import { Chevrons } from '../../components/Chevrons';
 import { SysEffects, mapName } from '../../site-data';
 import { SystemView2 } from './SystemView2';
+import { SysPop } from './SysPop';
 
 const css = mergeStyleSets({
   component: {
@@ -113,8 +114,16 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
 
       <div className={css.siteCardTable}>
 
+        <div key={`seSitePop1`}>Population:</div>
+        <div key={`seSitePop2`} className={css.siteCardCol2Span}>
+          <SysPop id64={snapshot.id64} name={snapshot.name} pop={snapshot.pop} onChange={newPop => {
+            snapshot.pop = newPop;
+            setSystems([...systems]);
+          }} />
+        </div>
+
         <div key={`seSiteCounts1`}>Sites:</div>
-        <div key={`seSiteCounts2`} className={css.siteCardCol2Span} >
+        <div key={`seSiteCounts2`} className={css.siteCardCol2Span}>
           {statusCounts.join(', ')}
         </div>
 

@@ -8,6 +8,7 @@ import { appTheme } from "../../theme";
 import { HaulList } from "./HaulList";
 import { ProjectLink2 } from "./ProjectLink2";
 import { SystemView2 } from "./SystemView2";
+import { SysPop } from "./SysPop";
 
 // //cargoTypes["Asteroid Starport"].items.
 // // const cargoTypes2 = cargoTypes as Record<string, any>;
@@ -59,6 +60,11 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
 
     <div>System architect:</div>
     <div style={{ gridColumn: '2 / span 3' }}>{sysMap.architect}</div>
+
+    <div>Population:</div>
+    <div style={{ gridColumn: '2 / span 3' }}>
+      <SysPop id64={sysMap.id64} name={sysMap.name} pop={sysMap.pop} onChange={newPop => props.sysView.updatePop(newPop)} />
+    </div>
 
     <div>Tier points:</div>
     <div style={{ gridColumn: '2 / span 3' }}>
