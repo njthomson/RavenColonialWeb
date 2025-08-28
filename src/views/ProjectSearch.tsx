@@ -100,7 +100,7 @@ export class ProjectSearch extends Component<ProjectProps, ProjectState> {
           text={systemName}
           onMatch={(text) => {
             if (text && text !== this.state.systemName) {
-              window.location.assign(`#find=${text.trim()}`);
+              window.location.assign(`#find=${encodeURIComponent(text.trim())}`);
             }
           }}
         />}

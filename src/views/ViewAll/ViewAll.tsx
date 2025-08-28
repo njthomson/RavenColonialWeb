@@ -290,7 +290,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     for (const systemName in mapBySystem) {
       const rowP = <li key={systemName} style={{ marginBottom: 8 }}>
         <Stack horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' style={{ fontWeight: 'bold', marginBottom: 8 }} >
-          <Link href={`#sys=${systemName}`} >{systemName}</Link>
+          <Link href={`#sys=${encodeURIComponent(systemName)}`}>{systemName}</Link>
           <CopyButton text={systemName} />
           <span>{mapBySystem[systemName].length} projects</span>
         </Stack>

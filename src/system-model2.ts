@@ -1,3 +1,4 @@
+import { SysSnapshot } from './api/v2-system';
 import { calculateColonyEconomies2 } from './economy-model2';
 import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
 import { SysMap } from './system-model';
@@ -546,3 +547,21 @@ export const hasPreReq2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType)
       return false;
   }
 }
+
+export const getSnapshot = (newSys: Sys) => {
+  // prepare a snapshot without using incomplete sites
+  const snapshotFull = buildSystemModel2(newSys, false, true);
+  const snapshot: SysSnapshot = {
+    architect: newSys.architect,
+    id64: newSys.id64,
+    v: newSys.v,
+    name: newSys.name,
+    pos: newSys.pos,
+    tierPoints: snapshotFull.tierPoints,
+    sumEffects: snapshotFull.sumEffects,
+    sites: newSys.sites,
+    pop: newSys.pop,
+    stale: false,
+  };
+  return snapshot;
+};

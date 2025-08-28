@@ -93,7 +93,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
         iconProps={{ imageProps: { src: inara16 } }}
         title='View on Inara'
         className={cn.bBox}
-        href={`https://inara.cz/elite/station-market/?search=${props.site.name} [${props.sysView.props.systemName}]`}
+        href={`https://inara.cz/elite/station-market/?search=${encodeURIComponent(props.site.name)} [${encodeURIComponent(props.sysView.state.systemName)}]`}
         target='inara'
       />
       <ActionButton

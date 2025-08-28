@@ -125,7 +125,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         />}
       </h3>
 
-      <table className={`commodities`} cellSpacing={0} cellPadding={0}>
+      {zeroNeed && !hideDoneRows && <table className={`commodities`} cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
@@ -135,7 +135,13 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           </tr>
         </thead>
         <tbody>{this.getTableRows()}</tbody>
-      </table>
+      </table>}
+
+      {zeroNeed && hideDoneRows && <>
+        <div style={{ textAlign: 'center', color: appTheme.palette.themeTertiary, margin: 20 }}>
+          No commodities to show
+        </div>
+      </>}
 
       {fcEditMarketId && <FleetCarrier
         marketId={fcEditMarketId}
@@ -383,7 +389,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
 
         {/* A cell for each FC */}
         {linkedFC.map(fc => <td key={`fcc${fc.marketId}`} className={`commodity-need ${cn.br}`} >
-          {fc.cargo[key] ? <span>{fc.cargo[key].toLocaleString()}</span> : <span style={{color: 'grey'}}>-</span>}
+          {fc.cargo[key] ? <span>{fc.cargo[key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
         </td>)}
       </>}
 

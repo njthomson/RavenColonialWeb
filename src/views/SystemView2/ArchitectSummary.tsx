@@ -1,6 +1,6 @@
 import * as api from '../../api';
-import { FunctionComponent, useEffect, useState } from "react";
-import { Link, mergeStyleSets, Spinner, Stack } from "@fluentui/react";
+import { FunctionComponent, useEffect, useMemo, useState } from "react";
+import { Icon, Link, mergeStyleSets, Spinner, Stack } from "@fluentui/react";
 import { appTheme, cn } from '../../theme';
 import { asPosNegTxt } from '../../util';
 import { BuildStatus, mapStatus } from '../../types2';
@@ -11,6 +11,7 @@ import { Chevrons } from '../../components/Chevrons';
 import { SysEffects, mapName } from '../../site-data';
 import { SystemView2 } from './SystemView2';
 import { SysPop } from './SysPop';
+import { getSnapshot } from '../../system-model2';
 
 const css = mergeStyleSets({
   component: {
@@ -21,6 +22,7 @@ const css = mergeStyleSets({
     margin: '20px 0',
   },
   siteCard: {
+    position: 'relative',
     width: 320,
     padding: 10,
     marginRight: '20px!important',
@@ -33,6 +35,7 @@ const css = mergeStyleSets({
     fontWeight: 'bold',
   },
   siteCardTable: {
+    position: 'relative',
     marginTop: 10,
     fontSize: 12,
     overflow: 'hidden',
@@ -50,6 +53,38 @@ const css = mergeStyleSets({
 export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
   const [loading, setLoading] = useState(false);
   const [systems, setSystems] = useState<SysSnapshot[] | undefined>();
+
+  // load, re-calc and save each stale snapshot
+  useMemo(() => {
+
+    // delay some or it looks spooky
+    setTimeout(async () => {
+
+      // exit early if nothing to re-calc
+      const stales = systems?.filter(s => s.stale) ?? []
+      if (!systems || stales.length === 0) { return; }
+
+      try {
+        const snap = stales[0];
+        console.log(`Recalculating snapshot for: ${snap.name} (${snap.id64})`);
+        const newSys = await api.systemV2.getSys(snap.id64.toString());
+        const newSnapshot = getSnapshot(newSys);
+        await api.systemV2.saveSites(snap.id64.toString(), {
+          update: [],
+          delete: [],
+          orderIDs: [],
+          snapshot: newSnapshot,
+        });
+
+        // replace the snapshot, which triggers the next memo
+        const idx = systems.indexOf(snap)
+        systems.splice(idx, 1, newSnapshot);
+        setSystems([...systems]);
+      } catch (err: any) {
+        console.error(err.stack);
+      }
+    }, 500);
+  }, [systems]);
 
   useEffect(() => {
     if (!systems) {
@@ -104,7 +139,7 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
         verticalAlign='center'
         tokens={{ childrenGap: 4 }}
       >
-        <Link href={`/#sys=${snapshot.name}`} className={css.siteCardLink}>{snapshot.name}</Link>
+        <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
         <div>
           <TierPoint tier={2} count={snapshot.tierPoints.tier2} />
           &nbsp;
@@ -142,6 +177,12 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
           ]
         })}
       </div>
+      {snapshot.stale && <>
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 11 }}>
+          <Icon iconName='Processing' />
+          <span>updating</span>
+        </Stack>
+      </>}
     </div>;
   });
 

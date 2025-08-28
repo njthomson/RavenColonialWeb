@@ -15,17 +15,20 @@ export const systemV2 = {
     snapshots: {} as Record<string, SysSnapshot[]>,
   },
 
-  getSys: async (systemName: string, force?: boolean, rev?: number): Promise<Sys> => {
-    if (systemName in systemV2.cache.sys && !force) { return systemV2.cache.sys[systemName]; }
+  getSys: async (nameOrNum: string, force?: boolean, rev?: number): Promise<Sys> => {
+    if (!force) {
+      const match = Object.values(systemV2.cache.sys).find(s => s.name === nameOrNum || s.id64.toString() === nameOrNum);
+      if (match) { return match; }
+    }
 
     if (rev) {
       // do not cache older revisions
-      const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/.${rev}`);
+      const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/.${rev}`);
       return result;
     }
 
-    const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}`);
-    systemV2.cache.sys[systemName] = result;
+    const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}`);
+    systemV2.cache.sys[result.id64] = result;
     return result;
   },
 
@@ -37,19 +40,19 @@ export const systemV2 = {
     return await callAPI<Bod[]>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`, 'PUT', JSON.stringify(data));
   },
 
-  saveSites: async (id64OrName: string, data: SitesPut): Promise<Sys> => {
-    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(id64OrName)}/sites`, 'PUT', JSON.stringify(data));
+  saveSites: async (nameOrNum: string, data: SitesPut): Promise<Sys> => {
+    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/sites`, 'PUT', JSON.stringify(data));
   },
 
-  import: async (systemName: string, type?: string): Promise<Sys> => {
-    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(systemName)}/import/${type ?? ''}`, 'POST');
+  import: async (nameOrNum: string, type?: string): Promise<Sys> => {
+    return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/import/${type ?? ''}`, 'POST');
   },
 
-  getRealEconomies: async (id64OrName: string, force?: boolean): Promise<GetRealEconomies[]> => {
-    if (id64OrName in systemV2.cache.economies && !force) { return systemV2.cache.economies[id64OrName]; }
+  getRealEconomies: async (nameOrNum: string, force?: boolean): Promise<GetRealEconomies[]> => {
+    if (nameOrNum in systemV2.cache.economies && !force) { return systemV2.cache.economies[nameOrNum]; }
 
-    const result = await callAPI<GetRealEconomies[]>(`/api/v2/system/${encodeURIComponent(id64OrName)}/spanshEconomies`);
-    systemV2.cache.economies[id64OrName] = result;
+    const result = await callAPI<GetRealEconomies[]>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/spanshEconomies`);
+    systemV2.cache.economies[nameOrNum] = result;
     return result;
   },
 

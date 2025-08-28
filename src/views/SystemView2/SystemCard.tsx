@@ -107,7 +107,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `backup-${props.sysView.props.systemName}.json`;
+                a.download = `backup-${props.sysView.state.systemName}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);

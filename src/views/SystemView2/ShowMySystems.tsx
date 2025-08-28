@@ -52,7 +52,7 @@ export const ShowMySystems: FunctionComponent<{ foo?: string }> = (props) => {
         {entries.length > 0 && <div>
           <ul>
             {entries.map(([name, count]) => (<li key={`s${name}`}>
-              <Link onClick={() => window.location.assign(`/#sys=${name}`)}>
+              <Link onClick={() => window.location.assign(`/#sys=${encodeURIComponent(name)}`)}>
                 {name}
                 <span style={{ color: 'grey' }}> - {count} sites</span>
               </Link>

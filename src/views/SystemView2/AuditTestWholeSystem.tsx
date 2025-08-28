@@ -40,7 +40,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
       isOpen
       isLightDismiss
       className='build-order'
-      headerText={`Compare: ${props.sysView.props.systemName}`}
+      headerText={`Compare: ${props.sysView.state.systemName}`}
       allowTouchBodyScroll={isMobile()}
       type={isMobile() ? PanelType.medium : PanelType.custom}
       customWidth='1280px'

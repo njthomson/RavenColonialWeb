@@ -40,7 +40,7 @@ export const SitePill: FunctionComponent<{ site: SiteMap2, fieldHighlight?: stri
 
 export const BodyPill: FunctionComponent<{ bod: Bod, sysView: SystemView2, sitesBodyViewRef: React.RefObject<SitesBodyView> }> = (props) => {
 
-  const bodyShortName = props.bod.name.replace(props.sysView.props.systemName + ' ', '');
+  const bodyShortName = props.bod.name.replace(props.sysView.state.systemName + ' ', '');
 
   return <ActionButton
     className={`${cn.bBox2} ${cn.pillSmall}`}

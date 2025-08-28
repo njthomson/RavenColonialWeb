@@ -6,14 +6,14 @@ import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog
 import { Component, createRef, FunctionComponent } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
-import { buildSystemModel2, hasPreReq2, SiteMap2, SysMap2, unknown } from '../../system-model2';
+import { buildSystemModel2, getSnapshot, hasPreReq2, SiteMap2, SysMap2, unknown } from '../../system-model2';
 import { TierPoint } from '../../components/TierPoints';
 import { SystemStats } from './SystemStats';
 import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
 import { Bod, BT, Pop, Site, SiteGraphType, Sys } from '../../types2';
-import { GetRealEconomies, SitesPut, SysSnapshot } from '../../api/v2-system';
+import { GetRealEconomies, SitesPut } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
@@ -32,6 +32,7 @@ interface SystemView2Props {
 }
 
 interface SystemView2State {
+  systemName: string;
   hideLoginPrompt?: boolean;
   errorMsg?: string;
   processingMsg?: string;
@@ -68,6 +69,7 @@ const viewTypes = [
 const anonymous = !store.cmdrName;
 
 export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
+  public static nextID64 = 0;
   static countNew = 0;
   static lastBuildType?: string;
   static lastBodyNum?: number;
@@ -79,6 +81,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     super(props);
 
     this.state = {
+      systemName: props.systemName,
       ...this.getResetState(),
       processingMsg: 'Loading ...',
       useIncomplete: store.useIncomplete,
@@ -90,7 +93,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (!!this.props.systemName) {
       // reload a new system
       window.document.title = 'Sys: ' + this.props.systemName;
-      const promise = this.loadData()
+      const promise = this.loadData(this.props.systemName);
       if (store.autoCheckSpanshEconomies) {
         promise.then(() => {
           this.doGetRealEconomies();
@@ -119,9 +122,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   componentDidUpdate(prevProps: Readonly<SystemView2Props>, prevState: Readonly<SystemView2State>, snapshot?: any): void {
     if (prevProps.systemName !== this.props.systemName) {
       if (!!this.props.systemName) {
+        // use the nextID64? Clear it regardless
+        const nameOrNum = !!SystemView2.nextID64
+          ? SystemView2.nextID64.toString()
+          : this.props.systemName
+        SystemView2.nextID64 = 0;
         // reload a new system
         window.document.title = 'Sys: ' + this.props.systemName;
-        this.loadData(true);
+        this.loadData(nameOrNum, true);
       } else {
         this.doSystemSearch();
       }
@@ -154,7 +162,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       auditWholeSystem: false,
       showCreateBuildProject: false,
       siteGraphType: store.siteGraphType,
-    } as Omit<SystemView2State, 'useIncomplete' | 'viewType'>;
+    } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName'>;
   }
 
   doSystemSearch() {
@@ -168,13 +176,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   doLoad = (rev?: number) => {
     if (this.isDirty()) {
-      this.setState({ showConfirmAction: () => this.loadData(false, rev) });
+      this.setState({ showConfirmAction: () => this.loadData(this.props.systemName, false, rev) });
     } else {
-      this.loadData(false, rev);
+      this.loadData(this.props.systemName, false, rev);
     }
   };
 
-  loadData = (reset?: boolean, rev?: number) => {
+  loadData = (nameOrNum: string, reset?: boolean, rev?: number) => {
     this.setState({
       ...(reset ? this.getResetState() : {} as any),
       processingMsg: 'Loading ...',
@@ -182,7 +190,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       errorMsg: '',
     });
 
-    return api.systemV2.getSys(this.props.systemName, true, rev)
+    return api.systemV2.getSys(nameOrNum, true, rev)
       .then(newSys => {
 
         if (newSys.v < api.systemV2.currentSchemaVersion) {
@@ -202,6 +210,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         }
 
         this.setState({
+          systemName: newSys.name,
           processingMsg: undefined,
           sysOriginal: newSys,
           sysMap: newSysMap,
@@ -212,6 +221,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           bodySlots: newSys.slots,
           originalBodySlots: JSON.stringify(newSys.slots),
         });
+        window.document.title = 'Sys: ' + newSys.name;
 
         //api.systemV2.getCmdrRevs().then(revs => console.warn(revs));
 
@@ -220,11 +230,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           return api.systemV2.getSnapshot(newSys.id64)
             .catch(err => {
               if (err.statusCode === 404) {
-                console.log(`Generate a snapshot for: ${this.props.systemName} ... `);
+                console.log(`Generate a snapshot for: ${newSys.name} ... `);
                 // clear this cache any time we add a snapshot
                 api.systemV2.cache.snapshots = {};
                 // save a new snapshot
-                const snapshot = this.getSnapshot(newSys);
+                const snapshot = getSnapshot(newSys);
                 return api.systemV2.saveSnapshot(newSys.id64, snapshot);
               } else {
                 console.error(err.stack);
@@ -264,6 +274,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
         const orderIDs = newSysMap.sites.map(s => s.id);
         this.setState({
+          systemName: newSys.name,
           processingMsg: undefined,
           sysOriginal: newSys,
           sysMap: newSysMap,
@@ -272,6 +283,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
         });
+        window.document.title = 'Sys: ' + newSys.name;
       })
       .catch(err => {
         console.error(err.stack);
@@ -307,7 +319,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       update: Object.values(this.state.dirtySites),
       delete: this.state.deletedIDs,
       orderIDs: this.state.orderIDs,
-      snapshot: this.state.sysMap.architect ? this.getSnapshot(this.state.sysMap) : undefined,
+      snapshot: this.state.sysMap.architect ? getSnapshot(this.state.sysMap) : undefined,
       slots: this.state.bodySlots,
     };
 
@@ -347,23 +359,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         }
       });
   };
-
-  getSnapshot(newSys: Sys) {
-    // prepare a snapshot without using incomplete sites
-    const snapshotFull = buildSystemModel2(newSys, false, true);
-    const snapshot: SysSnapshot = {
-      architect: newSys.architect,
-      id64: newSys.id64,
-      v: newSys.v,
-      name: newSys.name,
-      pos: newSys.pos,
-      tierPoints: snapshotFull.tierPoints,
-      sumEffects: snapshotFull.sumEffects,
-      sites: newSys.sites,
-      pop: newSys.pop,
-    };
-    return snapshot;
-  }
 
   updatePop = (newPop: Pop) => {
     const { sysMap } = this.state;
@@ -649,7 +644,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           text=''
           onMatch={(text) => {
             if (!!text?.trim()) {
-              window.location.assign(`/#sys=${text.trim()}`);
+              window.location.assign(`/#sys=${encodeURIComponent(text.trim())}`);
             }
           }}
         />
@@ -663,11 +658,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderTitleAndCommands() {
-    const { systemName } = this.props;
-    const { processingMsg, sysMap, sysOriginal, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType } = this.state;
+    const { systemName, processingMsg, sysMap, sysOriginal, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType } = this.state;
 
     // prepare rich copy link
-    const pageLink = `${window.location.origin}/#sys=${systemName}`;
+    const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
 
     const isAllowed = !!sysOriginal?.open || !sysOriginal?.architect || sysOriginal?.architect?.toLowerCase() === store.cmdrName.toLowerCase();
     const enableSave = isAllowed && this.isDirty() && !processingMsg;
@@ -1233,7 +1227,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       const bm = bodyMap[b.name];
       if (!bm) { continue; }
 
-      const bodyShortName = bm.name.replace(this.props.systemName + ' ', '');
+      const bodyShortName = bm.name.replace(this.state.systemName + ' ', '');
 
       // warn if a non-landable body has surface sites
       if (bm.surface.length > 0 && !isLandable) {
@@ -1335,7 +1329,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         width: 'max-content',
       }}>
       <SitesTableView
-        systemName={this.props.systemName}
+        systemName={this.state.systemName}
         sysMap={sysMap}
         sysView={this}
         pinnedId={pinnedSite?.id}
@@ -1364,7 +1358,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       }}>
       <SitesBodyView
         ref={this.sitesBodyViewRef}
-        systemName={this.props.systemName}
+        systemName={this.state.systemName}
         sysMap={sysMap}
         sysView={this}
         pinnedId={pinnedSite?.id}
@@ -1410,7 +1404,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       >
         <ProjectCreate
           noTitle
-          systemName={this.props.systemName}
+          systemName={this.state.systemName}
           knownMarketIds={knownMarketIDs}
           knownNames={knownNames}
           bodies={this.state.sysMap.bodies}
