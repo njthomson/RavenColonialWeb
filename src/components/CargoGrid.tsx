@@ -89,6 +89,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   render() {
     const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed } = this.state;
 
+    const hideGrid = hideDoneRows && zeroNeed;
     return <>
       <h3 className={cn.h3}>
         Commodities:&nbsp;
@@ -125,7 +126,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         />}
       </h3>
 
-      {zeroNeed && !hideDoneRows && <table className={`commodities`} cellSpacing={0} cellPadding={0}>
+      {!hideGrid && <table className={`commodities`} cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
@@ -137,7 +138,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         <tbody>{this.getTableRows()}</tbody>
       </table>}
 
-      {zeroNeed && hideDoneRows && <>
+      {hideGrid && <>
         <div style={{ textAlign: 'center', color: appTheme.palette.themeTertiary, margin: 20 }}>
           No commodities to show
         </div>
