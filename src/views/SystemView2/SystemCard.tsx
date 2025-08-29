@@ -11,7 +11,9 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
   const [dropDown, setDropDown] = useState(false);
 
   const isOpen = sysMap.open;
-  const canEditOpen = !!store.cmdrName && (sysOriginal.open || !sysOriginal.architect || store.cmdrName.toLowerCase() === sysOriginal.architect?.toLowerCase());
+  const isArchitect = !!sysOriginal.architect && sysOriginal.architect?.toLowerCase() === store.cmdrName?.toLowerCase();
+  const canEditOpen = !!store.cmdrName && (sysOriginal.open || !sysOriginal.architect || isArchitect);
+  const canEditArchitect = !!store.cmdrName && (isArchitect || !sysOriginal.architect);
 
   return <div>
 
@@ -40,13 +42,14 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
           gridTemplateColumns: 'max-content max-content',
           gap: '2px 10px',
           fontSize: '14px',
-          alignItems: 'baseline'
+          alignItems: 'center'
         }}>
 
           <div>Architect:</div>
           <div>
             <ViewEditName
-              name={sysMap.architect ?? '?'}
+              disabled={!canEditArchitect}
+              name={sysMap.architect || '?'}
               onChange={newName => {
                 sysMap.architect = newName;
                 props.sysView.setState({ sysMap: sysMap });

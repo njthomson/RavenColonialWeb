@@ -307,7 +307,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     // warn before lockout
-    if (!this.state.sysMap.open && this.state.sysMap?.architect?.toLowerCase() !== store.cmdrName.toLowerCase()) {
+    const aboutToLock = !this.state.sysMap.open && !!this.state.sysMap?.architect && this.state.sysMap?.architect?.toLowerCase() !== store.cmdrName.toLowerCase();
+    if (aboutToLock) {
       if (!window.confirm(`Are you sure?\n\nYou are not the system architect. You are about to lose permission to save future changes`)) {
         return;
       }
@@ -664,7 +665,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
 
     const isAllowed = !!sysOriginal?.open || !sysOriginal?.architect || sysOriginal?.architect?.toLowerCase() === store.cmdrName.toLowerCase();
-    const enableSave = isAllowed && this.isDirty() && !processingMsg;
+    const enableSave = isAllowed && this.isDirty() && !processingMsg && !anonymous;
     const noSplitAddButton = isMobile();
 
     const itemAddNewSite = {

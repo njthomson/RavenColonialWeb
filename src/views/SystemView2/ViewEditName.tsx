@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { delayFocus } from "../../util";
 
-export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean }> = (props) => {
+export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; }> = (props) => {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);
   const [editName, setEditName] = useState('');
@@ -18,11 +18,16 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
 
     {!editing && <>
       <ActionButton
+        disabled={props.disabled}
         text={props.name}
         title='Edit the name'
-        iconProps={{ iconName: 'Edit' }}
-        style={{ marginLeft: 4, fontSize: props.noBold ? undefined : '1.0em', fontWeight: props.noBold ? undefined : 'bold' }}
-        className={cn.bBox}
+        iconProps={{ iconName: props.disabled ? undefined : 'Edit' }}
+        style={{
+          fontSize: props.noBold ? undefined : '1.0em',
+          fontWeight: props.noBold ? undefined : 'bold',
+          color: props.disabled ? appTheme.palette.themeSecondary : undefined,
+        }}
+        className={props.disabled ? undefined : cn.bBox}
         onClick={(ev) => {
           ev.preventDefault();
           setEditName(props.name);
