@@ -15,13 +15,23 @@ const bsn = mergeStyles({
   },
 });
 
-/** Button Slot number (showing icon) */
+/** DIM Button Slot number (showing icon) */
 const bsni = mergeStyles({
   color: appTheme.palette.themeTertiary,
   border: `1px solid ${appTheme.palette.neutralQuaternary}`,
   ':hover': {
     color: appTheme.palette.themePrimary,
     border: `1px solid ${appTheme.palette.themeTertiary}`,
+  },
+});
+
+/** Bright Button Slot number (showing icon) */
+const bsnib = mergeStyles({
+  color: appTheme.semanticColors.bodyText,
+  border: `1px solid ${appTheme.palette.themeTertiary}`,
+  ':hover': {
+    color: appTheme.palette.themePrimary,
+    border: `1px solid ${appTheme.palette.themeSecondary}`,
   },
 });
 
@@ -36,22 +46,20 @@ const mbs = mergeStyles({
   fontWeight: 'bold',
 });
 
-export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, onChange: (count: number) => void }> = (props) => {
+export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
 
   const id = `view-edit-slots-${Date.now()}`;
   const tooMany = props.max >= 0 && props.current > props.max;
   const unknown = props.max === -1;
-  return <div
-    style={{ marginLeft: props.showIcon ? 4 : undefined }}
-  >
+  return <div style={{ marginLeft: props.showIcon ? 4 : undefined }}>
     <ActionButton
       id={id}
-      className={props.showIcon ? bsni : bsn}
+      className={props.showIcon ? (props.bright ? bsnib : bsni) : bsn}
       style={{ border: tooMany ? `2px dashed ${appTheme.palette.redDark}` : undefined }}
       styles={{
-        icon: { color: appTheme.palette.themeTertiary },
-        textContainer: { color: tooMany || unknown ? appTheme.palette.red : undefined },
+        icon: { color: props.bright ? appTheme.semanticColors.bodyText : appTheme.palette.themeTertiary },
+        textContainer: { color: tooMany || unknown ? appTheme.palette.red : 'unset' },
       }}
       iconProps={{ iconName: !props.showIcon ? undefined : (props.isOrbital ? 'ProgressRingDots' : 'GlobeFavorite'), }}
       text={props.max >= 0 ? props.max.toString() : '?'}

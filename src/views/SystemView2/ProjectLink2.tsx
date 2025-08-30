@@ -2,7 +2,7 @@ import * as api from '../../api';
 import rcc32 from '../../assets/rcc-32.png';
 import spansh16 from '../../assets/spansh-16x16.png';
 import inara16 from '../../assets/inara-16x16.png';
-import { ActionButton, Icon, Link, Stack } from "@fluentui/react";
+import { ActionButton, Icon, IconButton, Link, Stack } from "@fluentui/react";
 import { FunctionComponent, useMemo, useState } from "react";
 import { SystemView2 } from "./SystemView2";
 import { ChartGeneralProgress } from "../../components";
@@ -82,24 +82,29 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
 
   if (!showChart) {
     return <>
-      {props.site.id.startsWith('&') && <ActionButton
-        iconProps={{ imageProps: { src: spansh16 } }}
-        title='View on Spansh'
-        className={cn.bBox}
-        href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
-        target='spansh'
-      />}
-      <ActionButton
+      {props.site.id.startsWith('&') && <>
+        <IconButton
+          iconProps={{ imageProps: { src: spansh16 } }}
+          title='View on Spansh'
+          className={cn.bBox}
+          style={{ width: 24, height: 24 }}
+          href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
+          target='spansh'
+        />
+      </>}
+      <IconButton
         iconProps={{ imageProps: { src: inara16 } }}
         title='View on Inara'
         className={cn.bBox}
+        style={{ width: 24, height: 24 }}
         href={`https://inara.cz/elite/station-market/?search=${encodeURIComponent(props.site.name)} [${encodeURIComponent(props.sysView.state.systemName)}]`}
         target='inara'
       />
-      <ActionButton
+      <IconButton
         iconProps={{ imageProps: { src: rcc32, width: 16, height: 16 } }}
         title='Open project page'
         className={cn.bBox}
+        style={{ width: 24, height: 24 }}
         href={`${window.location.origin}/#build=${props.site.buildId}`}
         target='build'
       />

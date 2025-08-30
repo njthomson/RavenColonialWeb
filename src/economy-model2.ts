@@ -136,7 +136,7 @@ const finishUp = (map: EconomyMap, site: SiteMap2) => {
 const adjust = (inf: Economy, delta: number, reason: string, map: EconomyMap, site: SiteMap2, source?: 'body' | 'sys') => {
   const before = map[inf as keyof EconomyMap];
   let newValue = map[inf as keyof EconomyMap] + delta;
-  // if (newValue <= 0) { newValue = 0.1; }
+  if (newValue <= 0) { newValue = 0.1; }
   // round values (why do we get values of "2.2499999999999996"?)
   map[inf as keyof EconomyMap] = Math.round(newValue * 100) / 100;
   const after = map[inf as keyof EconomyMap];
@@ -178,7 +178,7 @@ const applySpecializedPort = (map: EconomyMap, site: SiteMap2) => {
   }
 };
 
-const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
+export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
   if (site.type.inf !== 'colony') {
     console.warn(`Why are we in: applyBodyType?`);
     return;
@@ -331,7 +331,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
 
     // size of impact varies by Tier: 0.4 / 0.8 / 1.2
     const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2);
-    const prefix = nested ? 'SUB-strong link' : 'strong link';
+    const prefix = nested ? 'SUB-strong link' : 'Strong link';
 
     // apply single adjustment for non-colony types
     if (s.type.inf !== 'colony') {
@@ -392,7 +392,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
   return isC2C;
 };
 
-const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, reason: string) => {
+export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, reason: string) => {
 
   // assume reserveLevel of PRISTINE if not set
   const reserveLevel = site.sys.reserveLevel ?? 'pristine';
@@ -485,7 +485,7 @@ const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, rea
   }
 }
 
-const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean, isC2C?: boolean) => {
+export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean, isC2C?: boolean) => {
 
   // Do not apply any negative buffs to Odyssey settlements
 

@@ -52,7 +52,7 @@ export interface BodyMap2 extends Bod {
   orbitalPrimary?: SiteMap2;
 }
 
-interface AuditEconomy {
+export interface AuditEconomy {
   inf: string;
   delta: number;
   reason: string;

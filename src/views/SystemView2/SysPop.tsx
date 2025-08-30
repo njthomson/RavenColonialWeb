@@ -6,6 +6,7 @@ import { appTheme, cn } from "../../theme";
 import { ILineChartDataPoint, ILineChartPoints, LineChart } from '@fluentui/react-charting';
 import { HistoryEvent } from '../../api/v2-system';
 import { IEventAnnotation } from '@fluentui/react-charting/lib/types/IEventAnnotation';
+import { getRelativeDuration } from '../../util';
 
 export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | undefined, onChange: (newPop: Pop) => void }> = (props) => {
   const [pop, setPop] = useState(props.pop);
@@ -13,7 +14,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
   const [showCharts, setShowCharts] = useState(false);
   const [loading, setLoading] = useState(true);
   const [fetch, setFetch] = useState(0);
-  const [data, setChartData] = useState<{ data: ILineChartPoints[], events: IEventAnnotation[] }>({ data: [], events: [] });
+  const [data, setChartData] = useState<{ data: ILineChartPoints[], events: IEventAnnotation[], lastDate: string }>({ data: [], events: [], lastDate: '?' });
 
   const updateFromSpansh = () => {
     setLoading(true);
@@ -43,8 +44,10 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
       const events: IEventAnnotation[] = [];
 
       const history = await api.systemV2.popHistory(props.id64);
+      let latest = 0;
       for (const entry of history) {
         const dd = new Date(entry.time);
+        latest = Math.max(latest, dd.getTime());
 
         switch (entry.event) {
           default: throw new Error(`Unexpected event: ${entry.event}`);
@@ -72,6 +75,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
       setChartData({
         data: newData,
         events: events,
+        lastDate: getRelativeDuration(new Date(latest)),
       });
 
       // delay a little to avoid flicker
@@ -160,6 +164,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
             }}
             customDateTimeFormatter={data.data.every(d => d.data.length <= 1) ? dt => dt.toLocaleString() : undefined}
           />
+          <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary }}>Last updated: <span style={{ color: appTheme.palette.themeSecondary }}>{data.lastDate}</span></div>
         </div>
       </Modal>
     </>}

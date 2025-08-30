@@ -115,7 +115,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             name='cmdr'
             label='Commander name:'
             value={cmdr}
-            onChange={(_, v) => this.setState({ cmdr: v! })}
+            onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
             onKeyDown={(ev) => {
               if (ev.key === 'Enter') { this.onSave(); }
               if (ev.key === 'Escape') { this.onCancel(); }
@@ -235,7 +235,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       }
 
       store.cmdr = {
-        name: cmdr,
+        name: cmdr.trim(),
         largeMax: cargoLargeMax,
         medMax: cargoMediumMax,
       };

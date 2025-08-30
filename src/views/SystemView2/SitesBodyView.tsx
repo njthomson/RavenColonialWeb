@@ -1,4 +1,4 @@
-import { Component, FunctionComponent } from "react";
+import { Component, FunctionComponent, useState } from "react";
 import { Bod, BT } from "../../types2";
 import { ActionButton, ContextualMenu, ContextualMenuItemType, DefaultButton, Icon, IconButton, IContextualMenuItem, Link, Stack } from "@fluentui/react";
 import { appTheme, cn } from "../../theme";
@@ -9,6 +9,7 @@ import { BodyFeature, mapBodyFeature } from "../../types";
 import { SiteLink } from "./SiteLink";
 import { stellarRemnants } from "../../economy-model2";
 import { ViewEditSlotCount } from "./ViewEditSlotCount";
+import { BodyCard } from "./BodyCard";
 
 let nnn = 0;
 const indent = 20;
@@ -598,7 +599,6 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
 
           <div style={{
             borderLeft: props.filtering ? undefined : `2px dotted ${appTheme.palette.themeTertiary}`,
-            fontSize: 12,
             margin: '10px 0',
           }}>
             {props.children}
@@ -659,6 +659,8 @@ interface BodyBlockProps {
 
 export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const { sysView, node, name, up, down, leftDotted, root, filtering } = props;
+  const [hasMouse, setHasMouse] = useState(false);
+  const [showCard, setShowCard] = useState(false);
 
   const bodyNum = node.body.num;
   const orbitals = node.map?.orbital;
@@ -680,7 +682,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
       key={`bfi-${bodyNum}${f}`}
       title={mapBodyFeature[f]}
       iconName={mapBodyFeatureIcon[f]}
-      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.4)' }}
+      style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.5)' }}
     />)}
   </Stack>;
 
@@ -720,6 +722,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, false)}
   />
 
+  const bodId = `bodc-${bodyNum}`;
   return <div
     style={{
       position: 'relative',
@@ -739,12 +742,17 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
           // backgroundColor: 'rgb(30,30,30)'
         }}>
           <svg
-            width={3 + indent + sz * 2}
+            id={bodId}
+            width={7 + indent + sz * 2}
             height={2 + sz * 2}
             style={{
               zIndex: 1,
               backgroundColor: appTheme.palette.white, // 'black',
+              cursor: hasMouse ? 'pointer' : 'default',
             }}
+            onMouseEnter={() => setHasMouse(true)}
+            onMouseLeave={() => setHasMouse(false)}
+            onClick={() => setShowCard(true)}
           >
             {!root && !filtering && <>
               {!leftDotted && <line x1={0} y1={1 + sz} x2={indent + sz} y2={1 + sz} stroke={appTheme.palette.themeSecondary} strokeWidth={2} />}
@@ -765,12 +773,26 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
               <ellipse cx={indent + sz - 4} cy={1 + sz} rx={sz / 2.5} ry={sz / 2.5} fill={c1} stroke={c2} strokeWidth={2} />
               <ellipse cx={indent + sz + 5} cy={1 + sz - 7} rx={sz / 3} ry={sz / 3} fill={c1} stroke={c2} strokeWidth={2} />
             </>}
+            {(hasMouse || showCard) && <>
+              <circle cx={indent + sz} cy={1 + sz} r={sz + 6} fill='transparent' stroke={appTheme.palette.accent} strokeWidth={4} />
+            </>}
           </svg>
 
           <div style={{ position: 'relative', borderBottom: innerBorders, paddingRight: 20 }} >
             <span id={`sbv-${bodyNum}`} style={{ position: 'absolute', left: 0, top: -64, width: 0, height: 0, backgroundColor: 'transparent' }} />
             <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 0 }}>
-              <span style={{ marginRight: 6, width: 'max-content' }}>{name}</span>
+              <span
+                style={{
+                  marginRight: 6,
+                  width: 'max-content',
+                  cursor: hasMouse ? 'pointer' : 'default',
+                }}
+                onMouseEnter={() => setHasMouse(true)}
+                onMouseLeave={() => setHasMouse(false)}
+                onClick={() => setShowCard(true)}
+              >
+                {name}
+              </span>
               {(!hasSites || !canHaveBodySites) && featureIcons}
               {!hasSites && <Stack horizontal verticalAlign='center'>
                 {btnAddSite}
@@ -848,10 +870,11 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
       </>}
     </>}
 
+    {showCard && <BodyCard targetId={bodId} bod={node.map ?? node.body} sysView={sysView} onClose={() => setShowCard(false)} />}
   </div >;
 };
 
-const mapBodyFeatureIcon = {
+export const mapBodyFeatureIcon = {
   bio: 'ClassroomLogo',
   geo: 'DefectSolid',
   volcanism: 'FlameSolid',
@@ -862,7 +885,7 @@ const mapBodyFeatureIcon = {
   atmos: 'Cloudy',
 };
 
-const mapBodyFeatureColor = {
+export const mapBodyFeatureColor = {
   bio: appTheme.isInverted ? 'rgb(100,255,100)' : 'rgb(0, 119, 0)',
   geo: 'rgb(255,100,100)',
   volcanism: 'rgb(255,0,0)',
@@ -970,7 +993,7 @@ const getBodySize = (bodyType?: BT) => {
       return 12;
 
     case BT.ib:
-      return 6;
+      return 7;
 
     case BT.un:
       return 30;

@@ -318,7 +318,7 @@ export const cn = mergeStyleSets({
     },
   },
 
-  /** Draw a box around a button on hover */
+  /** Draw a box around a button, highlight on hover */
   bBox2: {
     border: `1px solid ${appTheme.palette.themeTertiary}`,
     ':hover': {
