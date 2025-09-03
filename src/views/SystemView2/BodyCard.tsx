@@ -1,4 +1,4 @@
-import { Callout, DirectionalHint, Icon, mergeStyles, Stack } from "@fluentui/react";
+import { Callout, DirectionalHint, Icon, IconButton, mergeStyles, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { SystemView2 } from "./SystemView2";
@@ -10,6 +10,7 @@ import { AuditEconomy, BodyMap2, EconomyMap, SiteMap2 } from "../../system-model
 import { applyBodyType, applyBuffs, applyStrongLinkBoost } from "../../economy-model2";
 import { Economy, getSiteType, mapName } from "../../site-data";
 import { asPosNegTxt2 } from "../../util";
+import { store } from "../../local-storage";
 
 const cbt = mergeStyles({
   color: appTheme.semanticColors.bodyText
@@ -150,6 +151,16 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
         <h3 className={cn.h3} style={{ fontSize: 20 }}>{bod.name}</h3>
 
         <div style={{ color: appTheme.palette.themePrimary }}>
+          {!!store.cmdrName && <IconButton
+            className={cn.ibBri}
+            iconProps={{ iconName: 'CircleAddition' }}
+            title={`Add a new site to: ${bod.name}`}
+            style={{ position: 'absolute', right: 20, top: 42, paddingTop: 2 }}
+            onClick={() => {
+              sysView.createNewSite(bod.num);
+            }}
+          />}
+
           <div>{bod.subType} <span style={{ color: 'grey' }}>-</span> Arrival: ~{bod.distLS.toFixed(1)} ls</div>
 
           <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }} style={{ marginTop: 10 }}>

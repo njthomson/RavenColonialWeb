@@ -167,19 +167,12 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
       key={`snap-${snapshot.id64}-${snapshot.pop?.timeSaved}`}
       className={css.siteCard}
     >
-      <Stack
-        horizontal
-        horizontalAlign='space-between'
-        verticalAlign='center'
-        tokens={{ childrenGap: 4 }}
-      >
-        <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
-        <div>
-          <TierPoint tier={2} count={snapshot.tierPoints.tier2} />
-          &nbsp;
-          <TierPoint tier={3} count={snapshot.tierPoints.tier3} />
-        </div>
-      </Stack>
+      <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
+      <div style={{ float: 'right' }}>
+        <TierPoint tier={2} count={snapshot.tierPoints.tier2} />
+        &nbsp;
+        <TierPoint tier={3} count={snapshot.tierPoints.tier3} />
+      </div>
 
       <div className={css.siteCardTable}>
 

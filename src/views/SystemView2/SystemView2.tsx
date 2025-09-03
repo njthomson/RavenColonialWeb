@@ -282,6 +282,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           deletedIDs: [],
           orderIDs: orderIDs,
           originalSiteIDs: [...orderIDs],
+          bodySlots: newSys.slots,
+          originalBodySlots: JSON.stringify(newSys.slots),
         });
         window.document.title = 'Sys: ' + newSys.name;
       })

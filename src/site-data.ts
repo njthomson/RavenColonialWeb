@@ -1108,7 +1108,7 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   // T1 outposts
   plutus: [3, 1, 0], // Commercial Outpost
   vulcan: [2, 1, 0], // Industrial Outpost
-  dysnomia: [0, 1, 0], // Pirate Outpost
+  dysnomia: [2, 1, 0], // Pirate Outpost
   vesta: [4, 1, 0], // Civilian Outpost
   prometheus: [2, 1, 0], // Scientific Outpost
   nemesis: [2, 1, 0], // Military Outpost
