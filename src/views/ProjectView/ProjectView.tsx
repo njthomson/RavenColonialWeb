@@ -1542,7 +1542,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <div className='half'>
       <h3 className={cn.h3}>Progress: {percent.toFixed(0)}%</h3>
       {!!summary.totalDeliveries && <div className='stats-header'>
-        Total cargo delivered: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalCargo.toLocaleString()}</span> from <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span> deliveries
+        <span>Total cargo delivered: </span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{approxProgress.toLocaleString()}</span>
+        <span>&nbsp;Deliveries tracked:&nbsp;</span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span>
       </div>}
 
       {(approxProgress > 0 || this.countReadyOnFCs > 0) && <ChartGeneralProgress progress={approxProgress} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
