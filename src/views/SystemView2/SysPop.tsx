@@ -14,7 +14,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
   const [showCharts, setShowCharts] = useState(false);
   const [loading, setLoading] = useState(true);
   const [fetch, setFetch] = useState(0);
-  const [data, setChartData] = useState<{ data: ILineChartPoints[], events: IEventAnnotation[], lastDate: string }>({ data: [], events: [], lastDate: '?' });
+  const [data, setChartData] = useState<{ data: ILineChartPoints[], events: IEventAnnotation[], lastDate: number }>({ data: [], events: [], lastDate: 0 });
 
   const updateFromSpansh = () => {
     setLoading(true);
@@ -75,7 +75,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
       setChartData({
         data: newData,
         events: events,
-        lastDate: getRelativeDuration(new Date(latest)),
+        lastDate: latest,
       });
 
       // delay a little to avoid flicker
@@ -164,7 +164,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
             }}
             customDateTimeFormatter={data.data.every(d => d.data.length <= 1) ? dt => dt.toLocaleString() : undefined}
           />
-          <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary }}>Last updated: <span style={{ color: appTheme.palette.themeSecondary }}>{data.lastDate}</span></div>
+          <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary }}>Last updated: <span key={`spu-${data.lastDate}`} style={{ color: appTheme.palette.themeSecondary }}>{getRelativeDuration(new Date(data.lastDate))}</span></div>
         </div>
       </Modal>
     </>}

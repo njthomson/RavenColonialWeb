@@ -120,6 +120,7 @@ export interface SysSnapshot {
   sumEffects: SysEffects;
   stale?: boolean;
   pop?: Pop;
+  pendingPop?: boolean;
 }
 
 export interface History {

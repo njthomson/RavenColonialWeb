@@ -290,7 +290,12 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
       {errorMsg && <MessageBar messageBarType={MessageBarType.error} isMultiline truncated >{errorMsg}</MessageBar>}
 
       <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} horizontalAlign='end' verticalAlign='baseline' >
-        {(false || this.state.submitting) && <Spinner
+        {showAdvanced && !editProject.complete && <DefaultButton text='Mark complete' iconProps={{ iconName: 'Completed' }} onClick={() => {
+          if (window.confirm('Are you sure you want to mark this project as complete?')) {
+            this.onMarkComplete();
+          }
+        }} />}
+        {this.state.submitting && <Spinner
           style={{ marginRight: 20 }}
           label="Saving changes ..."
           labelPosition="right"
@@ -416,6 +421,22 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
       // success
       this.props.onChange(savedProj);
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message });
+    }
+  };
+
+  onMarkComplete = async () => {
+    const { editProject } = this.state;
+
+    // add a little artificial delay so the spinner doesn't flicker in and out
+    this.setState({ submitting: true, errorMsg: undefined });
+    await delay(500);
+
+    try {
+      await api.project.complete(editProject.buildId);
+
+      window.location.reload();
     } catch (err: any) {
       this.setState({ errorMsg: err.message });
     }

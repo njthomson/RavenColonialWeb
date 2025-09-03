@@ -1,6 +1,6 @@
 import * as api from '../../api';
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { Icon, Link, mergeStyleSets, Spinner, Stack } from "@fluentui/react";
+import { ActionButton, Icon, Link, mergeStyleSets, Spinner, Stack } from "@fluentui/react";
 import { appTheme, cn } from '../../theme';
 import { asPosNegTxt } from '../../util';
 import { BuildStatus, mapStatus } from '../../types2';
@@ -53,6 +53,7 @@ const css = mergeStyleSets({
 export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
   const [loading, setLoading] = useState(false);
   const [systems, setSystems] = useState<SysSnapshot[] | undefined>();
+  const [updatingPop, setUpdatingPop] = useState(false);
 
   // load, re-calc and save each stale snapshot
   useMemo(() => {
@@ -84,6 +85,39 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
         console.error(err.stack);
       }
     }, 500);
+  }, [systems]);
+
+  // update all
+  useMemo(() => {
+    // exit early if nothing to re-calc
+    const pendings = systems?.filter(s => s.pendingPop) ?? []
+    if (!systems || pendings.length === 0) { return; }
+
+    try {
+      const snap = pendings[0];
+
+      setUpdatingPop(true);
+
+      api.systemV2.refreshPop(snap.id64)
+        .then(newPop => {
+          if (!snap.pop) {
+            snap.pop = newPop;
+          } else {
+            snap.pop.pop = newPop.pop;
+            snap.pop.timeSaved = newPop.timeSaved;
+            snap.pop.timeSpansh = newPop.timeSpansh;
+          }
+          snap.pendingPop = false;
+
+          setSystems([...systems]);
+          setUpdatingPop(false);
+        })
+        .catch(err => {
+          console.error(`SysPop-updateFromSpansh: ${err.stack}`);
+        });
+    } catch (err: any) {
+      console.error(err.stack);
+    }
   }, [systems]);
 
   useEffect(() => {
@@ -130,7 +164,7 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
     }
 
     return <div
-      key={`snap-${snapshot.id64}`}
+      key={`snap-${snapshot.id64}-${snapshot.pop?.timeSaved}`}
       className={css.siteCard}
     >
       <Stack
@@ -183,9 +217,16 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
           <span>updating</span>
         </Stack>
       </>}
+      {snapshot.pendingPop && <>
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 11 }}>
+          <Icon iconName='Save' />
+          <span>updating</span>
+        </Stack>
+      </>}
     </div>;
   });
 
+  const totalPop = systems?.reduce((sum, s) => sum + (s.pop?.pop ?? 0), 0) ?? 0;
   return <>
     <div className={css.component}>
       <h3 className={cn.h3}>
@@ -195,11 +236,27 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
       </h3>
       {loading && <Stack horizontal><Spinner labelPosition='right' label='Loading ...' /></Stack>}
 
+      {!!rows?.length && <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}>
+        <div>Total population: {totalPop.toLocaleString()}</div>
+        <ActionButton
+          className={cn.bBox2}
+          style={{ height: 24, fontSize: 12 }}
+          iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
+          text='Update all'
+          onClick={() => {
+            if (!systems) { return; }
+            systems.forEach(s => s.pendingPop = true);
+            setSystems([...systems]);
+          }}
+        />
+        {updatingPop && <div>Updating ...</div>}
+      </Stack>}
+
       <Stack className={css.componentStack} horizontal wrap>
         {rows}
         {rows?.length === 0 && <div style={{ color: appTheme.palette.themeSecondary }}>No known systems. Start by searching for a system.</div>}
       </Stack>
 
-    </div >
+    </div>
   </>;
 }

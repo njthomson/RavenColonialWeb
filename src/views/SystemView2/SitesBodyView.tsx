@@ -669,7 +669,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const innerBorders = hasSites ? `2px dashed ${appTheme.palette.themeTertiary}` : undefined;
   const bottomGap = 10;
 
-  let bodyTitle = `${node.body.name}\n${node.body.subType}\nArrival: ~${node.body.distLS.toLocaleString()} ls\n` + node.body.features.map(f => '» ' + mapBodyFeature[f]).join('\n');
+  let bodyTitle = `${node.body.name}\nClick for more details`;
   const isLandable = node.body.features.includes(BodyFeature.landable);
 
   const featureIcons = <Stack

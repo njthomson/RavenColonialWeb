@@ -73,7 +73,9 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
       setInitialFocus
       isBeakVisible={false}
       role="dialog"
-      directionalHint={DirectionalHint.leftCenter}
+      coverTarget
+      directionalHint={DirectionalHint.topCenter}
+      gapSpace={-60}
       onDismiss={() => setDropDown(false)}
     >
       <div style={{ marginBottom: 8, color: appTheme.palette.themeSecondary }}>{props.isOrbital ? 'Orbital slots:' : 'Surface slots:'}</div>

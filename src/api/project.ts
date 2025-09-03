@@ -41,8 +41,8 @@ export const project = {
     return await callAPI<string>(`/api/project/${encodeURIComponent(buildId)}/last`);
   },
 
-  complete: async (buildId: string): Promise<Project> => {
-    return await callAPI<Project>(`/api/project/${encodeURIComponent(buildId)}/complete`, 'POST');
+  complete: async (buildId: string): Promise<void> => {
+    return await callAPI<void>(`/api/project/${encodeURIComponent(buildId)}/complete`, 'POST');
   },
 
   linkCmdr: async (buildId: string, cmdr: string): Promise<void> => {
