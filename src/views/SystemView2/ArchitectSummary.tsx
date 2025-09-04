@@ -12,6 +12,8 @@ import { SysEffects, mapName } from '../../site-data';
 import { SystemView2 } from './SystemView2';
 import { SysPop } from './SysPop';
 import { getSnapshot } from '../../system-model2';
+import { mapStatusIcon } from './ViewEditStatus';
+import { CopyButton } from '../../components/CopyButton';
 
 const css = mergeStyleSets({
   component: {
@@ -146,10 +148,6 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
       map[s.status] = (map[s.status] ?? 0) + 1;
       return map;
     }, {} as Record<BuildStatus, number>)
-    const statusCounts: string[] = [];
-    if (statusCountMap.complete) { statusCounts.push(`${statusCountMap.complete} ${mapStatus.complete}`) }
-    if (statusCountMap.build) { statusCounts.push(`${statusCountMap.build} ${mapStatus.build}`) }
-    if (statusCountMap.plan) { statusCounts.push(`${statusCountMap.plan} ${mapStatus.plan}`) }
 
     const maxEffectCount = Math.max(...Object.values(snapshot.sumEffects));
     let cw = 5;
@@ -167,7 +165,10 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
       key={`snap-${snapshot.id64}-${snapshot.pop?.timeSaved}`}
       className={css.siteCard}
     >
-      <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
+      <span>
+        <CopyButton text={snapshot.name} fontSize={10} />
+        <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
+      </span>
       <div style={{ float: 'right' }}>
         <TierPoint tier={2} count={snapshot.tierPoints.tier2} />
         &nbsp;
@@ -185,9 +186,11 @@ export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (pr
         </div>
 
         <div key={`seSiteCounts1`}>Sites:</div>
-        <div key={`seSiteCounts2`} className={css.siteCardCol2Span}>
-          {statusCounts.join(', ')}
-        </div>
+        <Stack horizontal key={`seSiteCounts2`} verticalAlign='center' className={css.siteCardCol2Span} style={{ display: 'inline-block', fontSize: 14 }} tokens={{ childrenGap: 16 }}>
+          {statusCountMap.complete && <span title={`${statusCountMap.complete} ${mapStatus.complete}`}><Icon iconName={mapStatusIcon.complete} /> {statusCountMap.complete}</span>}
+          {statusCountMap.build && <span title={`${statusCountMap.build} ${mapStatus.build}`} style={{ color: appTheme.palette.yellow }}><Icon iconName={mapStatusIcon.build} /> {statusCountMap.build}</span>}
+          {statusCountMap.plan && <span title={`${statusCountMap.plan} ${mapStatus.plan}`}><Icon iconName={mapStatusIcon.plan} /> {statusCountMap.plan}</span>}
+        </Stack>
 
         {Object.keys(snapshot.sumEffects).map(key => {
           const actual = snapshot.sumEffects[key as keyof SysEffects] ?? 0;

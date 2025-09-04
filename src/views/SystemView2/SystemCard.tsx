@@ -1,14 +1,16 @@
-import { Callout, DirectionalHint, ActionButton, Icon, ContextualMenu } from "@fluentui/react";
+import { Callout, DirectionalHint, ActionButton, Icon, ContextualMenu, Link } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
 import { ReserveLevel } from "../../types";
 import { store } from "../../local-storage";
+import { isMobile } from "../../util";
 
 export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemView2, onClose: () => void }> = (props) => {
   const { sysMap, sysOriginal } = props.sysView.state;
   const [dropDown, setDropDown] = useState(false);
+  const [showStuckHelp, setShowStuckHelp] = useState(false);
 
   const isOpen = sysMap.open;
   const isArchitect = !!sysOriginal.architect && sysOriginal.architect?.toLowerCase() === store.cmdrName?.toLowerCase();
@@ -23,6 +25,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
       isBeakVisible={false}
       alignTargetEdge
       directionalHint={DirectionalHint.bottomLeftEdge}
+      preventDismissOnScroll={isMobile()}
       style={{
         border: '1px solid ' + appTheme.palette.themePrimary,
         padding: 0,
@@ -47,14 +50,14 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
 
           <div>Architect:</div>
           <div>
-            <ViewEditName
-              disabled={!canEditArchitect}
+            {!canEditArchitect && <span style={{ cursor: 'default' }}>{sysMap.architect}</span>}
+            {canEditArchitect && <ViewEditName
               name={sysMap.architect || '?'}
               onChange={newName => {
                 sysMap.architect = newName;
                 props.sysView.setState({ sysMap: sysMap });
               }}
-            />
+            />}
           </div>
 
           <div>Reserve level:</div>
@@ -72,7 +75,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
 
         </div>
 
-        {canEditOpen && <><div
+        <div
           className={cn.bt}
           style={{
             marginTop: 8,
@@ -91,6 +94,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
               iconProps={{ iconName: isOpen ? 'Unlock' : 'LockSolid', style: { fontSize: 12 } }}
               text={isOpen ? 'Open' : 'Secured'}
               title='Only architects can edit a secured system'
+              disabled={!canEditOpen}
               onClick={() => {
                 props.sysView.updateOpen(!isOpen);
               }}
@@ -142,7 +146,28 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
           </div>
 
         </div>
-        </>}
+
+        {!canEditArchitect && <div style={{ textAlign: 'center' }}>
+          <Link id='sys-card-stuck' style={{ fontSize: 12, color: appTheme.palette.themeTertiary }} onClick={() => setShowStuckHelp(true)}>Cannot change architect?</Link>
+          {showStuckHelp && <Callout
+            styles={{
+              beak: { backgroundColor: appTheme.palette.themeTertiary, },
+              calloutMain: {
+                backgroundColor: appTheme.palette.themeTertiary,
+                color: appTheme.palette.neutralDark,
+              }
+            }}
+            onDismiss={() => setShowStuckHelp(false)}
+            target='#sys-card-stuck'
+          >
+            <div>
+              Get help through&nbsp;
+              <Link href='https://discord.gg/QZsMu2SkSA' target='_blank' style={{ fontWeight: 'bold', color: 'unset' }}>Discord</Link>
+              &nbsp;or&nbsp;
+              <Link href='https://github.com/njthomson/SrvSurvey/issues' target='_blank' style={{ fontWeight: 'bold', color: 'unset' }}>GitHub</Link>
+            </div>
+          </Callout>}
+        </div>}
       </div>
 
       {<ContextualMenu

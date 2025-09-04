@@ -306,6 +306,9 @@ export const cn = mergeStyleSets({
       zIndex: 2,
       border: `1px solid ${appTheme.palette.themeTertiary}`,
     },
+    ':disabled': {
+      border: `1px solid transparent`,
+    },
   },
   /** Draw a box around a button on hover, with partial and solid background colours */
   bBoxS: {
@@ -327,7 +330,6 @@ export const cn = mergeStyleSets({
     },
     ':disabled': {
       color: 'grey',
-      zIndex: 2,
       border: `1px solid grey`,
     },
   },

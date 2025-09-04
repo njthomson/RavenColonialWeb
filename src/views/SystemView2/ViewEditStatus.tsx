@@ -47,7 +47,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
 }
 
 export const mapStatusIcon: Record<string, string> = {
-  plan: 'Preview',
+  plan: 'WebAppBuilderFragment',
   build: 'ConstructionCone',
   complete: 'CityNext2',
 }
