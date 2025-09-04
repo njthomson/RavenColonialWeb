@@ -12,6 +12,7 @@ import { ViewAll } from './views/ViewAll/ViewAll';
 import { VisualIdentify } from './components/VisualIdentify';
 import { SystemView2 } from './views/SystemView2/SystemView2';
 import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
+import { processLoginCodes } from './api/auth';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -171,6 +172,12 @@ export class App extends Component<AppProps, AppState> {
   getPivotFromHash(): [TopPivot, string | undefined] {
     const params = new URLSearchParams(window.location.hash?.substring(1));
     const pivotArg = params.values().next().value;
+
+    // are we logging in?
+    if (window.location.pathname.endsWith('login')) {
+      processLoginCodes();
+      return [TopPivot.home, pivotArg];
+    }
 
     // auto switch urls to hash based anchors
     if (window.location.pathname.length > 1) {

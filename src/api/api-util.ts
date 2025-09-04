@@ -17,7 +17,7 @@ export const callSvcAPI = async <T>(url: URL, method: string = 'GET', body?: str
   if (logApiCalls) { console.log(`calling: (${method}) ${url}`); }
 
   const headers: HeadersInit = url.origin === apiSvcUrl && store.cmdrName
-    ? { 'rcc-cmdr0': base64Encode(store.cmdrName) }
+    ? { 'rcc-cmdr0': base64Encode(store.cmdrName), 'rcc-key': store.apiKey ?? "", }
     : {};
 
   const response = !body

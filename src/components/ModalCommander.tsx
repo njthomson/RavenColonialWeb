@@ -1,12 +1,14 @@
+import * as api from '../api';
 import { ActionButton, Checkbox, DefaultButton, DirectionalHint, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
-import * as api from '../api';
 import { store } from '../local-storage';
 import { appTheme, cn } from '../theme';
-import { delayFocus, fcFullName } from '../util';
+import { delay, delayFocus, fcFullName } from '../util';
 import { FindFC } from './FindFC';
 import { FleetCarrier } from '../views';
 import { CalloutMsg } from './CalloutMsg';
+import { redirectToFrontierAuth, resetApiKey } from '../api/auth';
+import { CopyButton } from './CopyButton';
 
 interface ModalCommanderProps {
   onComplete: () => void;
@@ -15,6 +17,8 @@ interface ModalCommanderProps {
 
 interface ModalCommanderState {
   cmdr?: string;
+  apiKey?: string;
+  resetting?: boolean;
 
   cargoLargeMax: number;
   cargoMediumMax: number;
@@ -44,6 +48,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     this.state = {
       showAddFC: props.preAddFC,
       cmdr: cmdr?.name,
+      apiKey: store.apiKey,
       cargoLargeMax: this.largeMax,
       cargoMediumMax: this.medMax,
       cmdrLinkedFCs: { ...store.cmdrLinkedFCs },
@@ -81,7 +86,8 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   render() {
-    const { cmdr, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord } = this.state;
+    const { cmdr, apiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord } = this.state;
+    const showLogin = !!localStorage.getItem('test-login');
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
       <span className='removable'>
@@ -110,17 +116,50 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     return <>
       <div className="edit-cmdr half">
         <div style={{ textAlign: 'left' }}>
-          <TextField
-            autoFocus
-            name='cmdr'
-            label='Commander name:'
-            value={cmdr}
-            onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
-            onKeyDown={(ev) => {
-              if (ev.key === 'Enter') { this.onSave(); }
-              if (ev.key === 'Escape') { this.onCancel(); }
-            }}
-          />
+          <Stack horizontal verticalAlign='end'>
+            <TextField
+              autoFocus
+              name='cmdr'
+              label='Commander name:'
+              disabled={showLogin && !!apiKey}
+              value={cmdr}
+              onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
+              onKeyDown={(ev) => {
+                if (ev.key === 'Enter') { this.onSave(); }
+                if (ev.key === 'Escape') { this.onCancel(); }
+              }}
+            />
+
+            {showLogin && <ActionButton
+              className={cn.bBox2}
+              style={{ height: 32, margin: 8 }}
+              iconProps={{ iconName: 'AuthenticatorApp' }}
+              text='Login'
+              onClick={() => redirectToFrontierAuth()}
+            />}
+          </Stack>
+
+          {showLogin && !!apiKey && <>
+            <Stack horizontal verticalAlign='center' style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}>
+              <span>API Key:&nbsp;</span>
+              <CopyButton text={apiKey} title='Copy API Key' />
+              <code style={{ border: '1px solid', padding: 2, margin: '0 4px' }}>{apiKey}</code>
+              <ActionButton
+                className={cn.bBox2}
+                disabled={resetting}
+                style={{ height: 20, fontSize: 12 }}
+                iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
+                text='Reset'
+                onClick={async () => {
+                  this.setState({ resetting: true });
+                  await delay(500);
+                  await resetApiKey();
+                  this.setState({ apiKey: store.apiKey, cmdr: store.cmdrName, resetting: false });
+                }}
+              />
+              <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} />
+            </Stack>
+          </>}
 
           <Label>Large ship max capacity:</Label>
           <Stack horizontal>

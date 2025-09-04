@@ -325,6 +325,11 @@ export const cn = mergeStyleSets({
       zIndex: 2,
       border: `1px solid ${appTheme.palette.themeSecondary}`,
     },
+    ':disabled': {
+      color: 'grey',
+      zIndex: 2,
+      border: `1px solid grey`,
+    },
   },
   /** Make text bold on hover */
   bBold: {

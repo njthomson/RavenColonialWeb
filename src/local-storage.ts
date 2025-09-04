@@ -5,6 +5,7 @@ import { fcFullName } from './util';
 
 enum Stored {
   cmdr = 'cmdr',
+  apiKey = 'apiKey',
   recentProjects = 'recentProjects',
   deliver = 'deliver',
   deliverDestination = 'deliverDestination',
@@ -99,6 +100,9 @@ class LocalStorage {
 
   get cmdr(): CmdrData | undefined { return readValue(Stored.cmdr); }
   set cmdr(newValue: CmdrData | undefined) { writeValue(Stored.cmdr, newValue); }
+
+  get apiKey(): string { return readString(Stored.apiKey); }
+  set apiKey(newValue: string) { writeValue(Stored.apiKey, newValue); }
 
   get recentProjects(): ProjectRefLite[] { return readValue(Stored.recentProjects) ?? []; }
 
