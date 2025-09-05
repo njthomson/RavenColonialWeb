@@ -1,6 +1,6 @@
 import './WhereToBuy.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, ComboBox, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
+import { ActionButton, Checkbox, ComboBox, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import { appTheme, cn } from '../../theme';
 import { FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames, mapSourceEconomy } from '../../types';
@@ -13,6 +13,7 @@ import { LinkSrvSurvey } from '../LinkSrvSurvey';
 import { isMobile, parseIntLocale, validIncDecLocale } from '../../util';
 import { mapName } from '../../site-data';
 import { EconomyBlock } from '../EconomyBlock';
+import { FindSystemName } from '../FindSystemName';
 
 const maxMaxDistance = 1000;
 const maxMaxArrival = 250_000;
@@ -73,6 +74,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     if (sortedRows.length > 0) { expandMatches.add(sortedRows[0].stationName); }
 
     this.state = {
+      refSystem: props.systemName,
       ...findMarketsOptions,
       largePanel: false,
       searching: false,
@@ -106,7 +108,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
   doSearch = async () => {
     try {
-      this.setState({ searching: true, hasSearched: true });
+      this.setState({ searching: true, hasSearched: true, refSystem: this.state.refSystem });
 
       // use distance: zero to indicate no limit
       const maxDistance = this.state.maxDistance < maxMaxDistance ? this.state.maxDistance : 0;
@@ -114,12 +116,14 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
       // extract options parts + store
       const findMarketsOptions = {
+        refSystem: this.state.refSystem,
         shipSize: this.state.shipSize,
         maxDistance: maxDistance,
         maxArrival: maxArrival,
         noFC: this.state.noFC,
         noSurface: this.state.noSurface,
         requireNeed: this.state.requireNeed,
+        hasShipyard: this.state.hasShipyard,
       };
       store.findMarketsOptions = findMarketsOptions;
 
@@ -194,7 +198,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   render() {
-    const { foundMarkets, sortedRows, largePanel, showSearchCriteria } = this.state;
+    const { refSystem, foundMarkets, sortedRows, largePanel, showSearchCriteria } = this.state;
 
     return <Panel
       isHiddenOnDismiss isFooterAtBottom
@@ -202,7 +206,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       allowTouchBodyScroll={isMobile()}
       isOpen={this.props.visible}
       type={largePanel ? PanelType.large : PanelType.custom}
-      customWidth='700px'
+      customWidth='800px'
       onDismiss={() => this.props.onClose()}
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
@@ -218,7 +222,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
             onClick={() => this.setState({ largePanel: !largePanel })}
           />
           <h3 style={{ fontSize: 20 }}>
-            Where to buy near: {this.props.systemName}
+            Where to buy near: <span style={{ color: appTheme.palette.themePrimary }}>{refSystem}</span>
             &nbsp;
             <CopyButton text={this.props.systemName} fontSize={14} />
           </h3>
@@ -229,10 +233,14 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
         const preparedAt = new Date(foundMarkets?.preparedAt ?? 0);
 
-        return <Stack horizontal horizontalAlign='space-between' style={{ margin: 6, fontSize: 12 }}>
-          {!showSearchCriteria && <span>Found: {sortedRows.length} markets. Searched on: {preparedAt.toLocaleDateString()} {preparedAt.toLocaleTimeString()}</span>}
-          <LinkSrvSurvey href='#about=markets' text='Help?' title='Learn more on the About page' />
-        </Stack>;
+        return <div>
+          {!showSearchCriteria && !isMobile() && this.renderFilledBars()}
+
+          <Stack horizontal horizontalAlign='space-between' style={{ margin: 6, fontSize: 10 }}>
+            {!showSearchCriteria && <span>Found: {sortedRows.length} markets. Searched on: {preparedAt.toLocaleDateString()} {preparedAt.toLocaleTimeString()}</span>}
+            <LinkSrvSurvey href='#about=markets' text='Help?' title='Learn more on the About page' />
+          </Stack>
+        </div>;
       }}
     >
       <div className='where-to-buy'>
@@ -242,8 +250,117 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     </Panel>;
   }
 
+  renderFilledBars() {
+    const { highlights } = this.state;
+
+    /** The visible width of the bar matching a large ship */
+    const wl = 720;
+    const wr = 40;
+    const large = store.cmdr?.largeMax ?? 1200;
+    const r = wl / large;
+    const med = store.cmdr?.medMax ?? 400;
+    const xMedLine = r * med;
+    const xMedTxt = xMedLine < 20 ? xMedLine : xMedLine - 20;
+
+    let used = 0;
+    const pills = Array.from(highlights).map(cargo => {
+      const need = this.props.need[cargo];
+      used += need;
+      let txt = need.toLocaleString();
+      if (need > 40) txt += ' ' + mapCommodityNames[cargo];
+
+      return <div
+        key={`fbp-${cargo}`}
+        className={barPill}
+        style={{
+          width: r * need,
+          fontSize: 9,
+          overflow: 'hidden',
+          alignContent: 'center',
+          border: '1px solid ' + appTheme.palette.themePrimary,
+        }}
+        title={`${mapCommodityNames[cargo]}: ${need.toLocaleString()}`}
+      >{txt}</div>;
+    });
+
+    return <>
+      <div style={{
+        position: 'relative',
+        marginLeft: 20,
+        width: wl + wr,
+        height: 40,
+        paddingTop: 4,
+        overflow: 'hidden',
+        cursor: 'default',
+        fontSize: 10,
+      }}>
+
+        <div style={{ width: wl, height: 20, backgroundColor: appTheme.palette.neutralTertiaryAlt }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 4 }}>Ship capacity: {used.toLocaleString()}</div>
+
+        <div style={{
+          position: 'absolute',
+          left: xMedTxt,
+          top: 0,
+          bottom: 0,
+          alignContent: 'end',
+          paddingRight: 8,
+          color: used > med ? appTheme.palette.yellow : undefined,
+        }}        >
+          <Stack horizontal><span>Medium: {med} </span><Icon iconName={used > med ? 'StatusCircleErrorX' : 'StatusCircleCheckmark'} style={{ lineHeight: '12px', fontSize: 18 }} /></Stack>
+        </div>
+
+        <div style={{
+          position: 'absolute',
+          borderRight: '4px solid ' + appTheme.palette.accent,
+          left: xMedLine,
+          top: 0,
+          bottom: 14,
+        }} />
+
+        <div style={{
+          position: 'absolute',
+          right: wr - 20,
+          top: 0,
+          bottom: 0,
+          alignContent: 'end',
+          paddingRight: 4,
+          fontWeight: used > large ? 'bold' : undefined,
+          color: used > large ? appTheme.palette.yellow : undefined,
+        }}
+        >
+          <Stack horizontal><span>Large: {large} </span><Icon iconName={used > large ? 'StatusCircleErrorX' : 'StatusCircleCheckmark'} style={{ lineHeight: '12px', fontSize: 18 }} /></Stack>
+        </div>
+
+        <div style={{
+          position: 'absolute',
+          borderRight: '4px solid ' + appTheme.palette.accent,
+          right: wr,
+          top: 0,
+          bottom: 14,
+        }} />
+
+        <Stack horizontal style={{ position: 'absolute', top: 4, textAlign: 'center', }}>
+          {pills}
+        </Stack>
+
+        <div style={{
+          position: 'absolute',
+          width: wr,
+          right: 0,
+          top: 0,
+          bottom: 14,
+          alignContent: 'end',
+          backgroundImage: `linear-gradient(to right, rgba(0, 0, 0, 0), ${appTheme.palette.white})`,
+          backgroundSize: '40px 40px',
+        }} />
+
+      </div >
+    </>;
+  }
+
   renderSearchCriteria() {
-    const { foundMarkets, shipSize, maxDistance, maxArrival, noSurface, noFC, requireNeed, searching, hasSearched } = this.state;
+    const { foundMarkets, refSystem, shipSize, maxDistance, maxArrival, noSurface, noFC, hasShipyard, requireNeed, searching, hasSearched } = this.state;
 
     const maxDistanceTxt = !maxDistance || maxDistance >= maxMaxDistance ? 'Unlimited' : maxDistance.toString();
     const maxArrivalTxt = !maxArrival || maxArrival >= maxMaxArrival ? 'Unlimited' : maxArrival.toLocaleString();
@@ -252,6 +369,13 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     return <div>
       <div style={{ marginBottom: 10 }}>Search for markets near this construction site that sell the commodities you need.</div>
+
+      <Label>Search near:</Label>
+      <FindSystemName
+        noLabel
+        text={refSystem}
+        onMatch={value => this.setState({ refSystem: value ?? '' })}
+      />
 
       <ComboBox
         label='Minimum ship size:'
@@ -347,6 +471,12 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           disabled={searching}
           onChange={(_ev, checked) => this.setState({ noFC: !!checked })}
         />
+        <Checkbox
+          label='Has shipyard'
+          checked={hasShipyard}
+          disabled={searching}
+          onChange={(_ev, checked) => this.setState({ hasShipyard: !!checked })}
+        />
       </Stack>
 
       <div className='small' style={{ margin: '20px 0' }}>Data sourced from <Link href='https://spansh.co.uk' target='spansh'>spansh.co.uk</Link>, updated hourly.</div>
@@ -362,7 +492,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         <PrimaryButton
           iconProps={{ iconName: 'Search' }}
           text="Search"
-          disabled={searching}
+          disabled={searching || !refSystem}
           onClick={this.doSearch} style={{ height: 25 }}
         />
 
@@ -732,3 +862,12 @@ const mapColumnNames: Record<string, string> = {
   distance: 'Distance',
   distanceToArrival: 'Arrival',
 }
+
+const barPill = mergeStyles({
+  borderRadius: 5,
+  height: '18px!important',
+  padding: 0,
+  fontSize: 12,
+  backgroundColor: appTheme.palette.themeTertiary,
+  whiteSpace: 'nowrap',
+});

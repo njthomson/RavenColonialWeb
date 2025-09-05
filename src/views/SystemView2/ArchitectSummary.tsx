@@ -52,7 +52,7 @@ const css = mergeStyleSets({
   },
 });
 
-export const ArchitectSummery: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
+export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
   const [loading, setLoading] = useState(false);
   const [systems, setSystems] = useState<SysSnapshot[] | undefined>();
   const [updatingPop, setUpdatingPop] = useState(false);

@@ -146,6 +146,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
 
   onFind = async (txt: string | undefined) => {
     // console.log(`onFind: ${txt}/ ${this.state.searchText}`);
+    txt = txt?.trim();
     if (!txt) {
       this.comboFind.current?.focus(true, true);
       return;

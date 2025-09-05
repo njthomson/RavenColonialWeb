@@ -16,6 +16,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
   const [showList, setShowList] = useState(false);
   const [knownFC, setKnownFC] = useState<KnownFC[]>([]);
   const [showCmdr, setShowCmdr] = useState(false);
+  const [refetch, setRefetch] = useState(0);
 
   let totalHaul = 0;
   const cargos = [];
@@ -46,6 +47,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
     if (!store.cmdrName) { return []; }
 
     try {
+      console.debug(`Fetch FCs #${refetch + 1}`);
       const cmdrFCs = await api.cmdr.getCmdrLinkedFCs(store.cmdrName);
       setKnownFC(cmdrFCs);
     } catch (err: any) {
@@ -55,7 +57,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
       }
     }
     return [];
-  }, []);
+  }, [refetch]);
 
   const width = 480 + knownFC.length * 80;
   let msg = undefined;
@@ -132,7 +134,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
           </Modal>}
         </div>
 
-        <CargoGrid cargo={cargoNeeded} linkedFC={knownFC} hideActive />
+        <CargoGrid cargo={cargoNeeded} linkedFC={knownFC} onRefresh={() => setRefetch(refetch + 1)} />
       </Panel>
     </>}
   </>;

@@ -217,12 +217,14 @@ export interface AppProps {
 }
 
 export interface FindMarketsOptions {
+  refSystem?: string;
   shipSize: string;
   maxDistance: number;
   maxArrival: number;
   noSurface: boolean;
   noFC: boolean;
   requireNeed: boolean;
+  hasShipyard: boolean;
 }
 
 export interface FoundMarkets {

@@ -1,4 +1,4 @@
-import { ActionButton, Icon, Link, Stack } from '@fluentui/react';
+import { ActionButton, Icon, IconButton, Link, Stack } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
@@ -13,6 +13,7 @@ interface CargoGridProps {
   cargo: Cargo,
   linkedFC: KnownFC[],
   hideActive?: boolean;
+  onRefresh?: () => void;
 }
 
 interface CargoGridState {
@@ -25,6 +26,7 @@ interface CargoGridState {
   hideDoneRows: boolean;
   hideFCColumns: boolean;
   fcEditMarketId?: string;
+  refreshing?: boolean;
 }
 
 export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
@@ -63,6 +65,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         cargo: this.getDefaultCargo(this.props.linkedFC, this.state.hideFCColumns),
         zeroNeed: Object.keys(this.props.cargo).length === 0,
         fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
+        refreshing: false,
       });
     }
   }
@@ -87,13 +90,14 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   render() {
-    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed } = this.state;
+    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing } = this.state;
 
     const hideGrid = hideDoneRows && zeroNeed;
     return <>
       <h3 className={cn.h3}>
         Commodities:&nbsp;
         <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: 'Sort' }}
           onClick={() => {
             const newSort = nextSort(sort);
@@ -104,6 +108,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           {sort}
         </ActionButton>
         {!this.props.hideActive && <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: hideDoneRows ? 'ThumbnailViewMirrored' : 'AllAppsMirrored' }}
           title={hideDoneRows ? 'Hiding completed commodies' : 'Showing all commodities'}
           text={hideDoneRows ? 'Active' : 'All'}
@@ -113,6 +118,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           }}
         />}
         {linkedFC.length > 0 && <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: hideFCColumns ? 'fleetCarrier' : 'fleetCarrierSolid' }}
           title={hideFCColumns ? 'Hiding FC columns' : 'Showing FC columns'}
           onClick={() => {
@@ -122,6 +128,19 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
               hideFCColumns: !hideFCColumns,
             });
             store.commodityHideFCColumns = !hideFCColumns;
+          }}
+        />}
+
+        {this.props.onRefresh && <IconButton
+          className={cn.bBox}
+          iconProps={{ iconName: 'Refresh' }}
+          style={{ width: 24, height: 24, float: 'right' }}
+          disabled={refreshing}
+          onClick={() => {
+            if (this.props.onRefresh) {
+              this.setState({ refreshing: true });
+              this.props.onRefresh();
+            }
           }}
         />}
       </h3>

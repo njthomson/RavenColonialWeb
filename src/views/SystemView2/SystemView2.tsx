@@ -23,7 +23,7 @@ import { ShowMySystems } from './ShowMySystems';
 import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
-import { ArchitectSummery } from './ArchitectSummary';
+import { ArchitectSummary } from './ArchitectSummary';
 import { mapName } from '../../site-data';
 import { BodyPill, SitePill } from './SitePill';
 
@@ -652,7 +652,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           }}
         />
         {!anonymous && <>
-          <ArchitectSummery sysView={this} />
+          <ArchitectSummary sysView={this} />
           <ShowMySystems />
         </>}
         {!store.cmdrName && this.renderLoginPrompt()}
