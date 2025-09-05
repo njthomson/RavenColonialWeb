@@ -36,8 +36,8 @@ export const systemV2 = {
     return await callAPI<Site>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`);
   },
 
-  updateBody: async (systemName: string, data: BodyPut): Promise<Bod[]> => {
-    return await callAPI<Bod[]>(`/api/v2/system/${encodeURIComponent(systemName)}/bodies`, 'PUT', JSON.stringify(data));
+  updateBodyFeatures: async (nameOrNum: string, bodyNum: number, features: BodyFeature[]): Promise<Bod[]> => {
+    return await callAPI<Bod[]>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/${bodyNum}/features`, 'PUT', JSON.stringify(features));
   },
 
   saveSites: async (nameOrNum: string, data: SitesPut): Promise<Sys> => {

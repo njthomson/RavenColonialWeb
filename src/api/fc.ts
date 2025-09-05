@@ -7,8 +7,8 @@ export const fc = {
     return await callAPI<Record<string, string>>(`/api/fc/match/${encodeURIComponent(name)}`);
   },
 
-  find: async (name: string): Promise<QuickSearchStation[]> => {
-    return await callAPI<QuickSearchStation[]>(`/api/fc/find/${encodeURIComponent(name)}`);
+  query: async (name: string): Promise<QuickSearchStation[]> => {
+    return await callAPI<QuickSearchStation[]>(`/api/fc/query/${encodeURIComponent(name)}`);
   },
 
   get: async (marketId: string): Promise<KnownFC> => {

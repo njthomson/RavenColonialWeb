@@ -59,7 +59,7 @@ export const BodyOverride: FunctionComponent<{ body: Bod; sysView: SystemView2; 
             iconProps={{ iconName: 'Save' }}
             text='Save'
             onClick={() => {
-              api.systemV2.updateBody(props.sysView.props.systemName, bodyPut)
+              api.systemV2.updateBodyFeatures(props.sysView.props.systemName, bodyPut.num, bodyPut.features)
                 .then(newBodies => {
                   // clobber bodies with what we just received, and re-calc state
                   const newSysMap = buildSystemModel2({ ...props.sysView.state.sysMap, bodies: newBodies }, props.sysView.state.useIncomplete);

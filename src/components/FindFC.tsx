@@ -170,8 +170,8 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     } else {
       this.setState({ matches: [], searching: true });
 
-      // FIND the FC via Spansh
-      const matches = await api.fc.find(txt);
+      // FIND the FC
+      const matches = await api.fc.query(txt);
 
       this.setState({
         searching: false,
