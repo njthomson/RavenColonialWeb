@@ -1540,7 +1540,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
     return <div className='half'>
-      <h3 className={cn.h3}>Progress: {percent.toFixed(0)}%</h3>
+      <h3 className={cn.h3}>Progress: {Math.floor(percent)}%</h3>
       {!!summary.totalDeliveries && <div className='stats-header'>
         <span>Total cargo delivered: </span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{approxProgress.toLocaleString()}</span>
         <span>&nbsp;Deliveries tracked:&nbsp;</span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span>

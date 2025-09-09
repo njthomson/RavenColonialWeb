@@ -62,6 +62,7 @@ export const ChartByCmdrs: FunctionComponent<{ summary: SupplyStatsSummary, cmdr
         chartTitle: 'Cargo delivered by Commander:',
         chartData: points,
       }}
+      enabledLegendsWrapLines
     />
   </div>;
 };
@@ -102,7 +103,7 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
   }
 
   // calculate how wide the bars can be to fill on hour's worth of pixels
-  const width = 400;
+  const width = 480;
   const timeDiffHours = 2 + ((maxTime - minTime) / 1000 / 60 / 60);
   let widthHour = ((width - 60) / timeDiffHours) - 1;
   // console.log(`${maxTime} // timeDiffHours: ${timeDiffHours} /widthHour: ${widthHour}`);
@@ -120,6 +121,9 @@ export const ChartByCmdrsOverTime: FunctionComponent<{ summary: SupplyStatsSumma
       barWidth={widthHour}
       maxBarWidth={widthHour}
       enableReflow
+      hideTickOverlap
+      wrapXAxisLables
+      enabledLegendsWrapLines
     />
   </div>;
 };
