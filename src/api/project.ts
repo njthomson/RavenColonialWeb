@@ -100,7 +100,7 @@ export const project = {
     return await callAPI<GlobalStats>(`/api/stats/`);
   },
 
-  findMarkets: async (buildId: string, options: FindMarketsOptions): Promise<FoundMarkets> => {
-    return await callAPI<FoundMarkets>(`/api/project/${encodeURIComponent(buildId)}/markets`, 'POST', JSON.stringify(options));
+  findMarkets: async (options: FindMarketsOptions): Promise<FoundMarkets> => {
+    return await callAPI<FoundMarkets>(`/api/project/markets`, 'POST', JSON.stringify(options));
   },
 };

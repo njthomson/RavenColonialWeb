@@ -3,7 +3,7 @@ import * as api from '../../api';
 import { ActionButton, Checkbox, ComboBox, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import { appTheme, cn } from '../../theme';
-import { FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames, mapSourceEconomy } from '../../types';
+import { Cargo, FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames, mapSourceEconomy } from '../../types';
 import { store } from '../../local-storage';
 import { CommodityIcon } from '../CommodityIcon/CommodityIcon';
 import { CopyButton } from '../CopyButton';
@@ -20,9 +20,9 @@ const maxMaxArrival = 250_000;
 
 interface WhereToBuyProps {
   visible: boolean;
-  buildId: string;
+  buildIds: string[];
   systemName: string;
-  need: Record<string, number>;
+  need: Cargo;
   onClose: () => void;
 }
 
@@ -53,7 +53,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     // disregard prior data if the buildId does not match (and clear our cached data)
     let priorMarkets = store.foundMarkets;
-    if (props.buildId !== priorMarkets?.buildId) {
+    if (props.buildIds.length !== priorMarkets?.buildIds?.length || JSON.stringify(props.buildIds) !== JSON.stringify(priorMarkets?.buildIds ?? [])) {
       priorMarkets = undefined;
       store.foundMarkets = undefined;
     }
@@ -62,6 +62,9 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const findMarketsOptions = store.findMarketsOptions;
     if (!findMarketsOptions.maxDistance) { findMarketsOptions.maxDistance = maxMaxDistance; }
     if (!findMarketsOptions.maxArrival) { findMarketsOptions.maxArrival = maxMaxArrival; }
+
+    // reset refSystem if we have no prior results
+    let defaultSystem = !!priorMarkets ? findMarketsOptions.refSystem : props.systemName;
 
     // do initial sort/filter by initial sort criteria
     const defaultSortColumn = 'distance';
@@ -74,8 +77,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     if (sortedRows.length > 0) { expandMatches.add(sortedRows[0].stationName); }
 
     this.state = {
-      refSystem: props.systemName,
       ...findMarketsOptions,
+      refSystem: defaultSystem,
       largePanel: false,
       searching: false,
       showSearchCriteria: sortedRows.length === 0,
@@ -93,16 +96,31 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   componentDidUpdate(prevProps: Readonly<WhereToBuyProps>, prevState: Readonly<WhereToBuyState>, snapshot?: any): void {
+
+    let nextState: Partial<WhereToBuyState> | undefined = undefined;
+
     // re-sort/filter if needs have changed
     if (prevProps.need !== this.props.need) {
       const { sortColumn, sortAscending } = this.state;
       const newSortedRows = this.sortMarkets(this.state.foundMarkets, sortColumn, sortAscending);
       const newMissedCargo = Object.keys(this.props.need).filter(cargo => newSortedRows.some(m => cargo in m.supplies));
 
-      this.setState({
+      nextState = {
+        ...nextState ?? {},
         sortedRows: newSortedRows,
         missedCargo: newMissedCargo,
-      });
+      };
+    }
+
+    if (prevProps.systemName !== this.props.systemName) {
+      nextState = {
+        ...nextState ?? {},
+        refSystem: this.props.systemName,
+      };
+    }
+
+    if (nextState) {
+      this.setState(nextState as WhereToBuyState);
     }
   }
 
@@ -116,6 +134,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
       // extract options parts + store
       const findMarketsOptions = {
+        commodities: {},
         refSystem: this.state.refSystem,
         shipSize: this.state.shipSize,
         maxDistance: maxDistance,
@@ -124,10 +143,19 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         noSurface: this.state.noSurface,
         requireNeed: this.state.requireNeed,
         hasShipyard: this.state.hasShipyard,
-      };
+      } as FindMarketsOptions;
+      // only populate needed things
+      for (const key in this.props.need) {
+        if (this.props.need[key] > 0) {
+          findMarketsOptions.commodities![key] = this.props.need[key];
+        }
+      }
+
       store.findMarketsOptions = findMarketsOptions;
 
-      const foundMarkets = await api.project.findMarkets(this.props.buildId, findMarketsOptions);
+      const foundMarkets = await api.project.findMarkets(findMarketsOptions);
+      // associate the buildIds (even though we didn't use them for searching)
+      foundMarkets.buildIds = this.props.buildIds;
 
       // store response for future reference
       store.foundMarkets = foundMarkets;
@@ -265,6 +293,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     let used = 0;
     const pills = Array.from(highlights).map(cargo => {
       const need = this.props.need[cargo];
+      const leftPad = (large - used) * 0.3; // in case the pill is too wide, this keeps text visible
       used += need;
       let txt = need.toLocaleString();
       if (need > 40) txt += ' ' + mapCommodityNames[cargo];
@@ -278,6 +307,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           overflow: 'hidden',
           alignContent: 'center',
           border: '1px solid ' + appTheme.palette.themePrimary,
+          textAlign: used > large ? 'left' : 'unset',
+          paddingLeft: used > large ? leftPad : 'unset',
         }}
         title={`${mapCommodityNames[cargo]}: ${need.toLocaleString()}`}
       >{txt}</div>;

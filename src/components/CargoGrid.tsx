@@ -8,12 +8,14 @@ import { CommodityIcon } from './CommodityIcon/CommodityIcon';
 import { FleetCarrier } from '../views';
 import { EconomyBlock } from './EconomyBlock';
 import { mapName } from '../site-data';
+import { WhereToBuy } from './WhereToBuy/WhereToBuy';
 
 interface CargoGridProps {
   cargo: Cargo,
   linkedFC: KnownFC[],
   hideActive?: boolean;
   onRefresh?: () => void;
+  whereToBuy?: { refSystem: string; buildIds: string[] }
 }
 
 interface CargoGridState {
@@ -27,6 +29,7 @@ interface CargoGridState {
   hideFCColumns: boolean;
   fcEditMarketId?: string;
   refreshing?: boolean;
+  showWhereToBuy: boolean;
 }
 
 export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
@@ -45,6 +48,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       sort: store.commoditySort ?? SortMode.alpha,
       hideDoneRows: store.commodityHideCompleted,
       hideFCColumns: defaultHideFCColumns,
+      showWhereToBuy: false,
     };
   }
 
@@ -90,7 +94,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   render() {
-    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing } = this.state;
+    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy } = this.state;
 
     const hideGrid = hideDoneRows && zeroNeed;
     return <>
@@ -131,6 +135,15 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           }}
         />}
 
+        {this.props.whereToBuy && <ActionButton
+          id='btnWhereToBuy'
+          iconProps={{ iconName: showWhereToBuy ? 'ShoppingCartSolid' : 'ShoppingCart' }}
+          title='Find markets supplying required commodities'
+          onClick={() => {
+            this.setState({ showWhereToBuy: !showWhereToBuy });
+          }}
+        />}
+
         {this.props.onRefresh && <IconButton
           className={cn.bBox}
           iconProps={{ iconName: 'Refresh' }}
@@ -163,24 +176,35 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         </div>
       </>}
 
-      {fcEditMarketId && <FleetCarrier
-        marketId={fcEditMarketId}
-        onClose={cargoUpdated => {
-          // use updated cargo
-          const { linkedFC } = this.state;
-          if (cargoUpdated) {
-            const fc = linkedFC.find(fc => fc.marketId.toString() === fcEditMarketId);
-            if (fc) { fc.cargo = cargoUpdated; }
-          }
+      {fcEditMarketId && <>
+        <FleetCarrier
+          marketId={fcEditMarketId}
+          onClose={cargoUpdated => {
+            // use updated cargo
+            const { linkedFC } = this.state;
+            if (cargoUpdated) {
+              const fc = linkedFC.find(fc => fc.marketId.toString() === fcEditMarketId);
+              if (fc) { fc.cargo = cargoUpdated; }
+            }
 
-          this.setState({
-            fcEditMarketId: undefined,
-            linkedFC: linkedFC,
-            fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
-          });
-        }}
-      />}
+            this.setState({
+              fcEditMarketId: undefined,
+              linkedFC: linkedFC,
+              fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
+            });
+          }}
+        />
+      </>}
 
+      {!!this.props.whereToBuy && <>
+        <WhereToBuy
+          visible={!!showWhereToBuy}
+          buildIds={this.props.whereToBuy.buildIds}
+          systemName={this.props.whereToBuy.refSystem}
+          need={this.props.cargo}
+          onClose={() => this.setState({ showWhereToBuy: false })}
+        />
+      </>}
     </>;
   }
 

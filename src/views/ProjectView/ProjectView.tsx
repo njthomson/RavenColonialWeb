@@ -485,13 +485,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
         {mode === Mode.view && proj.complete && this.renderSystemEffects(proj)}
 
-        {<WhereToBuy
+        <WhereToBuy
           visible={!!showWhereToBuy}
-          buildId={this.state.buildId!}
+          buildIds={[this.state.buildId!]}
           systemName={this.state.proj!.systemName}
           need={this.state.proj!.commodities}
           onClose={() => this.setState({ showWhereToBuy: false })}
-        />}
+        />
 
         {!!editCommodities && !proj.complete && this.renderEditCommodities()}
 

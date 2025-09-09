@@ -100,10 +100,12 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       const newProjects = this.state.projects.map(p => p.buildId === buildId ? newProject : p);
 
       this.setState({
-        loading: false,
         projects: newProjects,
         sumCargo: mergeCargo(newProjects.map(p => p.commodities))
       });
+
+      // add artificial delay to avoid flicker on the spinner
+      setTimeout(() => this.setState({ loading: false }), 500);
     } catch (err: any) {
       console.error(`Error loading data: ${err.message}`);
       this.setState({ loading: false, errorMsg: err.message });
@@ -162,12 +164,13 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
       this.setState({ autoUpdateUntil: 0 });
     } finally {
-      this.setState({ loading: false });
+      // add artificial delay to avoid flicker on the spinner
+      setTimeout(() => this.setState({ loading: false }), 500);
     }
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -205,6 +208,9 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       </div>;
     }
 
+    const whereToBuy = !projects?.length
+      ? undefined
+      : { refSystem: projects[0].systemName, buildIds: projects.map(p => p.buildId) }
 
     return <div className='view-all'>
       <div>
@@ -226,11 +232,25 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               onClick: () => {
                 this.toggleAutoRefresh();
               }
-            }
+            },
+
+            {
+              key: 'sys-loading',
+              title: 'Networking ...',
+              iconProps: { iconName: 'Nav2DMapView' },
+              onRender: () => {
+                return !loading ? null : <div>
+                  <Spinner
+                    size={SpinnerSize.medium}
+                    labelPosition='right'
+                    label='Loading ...'
+                    style={{ marginTop: 12, cursor: 'default' }}
+                  />
+                </div>
+              },
+            },
           ]}
         />
-
-        {loading && <Spinner size={SpinnerSize.medium} label={`Loading ...`} labelPosition={'right'} />}
       </div>
 
       <div className='contain-horiz'>
@@ -239,6 +259,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
           <CargoGrid
             cargo={this.state.sumCargo}
             linkedFC={this.state.linkedFC}
+            whereToBuy={whereToBuy}
           />
           <br />
           <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo' />

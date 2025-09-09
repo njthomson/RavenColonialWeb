@@ -218,19 +218,22 @@ export interface AppProps {
 
 export interface FindMarketsOptions {
   refSystem?: string;
-  shipSize: string;
   maxDistance: number;
   maxArrival: number;
+  shipSize: string;
   noSurface: boolean;
   noFC: boolean;
   requireNeed: boolean;
   hasShipyard: boolean;
+  commodities?: Cargo;
+  buildIds?: string[];
 }
 
 export interface FoundMarkets {
   preparedAt: string;
-  buildId: string;
+  buildIds?: string[];
   systemName: string;
+  commodities?: Cargo;
   markets: MarketSummary[];
 }
 
