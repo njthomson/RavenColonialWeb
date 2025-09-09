@@ -50,6 +50,7 @@ const supportedTypes: Record<string, ImageData> = {
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'Grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
   'dionysus': { cmdr: 'Abe Andet', location: `Poyser's Inheritance - Col 285 Sector LK-D b13-8` },
+  'dione': { cmdr: 'd34m0n', location: `Col 285 Sector PS-P b7-2, A3` },
   'dodona': { cmdr: 'Abe Andet', location: `Karman Vision - Arietis Sector PJ-Q B5-5` },
   'dual_truss': { cmdr: 'Abe Andet', location: `McCulley Gateway - Pegasi Sector IM-S a5-0` },
   'dysnomia': { cmdr: 'Disnaematter', location: `Campus Hub - Synuefe EM-M c23-8` },
