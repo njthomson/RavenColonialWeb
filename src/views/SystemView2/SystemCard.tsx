@@ -15,7 +15,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
   const isOpen = sysMap.open;
   const isArchitect = !!sysOriginal.architect && sysOriginal.architect?.toLowerCase() === store.cmdrName?.toLowerCase();
   const canEditOpen = !!store.cmdrName && (sysOriginal.open || !sysOriginal.architect || isArchitect);
-  const canEditArchitect = !!store.cmdrName && (isArchitect || !sysOriginal.architect);
+  const canEditArchitect = !!store.cmdrName && (sysOriginal.open || isArchitect || !sysOriginal.architect);
 
   return <div>
 
