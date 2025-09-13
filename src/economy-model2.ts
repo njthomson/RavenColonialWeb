@@ -318,7 +318,7 @@ export const applyStrongLinks0 = (map: EconomyMap, site: SiteMap2, useIncomplete
 };
 */
 
-export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, useIncomplete: boolean, nested?: boolean) => {
+export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, useIncomplete: boolean, subLink?: Economy | '*') => {
   // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
   // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
   let isC2C = false;
@@ -329,9 +329,12 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     // skip incomplete sites ?
     if (s.status !== 'complete' && !useIncomplete) { continue; }
 
+    // skip if we have a sub-link and this inf doesn't match it
+    if (!!subLink && !(subLink === '*' || s.type.inf === subLink)) { continue; }
+
     // size of impact varies by Tier: 0.4 / 0.8 / 1.2
     const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2);
-    const prefix = nested ? 'SUB-strong link' : 'Strong link';
+    const prefix = !!subLink ? 'SUB-strong link' : 'Strong link';
 
     // apply single adjustment for non-colony types
     if (s.type.inf !== 'colony') {
@@ -351,6 +354,11 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
         }
       } else {
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name} - ${s.type.displayName2} (${s.buildType})`);
+      }
+
+      // also apply strong links from the emitting port
+      if (useNewModel && s.links?.strongSites && !subLink) {
+        applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, s.type.inf);
       }
       continue;
     }
@@ -384,8 +392,8 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     }
 
     // also apply strong links from the emitting port
-    if (useNewModel && isC2C && s.links?.strongSites && !nested) {
-      applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, true);
+    if (useNewModel && isC2C && s.links?.strongSites && !subLink) {
+      applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, "*");
     }
   }
 
