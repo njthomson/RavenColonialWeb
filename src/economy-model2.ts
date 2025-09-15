@@ -330,11 +330,10 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     if (s.status !== 'complete' && !useIncomplete) { continue; }
 
     // skip if we have a sub-link and this inf doesn't match it
-    if (!!subLink && !(subLink === '*' || s.type.inf === subLink)) { continue; }
 
     // size of impact varies by Tier: 0.4 / 0.8 / 1.2
     const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2);
-    const prefix = !!subLink ? 'SUB-strong link' : 'Strong link';
+    const prefix = !!subLink ? 'sub-strong link' : 'Strong link';
 
     // apply single adjustment for non-colony types
     if (s.type.inf !== 'colony') {
@@ -343,15 +342,6 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
         adjust(s.type.inf, infSize, `Apply ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
 
         applyStrongLinkBoost(s.type.inf, map, site, prefix);
-
-        const stronglyLinkedEconomies = s.links?.economies && Object.keys(s.links.economies)?.filter(k => k !== s.type.inf && s.links?.economies && s.links.economies[k]?.strong > 0);
-        if (stronglyLinkedEconomies) {
-          for (const linkedInf of stronglyLinkedEconomies) {
-            console.log("@@", s.name, site.name, stronglyLinkedEconomies);
-            adjust(linkedInf as Economy, infSize, `Apply ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
-            applyStrongLinkBoost(linkedInf as Economy, map, site, prefix);
-          }
-        }
       } else {
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name} - ${s.type.displayName2} (${s.buildType})`);
       }
@@ -373,6 +363,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     for (var e in s.economies) {
       const ee = e as keyof EconomyMap;
       const val = s.economies[ee];
+      // todo: intrinsic economies, not 50%
       if (val >= 0.5) {
         isC2C = site.type.inf === 'colony' && s.type.inf === 'colony';
         if (useNewModel /* && s.type.tier === site.type.tier*/) {
@@ -382,6 +373,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
           // use the ACTUAL economy strength
           adjust(ee, val, `Apply colony ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
         }
+
         applyStrongLinkBoost(ee, map, site, `${prefix}s`);
 
         // Add a special case: terraforming can be boosted by colony-to-colony strong links.
