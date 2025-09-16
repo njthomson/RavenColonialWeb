@@ -183,6 +183,7 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
     console.warn(`Why are we in: applyBodyType?`);
     return;
   }
+  const intrinsic = new Set<Economy>();
 
   // Colony-type ports acquire their economy type(s) as follows:
   // - The "Base Inheritable Economy" type of the local body they are on or orbit is assessed
@@ -196,66 +197,68 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
     case BT.bh:
     case BT.ns:
     case BT.wd:
-      adjust('hightech', +1, 'Body type: REMNANT', map, site);
-      adjust('tourism', +1, 'Body type: REMNANT', map, site);
+      adjust('hightech', +1, 'Body type: REMNANT', map, site); intrinsic.add('hightech');
+      adjust('tourism', +1, 'Body type: REMNANT', map, site); intrinsic.add('tourism');
       break;
     case BT.st:
-      adjust('military', +1, 'Body type: STAR', map, site);
+      adjust('military', +1, 'Body type: STAR', map, site); intrinsic.add('military');
       break;
     case BT.elw:
-      adjust('agriculture', +1, 'Body type: ELW', map, site);
-      adjust('hightech', +1, 'Body type: ELW', map, site);
-      adjust('military', +1, 'Body type: ELW', map, site);
-      adjust('tourism', +1, 'Body type: ELW', map, site);
+      adjust('agriculture', +1, 'Body type: ELW', map, site); intrinsic.add('agriculture');
+      adjust('hightech', +1, 'Body type: ELW', map, site); intrinsic.add('hightech');
+      adjust('military', +1, 'Body type: ELW', map, site); intrinsic.add('military');
+      adjust('tourism', +1, 'Body type: ELW', map, site); intrinsic.add('tourism');
       break;
     case BT.ww:
-      adjust('agriculture', +1, 'Body type: WW', map, site);
-      adjust('tourism', +1, 'Body type: WW', map, site);
+      adjust('agriculture', +1, 'Body type: WW', map, site); intrinsic.add('agriculture');
+      adjust('tourism', +1, 'Body type: WW', map, site); intrinsic.add('tourism');
       break;
     case BT.aw:
-      adjust('hightech', +1, 'Body type: AMMONIA', map, site);
-      adjust('tourism', +1, 'Body type: AMMONIA', map, site);
+      adjust('hightech', +1, 'Body type: AMMONIA', map, site); intrinsic.add('hightech');
+      adjust('tourism', +1, 'Body type: AMMONIA', map, site); intrinsic.add('tourism');
       break;
     case BT.gg:
-      adjust('hightech', +1, 'Body type: GG', map, site);
-      adjust('industrial', +1, 'Body type: GG', map, site);
+      adjust('hightech', +1, 'Body type: GG', map, site); intrinsic.add('hightech');
+      adjust('industrial', +1, 'Body type: GG', map, site); intrinsic.add('industrial');
       break;
     case BT.hmc:
     case BT.mrb:
-      adjust('extraction', +1, 'Body type: HMC', map, site);
+      adjust('extraction', +1, 'Body type: HMC', map, site); intrinsic.add('extraction');
       break;
     case BT.ri:
-      adjust('industrial', +1, 'Body type: ROCKY-ICE', map, site);
-      adjust('refinery', +1, 'Body type: ROCKY-ICE', map, site);
+      adjust('industrial', +1, 'Body type: ROCKY-ICE', map, site); intrinsic.add('industrial');
+      adjust('refinery', +1, 'Body type: ROCKY-ICE', map, site); intrinsic.add('refinery');
       break;
     case BT.rb:
-      adjust('refinery', +1, 'Body type: ROCKY', map, site);
+      adjust('refinery', +1, 'Body type: ROCKY', map, site); intrinsic.add('refinery');
       break;
     case BT.ib:
-      adjust('industrial', +1, 'Body type: ICY', map, site);
+      adjust('industrial', +1, 'Body type: ICY', map, site); intrinsic.add('industrial');
       break;
     case BT.ac:
       // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
-      adjust('extraction', +1, 'Body type: ASTEROID', map, site);
+      adjust('extraction', +1, 'Body type: ASTEROID', map, site); intrinsic.add('extraction');
       break;
   }
 
   // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
   if (site.body.features.includes(BodyFeature.rings)) {
-    if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site, 'body'); }
+    if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site, 'body'); intrinsic.add('extraction'); }
   }
 
   // If the Body has Organics (also known as Biologicals) (+1.00) for Agriculture and Terraforming - the type of Organics doesn't matter
   if (site.body.features.includes(BodyFeature.bio)) {
-    if (![BT.elw, BT.ww].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site, 'body'); }
-    adjust('terraforming', +1, 'Body has: BIO', map, site, 'body');
+    if (![BT.elw, BT.ww].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site, 'body'); intrinsic.add('agriculture'); }
+    adjust('terraforming', +1, 'Body has: BIO', map, site, 'body'); intrinsic.add('terraforming');
   }
 
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.body.features.includes(BodyFeature.geo)) {
-    if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site, 'body'); }
-    if (![BT.gg, BT.ri, BT.ib].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site, 'body'); }
+    if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site, 'body'); intrinsic.add('extraction'); }
+    if (![BT.gg, BT.ri, BT.ib].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site, 'body'); intrinsic.add('industrial'); }
   }
+
+  site.intrinsic = Array.from(intrinsic);
 };
 
 /*
@@ -363,8 +366,8 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     for (var e in s.economies) {
       const ee = e as keyof EconomyMap;
       const val = s.economies[ee];
-      // todo: intrinsic economies, not 50%
-      if (val >= 0.5) {
+      // only boost intrinsic economies from initial body influences (not from links)
+      if (s.intrinsic?.includes(ee)) {
         isC2C = site.type.inf === 'colony' && s.type.inf === 'colony';
         if (useNewModel /* && s.type.tier === site.type.tier*/) {
           const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2)

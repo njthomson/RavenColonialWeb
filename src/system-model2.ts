@@ -67,6 +67,7 @@ export interface SiteMap2 extends Site {
   links?: SiteLinks2;
   /** Economies generated for Colony types */
   economies?: EconomyMap;
+  intrinsic?: Economy[];
   economyAudit?: AuditEconomy[];
   /** Top generated economy generated for Colony types */
   primaryEconomy?: Economy;

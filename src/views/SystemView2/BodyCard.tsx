@@ -102,7 +102,7 @@ const getEconomyTable = (map: EconomyMap, audit: AuditEconomy[], sumValues: bool
   }
 
   // add a blank row with empty cells at the end
-  colonyRows.push(<tr><td className={`${col1}`} /><td className={`${col2}`} /><td className={`${col3}`} /><td className={`${col4}`} /></tr>);
+  colonyRows.push(<tr key={`cr-er-${++nn}`}><td className={`${col1}`} /><td className={`${col2}`} /><td className={`${col3}`} /><td className={`${col4}`} /></tr>);
 
   return <>
     <table cellPadding={0} cellSpacing={0} style={{ fontSize: 11, lineHeight: '8px' }}>
