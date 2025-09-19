@@ -131,7 +131,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             />
 
             {showLogin && <ActionButton
-              className={cn.bBox2}
+              className={`${cn.bBox2} ${cn.bGrey}`}
               style={{ height: 32, margin: 8 }}
               iconProps={{ iconName: 'AuthenticatorApp' }}
               text='Login'
@@ -140,12 +140,13 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           </Stack>
 
           {showLogin && !!apiKey && <>
-            <Stack horizontal verticalAlign='center' style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}>
-              <span>API Key:&nbsp;</span>
+            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}>
+              <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
+              <div>API Key:&nbsp;</div>
               <CopyButton text={apiKey} title='Copy API Key' />
-              <code style={{ border: '1px solid', padding: 2, margin: '0 4px' }}>{apiKey}</code>
+              <code style={{ border: '1px solid', padding: '2px 8px', margin: '0 4px' }}>{apiKey}</code>
               <ActionButton
-                className={cn.bBox2}
+                className={`${cn.bBox2} ${cn.bGrey}`}
                 disabled={resetting}
                 style={{ height: 20, fontSize: 12 }}
                 iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
@@ -157,7 +158,6 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                   this.setState({ apiKey: store.apiKey, cmdr: store.cmdrName, resetting: false });
                 }}
               />
-              <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} />
             </Stack>
           </>}
 
@@ -200,17 +200,40 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
               iconProps={{ iconName: 'Add' }}
               text='Add'
               title='Link a new Fleet Carrier to your Commander'
+              className={`${cn.bBox2} ${cn.bGrey}`}
               style={{
                 marginLeft: 10,
-                padding: 0,
-                height: 22,
-                backgroundColor: appTheme.palette.themeLighter,
+                padding: 2,
+                height: 26,
               }}
               onClick={() => {
                 this.setState({
                   showAddFC: true
                 });
                 delayFocus('add-fc-combo-input');
+              }}
+            />}
+            {showLogin && <ActionButton
+              iconProps={{ iconName: 'Refresh' }}
+              text='My FC'
+              title='Refresh data for your own Fleet Carrier'
+              className={`${cn.bBox2} ${cn.bGrey}`}
+              style={{
+                marginLeft: 10,
+                padding: 2,
+                height: 26,
+              }}
+              onClick={async () => {
+                const myFC = await api.cmdr.fetchMyFC()
+                if (myFC) {
+                  const { cmdrEditLinkedFCs, cmdrLinkedFCs } = this.state;
+                  cmdrEditLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
+                  cmdrLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
+                  this.setState({ cmdrEditLinkedFCs });
+                  store.cmdrLinkedFCs = cmdrLinkedFCs;
+                } else {
+                  window.alert(`You do not appear to have a Fleet Carrier.`);
+                }
               }}
             />}
           </Stack>
@@ -240,6 +263,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} title='Discard changes' />
 
           <IconButton
+            className={cn.bBox}
             title='Reset "Do not show me this again" prompts'
             iconProps={{ iconName: 'ReportWarning' }}
             onClick={() => {

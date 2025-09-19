@@ -1,6 +1,6 @@
 import './App.css';
 import * as api from './api';
-import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, PrimaryButton, ThemeProvider } from '@fluentui/react';
+import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, PrimaryButton, Spinner, SpinnerSize, ThemeProvider } from '@fluentui/react';
 import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
@@ -162,6 +162,10 @@ export class App extends Component<AppProps, AppState> {
         window.location.hash = `#home`;
         window.location.reload();
       }
+    } else if (nextState.pivot === TopPivot.login) {
+      // do not change any state
+    } else if (window.location.pathname.endsWith('/user')) {
+      nextState.cmdrEdit = true;
     } else {
       nextState.pivot = TopPivot.home;
     }
@@ -174,9 +178,11 @@ export class App extends Component<AppProps, AppState> {
     const pivotArg = params.values().next().value;
 
     // are we logging in?
-    if (window.location.pathname.endsWith('login')) {
+    if (window.location.pathname.endsWith('/login')) {
       processLoginCodes();
-      return [TopPivot.home, pivotArg];
+      return [TopPivot.login, pivotArg];
+    } else if (window.location.pathname.endsWith('/user')) {
+      return [TopPivot.about, pivotArg];
     }
 
     // auto switch urls to hash based anchors
@@ -347,6 +353,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.about: return <About />;
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
       case TopPivot.table: return <BigSiteTablePage />;
+      case TopPivot.login: return <div><Spinner style={{ marginTop: 100 }} size={SpinnerSize.large} label='Logging in ...' /></div>;
     }
   }
 

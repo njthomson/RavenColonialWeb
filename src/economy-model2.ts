@@ -1,4 +1,3 @@
-import { store } from "./local-storage";
 import { Economy } from "./site-data";
 import { EconomyMap } from "./system-model";
 import { SiteMap2, SysMap2 } from "./system-model2";
@@ -8,8 +7,7 @@ import { asPosNegTxt2 } from "./util";
 
 let showConsoleAudit = Date.now() < 0;
 
-const useNewModel = store.useNewModel;
-console.log(`useNewModel: ${useNewModel}`);
+const useNewModel = true;
 
 /** Black hole, Neutron star or White Dwarf */
 export const stellarRemnants = [BT.bh, BT.ns, BT.wd];
@@ -197,8 +195,8 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
     case BT.bh:
     case BT.ns:
     case BT.wd:
-      adjust('hightech', +1, 'Body type: REMNANT', map, site); intrinsic.add('hightech');
-      adjust('tourism', +1, 'Body type: REMNANT', map, site); intrinsic.add('tourism');
+      adjust('hightech', +1, 'Body type: BH/NS/WD', map, site); intrinsic.add('hightech');
+      adjust('tourism', +1, 'Body type: BH/NS/WD', map, site); intrinsic.add('tourism');
       break;
     case BT.st:
       adjust('military', +1, 'Body type: STAR', map, site); intrinsic.add('military');
@@ -482,7 +480,7 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
         }
       }
       if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
-        adjust(inf, +0.4, `+ ${reason} boost: System has System has Black Hole/Neutron Star/White Dwarf`, map, site, 'sys');
+        adjust(inf, +0.4, `+ ${reason} boost: System has System has BH/NS/WD`, map, site, 'sys');
       }
       return;
   }

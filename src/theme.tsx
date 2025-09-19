@@ -339,6 +339,12 @@ export const cn = mergeStyleSets({
       fontWeight: 'bold',
     },
   },
+  /** Make background grey on hover */
+  bGrey: {
+    ':hover': {
+      backgroundColor: appTheme.semanticColors.buttonBackgroundHovered,
+    },
+  },
   pillSmall: {
     borderRadius: 5,
     height: '18px!important',

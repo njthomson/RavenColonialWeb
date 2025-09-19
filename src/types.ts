@@ -13,6 +13,7 @@ export enum TopPivot {
   sys = 'sys',
   /** Big Site Table */
   table = 'bst',
+  login = 'login',
 }
 
 export class RequestError extends Error {
