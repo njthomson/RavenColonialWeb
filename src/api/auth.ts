@@ -34,7 +34,10 @@ export const processLoginCodes = async () => {
 
     const storedAuth = localStorage.getItem('auth1') ?? '{}';
     const { codeVerifier } = JSON.parse(storedAuth);
-    if (!code || !codeVerifier) throw new Error('Missing codes')
+    if (!code || !codeVerifier) {
+      window.alert('Login failed');
+      window.location.replace('/');
+    }
 
     const body = asFormData({
       client_id: clientId,
@@ -57,7 +60,6 @@ export const processLoginCodes = async () => {
       return;
     }
 
-    localStorage.removeItem('auth1');
     localStorage.setItem('auth2', json);
     console.log('Token acquired');
 
@@ -70,9 +72,12 @@ export const processLoginCodes = async () => {
     }
 
     // redirect again to clean up the query string
+    localStorage.removeItem('auth1');
     window.location.assign('/');
   } catch (err: any) {
     console.error(`processLoginCodes:`, err.stack);
+    window.alert('Login failed');
+    window.location.replace('/');
   }
 };
 
@@ -80,10 +85,7 @@ export const resetApiKey = async () => {
   try {
     console.log('Resetting API key ...');
 
-    const json = localStorage.getItem('auth2');
-    if (!json) throw new Error('Cannot reset without tokens');
-
-    var data = await callAPI<{ key: string, cmdr: string }>(`/api/login/reset`, 'POST', json);
+    var data = await callAPI<{ key: string, cmdr: string }>(`/api/login/reset`, 'POST');
     if (data.key && data.key !== store.apiKey) {
       console.log(`API Key replaced`);
       store.apiKey = data.key;
