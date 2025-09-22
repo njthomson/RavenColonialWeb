@@ -661,7 +661,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderTitleAndCommands() {
-    const { systemName, processingMsg, sysMap, sysOriginal, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType } = this.state;
+    const { systemName, processingMsg, sysMap, sysOriginal, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType, bodySlots } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
@@ -788,6 +788,29 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       } as IContextualMenuItem);
     }
 
+    // get total count of orbital and surface slots
+    let orbitalSlots = 0;
+    let orbitalSlotsAllKnown = true;
+    let surfaceSlots = 0;
+    let surfaceSlotsAllKnown = true;
+    for (const b of sysMap?.bodies ?? []) {
+      if (b.type === BT.bc) { continue; } // ignore bacycenters
+      const slots = bodySlots[b.num] ?? [-1, -1];
+      if (slots[0] >= 0) {
+        orbitalSlots += slots[0];
+      } else {
+        orbitalSlotsAllKnown = false;
+      }
+      if (b.features.includes(BodyFeature.landable)) {
+        if (slots[1] >= 0) {
+          surfaceSlots += slots[1];
+        } else
+          surfaceSlotsAllKnown = false;
+      }
+    }
+    const orbitalSlotsTitle = `Total orbital slots: ${orbitalSlots}` + (orbitalSlotsAllKnown ? '' : '+?');
+    const surfaceSlotsTitle = `Total surface slots: ${surfaceSlots}` + (surfaceSlotsAllKnown ? '' : '+?');
+
     return <>
       {!onMobile && <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>}
       <h2 style={{ margin: 10, height: 32, fontSize: onMobile ? 18 : undefined }}>
@@ -812,6 +835,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               }
             }}
           />
+
+          <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ marginLeft: 20, color: appTheme.palette.themeTertiary, fontSize: 18, cursor: 'default' }}>
+            <Icon iconName='ProgressRingDots' title={orbitalSlotsTitle} />
+            <span title={orbitalSlotsTitle}>{orbitalSlots}{!orbitalSlotsAllKnown && <>?</>}&nbsp;</span>
+            <Icon iconName='GlobeFavorite' title={surfaceSlotsTitle} />
+            <span title={surfaceSlotsTitle}>{surfaceSlots}{!surfaceSlotsAllKnown && <>?</>}</span>
+          </Stack>
         </Stack>
       </h2>
 

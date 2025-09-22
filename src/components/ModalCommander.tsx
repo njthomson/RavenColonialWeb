@@ -31,6 +31,7 @@ interface ModalCommanderState {
 
   hideShipTrips: boolean
   useNativeDiscord: boolean;
+  fetchingFCs?: boolean;
 }
 
 export class ModalCommander extends Component<ModalCommanderProps, ModalCommanderState> {
@@ -86,7 +87,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   render() {
-    const { cmdr, apiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord } = this.state;
+    const { cmdr, apiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, fetchingFCs } = this.state;
     const showLogin = !!localStorage.getItem('test-login');
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
@@ -139,15 +140,15 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             />}
           </Stack>
 
-          {showLogin && !!apiKey && <>
-            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}>
+          {showLogin && <>
+            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: !apiKey ? 'grey' : appTheme.palette.themeSecondary }}>
               <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
               <div>API Key:&nbsp;</div>
-              <CopyButton text={apiKey} title='Copy API Key' />
-              <code style={{ border: '1px solid', padding: '2px 8px', margin: '0 4px' }}>{apiKey}</code>
+              {apiKey && <CopyButton text={apiKey} title='Copy API Key' />}
+              <code style={{ border: '1px solid', padding: '2px 8px', margin: '0 4px' }}>{apiKey || 'login needed'}</code>
               <ActionButton
                 className={`${cn.bBox2} ${cn.bGrey}`}
-                disabled={resetting}
+                disabled={resetting || !apiKey}
                 style={{ height: 20, fontSize: 12 }}
                 iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
                 text='Reset'
@@ -216,23 +217,28 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             {showLogin && <ActionButton
               iconProps={{ iconName: 'Refresh' }}
               text='My FC'
-              title='Refresh data for your own Fleet Carrier'
+              title='Refresh data for your own and/or Squadron Fleet Carrier'
               className={`${cn.bBox2} ${cn.bGrey}`}
               style={{
                 marginLeft: 10,
                 padding: 2,
                 height: 26,
               }}
+              disabled={fetchingFCs}
               onClick={async () => {
-                const myFC = await api.cmdr.fetchMyFC()
-                if (myFC) {
+                this.setState({ fetchingFCs: true });
+                const fcs = await api.cmdr.fetchMyFCs()
+                if (fcs.length) {
                   const { cmdrEditLinkedFCs, cmdrLinkedFCs } = this.state;
-                  cmdrEditLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
-                  cmdrLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
-                  this.setState({ cmdrEditLinkedFCs });
+                  for (const myFC of fcs) {
+                    cmdrEditLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
+                    cmdrLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
+                  }
+                  this.setState({ cmdrEditLinkedFCs, fetchingFCs: false });
                   store.cmdrLinkedFCs = cmdrLinkedFCs;
                 } else {
-                  window.alert(`You do not appear to have a Fleet Carrier.`);
+                  window.alert(`You and/or your squadron do not appear to have Fleet Carriers`);
+                  this.setState({ fetchingFCs: false });
                 }
               }}
             />}

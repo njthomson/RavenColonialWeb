@@ -52,15 +52,7 @@ export const cmdr = {
     return await callAPI<void>(`/api/cmdr/${encodeURIComponent(cmdr)}/fc/${encodeURIComponent(marketId)}`, 'DELETE');
   },
 
-  fetchMyFC: async (): Promise<KnownFC | undefined> => {
-    try {
-      return await callAPI<KnownFC>(`/api/cmdr/fleetCarrier`, 'POST');
-    } catch (err: any) {
-      if (err.statusCode === 404) {
-        return undefined; // don't make calling code need to try/catch for this purpose
-      } else {
-        throw err;
-      }
-    }
+  fetchMyFCs: async (): Promise<KnownFC[]> => {
+    return await callAPI<KnownFC[]>(`/api/cmdr/fleetCarriers`, 'POST');
   },
 };

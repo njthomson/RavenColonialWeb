@@ -360,6 +360,7 @@ export interface KnownFC {
   marketId: number;
   name: string;
   displayName: string;
+  owner?: string;
   cargo: Record<string, number>;
 }
 
