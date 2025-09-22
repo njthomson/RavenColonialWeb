@@ -292,10 +292,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     let used = 0;
     const pills = Array.from(highlights).map(cargo => {
-      const need = this.props.need[cargo];
+      const need = this.props.need[cargo] ?? 0;
       const leftPad = (large - used) * 0.3; // in case the pill is too wide, this keeps text visible
       used += need;
-      let txt = need.toLocaleString();
+      let txt = need?.toLocaleString() ?? '?';
       if (need > 40) txt += ' ' + mapCommodityNames[cargo];
 
       return <div
@@ -310,7 +310,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           textAlign: used > large ? 'left' : 'unset',
           paddingLeft: used > large ? leftPad : 'unset',
         }}
-        title={`${mapCommodityNames[cargo]}: ${need.toLocaleString()}`}
+        title={`${mapCommodityNames[cargo]}: ${need?.toLocaleString() ?? '?'}`}
       >{txt}</div>;
     });
 
@@ -327,7 +327,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       }}>
 
         <div style={{ width: wl, height: 20, backgroundColor: appTheme.palette.neutralTertiaryAlt }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 4 }}>Ship capacity: {used.toLocaleString()}</div>
+        <div style={{ position: 'absolute', bottom: 0, left: 4 }}>Ship capacity: {used?.toLocaleString() ?? '?'}</div>
 
         <div style={{
           position: 'absolute',
