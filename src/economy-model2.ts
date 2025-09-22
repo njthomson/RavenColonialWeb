@@ -216,8 +216,9 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       adjust('tourism', +1, 'Body type: AMMONIA', map, site); intrinsic.add('tourism');
       break;
     case BT.gg:
-      adjust('hightech', +1, 'Body type: GG', map, site); intrinsic.add('hightech');
-      adjust('industrial', +1, 'Body type: GG', map, site); intrinsic.add('industrial');
+    case BT.wg:
+      adjust('hightech', +1, 'Body type: GG/WG', map, site); intrinsic.add('hightech');
+      adjust('industrial', +1, 'Body type: GG/WG', map, site); intrinsic.add('industrial');
       break;
     case BT.hmc:
     case BT.mrb:
@@ -253,7 +254,7 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.body.features.includes(BodyFeature.geo)) {
     if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: GEO', map, site, 'body'); intrinsic.add('extraction'); }
-    if (![BT.gg, BT.ri, BT.ib].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site, 'body'); intrinsic.add('industrial'); }
+    if (![BT.gg, BT.wg, BT.ri, BT.ib].includes(site.body?.type)) { adjust('industrial', +1, 'Body has: GEO', map, site, 'body'); intrinsic.add('industrial'); }
   }
 
   site.intrinsic = Array.from(intrinsic);
