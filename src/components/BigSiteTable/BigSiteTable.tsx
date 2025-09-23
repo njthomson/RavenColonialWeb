@@ -102,7 +102,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     const { filterColumns } = this.state;
 
     const sorted = siteTypes
-      .slice(1) // remove the initial "Unknown" entry
+      .filter(t => t.tier > 0) // remove unknown types
       .filter(t => {
         // filter any of the effects
         for (const key in t.effects) {

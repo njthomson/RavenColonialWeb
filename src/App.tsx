@@ -77,8 +77,8 @@ export class App extends Component<AppProps, AppState> {
 
     // migrate local-storage items?
     if ((store.commoditySort as any) === 'Group by type') { store.commoditySort = SortMode.group; }
-    store.migrateLinkedFCs()
-      .catch(err => console.error(err));
+    store.migrateLinkedFCs().catch(err => console.error(err));
+    localStorage.removeItem('code_verifier');
 
     // style scrollbars
     App.scrollBarWidth = this.calcScrollBarWidth();

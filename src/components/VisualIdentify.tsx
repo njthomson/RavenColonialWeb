@@ -111,7 +111,9 @@ const supportedTypes: Record<string, ImageData> = {
   'zeus': { cmdr: 'EDExplorer', location: `Ascendia City - Col 285 Sector ZX-R b5-0, A 4` }, //, more: [{ n: 'zeus-plan.jpg', c: 'Cmdr Grinning2001' }] },
 };
 
-const sortedGroups = siteTypes.slice(1).sort((a, b) => a.displayName2.localeCompare(b.displayName2));
+const sortedGroups = siteTypes
+  .filter(t => t.tier > 0) // remove unknown types
+  .sort((a, b) => a.displayName2.localeCompare(b.displayName2));
 const sortedTypes = Object.keys(supportedTypes).sort();
 
 const typeTypes = Object.keys(supportedTypes).reduce((map, key) => {
@@ -329,7 +331,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
     const countTotal = siteTypes.flatMap(t => t.subTypes).length;
     let countMissing = 0;
     const groups = siteTypes
-      .slice(1)
+      .filter(t => t.tier > 0) // remove unknown types
       .reduce((map, t) => {
         const missing = t.subTypes.filter(st => !(st in supportedTypes));
         if (missing.length > 0) {

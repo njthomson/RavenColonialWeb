@@ -58,7 +58,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
     const id = Date.now().toString();
 
     const validTypes = siteTypes
-      .slice(1)
+      .filter(t => t.tier > 0) // remove unknown types
       .filter(type => location === 'both' || location === (type.orbital ? 'orbital' : 'surface'));
 
     const displayName2 = getSiteType(this.props.buildType, true)?.displayName2 ?? '?';

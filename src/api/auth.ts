@@ -6,7 +6,6 @@ const redirectUrl = 'https://ravencolonial.com/login';
 
 export const redirectToFrontierAuth = async () => {
   const { codeVerifier, codeChallenge } = await generateCodeVerifierAndChallenge();
-  localStorage.setItem('code_verifier', codeVerifier);
 
   const state = randomBase64();
 

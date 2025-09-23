@@ -59,6 +59,9 @@ const readBoolean = (key: Stored, defaultValue?: boolean): boolean => !!readValu
 class LocalStorage {
   clearCmdr(): void {
     window.localStorage.removeItem(Stored.cmdr);
+    window.localStorage.removeItem(Stored.apiKey);
+    window.localStorage.removeItem('auth1');
+    window.localStorage.removeItem('auth2');
     window.localStorage.removeItem(Stored.recentProjects);
     window.localStorage.removeItem(Stored.deliverDestination);
     window.localStorage.removeItem(Stored.cmdrLinkedFCs);

@@ -88,7 +88,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
   render() {
     const { cmdr, apiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, fetchingFCs } = this.state;
-    const showLogin = !!localStorage.getItem('test-login');
+    const showLogin = true;
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
       <span className='removable'>
@@ -117,12 +117,12 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     return <>
       <div className="edit-cmdr half">
         <div style={{ textAlign: 'left' }}>
-          <Stack horizontal verticalAlign='end'>
+          <Label style={{ margin: 0, padding: 0 }}>Commander name:</Label>
+          <Stack horizontal verticalAlign='end' style={{ margin: 0, padding: 0 }}>
             <TextField
               autoFocus
               name='cmdr'
-              label='Commander name:'
-              disabled={showLogin && !!apiKey}
+              disabled={true}
               value={cmdr}
               onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
               onKeyDown={(ev) => {
@@ -133,14 +133,25 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
             {showLogin && <ActionButton
               className={`${cn.bBox2} ${cn.bGrey}`}
-              style={{ height: 32, margin: 8 }}
+              style={{ height: 32, margin: '8px 0 8px 8px', minWidth: 88 }}
               iconProps={{ iconName: 'AuthenticatorApp' }}
               text='Login'
-              onClick={() => redirectToFrontierAuth()}
+              onClick={() => {
+                if (cmdr && !apiKey) {
+                  if (window.confirm('⚠️ Caution ⚠️\n\nThis will change your Commander name to match the game. If you have been using a different name as system architect you will not be able to edit your own systems after logging in.\n\n✔️ If in doubt hit Cancel, then:\n- In each system, click the pencil toolbar button\n- Change "Edit security" from "Secured" to "Open"')) {
+                    redirectToFrontierAuth();
+                  } else {
+                    window.location.assign('/sys');
+                  }
+                } else {
+                  redirectToFrontierAuth();
+                }
+              }}
             />}
           </Stack>
 
           {showLogin && <>
+            <ActionButton className={`${cn.bBox2} ${cn.bGrey}`} style={{ float: 'right', minWidth: 88, height: 32 }} iconProps={{ iconName: 'SignOut' }} text='Logout' onClick={this.onClear} title='Clear your Commander details' />
             <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: !apiKey ? 'grey' : appTheme.palette.themeSecondary }}>
               <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
               <div>API Key:&nbsp;</div>
@@ -224,7 +235,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 padding: 2,
                 height: 26,
               }}
-              disabled={fetchingFCs}
+              disabled={fetchingFCs || !apiKey}
               onClick={async () => {
                 this.setState({ fetchingFCs: true });
                 const fcs = await api.cmdr.fetchMyFCs()
@@ -265,7 +276,6 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }} horizontalAlign='end'>
           <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} title='Save changes' />
-          <DefaultButton iconProps={{ iconName: 'Delete' }} text='Clear' onClick={this.onClear} title='Clear your Commander details' />
           <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} title='Discard changes' />
 
           <IconButton

@@ -285,7 +285,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     const { location, selection } = this.state;
 
     const rows = siteTypes
-      .slice(1)
+      .filter(t => t.tier > 0) // remove unknown types
       .filter(type => location === 'both' || location === (type.orbital ? 'orbital' : 'surface'))
       .map((type, idx) => {
         const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');

@@ -240,13 +240,14 @@ export const sumEconomies = (economies: string[]): Record<string, number> => {
 // Unlocks are from: https://forums.frontier.co.uk/threads/elite-dangerous-trailblazers-update-3-3.638196/
 
 export const siteTypes: SiteType[] = [
+  // Unknown types
   {
     "displayName": "Unknown",
     "displayName2": "Unknown",
     "subTypes": [''],
     "haul": 0,
     "buildClass": "unknown",
-    "tier": 1,
+    "tier": 0,
     "padSize": "none",
     "orbital": true,
     "needs": { tier: 0, count: 0 },
@@ -254,6 +255,63 @@ export const siteTypes: SiteType[] = [
     "inf": "none",
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
   },
+  {
+    "displayName": "Installation?",
+    "displayName2": "Installation?",
+    "subTypes": ['installation'],
+    "haul": 0,
+    "buildClass": "unknown",
+    "tier": 0,
+    "padSize": "none",
+    "orbital": true,
+    "needs": { tier: 0, count: 0 },
+    "gives": { tier: 0, count: 0 },
+    "inf": "none",
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+  },
+  {
+    "displayName": "Outpost?",
+    "displayName2": "Outpost?",
+    "subTypes": ['outpost'],
+    "haul": 0,
+    "buildClass": "unknown",
+    "tier": 0,
+    "padSize": "none",
+    "orbital": true,
+    "needs": { tier: 0, count: 0 },
+    "gives": { tier: 0, count: 0 },
+    "inf": "none",
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+  },
+  {
+    "displayName": "Settlement?",
+    "displayName2": "Settlement?",
+    "subTypes": ['settlement'],
+    "haul": 0,
+    "buildClass": "unknown",
+    "tier": 0,
+    "padSize": "none",
+    "orbital": false,
+    "needs": { tier: 0, count: 0 },
+    "gives": { tier: 0, count: 0 },
+    "inf": "none",
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+  },
+  {
+    "displayName": "Facility?",
+    "displayName2": "Facility?",
+    "subTypes": ['facility'],
+    "haul": 0,
+    "buildClass": "unknown",
+    "tier": 0,
+    "padSize": "none",
+    "orbital": false,
+    "needs": { tier: 0, count: 0 },
+    "gives": { tier: 0, count: 0 },
+    "inf": "none",
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+  },
+  // Real site types follow
   {
     "displayName": "Coriolis",
     "displayName2": "Coriolis Starport",
