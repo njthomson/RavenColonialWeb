@@ -151,7 +151,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
           </Stack>
 
           {showLogin && <>
-            <ActionButton className={`${cn.bBox2} ${cn.bGrey}`} style={{ float: 'right', minWidth: 88, height: 32 }} iconProps={{ iconName: 'SignOut' }} text='Logout' onClick={this.onClear} title='Clear your Commander details' />
+            <ActionButton className={`${cn.bBox2} ${cn.bGrey}`} style={{ float: 'right', marginLeft: 8, minWidth: 88, height: 32 }} iconProps={{ iconName: 'SignOut' }} text='Logout' onClick={this.onClear} title='Clear your Commander details' />
             <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: !apiKey ? 'grey' : appTheme.palette.themeSecondary }}>
               <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
               <div>API Key:&nbsp;</div>
