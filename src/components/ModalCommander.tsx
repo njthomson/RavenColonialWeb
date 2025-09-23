@@ -1,5 +1,5 @@
 import * as api from '../api';
-import { ActionButton, Checkbox, DefaultButton, DirectionalHint, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Checkbox, DefaultButton, DirectionalHint, Icon, IconButton, Label, PrimaryButton, Slider, SpinButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import { store } from '../local-storage';
 import { appTheme, cn } from '../theme';
@@ -225,34 +225,22 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 delayFocus('add-fc-combo-input');
               }}
             />}
-            {showLogin && <ActionButton
-              iconProps={{ iconName: 'Refresh' }}
-              text='My FC'
-              title='Refresh data for your own and/or Squadron Fleet Carrier'
-              className={`${cn.bBox2} ${cn.bGrey}`}
-              style={{
-                marginLeft: 10,
-                padding: 2,
-                height: 26,
-              }}
-              disabled={fetchingFCs || !apiKey}
-              onClick={async () => {
-                this.setState({ fetchingFCs: true });
-                const fcs = await api.cmdr.fetchMyFCs()
-                if (fcs.length) {
-                  const { cmdrEditLinkedFCs, cmdrLinkedFCs } = this.state;
-                  for (const myFC of fcs) {
-                    cmdrEditLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
-                    cmdrLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
-                  }
-                  this.setState({ cmdrEditLinkedFCs, fetchingFCs: false });
-                  store.cmdrLinkedFCs = cmdrLinkedFCs;
-                } else {
-                  window.alert(`You and/or your squadron do not appear to have Fleet Carriers`);
-                  this.setState({ fetchingFCs: false });
-                }
-              }}
-            />}
+            {showLogin && <>
+              <ActionButton
+                iconProps={{ iconName: 'Refresh' }}
+                text='My FC'
+                title='Refresh data for your own and/or Squadron Fleet Carrier'
+                className={`${cn.bBox2} ${cn.bGrey}`}
+                style={{
+                  margin: '0 10px',
+                  padding: 2,
+                  height: 26,
+                }}
+                disabled={fetchingFCs || !apiKey}
+                onClick={this.onFetchFCs}
+              />
+              {fetchingFCs && <Spinner size={SpinnerSize.medium} />}
+            </>}
           </Stack>
 
           {showAddFC && <div>
@@ -363,4 +351,33 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     this.setState({ cmdrEditLinkedFCs });
   }
 
+  onFetchFCs = async () => {
+    this.setState({ fetchingFCs: true });
+    try {
+      const fcs = await api.cmdr.fetchMyFCs()
+      if (fcs.length) {
+        const { cmdrEditLinkedFCs, cmdrLinkedFCs } = this.state;
+        for (const myFC of fcs) {
+          cmdrEditLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
+          cmdrLinkedFCs[myFC.marketId] = fcFullName(myFC.name, myFC.displayName);
+        }
+        this.setState({ cmdrEditLinkedFCs, fetchingFCs: false });
+        store.cmdrLinkedFCs = cmdrLinkedFCs;
+      } else {
+        window.alert(`Your Commander and/or your squadron do not appear to have Fleet Carriers`);
+        this.setState({ fetchingFCs: false });
+      }
+    } catch (err: any) {
+      if (err.statusCode === 424) {
+        // show special message for Epic users
+        window.alert(`✋ Frontier/Epic account link expired?\n\nPlease signin through Epic game launcher and try again.`);
+        this.setState({ fetchingFCs: false });
+      } else {
+        // Otherwise, log raw error and show a generic error to users
+        console.error(`Failed to fetch FCs: `, err.message);
+        this.setState({ fetchingFCs: false });
+        window.alert(`There was a problem accessing Fleet Carriers.\nCheck console for more information.`);
+      }
+    }
+  };
 }
