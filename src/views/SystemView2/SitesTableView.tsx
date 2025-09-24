@@ -8,6 +8,7 @@ import { mapSiteGraphTypeIcon, SitesViewProps } from "./SystemView2";
 import { SiteMap2 } from "../../system-model2";
 import { EconomyBlocks, MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
+import { getBuildStatusNum } from "../../types2";
 
 export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const { sysMap, pinnedId } = props;
@@ -20,7 +21,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       switch (sortColumn) {
         case 'bodyNum': n = a.bodyNum - b.bodyNum; break;
         case 'name': n = a.name.localeCompare(b.name); break;
-        case 'status': n = a.status.localeCompare(b.status); break;
+        case 'status': n = getBuildStatusNum(a.status) - getBuildStatusNum(b.status); break;
         case 'buildType':
           n = a.type.displayName2 === b.type.displayName2
             ? a.buildType.localeCompare(b.buildType)
