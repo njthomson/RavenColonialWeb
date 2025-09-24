@@ -321,7 +321,11 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       store.cmdrLinkedFCs = { ...this.state.cmdrEditLinkedFCs };
       store.hideShipTrips = this.state.hideShipTrips;
       store.useNativeDiscord = this.state.useNativeDiscord;
-      window.location.reload();
+      if (window.location.pathname.endsWith('/user')) {
+        window.location.assign('/#about');
+      } else {
+        window.location.reload();
+      }
     }
   }
 
@@ -370,7 +374,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     } catch (err: any) {
       if (err.statusCode === 424) {
         // show special message for Epic users
-        window.alert(`✋ Frontier/Epic account link expired?\n\nPlease signin through Epic game launcher and try again.`);
+        window.alert(`✋ Frontier/Epic account link expired?\n\nPlease start playing the game with your Epic account and try again.`);
         this.setState({ fetchingFCs: false });
       } else {
         // Otherwise, log raw error and show a generic error to users
