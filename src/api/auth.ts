@@ -72,11 +72,11 @@ export const processLoginCodes = async () => {
 
     // redirect again to clean up the query string
     localStorage.removeItem('auth1');
-    window.location.assign('/');
+    window.location.assign('/user');
   } catch (err: any) {
     console.error(`processLoginCodes:`, err.stack);
     window.alert('Login failed');
-    window.location.replace('/');
+    window.location.replace('/user');
   }
 };
 
