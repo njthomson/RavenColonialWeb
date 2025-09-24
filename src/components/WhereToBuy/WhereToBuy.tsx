@@ -324,6 +324,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         overflow: 'hidden',
         cursor: 'default',
         fontSize: 10,
+        backgroundColor: appTheme.palette.white,
       }}>
 
         <div style={{ width: wl, height: 20, backgroundColor: appTheme.palette.neutralTertiaryAlt }} />
