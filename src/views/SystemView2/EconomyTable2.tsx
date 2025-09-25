@@ -136,18 +136,21 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
         </Link>;
       }
     }
-
   }
 
   const bodyFeatures = props.site.body?.features?.filter(f => f !== BodyFeature.landable).map(f => mapBodyFeature[f]).join(', ').toUpperCase();
   const systemFeatureStarTypes = Array.from(new Set(props.site.sys.bodies.filter(b => stellarRemnants.includes(b.type)).map(b => b.type)));
   const systemFeatures = systemFeatureStarTypes.map(t => mapBodyTypeNames[t]).join(', ').toUpperCase();
+  const sotlLink = getSotlLink(props.site.economies);
   let flip = false;
   return <div style={{ minWidth: 380 }}>
 
     {props.site.economies && <div style={{ position: 'relative' }}>
       <h3 className={cn.h3}>
-        {!props.noTableHeader && <>Economy Ratios:</>}
+        {!props.noTableHeader && <>
+          <span>Economy Ratios:</span>
+          {sotlLink && <Link href={sotlLink} target='sotl' style={{ marginLeft: 8, fontSize: 10, fontWeight: 'normal' }} title='See estimated commodities at: cdb.sotl.org.uk'>Estimate commodities<Icon className="icon-inline" iconName='OpenInNewWindow' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>}
+        </>}
         {!!props.noTableHeader && <>&nbsp;</>}
         <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}>
           {!!props.site.economyAudit && <Link
@@ -283,4 +286,24 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
       </div>
     </>}
   </div>;
+};
+
+const getSotlLink = (economies: EconomyMap | undefined) => {
+  if (!economies) { return undefined; }
+
+  const query = Object.keys(economies).map(key => `${mapEconomyToSotlEco[key as keyof (EconomyMap)]}=${economies[key as keyof (EconomyMap)]}`).join('&');
+  return 'https://cdb.sotl.org.uk/specialisation/hybrid?mode=c&' + query;
+}
+
+const mapEconomyToSotlEco = {
+  'agriculture': 'eco3',
+  'service': 'eco21', // The 'Contraband' economy is the 'new' Service type used by newly-colonised systems, while the 'Service' economy is the traditional type used rarely by older systems.
+  'extraction': 'eco2',
+  'hightech': 'eco7',
+  'industrial': 'eco5',
+  'military': 'eco8',
+  'tourism': 'eco1',
+  'refinery': 'eco4',
+  'colony': 'eco9',
+  'terraforming': 'eco10',
 };
