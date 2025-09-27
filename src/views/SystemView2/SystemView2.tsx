@@ -158,7 +158,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       showEditSys: false,
       showConfirmAction: undefined,
       activeProjects: {},
-      realEconomies: [],
+      realEconomies: undefined,
       auditWholeSystem: false,
       showCreateBuildProject: false,
       siteGraphType: store.siteGraphType,
@@ -1415,8 +1415,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   renderCreateBuildProject() {
     const knownMarketIDs = this.state.sysMap?.sites
-      .filter(s => s.id.startsWith('&') && !s.buildId)
-      .map(s => s.id.slice(1));
+      .filter(s => !!s.marketId && !s.buildId)
+      .map(s => s.marketId.toString());
 
     const knownNames = this.state.sysMap?.sites
       .filter(s => s.status === 'complete' || s.buildId)

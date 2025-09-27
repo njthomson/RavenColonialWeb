@@ -82,13 +82,13 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
 
   if (!showChart) {
     return <>
-      {props.site.id.startsWith('&') && <>
+      {props.site.marketId && <>
         <IconButton
           iconProps={{ imageProps: { src: spansh16 } }}
           title='View on Spansh'
           className={cn.bBox}
           style={{ width: 24, height: 24 }}
-          href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
+          href={`https://spansh.co.uk/station/${props.site.marketId}`}
           target='spansh'
         />
       </>}

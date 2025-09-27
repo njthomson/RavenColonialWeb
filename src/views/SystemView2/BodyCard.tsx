@@ -58,7 +58,7 @@ const calcForBody = (bod: Bod | BodyMap2, sysView: SystemView2) => {
     bodyNum: bod.num,
     body: bod as BodyMap2,
     sys: sysView.state.sysMap,
-    id: '', buildId: '', name: '', original: undefined!, economyAudit: [],
+    id: '', buildId: '', name: '', original: undefined!, economyAudit: [], marketId: 0,
   };
   // run economy calculations as if it were a Coriolis
   applyBodyType(mapColony, site);

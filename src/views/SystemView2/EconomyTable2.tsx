@@ -97,13 +97,13 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
         </tr>;
       });
 
-    if (props.site.id.startsWith('&')) {
+    if (props.site.marketId) {
       if (realMatch) {
         spanshHeader = <>
           {!!props.sysView.state.useIncomplete && <Icon iconName='Warning' style={{ color: colorYellow }} />}
           From&nbsp;
           <Link
-            href={`https://spansh.co.uk/station/${props.site.id.slice(1)}`}
+            href={`https://spansh.co.uk/station/${props.site.marketId}`}
             target='spansh'
           >
             Spansh <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
@@ -122,6 +122,13 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
             </span>
           </>}
         </>;
+      } else if (!realMatch && props.sysView.state.realEconomies) {
+        spanshHeader = <span style={{ color: 'grey' }}>No data from <Link
+          href={`https://spansh.co.uk/station/${props.site.marketId}`}
+          target='spansh'
+        >
+          Spansh <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
+        </Link></span>;
       } else if (loadingCompare) {
         spanshHeader = <span style={{ color: 'grey' }}>Loading ...</span>;
       } else {

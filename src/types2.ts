@@ -106,6 +106,7 @@ export const mapBodyTypeNames: Record<BT, string> = {
 export interface Site {
   id: string;
   buildId: string;
+  marketId: number;
   name: string;
   bodyNum: number;
   buildType: string;
