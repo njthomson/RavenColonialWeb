@@ -23,6 +23,7 @@ interface WhereToBuyProps {
   buildIds: string[];
   systemName: string;
   need: Cargo;
+  have?: Cargo;
   onClose: () => void;
 }
 
@@ -41,6 +42,7 @@ interface WhereToBuyState extends FindMarketsOptions {
   highlightHover?: string;
   highlights: Set<string>;
   filterNoHighlights: boolean;
+  fcDiffs: boolean;
 
   sortColumn: string;
   sortAscending: boolean;
@@ -92,6 +94,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       sortColumn: defaultSortColumn,
       sortAscending: defaultSortAscending,
       filterNoHighlights: false,
+      fcDiffs: true,
     };
   }
 
@@ -99,8 +102,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     let nextState: Partial<WhereToBuyState> | undefined = undefined;
 
-    // re-sort/filter if needs have changed
-    if (prevProps.need !== this.props.need) {
+    // re-sort/filter if needs of fcDiffs change
+    if (prevProps.need !== this.props.need || prevState.fcDiffs !== this.state.fcDiffs) {
       const { sortColumn, sortAscending } = this.state;
       const newSortedRows = this.sortMarkets(this.state.foundMarkets, sortColumn, sortAscending);
       const newMissedCargo = Object.keys(this.props.need).filter(cargo => newSortedRows.some(m => cargo in m.supplies));
@@ -191,8 +194,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const sortedRows = foundMarkets.markets
       // reduce each market's supplies to those that matter
       .map(m => {
-        const matchedSupplies = Object.keys(m.supplies)
-          .filter(cargo => cargo in this.props.need && this.props.need[cargo] > 0)
+        let matchedSupplies = Object.keys(m.supplies)
+          .filter(cargo => cargo in this.props.need && this.props.need[cargo] > 0 && (!this.state?.fcDiffs || !this.hasEnough(cargo)))
           .reduce((map, cargo) => {
             map[cargo] = m.supplies[cargo];
             return map;
@@ -223,6 +226,14 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       });
 
     return sortedRows;
+  }
+
+  private hasEnough(cargo: string): boolean {
+    if (!this.props.have) { return false; }
+
+    const have = this.props.have[cargo] ? this.props.have[cargo] : 0;
+    const need = this.props.need[cargo];
+    return have >= need;
   }
 
   render() {
@@ -279,7 +290,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderFilledBars() {
-    const { highlights } = this.state;
+    const { highlights, fcDiffs } = this.state;
 
     /** The visible width of the bar matching a large ship */
     const wl = 720;
@@ -292,7 +303,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     let used = 0;
     const pills = Array.from(highlights).map(cargo => {
-      const need = this.props.need[cargo] ?? 0;
+      let need = this.props.need[cargo] ?? 0;
+      if (fcDiffs) {
+        const have = this.props.have && this.props.have[cargo] ? this.props.have[cargo] : 0;
+        need -= have;
+      }
       const leftPad = (large - used) * 0.3; // in case the pill is too wide, this keeps text visible
       used += need;
       let txt = need?.toLocaleString() ?? '?';
@@ -545,7 +560,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderFoundMarkets() {
-    const { sortedRows, expandMatches, expandHighlights, filterNoHighlights } = this.state;
+    const { sortedRows, expandMatches, expandHighlights, filterNoHighlights, fcDiffs, highlights } = this.state;
 
     const allCollapsed = expandMatches.size === 0;
 
@@ -583,6 +598,25 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
             onChange={() => this.setState({ filterNoHighlights: !filterNoHighlights })}
           />
         </div>
+
+        {!!this.props.have && <div title='Toggle this to display amounts needed to fully load Fleet Carriers'>
+          <Toggle
+            onText='FC Diff'
+            offText='FC Diff'
+            checked={fcDiffs}
+            onChange={() => {
+              if (!fcDiffs) {
+                // remove highlights that will no longer apply
+                for (const k of highlights) {
+                  const have = this.props.have && this.props.have[k] ? this.props.have[k] : 0;
+                  const need = this.props.need[k];
+                  if (have >= need) { highlights.delete(k); }
+                }
+              }
+              this.setState({ fcDiffs: !fcDiffs, highlights });
+            }}
+          />
+        </div>}
 
         <ActionButton
           iconProps={{ iconName: 'SearchAndApps' }}
@@ -650,11 +684,13 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderBubblesNeeded() {
-    const { expandTopBubbles, highlights, highlightHover, missedCargo } = this.state;
+    const { expandTopBubbles, highlights, highlightHover, missedCargo, fcDiffs } = this.state;
 
-    const bubbleNames = expandTopBubbles
-      ? Object.keys(this.props.need).filter(k => this.props.need[k] > 0)
+    let bubbleNames = expandTopBubbles
+      ? Object.keys(this.props.need).filter(k => this.props.need[k] > 0 && (!fcDiffs || !this.hasEnough(k)))
       : Array.from(this.state.highlights);
+    // and sort by their display name
+    bubbleNames = bubbleNames.sort((a, b) => mapCommodityNames[a].localeCompare(mapCommodityNames[b]));
 
     const bubbles = bubbleNames.map(cargo => {
       const isHighlighted = highlights.has(cargo);
@@ -662,14 +698,23 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       let textColor = isHighlighted ? 'white' : appTheme.palette.black;
 
       let sourceMarkets = mapSourceEconomy[cargo].split(',').map(t => ' - ' + mapName[t]).join('\n');
-      const countTxt = this.props.need[cargo].toLocaleString();
-      let titleTxt = `Need ${countTxt} units, found in markets:\n${sourceMarkets}\n\n`
+      const have = this.props.have && this.props.have[cargo] ? this.props.have[cargo] : 0;
+      let need = this.props.need[cargo];
+      const diff = need - have
+      if (fcDiffs && have > 0) { need = diff; }
+      const hasEnough = !fcDiffs && have >= need;
+      let titleTxt = (hasEnough
+        ? `Need ${need.toLocaleString()} units, found in markets:\n${sourceMarkets}\n\n`
+        : `Need ${diff.toLocaleString()} more units, found in markets:\n${sourceMarkets}\n\n`)
         + (isHighlighted ? `Click to remove highlight` : `Click to highlight`);
 
-      if (!missedCargo.includes(cargo)) {
+      if (have > 0) {
+        titleTxt = `Fleet Carriers have: ${have.toLocaleString()} units\n` + titleTxt;
+      }
+      if (!missedCargo.includes(cargo) && !hasEnough) {
         titleTxt = `** Not available in any markets below **\n\n` + titleTxt;
         if (!isHighlighted) {
-          textColor = 'grey'; //or appTheme.palette.themeLighterAlt; ?
+          textColor = appTheme.palette.white;
         }
       }
 
@@ -694,7 +739,9 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           this.setState({ highlights });
         }}
       >
-        <CommodityIcon name={cargo} />&nbsp;{mapCommodityNames[cargo]}: {countTxt}
+        {!hasEnough && <CommodityIcon name={cargo} />}
+        {hasEnough && <Icon className='icon-inline' iconName='SkypeCheck' style={{ color: appTheme.palette.greenLight }} />}
+        <span>&nbsp;{mapCommodityNames[cargo]}: {need.toLocaleString()}</span>
       </div>;
     });
 
@@ -703,7 +750,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       <Stack
         horizontal wrap
         className={`highlight ${cn.bb}`}
-        verticalAlign='start'
+        verticalAlign='center'
         style={{ padding: 4, marginBottom: 8 }}
       >
         <Stack horizontal verticalAlign='center' title={highlightTitleTxt}>
@@ -850,12 +897,13 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     let textColor = isHighlighted ? 'white' : appTheme.palette.black;
     let titleTxt = isHighlighted ? `Remove ${mapCommodityNames[cargo]} from highlights` : `Click to highlight: ${mapCommodityNames[cargo]}`
 
-    if (count < this.props.need[cargo]) {
+    const hasEnough = this.hasEnough(cargo);
+    if (count < this.props.need[cargo] && !hasEnough) {
       // should we include the deficit count?
       titleTxt += ' (Insufficient supply)';
 
       if (!isHighlighted) {
-        textColor = 'grey'; //or appTheme.palette.themeLighterAlt; ?
+        textColor = appTheme.palette.white;
       }
     }
 
@@ -880,7 +928,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         this.setState({ highlights });
       }}
     >
-      <CommodityIcon name={cargo} />
+      {!hasEnough && <CommodityIcon name={cargo} />}
+      {hasEnough && <Icon className='icon-inline' iconName='SkypeCheck' style={{ color: appTheme.palette.greenLight }} />}
       &nbsp;
       {mapCommodityNames[cargo]}: {count.toLocaleString()}
     </div>;

@@ -94,7 +94,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   render() {
-    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy } = this.state;
+    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy, fcCargo } = this.state;
 
     const hideGrid = hideDoneRows && zeroNeed;
     return <>
@@ -202,6 +202,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           buildIds={this.props.whereToBuy.buildIds}
           systemName={this.props.whereToBuy.refSystem}
           need={this.props.cargo}
+          have={hideFCColumns ? undefined : fcCargo}
           onClose={() => this.setState({ showWhereToBuy: false })}
         />
       </>}

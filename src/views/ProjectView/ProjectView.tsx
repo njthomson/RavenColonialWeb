@@ -324,7 +324,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy, fcCargo } = this.state;
 
     if (loading) {
       return <div className='project-view'>
@@ -466,6 +466,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       'text/html': new Blob([`<a href='${`https://ravencolonial.com/#build=${proj.buildId}`}'>${proj.buildName}</a>`], { type: 'text/html' }),
     });
 
+    const fcMergedCargo = mergeCargo(Object.values(fcCargo))
     return <div className='project-view'>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
@@ -480,7 +481,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       <div className='contain-horiz'>
         {!proj.complete && mode === Mode.view && <div className='half'>
-          {this.renderCommodities()}
+          {this.renderCommodities(fcMergedCargo)}
         </div>}
 
         {mode === Mode.view && proj.complete && this.renderSystemEffects(proj)}
@@ -490,6 +491,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           buildIds={[this.state.buildId!]}
           systemName={this.state.proj!.systemName}
           need={this.state.proj!.commodities}
+          have={this.state.hideFCColumns ? undefined : fcMergedCargo}
           onClose={() => this.setState({ showWhereToBuy: false })}
         />
 
@@ -631,7 +633,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </Panel>;
   }
 
-  renderCommodities() {
+  renderCommodities(fcMergedCargo: Cargo) {
     const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy } = this.state;
     if (!proj?.commodities) { return <div />; }
 
@@ -681,7 +683,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }, {} as Cargo);
 
     // as we have the FC cargo diff's known here, calculate how much they have ready for the total progress chart. Meaning: count the needs where FCs have a surplus, otherwise count what is on the FC
-    const fcMergedCargo = mergeCargo(Object.values(fcCargo))
     this.countReadyOnFCs = getCargoCountOnHand(cargo, fcMergedCargo);
 
     // calculate sum of diffs that are negative
