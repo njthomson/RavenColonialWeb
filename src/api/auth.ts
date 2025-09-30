@@ -74,9 +74,17 @@ export const processLoginCodes = async () => {
     localStorage.removeItem('auth1');
     window.location.assign('/user');
   } catch (err: any) {
-    console.error(`processLoginCodes:`, err.stack);
-    window.alert('Login failed');
-    window.location.replace('/user');
+    if (err.statusCode === 424) {
+      // show special message for Epic users
+      window.alert(`✋ Frontier/Epic account link expired?\n\nPlease start playing the game with your Epic account and try again.`);
+    } else if (err.statusCode === 418) {
+      window.alert(`Frontier servers appear to be offline. Please try again later.`);
+    } else {
+      // Otherwise, log raw error and show a generic error to users
+      console.error(`processLoginCodes:`, err.stack);
+      window.alert('Login failed');
+      window.location.replace('/user');
+    }
   }
 };
 
@@ -91,7 +99,16 @@ export const resetApiKey = async () => {
       store.cmdrName = data.cmdr;
     }
   } catch (err: any) {
-    console.error(`resetApiKey:`, err.stack);
+    if (err.statusCode === 424) {
+      // show special message for Epic users
+      window.alert(`✋ Frontier/Epic account link expired?\n\nPlease start playing the game with your Epic account and try again.`);
+    } else if (err.statusCode === 418) {
+      window.alert(`Frontier servers appear to be offline. Please try again later.`);
+    } else {
+      // Otherwise, log raw error and show a generic error to users
+      console.error(`resetApiKey:`, err.stack);
+      window.alert(`There was an unexpected problem. Check console for more information.`);
+    }
   }
 }
 

@@ -376,6 +376,13 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         // show special message for Epic users
         window.alert(`✋ Frontier/Epic account link expired?\n\nPlease start playing the game with your Epic account and try again.`);
         this.setState({ fetchingFCs: false });
+      } else if (err.statusCode === 418) {
+        window.alert(`Frontier servers appear to be offline. Please try again later.`);
+        this.setState({ fetchingFCs: false });
+      } else if (err.statusCode === 404) {
+        // show special message for when squad FC is found but cannot be created due to a missing marketId
+        window.alert(`🔎 Cannot find the market ID for your Squadron Fleet Carrier.\n\nThis is a one time problem, please dock at it and try again.`);
+        this.setState({ fetchingFCs: false });
       } else {
         // Otherwise, log raw error and show a generic error to users
         console.error(`Failed to fetch FCs: `, err.message);
