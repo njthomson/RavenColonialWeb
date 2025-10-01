@@ -94,7 +94,7 @@ export interface BodyPut {
 export interface SitesPut {
   update: Site[];
   delete: string[];
-  orderIDs: string[];
+  orderIDs?: string[];
   architect?: string;
   reserveLevel?: ReserveLevel;
   snapshot?: SysSnapshot;

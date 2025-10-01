@@ -64,7 +64,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
     setTimeout(async () => {
 
       // exit early if nothing to re-calc
-      const stales = systems?.filter(s => s.stale) ?? []
+      const stales = systems?.filter(s => s.stale) ?? [];
       if (!systems || stales.length === 0) { return; }
 
       try {
@@ -75,12 +75,11 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         await api.systemV2.saveSites(snap.id64.toString(), {
           update: [],
           delete: [],
-          orderIDs: [],
           snapshot: newSnapshot,
         });
 
         // replace the snapshot, which triggers the next memo
-        const idx = systems.indexOf(snap)
+        const idx = systems.indexOf(snap);
         systems.splice(idx, 1, newSnapshot);
         setSystems([...systems]);
       } catch (err: any) {
