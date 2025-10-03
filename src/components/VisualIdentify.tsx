@@ -6,6 +6,7 @@ import { getSiteType, SiteType, siteTypes } from "../site-data";
 import { CopyButton } from "./CopyButton";
 import { isMobile } from "../util";
 import { BuildEffects } from "./BuildEffects";
+import { App } from "../App";
 
 interface ImageData {
   cmdr: string;
@@ -364,6 +365,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         this.setState({ showMissing: false });
       }}
     >
+      <div><Link id='send-feedback' onClick={() => App.showFeedback('Missing site images for: ')}><Icon className='icon-inline' iconName='ImageSearch' style={{ textDecoration: 'none', marginRight: 4 }} />Submit a missing image?</Link></div>
       <div style={{ textTransform: 'capitalize', cursor: 'default' }}>
         {rows}
       </div>

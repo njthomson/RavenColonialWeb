@@ -1016,7 +1016,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "extraction",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 10, tech: 0, sol: -4, dev: 3 }
+    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 10, tech: 0, sol: -4, dev: 3 }
   },
   {
     "displayName": "Civilian",
@@ -1030,7 +1030,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "none",
-    "effects": { pop: 0, mpop: 0, sec: -3, wealth: 0, tech: 0, sol: 3, dev: 3 },
+    "effects": { pop: 1, mpop: 1, sec: -3, wealth: 0, tech: 0, sol: 3, dev: 3 },
     "preReq": 'settlementAgr'
   },
   {
@@ -1045,7 +1045,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
-    "effects": { pop: 0, mpop: 0, sec: -1, wealth: 0, tech: 7, sol: 0, dev: 3 },
+    "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 7, sol: 0, dev: 3 },
     "preReq": 'comms',
     "unlocks": ['System unlock: Universal Cartographics at T1 Surface or T2 orbital ports']
   },
@@ -1061,7 +1061,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "none",
-    "effects": { pop: 0, mpop: 0, sec: -2, wealth: 0, tech: 0, sol: 3, dev: 3 },
+    "effects": { pop: 1, mpop: 1, sec: -2, wealth: 0, tech: 0, sol: 3, dev: 3 },
     "preReq": 'installationAgr',
     "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
   },
@@ -1077,7 +1077,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 0 },
+    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 0 },
     "unlocks": ['System unlock: Vista Genomics at T1 Surface or T2 orbital ports']
   },
   {
@@ -1092,7 +1092,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "military",
-    "effects": { pop: 0, mpop: 0, sec: 10, wealth: 0, tech: 0, sol: 0, dev: 0 },
+    "effects": { pop: 1, mpop: 1, sec: 10, wealth: 0, tech: 0, sol: 0, dev: 0 },
     "preReq": 'installationMil'
   },
   {
@@ -1107,7 +1107,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "refinery",
-    "effects": { pop: 0, mpop: 0, sec: -1, wealth: 5, tech: 3, sol: -2, dev: 7 }
+    "effects": { pop: 1, mpop: 1, sec: -1, wealth: 5, tech: 3, sol: -2, dev: 7 }
   },
   {
     "displayName": "High Tech",
@@ -1121,7 +1121,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 10, sol: 0, dev: 0 },
+    "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 10, sol: 0, dev: 0 },
     "unlocks": [
       'System unlock: Outfitting at non-Military Outposts',
       'System unlock: Outfitting at non-Industrial T1 surface ports',
@@ -1141,7 +1141,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "industrial",
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 5, tech: 3, sol: -4, dev: 3 },
+    "effects": { pop: 1, mpop: 1, sec: 0, wealth: 5, tech: 3, sol: -4, dev: 3 },
     "preReq": 'outpostMining',
     "unlocks": [
       'System unlock: Shipyard at T1 surface ports',
@@ -1174,7 +1174,7 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   // T2 surface hubs
   hestia: [4, 4, 4], // Civilian Surface Outpost
   decima: [4, 4, 4], // Civilian Surface Outpost
-  atropos: [4, 4, 4], // Civilian Surface Outpost
+  atropos: [4, 4, 2], // Civilian Surface Outpost
   nona: [4, 4, 4], // Civilian Surface Outpost
   lachesis: [4, 4, 4], // Civilian Surface Outpost
   clotho: [4, 4, 2], // Civilian Surface Outpost

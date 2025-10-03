@@ -250,7 +250,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
         scrollableContent: { scrollbarGutter: 'stable' },
-        footerInner: { padding: 1 }
+        footerInner: { padding: 1, backgroundColor: appTheme.palette.white, }
       }}
 
       onRenderHeader={() => {
@@ -339,7 +339,6 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         overflow: 'hidden',
         cursor: 'default',
         fontSize: 10,
-        backgroundColor: appTheme.palette.white,
       }}>
 
         <div style={{ width: wl, height: 20, backgroundColor: appTheme.palette.neutralTertiaryAlt }} />

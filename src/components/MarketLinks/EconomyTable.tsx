@@ -6,6 +6,7 @@ import { cn, appTheme } from "../../theme";
 import { asPosNegTxt, isMobile, asPosNegTxt2 } from "../../util";
 import { CopyButton } from "../CopyButton";
 import { EconomyBlock } from "../EconomyBlock";
+import { App } from "../../App";
 
 const journalEconomiesCache: Record<string, { timestamp: string; map: EconomyMap }> = {};
 type StationEconomies = { Name: string, Name_Localised: string, Proportion: number };
@@ -216,7 +217,7 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
           </table>
 
           <div className='small' style={{ marginTop: 16, marginBottom: 8 }}>
-            Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+            Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.buildName}" (${props.site.marketId}) in: ${props.site.systemName}`)}>report errors or issues</Link>
           </div>
         </div>
       </Panel>}
@@ -302,7 +303,7 @@ export const EconomyTable: FunctionComponent<{ site: SiteMap, showName?: boolean
     }
 
     <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
-      Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+      Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.buildName}" (${props.site.marketId}) in: ${props.site.systemName}`)}>report errors or issues</Link>
     </div>
   </div>;
 };

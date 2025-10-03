@@ -8,7 +8,7 @@ export const LinkSrvSurvey: FunctionComponent<{ href?: string, text?: string; ti
       title={props.title ?? 'Learn more about SrvSurvey'}
       target='_blank'
     >
-      {props.text ?? 'SrvSurvey'} <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
+      {props.text ?? 'SrvSurvey'}<Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none', marginLeft: 4 }} />
     </Link>
   </>;
 };

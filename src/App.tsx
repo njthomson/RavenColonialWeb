@@ -13,6 +13,7 @@ import { VisualIdentify } from './components/VisualIdentify';
 import { SystemView2 } from './views/SystemView2/SystemView2';
 import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
 import { processLoginCodes } from './api/auth';
+import { ShareFeedback } from './components/ShareFeedback';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -28,11 +29,17 @@ interface AppState {
   cmdrEdit: boolean;
   showDonate?: boolean;
   showThemes?: boolean;
+  showFeedback?: string;
 }
 
 export class App extends Component<AppProps, AppState> {
   private static scrollBarWidth = 0;
   private static fakeScroll: HTMLDivElement;
+  private static instance: App | undefined;
+
+  public static showFeedback(topic?: string) {
+    App.instance?.setState({ showFeedback: topic ?? 'Raven Colonial' });
+  }
 
   public static suspendPageScroll() {
     if (document.body.clientHeight < document.body.scrollHeight) {
@@ -50,6 +57,7 @@ export class App extends Component<AppProps, AppState> {
 
   constructor(props: AppProps) {
     super(props);
+    App.instance = this;
 
     const [pivot, pivotArg] = this.getPivotFromHash();
 
@@ -96,6 +104,10 @@ export class App extends Component<AppProps, AppState> {
     App.fakeScroll.style.width = `${App.scrollBarWidth}px`;
     App.fakeScroll.style.display = 'none';
     docBody.appendChild(App.fakeScroll);
+  }
+
+  componentWillUnmount(): void {
+    delete App.instance;
   }
 
   calcScrollBarWidth() {
@@ -210,7 +222,7 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { cmdrEdit, pivot, showDonate, showThemes } = this.state;
+    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback } = this.state;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -302,24 +314,32 @@ export class App extends Component<AppProps, AppState> {
               window.location.reload();
             }
           }}
-          styles={{
-            container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
-          }}
+          styles={{ container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, } }}
         />}
 
         {this.renderBody()}
 
-        {cmdrEdit && <Modal isOpen>
+        {cmdrEdit && <Modal isOpen onDismiss={() => this.setState({ cmdrEdit: false })}>
           <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} />
         </Modal>}
         <br />
         <footer className={cn.footer}>
-          <div>©2025 Raven Colonial Corporation <span style={{ color: 'grey' }}>|</span> <Link onClick={() => this.setState({ showDonate: true })}>Support <Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none' }} /></Link> <span style={{ color: 'grey' }}>|</span> <LinkSrvSurvey text='About SrvSurvey' /></div>
+          <div>
+            <span>©2025 Raven Colonial Corporation</span>
+            <span style={{ color: 'grey' }}> | </span>
+            <Link id='send-support' onClick={() => this.setState({ showDonate: true })}>Support<Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>
+            <span style={{ color: 'grey' }}> | </span>
+            <LinkSrvSurvey text='About SrvSurvey' />
+            <span style={{ color: 'grey' }}> | </span>
+            <Link id='send-feedback' onClick={() => App.showFeedback()}>Feedback<Icon className='icon-inline' iconName='Feedback' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>
+          </div>
         </footer>
 
         <Dialog
           hidden={!showDonate}
           dialogContentProps={{ title: 'Support Raven Colonial' }}
+          onDismiss={() => this.setState({ showDonate: false })}
+          styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
         >
           Do you like this site? Fantastic!
           <br />
@@ -336,6 +356,7 @@ export class App extends Component<AppProps, AppState> {
           </DialogFooter>
         </Dialog>
 
+        {!!showFeedback && <ShareFeedback topic={showFeedback} onDismiss={() => this.setState({ showFeedback: undefined })} />}
       </ThemeProvider>
     );
   }

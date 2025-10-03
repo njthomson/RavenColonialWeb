@@ -6,3 +6,4 @@ export { canonn } from './canonn';
 export { ardent } from './ardent';
 export { system } from './system';
 export { systemV2 } from './v2-system';
+export { misc } from './misc';

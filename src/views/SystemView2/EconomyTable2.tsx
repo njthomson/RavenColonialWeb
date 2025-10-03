@@ -12,6 +12,7 @@ import { SystemView2 } from "./SystemView2";
 import { mapBodyTypeNames } from "../../types2";
 import { EconomyBlocks } from "../../components/MarketLinks/MarketLinks";
 import { stellarRemnants } from "../../economy-model2";
+import { App } from "../../App";
 
 export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
   const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site?.id);
@@ -246,7 +247,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
           </table>
 
           <div className='small' style={{ marginTop: 16, marginBottom: 8 }}>
-            Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+            Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.name}" (${props.site.marketId}) in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
           </div>
 
           {props.site.body && bodyOverride && <>
@@ -289,7 +290,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
             <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
           </div>
         </>}
-        Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+        Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.name}" (${props.site.marketId}) in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
       </div>
     </>}
   </div>;

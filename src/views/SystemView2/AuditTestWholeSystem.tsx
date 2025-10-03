@@ -5,6 +5,7 @@ import { appTheme } from '../../theme';
 import { isMobile } from '../../util';
 import { EconomyTable2 } from './EconomyTable2';
 import { EconomyMap } from "../../system-model2";
+import { App } from "../../App";
 
 export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onClose: () => void }> = (props) => {
   const [onlyProblems, setOnlyProblems] = useState(window.location.hostname.includes('localhost'));
@@ -68,7 +69,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
           </div>
 
           <div>
-            Economy modelling calculations are a work in progress, please <Link href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">report errors or issues</Link>
+            Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issues in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
           </div>
         </div>;
       }}
