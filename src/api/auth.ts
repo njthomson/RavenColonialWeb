@@ -10,7 +10,6 @@ export const redirectToFrontierAuth = async () => {
   const state = randomBase64();
 
   const params = new URLSearchParams({
-    audience: 'frontier',
     scope: 'auth capi',
     response_type: 'code',
     client_id: clientId,
