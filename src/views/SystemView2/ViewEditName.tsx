@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { delayFocus } from "../../util";
 
-export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; }> = (props) => {
+export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; }> = (props) => {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.name);
   const [editName, setEditName] = useState('');
@@ -19,7 +19,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
     {!editing && <>
       <ActionButton
         disabled={props.disabled}
-        text={props.name}
+        text={(props.prefix ?? '') + props.name}
         title='Edit the name'
         iconProps={{ iconName: props.disabled ? undefined : 'Edit' }}
         style={{
@@ -38,6 +38,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
     </>}
 
     {editing && <>
+      {props.prefix && <span>{props.prefix}</span>}
       <input
         id={id}
         type='text'

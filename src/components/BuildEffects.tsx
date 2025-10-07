@@ -22,20 +22,22 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
   const paddingTop = 2;
 
   const st = getSiteType(props.buildType)!;
+  let hasNegs = false;
   const effectRows = Object.keys(st.effects)
     .map(key => {
       if (!st.effects[key as keyof SysEffects]) return null;
 
       const value = st.effects[key as keyof SysEffects] ?? 0;
       const displayName = mapName[key];
-      let displayVal = asPosNegTxt(value);
+      const displayVal = asPosNegTxt(value);
+      if (value < 0) { hasNegs = true; }
 
       return <tr key={`se${key}`} title={`${displayName}: ${asPosNegTxt(value)}`}>
         <td className={tds}>{displayName}:</td>
         <td className={` ${tr} ${tds}`}>
           {value < 0 && <Chevrons name={displayName} count={value} />}
         </td>
-        <td className={`${tds} ${tc}`} >
+        <td className={`${tds} ${tc}`}>
           {displayVal}
         </td>
         <td className={tds}>
@@ -63,8 +65,8 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
     <table style={{ fontSize: 14 }} cellPadding={0} cellSpacing={0}>
       <colgroup>
         <col width='auto' />
-        <col width={40} />
-        <col width={40} />
+        <col width={hasNegs ? 10 : 0} />
+        <col width={20} />
         <col width={40} />
         <col width='auto' />
       </colgroup>

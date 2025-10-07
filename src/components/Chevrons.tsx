@@ -3,12 +3,12 @@ import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { appTheme } from "../theme";
 
-export const Chevrons: FunctionComponent<{ name: string, count: number | undefined, extra?: number, title?: string, cw?: number | undefined }> = (props) => {
+export const Chevrons: FunctionComponent<{ name: string, count: number | undefined, title?: string, cw?: number | undefined }> = (props) => {
   const neg = props.count && props.count < 0;
   const rootKey = props.name + Date.now().toString();
 
   const count = Math.abs(props.count ?? 0);
-  const maxCount = count + (props.extra ?? 0);
+  const maxCount = count;
   if (maxCount === 0) return null;
 
   const w = props.cw ?? 6;
@@ -26,6 +26,8 @@ export const Chevrons: FunctionComponent<{ name: string, count: number | undefin
       key={`${rootKey}${n}`}
       iconName={neg ? 'ChevronLeftSmall' : 'ChevronRightSmall'}
       style={{
+        position: 'relative',
+        left: -2,
         width: w,
         color: color
       }}
@@ -40,8 +42,9 @@ export const Chevrons: FunctionComponent<{ name: string, count: number | undefin
   return <div
     title={props.title}
     style={{
+      position: 'relative',
       display: 'inline-block',
-      width: (maxCount * w) + 5,
+      width: (maxCount * w) + 5 + w,
     }}>
     {chevrons}
   </div>;

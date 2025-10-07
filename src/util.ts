@@ -252,3 +252,17 @@ export const getRelativeDuration = (time: Date) => {
 
   return time.toLocaleString();
 }
+
+export const isMatchingCmdr = (cmdrA?: string, cmdrB?: string) => {
+  cmdrA = cmdrA?.toLowerCase() ?? '';
+  cmdrB = cmdrB?.toLowerCase() ?? '';
+
+  if (cmdrA.startsWith('cmdr ') && !cmdrB.startsWith('cmdr ')) {
+    cmdrA = cmdrA.substring(5);
+  } else if (cmdrB.startsWith('cmdr ') && !cmdrA.startsWith('cmdr ')) {
+    cmdrB = cmdrA.substring(5);
+  }
+
+  console.log(`isMatchingCmdr: ${cmdrA} vs ${cmdrB}`);
+  return cmdrA === cmdrB;
+}

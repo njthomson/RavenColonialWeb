@@ -18,7 +18,7 @@ import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName, ProjectCreate } from '../../components';
-import { createRandomPhoneticName, delayFocus, getRelativeDuration, isMobile } from '../../util';
+import { createRandomPhoneticName, delayFocus, getRelativeDuration, isMatchingCmdr, isMobile } from '../../util';
 import { ShowMySystems } from './ShowMySystems';
 import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
@@ -59,6 +59,7 @@ interface SystemView2State {
   showCreateBuildProject?: boolean;
   siteGraphType: SiteGraphType;
   fssNeeded?: boolean;
+  canEditAsArchitect: boolean;
 }
 
 const viewTypes = [
@@ -162,6 +163,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       auditWholeSystem: false,
       showCreateBuildProject: false,
       siteGraphType: store.siteGraphType,
+      canEditAsArchitect: false,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName'>;
   }
 
@@ -209,6 +211,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           }
         }
 
+        let isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
+        const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect;
+
         this.setState({
           systemName: newSys.name,
           processingMsg: undefined,
@@ -220,6 +225,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           originalSiteIDs: [...orderIDs],
           bodySlots: newSys.slots,
           originalBodySlots: JSON.stringify(newSys.slots),
+          canEditAsArchitect: canEditAsArchitect,
         });
         window.document.title = 'Sys: ' + newSys.name;
 
@@ -302,14 +308,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return;
     }
 
-    const isAllowed = !!this.state.sysOriginal?.open || !this.state.sysOriginal?.architect || this.state.sysOriginal?.architect?.toLowerCase() === store.cmdrName.toLowerCase();
-    if (!isAllowed) {
+    if (!this.state.canEditAsArchitect) {
       console.warn('Edit permission is denied');
       return;
     }
 
     // warn before lockout
-    const aboutToLock = !this.state.sysMap.open && !!this.state.sysMap?.architect && this.state.sysMap?.architect?.toLowerCase() !== store.cmdrName.toLowerCase();
+    const aboutToLock = !this.state.sysMap.open && !!this.state.sysMap?.architect && !isMatchingCmdr(this.state.sysMap?.architect, store.cmdrName);
     if (aboutToLock) {
       if (!window.confirm(`Are you sure?\n\nYou are not the system architect. You are about to lose permission to save future changes`)) {
         return;
@@ -661,12 +666,12 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderTitleAndCommands() {
-    const { systemName, processingMsg, sysMap, sysOriginal, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType, bodySlots } = this.state;
+    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
 
-    const isAllowed = !!sysOriginal?.open || !sysOriginal?.architect || sysOriginal?.architect?.toLowerCase() === store.cmdrName.toLowerCase();
+    const isAllowed = canEditAsArchitect;
     const enableSave = isAllowed && this.isDirty() && !processingMsg && !anonymous;
     const noSplitAddButton = isMobile();
 

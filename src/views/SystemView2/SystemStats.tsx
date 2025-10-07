@@ -9,6 +9,7 @@ import { HaulList } from "./HaulList";
 import { ProjectLink2 } from "./ProjectLink2";
 import { SystemView2 } from "./SystemView2";
 import { SysPop } from "./SysPop";
+import { Icon } from "@fluentui/react";
 
 // //cargoTypes["Asteroid Starport"].items.
 // // const cargoTypes2 = cargoTypes as Record<string, any>;
@@ -49,26 +50,32 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
   return <div
     style={{
       display: 'grid',
-      gridTemplateColumns: 'max-content min-content min-content auto',
-      gap: '2px 10px',
+      gridTemplateColumns: 'max-content max-content max-content max-content 100%',
+      gap: '2px 4px',
       fontSize: '14px',
     }}
   >
 
     <div>Calculating:</div>
-    <div style={{ gridColumn: '2 / span 3' }}>{props.useIncomplete ? 'All sites' : 'Completed sites only'}</div>
+    <div style={{ gridColumn: '2 / span 4' }}>
+      <Icon className='icon-inline' iconName={props.useIncomplete ? 'TestBeakerSolid' : 'TestBeaker'} style={{ color: appTheme.palette.themePrimary }} />
+      &nbsp;
+      {props.useIncomplete ? 'All sites' : 'Completed sites only'}
+    </div>
 
     <div>System architect:</div>
-    <div style={{ gridColumn: '2 / span 3' }}>{sysMap.architect}</div>
+    <div style={{ gridColumn: '2 / span 4' }}>
+      {!sysMap.architect && <span style={{ color: 'grey' }}>-</span>}
+      {sysMap.architect && <>Cmdr {sysMap.architect}</>}
+    </div>
 
     <div>Population:</div>
-    <div style={{ gridColumn: '2 / span 3' }}>
+    <div style={{ gridColumn: '2 / span 4' }}>
       <SysPop id64={sysMap.id64} name={sysMap.name} pop={sysMap.pop} onChange={newPop => props.sysView.updatePop(newPop)} />
     </div>
 
     <div>Tier points:</div>
-    <div style={{ gridColumn: '2 / span 3' }}>
-      &nbsp;
+    <div style={{ gridColumn: '2 / span 4' }}>
       &nbsp;
       <span style={{ color: sysMap.tierPoints.tier2 < 0 ? appTheme.palette.red : undefined }}>
         <TierPoint tier={2} count={sysMap.tierPoints.tier2} />
@@ -77,7 +84,6 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       <span style={{ color: sysMap.tierPoints.tier3 < 0 ? appTheme.palette.red : undefined }}>
         <TierPoint tier={3} count={sysMap.tierPoints.tier3} />
       </span>
-
     </div>
 
     {sysEffects.map(key => {
@@ -85,26 +91,27 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
 
       return [
         <div key={`se${key}1`}>{mapName[key]}:</div>,
-        <div key={`se${key}2`}>
+        <div key={`se${key}2`} style={{ maxWidth: 100, overflowX: 'hidden' }}>
           {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
         </div>,
-        <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
+        <div key={`se${key}3`} style={{ textAlign: 'right' }}>{asPosNegTxt(actual)}</div>,
         <div key={`se${key}4`}>
           {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
         </div>,
+        <span style={{ width: '100%' }} />
       ]
     })}
 
     {!!buildTypes.length && <>
       <div style={{ alignContent: 'center' }}>Planned haul:</div>
-      <div style={{ gridColumn: '2 / span 3' }}>
+      <div style={{ gridColumn: '2 / span 4' }}>
         <HaulList buildTypes={buildTypes} />
       </div>
     </>}
 
     {!!activeBuilds?.length && <>
       <div>Active builds:</div>
-      <div style={{ gridColumn: '2 / span 3' }}>{activeBuilds}</div>
+      <div style={{ gridColumn: '2 / span 4' }}>{activeBuilds}</div>
     </>}
 
   </div>;
