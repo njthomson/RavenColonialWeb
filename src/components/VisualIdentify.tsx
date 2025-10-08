@@ -93,6 +93,7 @@ const supportedTypes: Record<string, ImageData> = {
   'nona': { cmdr: 'Abe Andet', location: `Anderson Vision - Pegasi Sector MS-T b3-5`, more: [{ n: 'nona-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'ocellus': { cmdr: 'NavlGazr', location: `Walters Relay - Bleae Thua NI-B b27-5` },
   'opis': { cmdr: 'Kekosummer', location: `Morgan Base - LTT 1873, B 2` },
+  'opora': { cmdr: 'Freyera', more: [{ n: 'opora-two.jpg', c: 'Cmdr Freyera' }] },
   'orcus': { cmdr: 'Kekosummer', location: `Weber metalurgic station - Col 285 Sector GL-X c1-11, B 3`, more: [{ n: 'orcus-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'ourea': { cmdr: 'Kekosummer', location: `Polubotok drilling station - Col 285 Sector GL-X c1-11, B 3`, more: [{ n: 'ourea-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'palici': { cmdr: 'Kekosummer', location: `Greko chemical workshop - Col 285 Sector GL-X c1-11, A 6`, more: [{ n: 'palici-plan.jpg', c: 'Cmdr Grinning2001' }] },

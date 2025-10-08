@@ -64,7 +64,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
           />
           <StatsBox
             label='Linked'
-            data={{ Commanders: stats.commanders, 'Fleet Carriers': stats.fleetCarriers }}
+            data={{ Commanders: Math.max(stats.totalArchitects, stats.commanders), 'Fleet Carriers': stats.fleetCarriers, Systems: stats.totalPlannedSystems }}
           />
           {/* <StatsBox
             label='Deliveries'

@@ -199,6 +199,9 @@ export interface GlobalStats {
   totalDelivered7d: number;
   topContributors7d: Record<string, number>;
   topHelpers7d: Record<string, number>;
+  totalArchitects: number;
+  totalPlannedSystems: number;
+  topArchitects: Record<string, number>;
 }
 
 export interface QueryProject {

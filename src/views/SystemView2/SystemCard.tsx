@@ -5,6 +5,8 @@ import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
 import { ReserveLevel } from "../../types";
 import { isMobile } from "../../util";
+import { Sys } from "../../types2";
+import { store } from "../../local-storage";
 
 export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemView2, onClose: () => void }> = (props) => {
   const { sysMap, sysOriginal, canEditAsArchitect } = props.sysView.state;
@@ -104,42 +106,41 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
               className={cn.bBox}
               iconProps={{ iconName: 'Download', style: { fontSize: 12 } }}
               text='Download'
-              title='Download a copy of data for this system'
+              title='Download a copy of this system'
               onClick={() => {
                 // download original state
-                const blob = new Blob([JSON.stringify(sysOriginal, null, 2)], { type: 'text/json' });
+                const json = serializeSystem(props.sysView);
+                const blob = new Blob([json], { type: 'text/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `backup-${props.sysView.state.systemName}.json`;
+                a.download = `backup_${props.sysView.state.systemName}_#${sysOriginal.rev}_${store.cmdrName}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
               }}
             />
-            {false && <>
-              <ActionButton
-                className={cn.bBox}
-                iconProps={{ iconName: 'Upload', style: { fontSize: 12 } }}
-                text='Restore'
-                title='Restore data from a download'
-                onClick={() => {
-                  document.getElementById('backupRestore')?.click();
-                }}
-              />
-              <input
-                type="file"
-                id="backupRestore"
-                style={{ display: 'none' }}
-                onChange={async (ev) => {
-                  if (ev.target.files?.length !== 1) { return; }
-                  const json = await ev.target.files[0].text();
-                  console.log(json);
-                  // TODO: do something with this .json
-                }}
-              />
-            </>}
+            <ActionButton
+              className={cn.bBox}
+              iconProps={{ iconName: 'Upload', style: { fontSize: 12 } }}
+              text='Restore'
+              title='Restore data from a download'
+              onClick={() => {
+                document.getElementById('backupRestore')?.click();
+              }}
+            />
+            <input
+              type="file"
+              id="backupRestore"
+              style={{ display: 'none' }}
+              onChange={async (ev) => {
+                if (ev.target.files?.length !== 1) { return; }
+                const json = await ev.target.files[0].text();
+                const newSys = JSON.parse(json) as Sys;
+                props.sysView.useLoadedData(newSys)
+              }}
+            />
           </div>
 
         </div>
@@ -209,3 +210,34 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
   </div>;
 }
 
+const serializeSystem = (sysView: SystemView2) => {
+  const { sysOriginal, sysMap, orderIDs } = sysView.state;
+
+  // re-order sites according to orderIDs
+  const sites = sysMap.sites.sort((a, b) => orderIDs.indexOf(a.id) - orderIDs.indexOf(b.id));
+
+  // prep an object for serialization, using the keys from sysOriginal but the values from sysMap
+  const obj = {} as any;
+  for (const key in sysOriginal) {
+    obj[key] = sysMap[key as keyof Sys];
+  }
+  obj.sites = sites;
+  delete obj.cmdr;
+  delete obj.primaryPortId;
+  delete obj.revs;
+
+  // serialize to 1 line per field, or 1 line per array entry
+  const parts = Object.keys(obj)
+    .map(key => {
+      var value = obj[key];
+      let json = JSON.stringify(value);
+      if (['bodies', 'sites'].includes(key) && Array.isArray(value)) {
+        const parts = value.map(v => JSON.stringify(v)).join(',\n    ');
+        json = `[\n    ${parts}\n  ]`;
+      }
+      return `  "${key}": ${json}`;
+    })
+    .join(',\n');
+
+  return `{\n${parts}\n}`;
+}

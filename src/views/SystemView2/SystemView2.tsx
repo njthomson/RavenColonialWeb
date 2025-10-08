@@ -200,54 +200,38 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           return this.doImport('bodies');
         }
 
-        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
-        const orderIDs = newSysMap.sites.map(s => s.id);
+        /*const canEditAsArchitect =*/ this.useLoadedData(newSys);
 
-        const dirties: Record<string, Site> = {};
-        if (newSys.updateIDs) {
-          for (const id of newSys.updateIDs) {
-            const ds = newSys.sites.find(s => s.id === id)
-            if (ds) dirties[ds.id] = ds;
-          }
-        }
-
-        let isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
-        const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect;
-
-        this.setState({
-          systemName: newSys.name,
-          processingMsg: undefined,
-          sysOriginal: newSys,
-          sysMap: newSysMap,
-          dirtySites: dirties,
-          deletedIDs: newSys.deleteIDs ?? [],
-          orderIDs: orderIDs,
-          originalSiteIDs: [...orderIDs],
-          bodySlots: newSys.slots,
-          originalBodySlots: JSON.stringify(newSys.slots),
-          canEditAsArchitect: canEditAsArchitect,
-        });
-        window.document.title = 'Sys: ' + newSys.name;
-
-        //api.systemV2.getCmdrRevs().then(revs => console.warn(revs));
-
-        // Temporary - until current users have visited their sites?
-        if (!!store.cmdrName && !!newSys.architect) {
+        /*
+        // Do we need to create or update the snapshot for this system?
+        if (canEditAsArchitect) {
+          let genSnapshot = false;
           return api.systemV2.getSnapshot(newSys.id64)
+            .then(snapshot => {
+              if (snapshot.stale) {
+                genSnapshot = true;
+              }
+            })
             .catch(err => {
               if (err.statusCode === 404) {
+                genSnapshot = true;
+              } else {
+                console.error(err.stack);
+                this.setState({ errorMsg: err?.message ?? 'Something failed' });
+              }
+            })
+            .finally(() => {
+              if (genSnapshot) {
                 console.log(`Generate a snapshot for: ${newSys.name} ... `);
                 // clear this cache any time we add a snapshot
                 api.systemV2.cache.snapshots = {};
                 // save a new snapshot
                 const snapshot = getSnapshot(newSys);
                 return api.systemV2.saveSnapshot(newSys.id64, snapshot);
-              } else {
-                console.error(err.stack);
-                this.setState({ errorMsg: err?.message ?? 'Something failed' });
               }
             });
         }
+        */
       })
       .catch(err => {
         if (err.statusCode === 404) {
@@ -259,6 +243,39 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         }
       });
   };
+
+  useLoadedData = (newSys: Sys) => {
+    const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
+    const orderIDs = newSysMap.sites.map(s => s.id);
+
+    const dirties: Record<string, Site> = {};
+    if (newSys.updateIDs) {
+      for (const id of newSys.updateIDs) {
+        const ds = newSys.sites.find(s => s.id === id)
+        if (ds) dirties[ds.id] = ds;
+      }
+    }
+
+    let isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
+    const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect;
+
+    this.setState({
+      systemName: newSys.name,
+      processingMsg: undefined,
+      sysOriginal: newSys,
+      sysMap: newSysMap,
+      dirtySites: dirties,
+      deletedIDs: newSys.deleteIDs ?? [],
+      orderIDs: orderIDs,
+      originalSiteIDs: [...orderIDs],
+      bodySlots: newSys.slots,
+      originalBodySlots: JSON.stringify(newSys.slots),
+      canEditAsArchitect: canEditAsArchitect,
+    });
+    window.document.title = 'Sys: ' + newSys.name;
+
+    return canEditAsArchitect;
+  }
 
   doGetRealEconomies = () => {
     api.systemV2.getRealEconomies(this.state.sysMap.id64.toString())
@@ -544,8 +561,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || sysMap.architect !== sysOriginal.architect
       || sysMap.open !== sysOriginal.open
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
-      // consider any older revision to be dirty
-      || sysMap.rev < sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0)
+      // consider any other revision to be dirty
+      || sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0)
       || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
       ;
@@ -794,7 +811,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       loadRevisionItems.splice(1, 0, {
         key: `load-rev-header`,
         itemType: ContextualMenuItemType.Header,
-        className: anonymous ? undefined : cn.bBox,
         disabled: !!processingMsg || anonymous,
         text: `Prior revisions:`,
       } as IContextualMenuItem);
