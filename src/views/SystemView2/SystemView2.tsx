@@ -780,6 +780,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         canCheck: true,
         checked: sysMap.rev === r.rev,
         onClick: () => this.doLoad(r.rev),
+        onRenderContent(props, defaultRenders) {
+          props.item.text = `#${r.rev} by ${r.cmdr} ${getRelativeDuration(new Date(r.time))}`;
+          return <>
+            {defaultRenders.renderCheckMarkIcon(props)}
+            {defaultRenders.renderItemName(props)}
+          </>;
+        },
       } as IContextualMenuItem;
     }) ?? [];
     // inject a header row between the first 2 entries
@@ -799,7 +806,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     let surfaceSlots = 0;
     let surfaceSlotsAllKnown = true;
     for (const b of sysMap?.bodies ?? []) {
-      if (b.type === BT.bc) { continue; } // ignore bacycenters
+      if (b.type === BT.bc) { continue; } // ignore barycenters
       const slots = bodySlots[b.num] ?? [-1, -1];
       if (slots[0] >= 0) {
         orbitalSlots += slots[0];
