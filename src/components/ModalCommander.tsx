@@ -18,6 +18,7 @@ interface ModalCommanderProps {
 interface ModalCommanderState {
   cmdr?: string;
   apiKey?: string;
+  showApiKey?: boolean;
   resetting?: boolean;
 
   cargoLargeMax: number;
@@ -87,7 +88,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   render() {
-    const { cmdr, apiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, fetchingFCs } = this.state;
+    const { cmdr, apiKey, showApiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, fetchingFCs } = this.state;
     const showLogin = true;
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
@@ -114,64 +115,73 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       </span>
     </li>));
 
+    const apiKeyTxt = !apiKey
+      ? 'login needed'
+      : showApiKey ? apiKey : '(hidden)';
+
     return <>
       <div className="edit-cmdr half">
         <div style={{ textAlign: 'left' }}>
-          <Label style={{ margin: 0, padding: 0 }}>Commander name:</Label>
-          <Stack horizontal verticalAlign='end' style={{ margin: 0, padding: 0 }}>
-            <TextField
-              autoFocus
-              name='cmdr'
-              disabled={true}
-              value={cmdr}
-              onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
-              onKeyDown={(ev) => {
-                if (ev.key === 'Enter') { this.onSave(); }
-                if (ev.key === 'Escape') { this.onCancel(); }
-              }}
-            />
-
-            {showLogin && <ActionButton
-              className={`${cn.bBox2} ${cn.bGrey}`}
-              style={{ height: 32, margin: '8px 0 8px 8px', minWidth: 88 }}
-              iconProps={{ iconName: 'AuthenticatorApp' }}
-              text='Login'
-              onClick={() => {
-                if (cmdr && !apiKey) {
-                  if (window.confirm('⚠️ Caution ⚠️\n\nThis will change your Commander name to match the game. If you have been using a different name as system architect you will not be able to edit your own systems after logging in.\n\n✔️ If in doubt hit Cancel, then:\n- In each system, click the pencil toolbar button\n- Change "Edit security" from "Secured" to "Open"')) {
-                    redirectToFrontierAuth();
-                  } else {
-                    window.location.assign('/sys');
-                  }
-                } else {
-                  redirectToFrontierAuth();
-                }
-              }}
-            />}
-          </Stack>
-
-          {showLogin && <>
-            <ActionButton className={`${cn.bBox2} ${cn.bGrey}`} style={{ float: 'right', marginLeft: 8, minWidth: 88, height: 32 }} iconProps={{ iconName: 'SignOut' }} text='Logout' onClick={this.onClear} title='Clear your Commander details' />
-            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: !apiKey ? 'grey' : appTheme.palette.themeSecondary }}>
-              <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
-              <div>API Key:&nbsp;</div>
-              {apiKey && <CopyButton text={apiKey} title='Copy API Key' />}
-              <code style={{ border: '1px solid', padding: '2px 8px', margin: '0 4px' }}>{apiKey || 'login needed'}</code>
-              <ActionButton
-                className={`${cn.bBox2} ${cn.bGrey}`}
-                disabled={resetting || !apiKey}
-                style={{ height: 20, fontSize: 12 }}
-                iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
-                text='Reset'
-                onClick={async () => {
-                  this.setState({ resetting: true });
-                  await delay(500);
-                  await resetApiKey();
-                  this.setState({ apiKey: store.apiKey, cmdr: store.cmdrName, resetting: false });
+          <div
+            onMouseEnter={() => this.setState({ showApiKey: true })}
+            onMouseLeave={() => this.setState({ showApiKey: false })}
+          >
+            <Label style={{ margin: 0, padding: 0 }}>Commander name:</Label>
+            <Stack horizontal verticalAlign='end' style={{ margin: 0, padding: 0 }}>
+              <TextField
+                autoFocus
+                name='cmdr'
+                disabled={true}
+                value={cmdr}
+                onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
+                onKeyDown={(ev) => {
+                  if (ev.key === 'Enter') { this.onSave(); }
+                  if (ev.key === 'Escape') { this.onCancel(); }
                 }}
               />
+
+              {showLogin && <ActionButton
+                className={`${cn.bBox2} ${cn.bGrey}`}
+                style={{ height: 32, margin: '8px 0 8px 8px', minWidth: 88 }}
+                iconProps={{ iconName: 'AuthenticatorApp' }}
+                text='Login'
+                onClick={() => {
+                  if (cmdr && !apiKey) {
+                    if (window.confirm('⚠️ Caution ⚠️\n\nThis will change your Commander name to match the game. If you have been using a different name as system architect you will not be able to edit your own systems after logging in.\n\n✔️ If in doubt hit Cancel, then:\n- In each system, click the pencil toolbar button\n- Change "Edit security" from "Secured" to "Open"')) {
+                      redirectToFrontierAuth();
+                    } else {
+                      window.location.assign('/sys');
+                    }
+                  } else {
+                    redirectToFrontierAuth();
+                  }
+                }}
+              />}
             </Stack>
-          </>}
+
+            {showLogin && <>
+              <ActionButton className={`${cn.bBox2} ${cn.bGrey}`} style={{ float: 'right', marginLeft: 8, minWidth: 88, height: 32 }} iconProps={{ iconName: 'SignOut' }} text='Logout' onClick={this.onClear} title='Clear your Commander details' />
+              <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: !apiKey ? 'grey' : appTheme.palette.themeSecondary }}>
+                <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
+                <div>API Key:&nbsp;</div>
+                {apiKey && <CopyButton text={apiKey} title='Copy API Key' />}
+                <code style={{ border: '1px solid', padding: '2px 8px', margin: '0 4px', width: 150, textAlign: 'center' }}>{apiKeyTxt}</code>
+                <ActionButton
+                  className={`${cn.bBox2} ${cn.bGrey}`}
+                  disabled={resetting || !apiKey}
+                  style={{ height: 20, fontSize: 12 }}
+                  iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
+                  text='Reset'
+                  onClick={async () => {
+                    this.setState({ resetting: true });
+                    await delay(500);
+                    await resetApiKey();
+                    this.setState({ apiKey: store.apiKey, cmdr: store.cmdrName, resetting: false });
+                  }}
+                />
+              </Stack>
+            </>}
+          </div>
 
           <Label>Large ship max capacity:</Label>
           <Stack horizontal>

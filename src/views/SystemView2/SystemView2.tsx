@@ -839,6 +839,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const orbitalSlotsTitle = `Total orbital slots: ${orbitalSlots}` + (orbitalSlotsAllKnown ? '' : '+?');
     const surfaceSlotsTitle = `Total surface slots: ${surfaceSlots}` + (surfaceSlotsAllKnown ? '' : '+?');
 
+    // make Save button colours really dark if user has no permission to save
+    const saveTextColor = !canEditAsArchitect
+      ? appTheme.palette.themeLight
+      : !enableSave || anonymous ? 'grey' : appTheme.palette.yellowDark;
+    const saveIconColor = !canEditAsArchitect
+      ? appTheme.palette.themeLight
+      : enableSave ? appTheme.palette.yellowDark : undefined;
+
     return <>
       {!onMobile && <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>}
       <h2 style={{ margin: 10, height: 32, fontSize: onMobile ? 18 : undefined }}>
@@ -903,13 +911,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
           {
             key: 'sys-save',
-            title: isAllowed ? 'Save changes to this system' : 'Edit permission is denied',
+            title: isAllowed ? 'Save changes to this system' : 'Save permission is denied',
             text: 'Save',
             className: anonymous ? undefined : cn.bBox,
-            iconProps: { iconName: 'Save', style: { color: enableSave ? appTheme.palette.yellowDark : undefined } },
+            iconProps: { iconName: 'Save', style: { color: saveIconColor } },
             disabled: !enableSave || anonymous,
             style: {
-              color: !enableSave || anonymous ? 'grey' : appTheme.palette.yellowDark,
+              color: saveTextColor,
               border: !enableSave || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
             },
             onClick: this.doSaveData,

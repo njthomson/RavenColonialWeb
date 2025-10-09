@@ -48,6 +48,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
       for (const entry of history) {
         const dd = new Date(entry.time);
         latest = Math.max(latest, dd.getTime());
+        const parsed = JSON.parse(entry.json);
 
         switch (entry.event) {
           default: throw new Error(`Unexpected event: ${entry.event}`);
@@ -63,7 +64,21 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
           case HistoryEvent.build:
             events.push({
               date: dd,
-              event: JSON.parse(entry.json).name,
+              event: parsed.name,
+              onRenderCard: () => {
+                // This is a total hack: to force styles on the Callout containing these elements :(
+                setTimeout(() => {
+                  let ep = document.getElementById('hack-me')?.parentElement;
+                  while (ep?.parentElement && !ep.classList.contains('ms-Callout-main')) { ep = ep.parentElement; }
+                  if (ep) {
+                    ep.style.border = '1px solid ' + appTheme.palette.themeTertiary;
+                    if (ep.parentElement) { ep.parentElement.style.boxShadow = `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px`; }
+                    const eb = ep.parentElement?.firstElementChild as HTMLElement;
+                    if (eb) { eb.style.backgroundColor = appTheme.palette.themeSecondary; }
+                  }
+                }, 25);
+                return <div id='hack-me'>•&nbsp;{parsed.name}</div>;
+              },
             });
             break;
         }
@@ -153,7 +168,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
           <LineChart
             width={800}
             height={400}
-            calloutProps={{ style: { border: '1px solid ' + appTheme.palette.themeTertiary, padding: 0, } }}
+            calloutProps={{ style: { border: '1px solid ' + appTheme.palette.themeTertiary, padding: 0, boxShadow: `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px` } }}
             enablePerfOptimization hideLegend
             allowMultipleShapesForPoints={true}
             data={{ lineChartData: data.data, }}

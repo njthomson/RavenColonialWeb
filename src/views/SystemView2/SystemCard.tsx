@@ -138,7 +138,21 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
                 if (ev.target.files?.length !== 1) { return; }
                 const json = await ev.target.files[0].text();
                 const newSys = JSON.parse(json) as Sys;
-                props.sysView.useLoadedData(newSys)
+
+                // manipulate this data so it plays nicely and saves correctly
+                const original = {
+                  architect: props.sysView.state.sysOriginal.architect,
+                  open: props.sysView.state.sysOriginal.open,
+                  reserveLevel: props.sysView.state.sysOriginal.reserveLevel,
+                };
+                newSys.revs = [];
+                const updateIDs = new Set<string>(newSys.sites.map(s => s.id).concat(newSys.updateIDs ?? []));
+                newSys.updateIDs = Array.from(updateIDs);
+                props.sysView.useLoadedData(newSys);
+                // restore these values for dirtyness to work properly
+                props.sysView.state.sysOriginal.architect = original.architect;
+                props.sysView.state.sysOriginal.open = original.open;
+                props.sysView.state.sysOriginal.reserveLevel = original.reserveLevel;
               }}
             />
           </div>

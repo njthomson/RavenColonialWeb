@@ -59,7 +59,7 @@ export const ShareFeedback: FunctionComponent<{ topic: string, onDismiss: () => 
         styles={{ fieldGroup: { width: 600 }, root: { marginBottom: appTheme.spacing.s2 }, subComponentStyles: { label: { root: { color: appTheme.palette.accent } } } }}
       />
       <TextField
-        label='Email or Discord user:'
+        label='Email:'
         description='(optional, if you would like a reply)'
         value={contact}
         onChange={(_, v) => setContact(v ?? '')}
