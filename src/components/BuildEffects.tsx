@@ -8,6 +8,7 @@ import { Icon, mergeStyleSets, Stack } from "@fluentui/react";
 import { TierPoint } from "./TierPoints";
 import { PadSize } from "./PadSize";
 import { HaulList } from "../views/SystemView2/HaulList";
+import { SiteMap2 } from "../system-model2";
 
 const { tds, tc, tr } = mergeStyleSets({
   tds: {
@@ -18,7 +19,7 @@ const { tds, tc, tr } = mergeStyleSets({
   tr: { textAlign: 'right', },
 })
 
-export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: boolean, noType?: boolean, heading?: string; noPads?: boolean }> = (props) => {
+export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: boolean, noType?: boolean, heading?: string; noPads?: boolean, siteMap?: SiteMap2 }> = (props) => {
   const paddingTop = 2;
 
   const st = getSiteType(props.buildType)!;
@@ -48,7 +49,9 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
 
   let needs = <span style={{ color: 'grey' }}>None</span>;
   if (st.needs.count > 0) {
-    needs = <span><TierPoint tier={st.needs.tier} count={st.needs.count} /></span>;
+    // try using adjusted costs if available
+    const points = props.siteMap?.calcNeeds?.count ?? st.needs.count;
+    needs = <TierPoint tier={st.needs.tier} count={points} />;
   }
 
   let gives = <span style={{ color: 'grey' }}>None</span>;

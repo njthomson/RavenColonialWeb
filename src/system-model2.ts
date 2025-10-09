@@ -76,6 +76,9 @@ export interface SiteMap2 extends Site {
 
   bodyBuffed?: Set<Economy>;
   systemBuffed?: Set<Economy>;
+
+  /** Calculated points needed to start construction */
+  calcNeeds?: { tier: number; count: number; }
 }
 
 export type EconomyMap = Record<Exclude<Economy, 'colony' | 'none'>, number>;
@@ -242,6 +245,8 @@ export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
 
       const tierName = site.type.needs.tier === 2 ? 'tier2' : 'tier3';
       tierPoints[tierName] -= needCount;
+      // store this on the site itself, so we can display these adjusted costs
+      site.calcNeeds = { tier: site.type.needs.tier, count: needCount };
     }
 
     // skip incomplete sites, unless ...

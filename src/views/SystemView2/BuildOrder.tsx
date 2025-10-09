@@ -1,10 +1,29 @@
-import { DefaultButton, Icon, Panel, PanelType, Stack } from "@fluentui/react";
-import { Component, FunctionComponent } from "react";
+import { DefaultButton, Icon, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
+import { Component, CSSProperties, FunctionComponent } from "react";
 import { appTheme, cn } from "../../theme";
-import { isMobile } from "../../util";
+import { asPosNegTxt, isMobile } from "../../util";
 import { SiteMap2, sumTierPoints, SysMap2, TierPoints } from "../../system-model2";
 import { getSiteType } from "../../site-data";
 import { TierPoint } from "../../components/TierPoints";
+
+const ts = mergeStyles({
+  "th": {
+    borderBottom: `1px solid ${appTheme.palette.purpleDark}`,
+    borderRight: `1px solid ${appTheme.palette.purpleDark}`,
+  },
+  "td": {
+    padding: '0 4px',
+  },
+  ".cc": {
+    textAlign: 'center',
+  },
+  ".cr": {
+    textAlign: 'right',
+  },
+  ".dc": {
+    cursor: 'default',
+  }
+} as Record<string, CSSProperties>);
 
 interface BuildOrderProps {
   sysMap: SysMap2;
@@ -31,7 +50,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       return m;
     }, {} as Record<string, SiteMap2>);
 
-    const tierPoints = sumTierPoints(props.sysMap.siteMaps, props.useIncomplete);
+    const tierPoints = sumTierPoints(props.sysMap.siteMaps, true);
 
     this.state = {
       map: map,
@@ -50,13 +69,14 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     newSorted.splice(idx, 0, dragId);
 
     const sortedSiteMaps = newSorted.map(id => map[id]);
-    const tierPoints = sumTierPoints(sortedSiteMaps, this.props.useIncomplete);
+    const tierPoints = sumTierPoints(sortedSiteMaps, true);
     this.setState({ sortedIDs: newSorted, tierPoints });
   }
 
   render() {
     const { map, sortedIDs, dragId, dragging, tierPoints } = this.state;
 
+    const tp: TierPoints = { tier2: 0, tier3: 0 };
     const rows = sortedIDs.map((id, i) => {
       const s = map[id];
       let backgroundColor = i % 2 ? appTheme.palette.neutralLighter : undefined;
@@ -90,8 +110,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       >
         <td className={`cr ${cn.br}`}>{i + 1}</td>
 
-        <td className={`cl`}>
-
+        <td>
           <span style={{ color: s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.accent, marginRight: 8 }}>
             <Icon iconName={s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
             &nbsp;
@@ -104,7 +123,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
         </td>
 
-        <td className={`c3 ${cn.br}`}>
+        <td className={`${cn.br}`}>
           <Stack horizontal>
             {(dragId === id || !dragId) && <Icon
               iconName={dragId === id ? 'GripperBarHorizontal' : 'GripperDotsVertical'}
@@ -113,30 +132,50 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
 
           </Stack>
         </td>
-
-        <td className={`cr ${cn.br}`}>{s.body?.name?.replace(this.props.sysMap.name, '')}</td>
+        <td className={`cc dc ${cn.br}`}>{getTierPointsDelta(s, 2, tp, i === 0)}</td>
+        <td className={`cc dc ${cn.br}`}>{getTierPointsDelta(s, 3, tp, i === 0)}</td>
+        <td className='cr'>{s.body?.name?.replace(this.props.sysMap.name, '')}</td>
       </tr>;
     });
+
+    // and add a totals row
+    rows.push(<tr style={{ fontSize: 16 }}>
+      <td className={cn.bt} />
+      <td className={`${cn.bt} ${cn.br}`} style={{ textAlign: 'right' }} colSpan={2}>Total points:</td>
+      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: tierPoints.tier2 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
+        {asPosNegTxt(tierPoints.tier2)}
+      </td>
+      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: tierPoints.tier3 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
+        {asPosNegTxt(tierPoints.tier3)}
+      </td>
+      <td className={cn.bt} />
+    </tr>);
+
     return <>
       <Panel
         isOpen
         isLightDismiss
-        className='build-order'
+
         headerText='Order for calculations:'
         allowTouchBodyScroll={isMobile()}
-        type={PanelType.medium}
+        type={PanelType.custom}
+        customWidth='800px'
         styles={{
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
         }}
         onDismiss={(ev) => this.props.onClose(undefined)}
         onRenderFooterContent={() => <div style={{ marginBottom: 10 }}>
-          <Stack horizontal horizontalAlign='end' tokens={{ childrenGap: 10 }}>
-            <BothTierPoints disable={false} tier2={tierPoints.tier2} tier3={tierPoints.tier3} fontSize={24} />
+          <Stack horizontal horizontalAlign='end' verticalAlign='center' tokens={{ childrenGap: 10 }}>
+
+            <div style={{ fontSize: 16, color: appTheme.semanticColors.disabledBodyText }}>
+              <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, marginRight: 4 }} iconName='Warning' />
+              Including all sites in tier points calculations
+            </div>
 
             <DefaultButton
               iconProps={{ iconName: 'Accept' }}
               text='Okay'
-              style={{ marginLeft: 100 }}
+              style={{ marginLeft: 40 }}
               onClick={() => this.props.onClose(this.state.sortedIDs)}
             />
             <DefaultButton
@@ -153,19 +192,23 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           Drag rows up and down to adjust the order.
         </div>
 
-        <table cellPadding={0} cellSpacing={0} style={{ userSelect: 'none', fontSize: 16 }}>
+        <table className={ts} cellPadding={0} cellSpacing={0} style={{ userSelect: 'none', fontSize: 14, width: '100%' }}>
           <colgroup>
-            <col width='5%' />
-            <col width='70%' />
-            <col width='5%' />
-            <col width='8%' />
+            <col width='30px' />
+            <col width='auto' />
+            <col width='30px' />
+            <col width='36px' />
+            <col width='36px' />
+            <col width='50px' />
           </colgroup>
 
           <thead>
-            <tr>
-              <th className={`cr ${cn.bb} ${cn.br}`}>#</th>
-              <th className={`cl ${cn.bb} ${cn.br}`} colSpan={2}>Site</th>
-              <th className={`${cn.bb} ${cn.br}`}>Body</th>
+            <tr style={{ fontSize: 16 }}>
+              <th >#</th>
+              <th colSpan={2} style={{ textAlign: 'left', paddingLeft: 24 }}>Site</th>
+              <th title='Tier 2 points'><Icon className="icon-inline" iconName='Product' style={{ color: appTheme.palette.yellow, fontSize: 24 }} /></th>
+              <th title='Tier 3 points'><Icon className="icon-inline" iconName='ProductVariant' style={{ color: appTheme.palette.green, fontSize: 24 }} /></th>
+              <th style={{ borderRight: 'unset' }}>Body</th>
             </tr>
           </thead>
           <tbody>
@@ -199,4 +242,45 @@ export const BothTierPoints: FunctionComponent<{ tier2: number; tier3: number; d
       <TierPoint tier={3} count={props.tier3} disabled={props.disable} />
     </span>
   </div>;
+}
+
+const getTierPointsDelta = (s: SiteMap2, tier: number, tp: TierPoints, first: boolean) => {
+  let p = 0;
+
+  let taxed = false;
+  if (s.type.needs.tier === tier && !first) {
+    taxed = s.calcNeeds?.count !== s.type.needs.count;
+    p = -(s.calcNeeds?.count ?? s.type.needs.count);
+  } else if (s.type.gives.tier === tier) {
+    p = s.type.gives.count;
+  }
+
+  let deficit = false;
+  if (tier === 2) {
+    tp.tier2 += p;
+    deficit = p < 0 && tp.tier2 < 0;
+  } else {
+    tp.tier3 += p;
+    deficit = p < 0 && tp.tier3 < 0;
+  }
+
+  // exit early if nothing to render
+  if (!p) { return null; }
+
+  let title = '';
+  const style = {} as CSSProperties;
+  if (taxed) {
+    title = 'Points tax applied.'
+    style.color = appTheme.palette.yellow;
+    style.fontWeight = 'bold';
+  }
+  if (deficit) {
+    if (taxed) { title += '\n'; }
+    const d = tier === 2 ? tp.tier2 : tp.tier3;
+    title += `Insufficient points.\nNeed ${asPosNegTxt(-d)} Tier ${tier} points`;
+    style.color = appTheme.palette.red;
+    style.fontWeight = 'bold';
+  }
+
+  return <span style={style} title={title}>{asPosNegTxt(p)}</span>;
 }
