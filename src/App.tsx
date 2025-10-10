@@ -5,7 +5,7 @@ import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
 import { SortMode, TopPivot } from './types';
-import { About, Commander, Home, ProjectView } from './views';
+import { About, Home, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
 import { ViewAll } from './views/ViewAll/ViewAll';
@@ -164,16 +164,7 @@ export class App extends Component<AppProps, AppState> {
       nextState.pivot = TopPivot.table;
     } else if (params.has('cmdr')) {
       // Cmdr specific data
-      nextState.pivot = TopPivot.cmdr;
-      const hashCmdr = params.get('cmdr');
-      if (hashCmdr) {
-        // update to new name and clean the hash
-        console.log(`Chanding cmdr: ${store.cmdrName} => ${hashCmdr}`);
-        store.cmdrName = hashCmdr;
-        nextState.cmdr = hashCmdr;
-        window.location.hash = `#home`;
-        window.location.reload();
-      }
+      nextState.pivot = TopPivot.home;
     } else if (nextState.pivot === TopPivot.login) {
       // do not change any state
     } else if (window.location.pathname.endsWith('/user')) {
@@ -210,8 +201,6 @@ export class App extends Component<AppProps, AppState> {
       return window.location.hash === '#build' ? [TopPivot.buildAll, pivotArg] : [TopPivot.build, pivotArg];
     } else if (params.has('about')) {
       return [TopPivot.about, pivotArg];
-    } else if (params.has('cmdr')) {
-      return [TopPivot.cmdr, pivotArg];
     } else if (params.has('vis') || window.location.pathname === '/vis') {
       return [TopPivot.vis, pivotArg];
     } else if (params.has('table') || window.location.pathname === '/table') {
@@ -256,11 +245,6 @@ export class App extends Component<AppProps, AppState> {
               checked: pivot === 'build',
               href: '/#build',
             },
-            // {
-            //   key: 'cmdr', text: 'Cmdr',
-            //   iconProps: { iconName: 'Contact' },
-            //   onClick: (_, i) => this.clickNearItem(i),
-            // },
             {
               className: cn.bBox,
               key: 'about', text: 'About',
@@ -370,7 +354,6 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />;
       case TopPivot.build: return <ProjectView buildId={pivotArg} />;
       case TopPivot.buildAll: return <ViewAll />;
-      case TopPivot.cmdr: return <Commander />;
       case TopPivot.about: return <About />;
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
       case TopPivot.table: return <BigSiteTablePage />;

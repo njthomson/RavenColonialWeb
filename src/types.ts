@@ -7,7 +7,6 @@ export enum TopPivot {
   find = 'find',
   build = 'build',
   buildAll = 'buildAll',
-  cmdr = 'cmdr',
   about = 'about',
   vis = 'vis',
   sys = 'sys',

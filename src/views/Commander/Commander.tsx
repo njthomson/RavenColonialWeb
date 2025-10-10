@@ -19,25 +19,21 @@ interface CmdrState {
 }
 
 export class Commander extends Component<CmdrProps, CmdrState> {
-  cmdr?: string;
 
   private unmounted: boolean = false;
 
   constructor(props: CmdrProps) {
     super(props);
 
-    const params = new URLSearchParams(window.location.hash?.substring(1));
-    this.cmdr = params.get('cmdr') ?? store.cmdrName;
-
     this.state = {
-      showBubble: !this.cmdr,
+      showBubble: !store.cmdrName,
       assignments: {},
     };
   }
 
   componentDidMount(): void {
-    if (this.cmdr) {
-      this.fetchCmdrProjects(this.cmdr);
+    if (store.cmdrName) {
+      this.fetchCmdrProjects(store.cmdrName);
     }
   }
 

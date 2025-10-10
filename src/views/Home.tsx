@@ -26,7 +26,7 @@ export class Home extends Component<HomeProps, HomeState> {
           {renderQuote()}
 
           <div className='home-box'>
-            <DefaultButton text='Sign-in' onClick={() => document.getElementById('current-cmdr')?.click()} /> to see your projects and assignments
+            <DefaultButton iconProps={{ iconName: 'AuthenticatorApp' }} text='Login' onClick={() => document.getElementById('current-cmdr')?.click()} /> to see your projects and assignments
           </div>
 
           <ShowGlobalStats />
