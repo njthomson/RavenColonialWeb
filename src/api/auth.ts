@@ -17,6 +17,7 @@ export const redirectToFrontierAuth = async () => {
     code_challenge_method: 'S256',
     state: state,
     redirect_uri: redirectUrl,
+    audience: 'frontier,steam,epic',
   });
 
   localStorage.setItem('auth1', JSON.stringify({ state, codeVerifier }));

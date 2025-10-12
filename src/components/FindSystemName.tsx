@@ -121,7 +121,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
     // wait a bit for more typing, only proceed if no other typing happened since
     this.comboFindPendingTypeCount++;
     // console.log(`pre: (${this.comboFindPendingTypeCount}) ${txt} / ${this.state.searchText}`);
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // wait a whole second
     this.comboFindPendingTypeCount--;
     // console.log(`post: (${this.comboFindPendingTypeCount}) ${txt}/ ${this.state.searchText}`);
 
@@ -161,15 +161,37 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
 
     // query system names
     this.setState({ matches: [], searching: true });
-    const matches = await api.edsm.findSystems(txt);
+    const matches = await api.edsm.findSystems(txt)
+      .then(hits => {
+        return hits.map(m => ({
+          key: m.value,
+          text: m.value,
+        }));
+      })
+      .catch((err: any) => {
+        console.warn(`findSystems failed: ${err.stack}`);
+        if (!!txt) {
+          return api.ardent.findSystem(txt)
+            .then(hits => {
+              return hits.slice(0, 15).map(m => ({
+                key: m.systemName,
+                text: m.systemName,
+              }));
+            })
+            .catch((err2: any) => {
+              console.error(`findSystems failed: ${err2.stack}`);
+              return undefined;
+            });
+        }
+      });
 
+    const errMsg = matches === undefined
+      ? 'Search failed'
+      : matches.length === 0 ? 'No matches found' : undefined;
     this.setState({
-      errorMsg: matches.length === 0 ? 'No matches found' : undefined,
+      errorMsg: errMsg,
       searching: false,
-      matches: matches.map(m => ({
-        key: m.value,
-        text: m.value,
-      }))
+      matches: matches ?? [],
     });
 
     this.comboFind.current?.focus(true);
