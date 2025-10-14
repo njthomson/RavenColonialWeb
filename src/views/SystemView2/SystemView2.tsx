@@ -256,7 +256,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       }
     }
 
-    let isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
+    const isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
     const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect;
 
     this.setState({
@@ -294,21 +294,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     api.systemV2.import(this.props.systemName, type)
       .then(newSys => {
-        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
-        const orderIDs = newSysMap.sites.map(s => s.id);
-        this.setState({
-          systemName: newSys.name,
-          processingMsg: undefined,
-          sysOriginal: newSys,
-          sysMap: newSysMap,
-          dirtySites: {},
-          deletedIDs: [],
-          orderIDs: orderIDs,
-          originalSiteIDs: [...orderIDs],
-          bodySlots: newSys.slots,
-          originalBodySlots: JSON.stringify(newSys.slots),
-        });
-        window.document.title = 'Sys: ' + newSys.name;
+        this.useLoadedData(newSys);
       })
       .catch(err => {
         console.error(err.stack);

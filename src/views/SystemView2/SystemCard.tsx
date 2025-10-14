@@ -48,7 +48,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
 
           <div>Architect:</div>
           <Stack horizontal verticalAlign='center'>
-            {!canEditAsArchitect && <span style={{ cursor: 'default' }}>Cmdr {sysMap.architect}</span>}
+            {!canEditAsArchitect && <span style={{ cursor: 'default' }}>Cmdr {sysMap.architect || '?'}</span>}
             {canEditAsArchitect && <ViewEditName
               name={sysMap.architect || '?'}
               prefix='Cmdr '
