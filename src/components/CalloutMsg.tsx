@@ -5,7 +5,7 @@ import { appTheme, cn } from "../theme";
 
 let nn = 0;
 
-export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName?: string; width?: number; height?: number; style?: CSSProperties; directionalHint?: DirectionalHint }> = (props) => {
+export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName?: string; width?: number; height?: number; iconStyle?: CSSProperties; directionalHint?: DirectionalHint }> = (props) => {
   const [showBubble, setShowBubble] = useState(false);
   const [cid] = useState(`cid--${++nn}`);
   return <span id={cid}>
@@ -13,7 +13,7 @@ export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName
       className={cn.bBox}
       iconProps={{
         iconName: props.iconName ?? 'Info',
-        style: { ...props.style }
+        style: { ...props.iconStyle }
       }}
       style={{
         width: props.width ?? 18,

@@ -712,6 +712,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     current={orbitals?.length ?? 0}
     isOrbital={true}
     showIcon={!hasSites}
+    style={{ marginLeft: hasSites ? undefined : 4 }}
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, true)}
   />;
   const btnSlotsSurface = <ViewEditSlotCount
@@ -719,6 +720,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     current={surfaces?.length ?? 0}
     isOrbital={false}
     showIcon={!hasSites}
+    style={{ marginLeft: hasSites ? undefined : 4 }}
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, false)}
   />
 

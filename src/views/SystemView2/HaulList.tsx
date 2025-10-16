@@ -86,7 +86,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
         onClick={() => setShowList(true)}
       />
 
-      {msg && <CalloutMsg msg={msg} style={{ marginTop: 6 }} />}
+      {msg && <CalloutMsg msg={msg} iconStyle={{ marginTop: 6 }} />}
     </Stack>
 
     {showList && <>

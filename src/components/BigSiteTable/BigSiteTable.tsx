@@ -583,7 +583,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       iconName={!isValid ? 'Warning' : undefined}
       width={22}
       height={22}
-      style={{
+      iconStyle={{
         fontWeight: !isValid ? 'bold' : undefined,
         color: !isValid ? appTheme.palette.yellowDark : appTheme.palette.black,
       }}

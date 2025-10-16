@@ -760,7 +760,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
             onClick={() => this.setState({ expandTopBubbles: !expandTopBubbles })}
           />
 
-          <CalloutMsg msg={highlightTitleTxt} directionalHint={DirectionalHint.bottomCenter} style={{ fontSize: 12 }} />
+          <CalloutMsg msg={highlightTitleTxt} directionalHint={DirectionalHint.bottomCenter} iconStyle={{ fontSize: 12 }} />
         </Stack>
 
         {bubbles}

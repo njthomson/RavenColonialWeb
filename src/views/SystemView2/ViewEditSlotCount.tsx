@@ -1,5 +1,5 @@
 import { ActionButton, DirectionalHint, mergeStyles, Callout, Stack, ContextualMenu, IContextualMenuItem } from "@fluentui/react";
-import { FunctionComponent, useState } from "react";
+import { CSSProperties, FunctionComponent, useState } from "react";
 import { cn, appTheme } from "../../theme";
 
 /** Button Slot Number (no icon) */
@@ -52,7 +52,7 @@ const mbsm = mergeStyles({
 });
 
 
-export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void }> = (props) => {
+export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void, style?: CSSProperties }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
@@ -78,7 +78,7 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
     } as IContextualMenuItem);
   }
 
-  return <div style={{ marginLeft: props.showIcon ? 4 : undefined }}>
+  return <div style={{ ...props.style }}>
     <ActionButton
       id={id}
       className={props.showIcon ? (props.bright ? bsnib : bsni) : bsn}

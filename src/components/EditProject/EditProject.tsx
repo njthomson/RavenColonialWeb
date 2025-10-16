@@ -101,7 +101,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
       <td>
         <Label style={{ color: this.props.fieldHighlight === 'timeCompleted' ? appTheme.palette.yellowDark : undefined }}>
           <span>Date completed:</span>
-          <CalloutMsg msg={dateCompletedHelpElement} style={{ fontSize: 12 }} directionalHint={DirectionalHint.bottomCenter} />
+          <CalloutMsg msg={dateCompletedHelpElement} iconStyle={{ fontSize: 12 }} directionalHint={DirectionalHint.bottomCenter} />
           {this.props.fieldHighlight === 'timeCompleted' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
         </Label>
       </td>

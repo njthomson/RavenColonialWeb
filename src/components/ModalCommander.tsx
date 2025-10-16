@@ -162,7 +162,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             {showLogin && <>
               <ActionButton className={`${cn.bBox2} ${cn.bGrey}`} style={{ float: 'right', marginLeft: 8, minWidth: 88, height: 32 }} iconProps={{ iconName: 'SignOut' }} text='Logout' onClick={this.onClear} title='Clear your Commander details' />
               <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }} style={{ fontSize: 12, color: !apiKey ? 'grey' : appTheme.palette.themeSecondary }}>
-                <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} style={{ marginRight: 2 }} />
+                <CalloutMsg msg={'API Keys are used to authenticate apps against Raven Colonial APIs. Copy and paste this value into those apps.'} iconStyle={{ marginRight: 2 }} />
                 <div>API Key:&nbsp;</div>
                 {apiKey && <CopyButton text={apiKey} title='Copy API Key' />}
                 <code style={{ border: '1px solid', padding: '2px 8px', margin: '0 4px', width: 150, textAlign: 'center' }}>{apiKeyTxt}</code>
@@ -210,7 +210,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 onChange={(_ev, checked) => this.setState({ useNativeDiscord: !!checked })}
               />
               &nbsp;
-              <CalloutMsg msg='Requires Discord app to be installed on this device.' directionalHint={DirectionalHint.rightCenter} style={{ fontSize: 12 }} />
+              <CalloutMsg msg='Requires Discord app to be installed on this device.' directionalHint={DirectionalHint.rightCenter} iconStyle={{ fontSize: 12 }} />
             </Stack>
           </Stack>
 

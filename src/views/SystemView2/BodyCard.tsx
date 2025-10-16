@@ -1,8 +1,8 @@
-import { Callout, DirectionalHint, Icon, IconButton, mergeStyles, Stack } from "@fluentui/react";
+import { ActionButton, Callout, DirectionalHint, Icon, IconButton, Link, mergeStyles, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { SystemView2 } from "./SystemView2";
-import { Bod } from "../../types2";
+import { Bod, BT } from "../../types2";
 import { BodyFeature, mapBodyFeature } from "../../types";
 import { mapBodyFeatureColor, mapBodyFeatureIcon } from "./SitesBodyView";
 import { ViewEditSlotCount } from "./ViewEditSlotCount";
@@ -11,6 +11,7 @@ import { applyBodyType, applyBuffs, applyStrongLinkBoost } from "../../economy-m
 import { Economy, getSiteType, mapName } from "../../site-data";
 import { asPosNegTxt2 } from "../../util";
 import { store } from "../../local-storage";
+import { LinkSrvSurvey } from "../../components/LinkSrvSurvey";
 
 const cbt = mergeStyles({
   color: appTheme.semanticColors.bodyText
@@ -125,6 +126,10 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
   const bodySlots = sysView.state.sysMap.slots[bod.num] ?? [-1, -1];
   const isLandable = bod.features.includes(BodyFeature.landable);
   const [data] = useState(calcForBody(bod, sysView));
+  const [helpNoGroundSlots, setHelpNoGroundSlots] = useState(true);
+
+  // only show the hint on bodies that could be landable
+  const showMissingGroundSlotsHint = !isLandable && [BT.hmc, BT.ib, BT.mrb, BT.rb, BT.ri].includes(bod.type);
 
   return <div>
     <Callout
@@ -166,23 +171,60 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
           <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }} style={{ marginTop: 10 }}>
             <div>Slots:</div>
 
-            <div><ViewEditSlotCount
+            <ViewEditSlotCount
               showIcon bright
               max={bodySlots[0]}
               current={0}
               isOrbital={true}
               onChange={newCount => sysView.setBodySlot(bod.num, newCount, true)}
-            /></div>
+            />
 
-            {isLandable && <div><ViewEditSlotCount
+            {isLandable && <ViewEditSlotCount
               showIcon bright
               max={bodySlots[1]}
               current={0}
               isOrbital={false}
               onChange={newCount => sysView.setBodySlot(bod.num, newCount, false)}
-            /></div>}
+            />}
+
+            {showMissingGroundSlotsHint && <Link
+              id='missing-ground-slots'
+              style={{ marginLeft: 40, color: appTheme.palette.themeTertiary, fontSize: 12, position: 'relative' }}
+              onClick={() => setHelpNoGroundSlots(true)}
+            >
+              Missing ground slots?
+            </Link>}
           </Stack>
 
+          {helpNoGroundSlots && <Callout
+            target='#missing-ground-slots'
+            styles={{
+              beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+              calloutMain: {
+                backgroundColor: appTheme.palette.neutralTertiaryAlt,
+                color: appTheme.palette.neutralDark,
+              }
+            }}
+            onDismiss={() => setHelpNoGroundSlots(false)}
+          >
+            If the game shows ground slots but there is no button, that suggests<br />
+            this body was last scanned before Odyssey was released.
+            <br /><br />
+            <b>To fix:</b>
+            <ul style={{ margin: 0 }}>
+              <li>With an EDDN client running, re-scan the body or FSS this system</li>
+
+              <li>
+                Check this body shows as Landable on&nbsp;
+                <LinkSrvSurvey href={`https://spansh.co.uk/system/${props.sysView.state.sysMap.id64}#system-bodies`} text='Spansh' />
+              </li>
+
+              <li>Then <ActionButton className={cn.bBox2} style={{ height: 24, fontSize: 12 }} text='Re-import bodies' onClick={() => {
+                props.sysView.doImport('bodies');
+                setHelpNoGroundSlots(false);
+              }} /></li>
+            </ul>
+          </Callout>}
 
           {bod.features.length > 0 && <Stack horizontal wrap tokens={{ childrenGap: '0 8px' }} style={{ marginTop: 10 }}>
             <div>Features:</div>

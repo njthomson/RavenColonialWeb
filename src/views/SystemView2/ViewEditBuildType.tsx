@@ -248,7 +248,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
             directionalHint={DirectionalHint.rightCenter}
             msg={msgElement}
             iconName={isValid ? undefined : 'Warning'}
-            style={{
+            iconStyle={{
               fontSize: 12,
               fontWeight: isValid ? undefined : 'bold',
               color: isValid ? appTheme.palette.black : appTheme.palette.yellowDark,

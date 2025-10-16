@@ -109,7 +109,7 @@ const StatsBox: FunctionComponent<{ label: string, title?: string, small?: strin
     <h3 className={cn.h3}>
       {props.label}:
       &nbsp;
-      {!!props.title && <CalloutMsg msg={props.title} style={{ fontSize: 12 }} directionalHint={DirectionalHint.topCenter} />}
+      {!!props.title && <CalloutMsg msg={props.title} iconStyle={{ fontSize: 12 }} directionalHint={DirectionalHint.topCenter} />}
     </h3>
     <table className='t-right' cellPadding={0} cellSpacing={0}>
       <tbody>
