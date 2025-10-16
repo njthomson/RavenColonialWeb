@@ -103,7 +103,7 @@ export interface SitesPut {
 }
 
 export interface GetRealEconomies {
-  id: string;
+  id: number | string;
   updated: string;
   economies: EconomyMap;
 }

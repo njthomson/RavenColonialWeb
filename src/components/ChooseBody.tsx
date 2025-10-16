@@ -8,6 +8,7 @@ import { getSysMap, SysMap } from '../system-model';
 interface ChooseBodyProps {
   systemName: string;
   bodyName: string | undefined;
+  bodyNum?: number;
   onChange: (name: string, num: number) => void;
   sysMap?: SysMap;
 }
@@ -77,7 +78,14 @@ export class ChooseBody extends Component<ChooseBodyProps, ChooseBodyState> {
         return map;
       }, {} as Record<string, ResponseEdsmSystemBody>);
 
-    this.setState({ allBodies: newBodies });
+    let bodyName = this.state.bodyName;
+    if (!bodyName && this.props.bodyNum) {
+      const match = system.bodies.find(b => b.bodyId === this.props.bodyNum);
+      if (match) {
+        bodyName = match.name;
+      }
+    }
+    this.setState({ allBodies: newBodies, bodyName });
   }
 
   render(): ReactNode {

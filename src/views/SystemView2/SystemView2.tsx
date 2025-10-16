@@ -531,6 +531,39 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
   };
 
+  siteBuilding = (siteId: string, newProject: Project) => {
+    // console.log(`siteChanged: ${site.name} (${site.buildType} on body #${site.bodyNum} / ${site.id})`);
+    const { sysMap, sysOriginal } = this.state;
+
+    const site = sysMap.sites.find(s => s.id === siteId);
+    if (!site) { return; }
+
+    // TODO: handle the order changing?
+
+    site.status = 'build';
+    site.name = newProject.buildName;
+    site.buildId = newProject.buildId;
+    if (newProject.marketId > 4_200_000_000) {
+      site.marketId = newProject.marketId;
+    }
+
+    const originalSite = this.state.sysOriginal.sites.find(s => s.id === siteId);
+    if (originalSite) {
+      originalSite.status = 'build';
+      originalSite.name = newProject.buildName;
+      originalSite.buildId = newProject.buildId;
+      if (newProject.marketId > 4_200_000_000) {
+        originalSite.marketId = newProject.marketId;
+      }
+    }
+
+    const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete);
+    this.setState({
+      sysMap: newSysMap,
+      sysOriginal: sysOriginal,
+    });
+  };
+
   siteSelected = (selectedSite?: Site) => {
     this.setState({ selectedSite });
   };

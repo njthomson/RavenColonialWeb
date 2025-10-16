@@ -185,7 +185,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             </td>
             <td>
               {editProject && <div style={{ backgroundColor: appTheme.palette.purpleLight }}>
-                <ChooseBody systemName={editProject.systemName} bodyName={editProject.bodyName} onChange={(newName, newId) => {
+                <ChooseBody systemName={editProject.systemName} bodyName={editProject.bodyName} bodyNum={editProject.bodyNum} onChange={(newName, newId) => {
                   const editProject = { ...this.state.editProject };
                   if (editProject) {
                     editProject.bodyName = newName;

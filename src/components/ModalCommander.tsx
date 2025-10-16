@@ -345,7 +345,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
   onClickLinkFC = async (marketId: string) => {
     if (!marketId) return;
-    const fc = await api.fc.get(marketId!)
+    const fc = await api.fc.get(marketId);
 
     // add to array
     const { cmdrEditLinkedFCs } = this.state;
@@ -368,7 +368,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   onFetchFCs = async () => {
     this.setState({ fetchingFCs: true });
     try {
-      const fcs = await api.cmdr.fetchMyFCs()
+      const fcs = await api.cmdr.fetchMyFCs();
       if (fcs.length) {
         const { cmdrEditLinkedFCs, cmdrLinkedFCs } = this.state;
         for (const myFC of fcs) {

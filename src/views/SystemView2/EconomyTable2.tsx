@@ -15,7 +15,7 @@ import { stellarRemnants } from "../../economy-model2";
 import { App } from "../../App";
 
 export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
-  const realMatch = props.sysView.state.realEconomies?.find(r => r.id === props.site?.id);
+  const realMatch = props.sysView.state.realEconomies?.find(r => typeof r.id === 'number' ? r.id === props.site?.marketId : r.id.substring(1) === props.site?.marketId.toString());
   const realEconomy = realMatch?.economies;
 
   const [showAudit, setShowAudit] = useState(false);

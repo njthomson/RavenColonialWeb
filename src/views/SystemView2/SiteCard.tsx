@@ -1,4 +1,5 @@
-import { Stack, IconButton, Callout, DirectionalHint, ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IContextualMenuItem } from "@fluentui/react";
+import * as api from '../../api';
+import { Stack, IconButton, Callout, DirectionalHint, ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IContextualMenuItem, Dialog, DefaultButton, DialogFooter, PrimaryButton, Link, Spinner, MessageBar, MessageBarType } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { SiteMap2 } from "../../system-model2";
 import { appTheme, cn } from "../../theme";
@@ -8,10 +9,17 @@ import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
 import { ProjectLink2 } from "./ProjectLink2";
+import { store } from '../../local-storage';
+import { getSiteType } from '../../site-data';
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
+  const [confirmBuildIt, setConfirmBuildIt] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [errMsg, setErrMsg] = useState('');
   const site = props.site;
   const isPinned = props.sysView.state.pinnedSite?.id === site.id;
+  const couldBuildIt = props.site.status !== 'complete' && !props.site.buildId && !!props.site.buildType;
+  const couldRemoveDupes = props.site.status !== 'plan' && !!props.site.buildId;
 
   return <div>
 
@@ -116,10 +124,66 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             onClick={() => props.sysView.siteDeleted(site.id)}
           />
 
-          <DeleteSibling site={site} sysView={props.sysView} />
+          {couldBuildIt && <ActionButton
+            className={cn.bBox}
+            iconProps={{ iconName: 'ConstructionCone' }}
+            text='Docked? Build it'
+            style={{ height: 24 }}
+            onClick={() => {
+              setErrMsg('');
+              setConfirmBuildIt(true);
+            }}
+          />}
+
+          {couldRemoveDupes && <DeleteSibling site={site} sysView={props.sysView} />}
         </Stack>
 
       </div>
+
+      {confirmBuildIt && <Dialog
+        hidden={false}
+        dialogContentProps={{ title: 'Ready to build?', subText: 'If you are currently docked at this construction site, a build project can be created using data from Fontier.' }}
+        minWidth={480}
+      >
+        <div style={{ paddingBottom: 16 }}>
+          {getSiteType(props.site.buildType, true)?.displayName2} ({props.site.buildType})
+        </div>
+
+        {props.sysView.isDirty() && <div style={{ color: appTheme.palette.yellow }}>
+          <Icon className='icon-inline' iconName='Warning' style={{ fontSize: 16, marginRight: 4 }} />
+          <span style={{ fontWeight: 'bold' }}>You must save first</span>
+        </div>}
+
+        {!store.apiKey && <div style={{ color: appTheme.palette.yellow }}>
+          <Icon className='icon-inline' iconName='Warning' style={{ fontSize: 16, marginRight: 4 }} />
+          <span style={{ fontWeight: 'bold' }}>You must to <Link onClick={() => { document.getElementById('current-cmdr')?.click(); }}>login</Link> to use this feature</span>
+        </div>}
+
+        {!!errMsg && <MessageBar messageBarType={MessageBarType.error}>{errMsg}</MessageBar>}
+
+        <DialogFooter>
+          {pending && <Spinner />}
+          <DefaultButton text='I am docked here' disabled={pending || !store.apiKey || props.sysView.isDirty()} iconProps={{ iconName: 'CheckMark' }} onClick={async () => {
+            setPending(true);
+            setErrMsg('');
+            try {
+              // create the project
+              const newProject = await api.project.createFrom(props.site.id);
+              // inject buildId in various places, without triggering dirtyness
+              if (newProject?.buildId) {
+                props.sysView.siteBuilding(props.site.id, newProject);
+              }
+              setConfirmBuildIt(false);
+            } catch (err: any) {
+              console.error(err.stack)
+              setErrMsg(err.message ?? 'Something failed, see browser console');
+            } finally {
+              setPending(false);
+            }
+          }} />
+          <PrimaryButton text='Cancel' disabled={pending} iconProps={{ iconName: 'Cancel' }} onClick={() => setConfirmBuildIt(false)} />
+        </DialogFooter>
+      </Dialog>}
     </Callout>
 
   </div>;
@@ -127,9 +191,6 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
 
 export const DeleteSibling: FunctionComponent<{ site: SiteMap2; sysView: SystemView2 }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
-
-  // do nothing if we are planning or have no buildId
-  if (props.site.status === 'plan' || !props.site.buildId) { return null; }
 
   // if anything is being built on the same body WITHOUT a buildId - offer to remove it
   const matches = props.sysView.state.sysMap.siteMaps.filter(s => !s.buildId && s.bodyNum === props.site.bodyNum && s.buildType === props.site.buildType && s.type.orbital === props.site.type.orbital);
