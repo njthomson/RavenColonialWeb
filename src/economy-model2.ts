@@ -638,7 +638,7 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number
   }
 
   // stop if this body is not tidally locked (but bypass Barycenters)
-  if (!body?.features.includes(BodyFeature.tidal) && body?.type !== BT.bc) {
+  if (!body?.features?.includes(BodyFeature.tidal) && body?.type !== BT.bc) {
     return false;
   }
 
