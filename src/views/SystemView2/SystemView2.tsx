@@ -24,7 +24,7 @@ import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowC
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
 import { ArchitectSummary } from './ArchitectSummary';
-import { mapName } from '../../site-data';
+import { getSiteType, mapName } from '../../site-data';
 import { BodyPill, SitePill } from './SitePill';
 
 interface SystemView2Props {
@@ -855,8 +855,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           surfaceSlotsAllKnown = false;
       }
     }
-    const orbitalSlotsTitle = `Total orbital slots: ${orbitalSlots}` + (orbitalSlotsAllKnown ? '' : '+?');
-    const surfaceSlotsTitle = `Total surface slots: ${surfaceSlots}` + (surfaceSlotsAllKnown ? '' : '+?');
+    const countOrbital = sysMap?.sites.filter(s => getSiteType(s.buildType)?.orbital).length ?? 0;
+    const countSurface = sysMap?.sites.filter(s => !getSiteType(s.buildType)?.orbital).length ?? 0;
+    const orbitalSlotsTitle = `Total orbital slots: ${orbitalSlots}` + (orbitalSlotsAllKnown ? `, remaining: ${orbitalSlots - countOrbital}` : '+?');
+    const surfaceSlotsTitle = `Total surface slots: ${surfaceSlots}` + (surfaceSlotsAllKnown ? `, remaining: ${surfaceSlots - countSurface}` : '+?');
 
     // make Save button colours really dark if user has no permission to save
     const saveTextColor = !canEditAsArchitect

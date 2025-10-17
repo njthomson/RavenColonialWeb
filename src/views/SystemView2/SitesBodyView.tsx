@@ -91,9 +91,6 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
   prepBodyTree(sysMap: SysMap2, hideEmpties: boolean) {
     // console.log('prepBodyTree');
 
-    const bs = sysMap.bodies;
-    // console.log(Object.values(sysMap.bodyMap));
-
     const initialTree = {} as BodyMapTree;
 
     const bodyUnknown = sysMap.bodyMap['Unknown'];
@@ -123,7 +120,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       } else {
         // process parents into the tree
         for (const p of [...bm.parents].reverse()) {
-          let bp = bs.find(_ => _.num === p);
+          let bp = sysMap.bodies.find(_ => _.num === p);
 
           if (!bp && p === 0) {
             // inject a root barycentre if needed
@@ -178,8 +175,10 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           return map;
         }
 
-        // once finished processing parents, add ourself to the immediate parent
-        bpn.children[bm.name] = new BodyMapTreeNode(bm, bpn);
+        // once finished processing parents, add ourself to the immediate parent (if not already there)
+        if (!bpn.children[bm.name]) {
+          bpn.children[bm.name] = new BodyMapTreeNode(bm, bpn);
+        }
       }
 
       return map;
@@ -216,12 +215,12 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
       // const bn = node.children[b].body.name.replace(this.props.systemName + ' ', '').replace(' ', '');
       // return an.localeCompare(bn);
     });
-    */
+   */
 
     // pre-process, so we know the state of all sibling nodes
     const processed = sorted.map(key => {
       const childNode = node.children[key];
-      // console.log(`*** ${childNode.body.name} => ${childHasSites} / ${childNode.parent?.body.name}:${childNode.parent?.body.type}`);
+      // console.log(`*** ${childNode.body.name} => ${childNode.parent?.body.name}:${childNode.parent?.body.type}`);
       const childHasSites = this.sortAndFilterBodyTree(childNode, hideEmpties);
       node.hasSites ||= childHasSites;
       return { key, childNode, childHasSites };

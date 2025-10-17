@@ -319,8 +319,8 @@ export class App extends Component<AppProps, AppState> {
           </div>
         </footer>
 
-        <Dialog
-          hidden={!showDonate}
+        {showDonate && <Dialog
+          hidden={false}
           dialogContentProps={{ title: 'Support Raven Colonial' }}
           onDismiss={() => this.setState({ showDonate: false })}
           styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
@@ -338,7 +338,7 @@ export class App extends Component<AppProps, AppState> {
           <DialogFooter>
             <PrimaryButton text="Close" onClick={() => this.setState({ showDonate: false })} />
           </DialogFooter>
-        </Dialog>
+        </Dialog>}
 
         {!!showFeedback && <ShareFeedback topic={showFeedback} onDismiss={() => this.setState({ showFeedback: undefined })} />}
       </ThemeProvider>

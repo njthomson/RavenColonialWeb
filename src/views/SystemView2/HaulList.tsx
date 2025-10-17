@@ -12,7 +12,7 @@ import { KnownFC } from '../../types';
 import { ModalCommander } from '../../components/ModalCommander';
 import { CalloutMsg } from '../../components/CalloutMsg';
 
-export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => {
+export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number }> = (props) => {
   const [showList, setShowList] = useState(false);
   const [knownFC, setKnownFC] = useState<KnownFC[]>([]);
   const [showCmdr, setShowCmdr] = useState(false);
@@ -76,7 +76,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[] }> = (props) => 
 
   return <>
     <Stack horizontal verticalAlign='center' style={{ width: 200 }}>
-      <HaulSize haul={totalHaul} />
+      <HaulSize haul={totalHaul} size={props.size} />
 
       <ActionButton
         className={cn.bBox}

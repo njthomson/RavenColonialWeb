@@ -122,7 +122,7 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
           <td className={tds} style={{ paddingTop }}>Average haul:</td>
           <td className={tds} colSpan={3} style={{ paddingTop }}>
             <div className='grey'>
-              <HaulList buildTypes={[props.buildType]} />
+              <HaulList buildTypes={[props.buildType]} size={2} />
             </div>
           </td>
         </tr>

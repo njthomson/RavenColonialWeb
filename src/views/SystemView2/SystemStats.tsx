@@ -98,7 +98,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
         <div key={`se${key}4`}>
           {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
         </div>,
-        <span style={{ width: '100%' }} />
+        <span key={`se${key}5`} style={{ width: '100%' }} />
       ]
     })}
 

@@ -28,6 +28,14 @@ export const cmdr = {
     return await callAPI<string>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary`);
   },
 
+  getHiddenIDs: async (cmdr: string): Promise<string[]> => {
+    return await callAPI<string[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/hiddenIDs`);
+  },
+
+  setHiddenIDs: async (cmdr: string, chosenIDs: string[]): Promise<string[]> => {
+    return await callAPI<string[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/hiddenIDs`, 'POST', JSON.stringify(chosenIDs));
+  },
+
   setPrimary: async (cmdr: string, buildId: string): Promise<void> => {
     await callAPI<CmdrSummary>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary/${buildId}`, 'PUT');
   },

@@ -12,16 +12,18 @@ interface ProjectLinkProps {
   noType?: boolean;
   iconName?: string;
   greyIncomplete?: boolean;
+  incompleteLinkColor?: string;
 }
 
 export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
   let color = props.proj.isMock ? appTheme.palette.yellowDark : undefined;
   if (props.greyIncomplete && !props.proj.complete) {
-    color = 'grey'; //appTheme.palette.neutralTertiary;
+    color = 'grey';
   }
 
   return <span
-    className="project-link" style={{
+    className="project-link"
+    style={{
       color,
       fontStyle: props.proj.isMock ? 'italic' : undefined
     }}
@@ -34,14 +36,14 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
       href={`#build=${props.proj.buildId}`}
       style={{
         fontWeight: props.noBold ? 'normal' : 'bold',
-        color,
+        color: (props.greyIncomplete && props.incompleteLinkColor) ? props.incompleteLinkColor : color,
       }}
     >
       <Icon iconName={props.iconName || 'Manufacturing'} /> {props.proj.buildName}
     </Link>
 
     {!props.noType && <>
-      &nbsp;- <BuildTypeDisplay buildType={props.proj.buildType} />
+      &nbsp;-&nbsp;<BuildTypeDisplay buildType={props.proj.buildType} />
 
       {props.proj.isPrimaryPort && <Icon className='icon-inline' iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
     </>}

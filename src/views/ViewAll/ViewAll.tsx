@@ -1,16 +1,17 @@
 import './ViewAll.css';
 import '../ProjectView/ProjectView.css';
-import { ActionButton, CommandBar, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
+import { ActionButton, Checkbox, CommandBar, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../../types';
 import { store } from '../../local-storage';
-import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo as sumCargos } from '../../util';
+import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
 import { CopyButton } from '../../components/CopyButton';
 import { ModalCommander } from '../../components/ModalCommander';
+import { HaulSize } from '../../components/BigSiteTable/BigSiteTable';
 
 interface ViewAllProps {
 }
@@ -18,8 +19,11 @@ interface ViewAllProps {
 interface ViewAllState {
   errorMsg?: string;
   loading?: boolean;
+  allProjects: Project[],
   projects: Project[],
   linkedFC: KnownFC[],
+  hiddenIDs: Set<string>,
+  originalHiddenIDs: string,
 
   /** Merged cargo needs from all projects */
   sumCargo: Cargo,
@@ -39,8 +43,11 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     super(props);
 
     this.state = {
+      allProjects: [],
       projects: [],
       linkedFC: [],
+      hiddenIDs: new Set<string>(),
+      originalHiddenIDs: '',
       sumCargo: {},
       fcCargo: {},
       autoUpdateUntil: 0,
@@ -68,23 +75,23 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     this.setState({ loading: true });
 
     try {
-      await Promise.all([
-        // get the projects
-        api.cmdr.getActiveProjects(store.cmdrName).then(projects => {
-          this.setState({
-            projects: projects,
-            sumCargo: mergeCargo(projects.map(p => p.commodities))
-          });
-        }),
-
-        // get the FCs
-        api.cmdr.getAllLinkedFCs(store.cmdrName).then(linkedFC => {
-          const fcCargo = mergeCargo(linkedFC.map(fc => fc.cargo));
-          this.setState({ linkedFC, fcCargo });
-        }),
+      const [allProjects, linkedFC, hiddenIDs] = await Promise.all([
+        // get the projects, FCs and hiddenIDs
+        api.cmdr.getActiveProjects(store.cmdrName),
+        api.cmdr.getAllLinkedFCs(store.cmdrName),
+        api.cmdr.getHiddenIDs(store.cmdrName)
       ]);
 
-      this.setState({ loading: false });
+      const projects = allProjects.filter(p => !hiddenIDs.includes(p.buildId));
+      const sumCargo = mergeCargo(projects.map(p => p.commodities));
+      this.setState({
+        loading: false,
+        allProjects, projects, sumCargo,
+        linkedFC, fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
+        hiddenIDs: new Set(hiddenIDs),
+        originalHiddenIDs: hiddenIDs.sort().join(),
+      });
+
     } catch (err: any) {
       console.error(`Error loading data: ${err.message}`);
       this.setState({ loading: false, errorMsg: err.message });
@@ -110,6 +117,18 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       console.error(`Error loading data: ${err.message}`);
       this.setState({ loading: false, errorMsg: err.message });
     }
+  }
+
+  saveHiddenIDs = () => {
+    this.setState({ loading: true });
+    api.cmdr.setHiddenIDs(store.cmdrName, Array.from(this.state.hiddenIDs))
+      .then(newHiddenIDs => {
+        this.setState({ loading: false, hiddenIDs: new Set(newHiddenIDs), originalHiddenIDs: newHiddenIDs.sort().join() });
+      })
+      .catch((err: any) => {
+        console.error(`saveHiddenIDs failed: ${err.stack}`);
+        this.setState({ loading: false, errorMsg: err.message });
+      });
   }
 
   toggleAutoRefresh = () => {
@@ -170,7 +189,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -210,7 +229,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
 
     const whereToBuy = !projects?.length
       ? undefined
-      : { refSystem: projects[0].systemName, buildIds: projects.map(p => p.buildId) }
+      : { refSystem: projects[0].systemName, buildIds: allProjects.map(p => p.buildId) }
 
     return <div className='view-all'>
       <div>
@@ -229,6 +248,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
               iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
               disabled: loading,
+              className: cn.bBox,
+              style: { color: (loading) ? 'grey' : undefined },
               onClick: () => {
                 this.toggleAutoRefresh();
               }
@@ -255,11 +276,12 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
 
       <div className='contain-horiz'>
 
-        <div className='half'>
+        <div className='half' style={{ minWidth: 540 }}>
           <CargoGrid
             cargo={this.state.sumCargo}
             linkedFC={this.state.linkedFC}
             whereToBuy={whereToBuy}
+            minWidthNeed={55}
           />
           <br />
           <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo' />
@@ -299,51 +321,105 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   renderActiveProjectsAndFCs() {
-    const { projects, linkedFC, fcCargo } = this.state;
+    const { allProjects, projects, linkedFC, fcCargo, loading, hiddenIDs, originalHiddenIDs } = this.state;
 
-    const mapBySystem = projects.reduce((map, p) => {
+    const mapBySystem = allProjects.reduce((map, p) => {
       if (!map[p.systemName]) { map[p.systemName] = []; }
       map[p.systemName] = [...map[p.systemName], p];
       return map;
     }, {} as Record<string, Project[]>);
 
     const systemRows = [];
-    for (const systemName in mapBySystem) {
-      const rowP = <li key={systemName} style={{ marginBottom: 8 }}>
-        <Stack horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' style={{ fontWeight: 'bold', marginBottom: 8 }} >
-          <Link href={`#sys=${encodeURIComponent(systemName)}`}>{systemName}</Link>
+    let first = true;
+    const sortedSystems = Object.keys(mapBySystem).sort();
+    for (const systemName of sortedSystems) {
+      if (!first) {
+        systemRows.push(<div key={`${systemName}-d`} style={{ marginTop: 8, marginBottom: 12, borderTop: `1px dashed ${appTheme.palette.themeTertiary}` }} />);
+      }
+      first = false;
+
+      let checkCount = 0;
+      const projCount = mapBySystem[systemName].length;
+
+      const systemProjectRows = mapBySystem[systemName].map(p => {
+        const sumNeed = sumCargos(p.commodities);
+        const approxProgress = p.maxNeed - sumNeed;
+        const percent = 100 / p.maxNeed * approxProgress;
+
+        const checkProj = !hiddenIDs.has(p.buildId);
+        if (checkProj) { checkCount++; }
+        const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
+
+        const projSum = sumCargo(p.commodities);
+        return <div key={p.buildId} style={{ marginLeft: 32, marginTop: 4, color: checkProj ? undefined : 'grey' }}>
+
+          <Stack horizontal verticalAlign='baseline' style={{ position: 'relative', float: 'right', marginLeft: 8, marginTop: 4 }}>
+            <HaulSize haul={projSum} size={1} dim={!checkProj} />
+            <span style={{ position: 'relative', marginLeft: 4, top: -1, fontSize: 12 }}>{projSum.toLocaleString()}</span>
+          </Stack>
+
+          <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center'>
+
+            <Checkbox checked={checkProj} onChange={(e, c) => {
+              // add or remove an entry
+              const { hiddenIDs } = this.state;
+              if (c) {
+                hiddenIDs.delete(p.buildId);
+              } else {
+                hiddenIDs.add(p.buildId);
+              }
+              const projects = allProjects.filter(p => !hiddenIDs.has(p.buildId));
+              const sumCargo = mergeCargo(projects.map(p => p.commodities));
+              this.setState({ hiddenIDs, projects, sumCargo });
+            }} />
+
+            <ProjectLink proj={p} noSys greyIncomplete={!checkProj} incompleteLinkColor={appTheme.palette.themeTertiary} />
+
+            {p.discordLink && <Icon
+              className='icon-btn'
+              iconName='OfficeChatSolid'
+              title='Open Discord link'
+              onClick={() => openDiscordLink(p.discordLink)}
+            />}
+            {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
+          </Stack>
+
+          <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center'>
+            <ChartGeneralProgress maxNeed={p.maxNeed} progress={approxProgress} readyOnFC={countReadyOnFCs} minimal />
+            <Label style={{ marginBottom: 2, color: checkProj ? undefined : 'grey' }}>&nbsp;&nbsp;{percent.toFixed(0)}%</Label>
+          </Stack>
+
+        </div>;
+      });
+
+      const checkSys = checkCount === projCount;
+
+      const rowSys = <div key={systemName} style={{ marginTop: 12 }}>
+        <Stack horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' style={{ fontWeight: 'bold', marginBottom: 8, color: checkSys ? undefined : 'grey' }} >
+
+          <Checkbox checked={checkSys} indeterminate={checkCount > 0 && checkCount < projCount} onChange={(e, c) => {
+            // add or remove an each project
+            const { hiddenIDs } = this.state;
+            for (const p of mapBySystem[systemName]) {
+              if (c) {
+                hiddenIDs.delete(p.buildId);
+              } else {
+                hiddenIDs.add(p.buildId);
+              }
+            }
+            const projects = allProjects.filter(p => !hiddenIDs.has(p.buildId));
+            const sumCargo = mergeCargo(projects.map(p => p.commodities));
+            this.setState({ hiddenIDs, projects, sumCargo });
+          }} />
+
+          <Link href={`#sys=${encodeURIComponent(systemName)}`} style={{ color: checkSys ? undefined : appTheme.palette.themeTertiary }}>{systemName}</Link>
           <CopyButton text={systemName} />
           <span>{mapBySystem[systemName].length} projects</span>
         </Stack>
 
-        {mapBySystem[systemName].map(p => {
-          const sumNeed = sumCargos(p.commodities);
-          const approxProgress = p.maxNeed - sumNeed;
-          const percent = 100 / p.maxNeed * approxProgress;
-
-          const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
-
-          return <div key={p.buildId} >
-            <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center' >
-              <ProjectLink proj={p} noSys />
-              {p.discordLink && <Icon
-                className='icon-btn'
-                iconName='OfficeChatSolid'
-                title='Open Discord link'
-                onClick={() => openDiscordLink(p.discordLink)}
-              />}
-              {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
-            </Stack>
-
-            <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center'>
-              <ChartGeneralProgress maxNeed={p.maxNeed} progress={approxProgress} readyOnFC={countReadyOnFCs} minimal />
-              <Label style={{ marginBottom: 2 }}>&nbsp;&nbsp;{percent.toFixed(0)}%</Label>
-            </Stack>
-
-          </div>;
-        })}
-      </li>;
-      systemRows.push(rowP);
+        {systemProjectRows}
+      </div>;
+      systemRows.push(rowSys);
     }
 
     const cmdrLinkedFC: KnownFC[] = [];
@@ -352,7 +428,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     const cmdrLinkedFCs = store.cmdrLinkedFCs;
 
     for (let fc of linkedFC) {
-      let projLinked = projects.some(p => p.linkedFC.map(_ => _.marketId).includes(fc.marketId));
+      let projLinked = allProjects.some(p => p.linkedFC.map(_ => _.marketId).includes(fc.marketId));
       if (projLinked) {
         projectLinkedFC.push(fc);
       } else if (!cmdrLinkedFCs) {
@@ -363,15 +439,27 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       }
     }
 
+    const hiddenIDsChanged = originalHiddenIDs !== Array.from(hiddenIDs).sort().join();
+
     return <>
       <h3 className={cn.h3}>
-        {systemRows.length} Systems, {projects.length} Active projects:
-      </h3>
-      <ul>
-        {systemRows}
-      </ul>
+        {systemRows.length} Systems: {allProjects.length} active, {projects.length} chosen projects&nbsp;
 
-      <div className='linked-fc'>
+        {hiddenIDsChanged && <ActionButton
+          className={cn.bBox2}
+          disabled={loading}
+          iconProps={{ iconName: 'Save' }}
+          style={{ float: 'right' }}
+          text='Save'
+          title='Save changes to chosen projects'
+          onClick={() => this.saveHiddenIDs()}
+        />}
+      </h3>
+      <div style={{ fontSize: 14 }}>
+        {systemRows}
+      </div>
+
+      <div className='linked-fc' style={{ marginTop: 20, fontSize: 14 }}>
         <h3 className={cn.h3}>
           {linkedFC.length} Fleet Carriers:
         </h3>

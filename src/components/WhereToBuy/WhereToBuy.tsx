@@ -1,6 +1,6 @@
 import './WhereToBuy.css';
 import * as api from '../../api';
-import { ActionButton, Checkbox, ComboBox, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
+import { ActionButton, Callout, Checkbox, ComboBox, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Slider, SpinButton, Spinner, Stack, Toggle } from '@fluentui/react';
 import { Component } from 'react';
 import { appTheme, cn } from '../../theme';
 import { Cargo, FindMarketsOptions, FoundMarkets, MarketSummary, mapCommodityNames, mapSourceEconomy } from '../../types';
@@ -46,6 +46,8 @@ interface WhereToBuyState extends FindMarketsOptions {
 
   sortColumn: string;
   sortAscending: boolean;
+  stale?: boolean;
+  showStaleMsg?: boolean;
 }
 
 export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
@@ -112,6 +114,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         ...nextState ?? {},
         sortedRows: newSortedRows,
         missedCargo: newMissedCargo,
+        stale: false,
       };
     }
 
@@ -119,7 +122,20 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       nextState = {
         ...nextState ?? {},
         refSystem: this.props.systemName,
+        stale: false,
       };
+    }
+
+    if (this.state.commodities && prevProps.need !== this.props.need) {
+      // we are stale if we need some commodity we did not know about previously
+      const missing = Object.keys(this.props.need).filter(c => this.props.need[c] > 0 && this.state.commodities && !(c in this.state.commodities));
+      // console.log(`going stale: ${missing.length > 0}\n`, missing);
+      if (missing.length > 0) {
+        nextState = {
+          ...nextState ?? {},
+          stale: true,
+        };
+      }
     }
 
     if (nextState) {
@@ -237,7 +253,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   render() {
-    const { refSystem, foundMarkets, sortedRows, largePanel, showSearchCriteria } = this.state;
+    const { refSystem, foundMarkets, sortedRows, largePanel, showSearchCriteria, showStaleMsg } = this.state;
 
     return <Panel
       isHiddenOnDismiss isFooterAtBottom
@@ -256,6 +272,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       onRenderHeader={() => {
         return <div style={{ width: '90%', margin: '10px 40px' }}>
           <IconButton
+            className={cn.bBox}
             iconProps={{ iconName: largePanel ? 'DoubleChevronRight' : 'DoubleChevronLeft', style: { color: appTheme.palette.neutralDark, fontSize: 12 } }}
             style={{ position: 'absolute', left: 0, top: 0 }}
             onClick={() => this.setState({ largePanel: !largePanel })}
@@ -282,10 +299,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         </div>;
       }}
     >
-      <div className='where-to-buy'>
+      {this.props.visible && <div className='where-to-buy'>
         {showSearchCriteria && this.renderSearchCriteria()}
         {!showSearchCriteria && this.renderFoundMarkets()}
-      </div>
+        {showStaleMsg && this.renderStaleMsgCallout()}
+      </div>}
     </Panel>;
   }
 
@@ -342,7 +360,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       }}>
 
         <div style={{ width: wl, height: 20, backgroundColor: appTheme.palette.neutralTertiaryAlt }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 4 }}>Ship capacity: {used?.toLocaleString() ?? '?'}</div>
+        <div style={{ position: 'absolute', bottom: 0, left: 4 }}>Required capacity: {used?.toLocaleString() ?? '?'}</div>
 
         <div style={{
           position: 'absolute',
@@ -351,8 +369,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           bottom: 0,
           alignContent: 'end',
           paddingRight: 8,
-          color: used > med ? appTheme.palette.yellow : undefined,
-        }}        >
+          color: used === 0 ? undefined : used > med ? appTheme.palette.yellow : appTheme.palette.greenLight,
+        }}>
           <Stack horizontal><span>Medium: {med} </span><Icon iconName={used > med ? 'StatusCircleErrorX' : 'StatusCircleCheckmark'} style={{ lineHeight: '12px', fontSize: 18 }} /></Stack>
         </div>
 
@@ -372,7 +390,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
           alignContent: 'end',
           paddingRight: 4,
           fontWeight: used > large ? 'bold' : undefined,
-          color: used > large ? appTheme.palette.yellow : undefined,
+          color: used === 0 ? undefined : used > large ? appTheme.palette.yellow : appTheme.palette.greenLight,
         }}
         >
           <Stack horizontal><span>Large: {large} </span><Icon iconName={used > large ? 'StatusCircleErrorX' : 'StatusCircleCheckmark'} style={{ lineHeight: '12px', fontSize: 18 }} /></Stack>
@@ -558,8 +576,40 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     </div>;
   }
 
+  renderStaleMsgCallout() {
+    // we are stale if we need some commodity we did not know about previously
+    const missing = Object.keys(this.props.need)
+      .filter(c => this.props.need[c] > 0 && this.state.commodities && !(c in this.state.commodities))
+      .map(c => mapCommodityNames[c] ?? c)
+      .sort();
+
+    return <Callout
+      target='#btn-stale'
+      styles={{
+        beak: { backgroundColor: appTheme.palette.themeSecondary, },
+        calloutMain: {
+          backgroundColor: appTheme.palette.themeSecondary,
+          color: appTheme.palette.neutralDark,
+        }
+      }}
+      onDismiss={() => this.setState({ showStaleMsg: false })}
+    >
+      <div>Commodities have been added since the last search:</div>
+
+      <ul>
+        {missing.map(c => <li key={`missing-${c}`}>{c}</li>)}
+      </ul>
+
+      <DefaultButton
+        style={{ marginTop: 10 }}
+        text='Search again?'
+        onClick={() => this.setState({ showStaleMsg: false, showSearchCriteria: true })}
+      />
+    </Callout>;
+  }
+
   renderFoundMarkets() {
-    const { sortedRows, expandMatches, expandHighlights, filterNoHighlights, fcDiffs, highlights } = this.state;
+    const { sortedRows, expandMatches, expandHighlights, filterNoHighlights, fcDiffs, highlights, stale, showStaleMsg } = this.state;
 
     const allCollapsed = expandMatches.size === 0;
 
@@ -567,6 +617,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       <Stack horizontal style={{ marginTop: 2 }}>
 
         <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: allCollapsed ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
           text={allCollapsed ? 'Expand all' : `Collapse all`}
           style={{ height: 22 }}
@@ -618,11 +669,20 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         </div>}
 
         <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: 'SearchAndApps' }}
           text='Change criteria'
-          style={{ height: 22 }}
+          style={{ height: 26 }}
           onClick={() => this.setState({ showSearchCriteria: true })}
         />
+
+        {stale && <IconButton
+          id='btn-stale'
+          className={cn.bBox}
+          style={{ width: 24, height: 26, color: appTheme.palette.yellow }}
+          iconProps={{ iconName: 'WarningSolid' }}
+          onClick={() => this.setState({ showStaleMsg: !showStaleMsg })}
+        />}
       </Stack>
 
       {this.renderBubblesNeeded()}
@@ -754,9 +814,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       >
         <Stack horizontal verticalAlign='center' title={highlightTitleTxt}>
           <ActionButton
+            className={cn.bBox}
             iconProps={{ iconName: expandTopBubbles ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
             text={'Highlight:'}
-            style={{ height: 22, paddingLeft: 0, }}
+            style={{ height: 26, paddingLeft: 0, }}
             onClick={() => this.setState({ expandTopBubbles: !expandTopBubbles })}
           />
 
@@ -766,6 +827,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         {bubbles}
 
         {!!highlights.size && <IconButton
+          className={cn.bBox}
           iconProps={{ iconName: 'Clear' }}
           title='Remove all highlights'
           style={{ width: 22, height: 22 }}
@@ -786,7 +848,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     }
 
     const isHighlightMatch = !filterNoHighlights && Object.keys(market.supplies).some(n => highlights.has(n));
-    const isExpanded = expandMatches.has(market.stationName) || (expandHighlights && isHighlightMatch);
+    let isExpanded = expandMatches.has(market.stationName) || (expandHighlights && isHighlightMatch) || (filterNoHighlights && expandHighlights);
 
     // fleet carriers need to use their ident, not display name
     const stationName = market.stationName.endsWith(')')

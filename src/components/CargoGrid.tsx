@@ -16,6 +16,7 @@ interface CargoGridProps {
   hideActive?: boolean;
   onRefresh?: () => void;
   whereToBuy?: { refSystem: string; buildIds: string[] }
+  minWidthNeed?: number;
 }
 
 interface CargoGridState {
@@ -29,7 +30,7 @@ interface CargoGridState {
   hideFCColumns: boolean;
   fcEditMarketId?: string;
   refreshing?: boolean;
-  showWhereToBuy: boolean;
+  showWhereToBuy?: boolean;
 }
 
 export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
@@ -48,7 +49,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       sort: store.commoditySort ?? SortMode.alpha,
       hideDoneRows: store.commodityHideCompleted,
       hideFCColumns: defaultHideFCColumns,
-      showWhereToBuy: false,
+      showWhereToBuy: undefined,
     };
   }
 
@@ -162,7 +163,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         <thead>
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
-            {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>}
+            {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} style={{ minWidth: this.props.minWidthNeed }} title='Total needed for this commodity'>Need</th>}
             {!hideFCColumns && this.getCargoFCHeaders()}
             {/* {!editCommodities && hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>} */}
           </tr>
@@ -196,7 +197,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         />
       </>}
 
-      {!!this.props.whereToBuy && <>
+      {!!this.props.whereToBuy && showWhereToBuy !== undefined && <>
         <WhereToBuy
           visible={!!showWhereToBuy}
           buildIds={this.props.whereToBuy.buildIds}
