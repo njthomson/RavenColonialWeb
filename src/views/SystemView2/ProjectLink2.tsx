@@ -50,7 +50,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
   if (proj) {
     const progress = (100 - (100 / proj.maxNeed * proj.sumNeed));
     progressElement = <Stack horizontal verticalAlign='center' horizontalAlign='start'>
-      <div style={{ width: 160, height: 20, padding: 0, margin: '10px 10px 0 10px' }}>
+      <div style={{ width: 160, height: 20, padding: 0, margin: '10px 4px 0 4px' }}>
         <ChartGeneralProgress progress={proj.maxNeed - proj.sumNeed} maxNeed={proj.maxNeed} readyOnFC={0} minimal width={160} />
       </div>
       <div>{progress.toFixed(0)}%</div>

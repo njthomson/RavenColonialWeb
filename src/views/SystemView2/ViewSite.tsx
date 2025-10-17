@@ -62,7 +62,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       />
 
       <div>Status:</div>
-      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+      <Stack horizontal verticalAlign='center'>
         <ViewEditBuildStatus
           status={site.status}
           onChange={newStatus => {

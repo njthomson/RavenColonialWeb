@@ -31,6 +31,7 @@ export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOn
 
   return <div className={props.width ? undefined : 'chart'} >
     <StackedBarChart
+      ignoreFixStyle
       hideLegend={props.minimal}
       styles={{
         chart: { width: props.width, height: props.height, margin: 0, padding: 0 },
