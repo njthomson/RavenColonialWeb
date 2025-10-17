@@ -191,8 +191,7 @@ export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | un
   const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType) || buildType === st.subTypes[0] + '?');
   if (!match) {
     console.error(`No SiteType match found for: '${buildType}'`);
-    if (noThrow) return undefined!;
-    throw new Error(`No SiteType match found for: '${buildType}'`)
+    return undefined;
   }
   return match;
 };
