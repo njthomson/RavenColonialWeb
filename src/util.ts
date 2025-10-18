@@ -263,6 +263,6 @@ export const isMatchingCmdr = (cmdrA?: string, cmdrB?: string) => {
     cmdrB = cmdrA.substring(5);
   }
 
-  console.log(`isMatchingCmdr: ${cmdrA} vs ${cmdrB}`);
+  // console.log(`isMatchingCmdr: ${cmdrA} vs ${cmdrB}`);
   return cmdrA === cmdrB;
 }

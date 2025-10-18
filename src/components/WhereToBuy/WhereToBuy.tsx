@@ -193,6 +193,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         sortedRows: sortedRows,
         missedCargo: missedCargo,
         expandMatches: expandMatches,
+        stale: false,
       });
     } catch (err: any) {
       console.error(`WhereToBuy: search failed: ${err.stack}`);
