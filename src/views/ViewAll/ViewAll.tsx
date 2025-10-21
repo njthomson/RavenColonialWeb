@@ -5,7 +5,7 @@ import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
 import { appTheme, cn } from '../../theme';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, mapCommodityNames, Project } from '../../types';
 import { store } from '../../local-storage';
 import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
@@ -29,6 +29,8 @@ interface ViewAllState {
   sumCargo: Cargo,
   /** Merged cargo from all Fleet Carriers */
   fcCargo: Cargo,
+  /** Hover text for what projects need which commodities */
+  commodityTitles?: Record<string, string>,
 
   autoUpdateUntil: number;
   fcEditMarketId?: string;
@@ -83,10 +85,12 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       ]);
 
       const projects = allProjects.filter(p => !hiddenIDs.includes(p.buildId));
-      const sumCargo = mergeCargo(projects.map(p => p.commodities));
+      const newSumCargo = mergeCargo(projects.map(p => p.commodities));
+      const newCommodityTitles = this.generateCommodityTitles(newSumCargo, projects);
       this.setState({
         loading: false,
-        allProjects, projects, sumCargo,
+        allProjects, projects, sumCargo: newSumCargo,
+        commodityTitles: newCommodityTitles,
         linkedFC, fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
         hiddenIDs: new Set(hiddenIDs),
         originalHiddenIDs: hiddenIDs.sort().join(),
@@ -98,6 +102,20 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     }
   }
 
+  generateCommodityTitles(newSumCargo: Cargo, projects: Project[]) {
+    const newCommodityTitles = Object.keys(newSumCargo)
+      .reduce((m, key) => {
+        m[key] = `${mapCommodityNames[key] ?? key}:`;
+        for (const p of projects) {
+          if (key in p.commodities && p.commodities[key] > 0) {
+            m[key] += `\n  ${[p.buildName]} : ${p.commodities[key]}`
+          }
+        }
+        return m;
+      }, {} as Record<string, string>);
+    return newCommodityTitles;
+  }
+
   async fetchProject(buildId: string) {
     this.setState({ loading: true });
 
@@ -105,10 +123,13 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       // get one project
       const newProject = await api.project.get(buildId);
       const newProjects = this.state.projects.map(p => p.buildId === buildId ? newProject : p);
+      const newSumCargo = mergeCargo(newProjects.map(p => p.commodities));
+      const newCommodityTitles = this.generateCommodityTitles(newSumCargo, newProjects);
 
       this.setState({
         projects: newProjects,
-        sumCargo: mergeCargo(newProjects.map(p => p.commodities))
+        sumCargo: newSumCargo,
+        commodityTitles: newCommodityTitles,
       });
 
       // add artificial delay to avoid flicker on the spinner
@@ -189,7 +210,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityTitles } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -282,6 +303,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             linkedFC={this.state.linkedFC}
             whereToBuy={whereToBuy}
             minWidthNeed={55}
+            commodityTitles={commodityTitles}
           />
           <br />
           <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo' />
@@ -370,7 +392,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               }
               const projects = allProjects.filter(p => !hiddenIDs.has(p.buildId));
               const sumCargo = mergeCargo(projects.map(p => p.commodities));
-              this.setState({ hiddenIDs, projects, sumCargo });
+              const commodityTitles = this.generateCommodityTitles(sumCargo, projects);
+              this.setState({ hiddenIDs, projects, sumCargo, commodityTitles });
             }} />
 
             <ProjectLink proj={p} noSys greyIncomplete={!checkProj} incompleteLinkColor={appTheme.palette.themeTertiary} />
@@ -409,7 +432,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             }
             const projects = allProjects.filter(p => !hiddenIDs.has(p.buildId));
             const sumCargo = mergeCargo(projects.map(p => p.commodities));
-            this.setState({ hiddenIDs, projects, sumCargo });
+            const commodityTitles = this.generateCommodityTitles(sumCargo, projects);
+            this.setState({ hiddenIDs, projects, sumCargo, commodityTitles });
           }} />
 
           <Link href={`#sys=${encodeURIComponent(systemName)}`} style={{ color: checkSys ? undefined : appTheme.palette.themeTertiary }}>{systemName}</Link>

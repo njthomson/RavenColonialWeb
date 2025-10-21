@@ -17,6 +17,7 @@ interface CargoGridProps {
   onRefresh?: () => void;
   whereToBuy?: { refSystem: string; buildIds: string[] }
   minWidthNeed?: number;
+  commodityTitles?: Record<string, string>
 }
 
 interface CargoGridState {
@@ -159,13 +160,12 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         />}
       </h3>
 
-      {!hideGrid && <table className={`commodities`} cellSpacing={0} cellPadding={0}>
+      {!hideGrid && <table className={`commodities`} cellSpacing={0} cellPadding={0} style={{ cursor: 'default' }}>
         <thead>
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
             {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} style={{ minWidth: this.props.minWidthNeed }} title='Total needed for this commodity'>Need</th>}
             {!hideFCColumns && this.getCargoFCHeaders()}
-            {/* {!editCommodities && hasAssignments && <th className={`commodity-assigned ${cn.bb}`}>Assigned</th>} */}
           </tr>
         </thead>
         <tbody>{this.getTableRows()}</tbody>
@@ -214,7 +214,6 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     const { zeroNeed } = this.state;
     const cells = [
       ...this.state.linkedFC.map(fc => {
-        //const fc = this.state.linkedFC.find(fc => fc.marketId.toString() === k);
         return fc && <th key={`fcc${fc.marketId}`} className={`commodity-need ${cn.bb} ${cn.br}`} title={`${fc.displayName} (${fc.name})`} >
           <Link
             className='fake-link'
@@ -256,11 +255,6 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       flip = !flip;
       var row = this.getCommodityRow(key, flip);
       rows.push(row)
-
-      // // show extra row to assign a commodity to a cmdr?
-      // if (assignCommodity === key && proj.commanders && !editCommodities) {
-      //   rows.push(this.getCommodityAssignmentRow(key, proj, cmdrs));
-      // }
     }
 
     // generate a totals row at the bottom
@@ -294,7 +288,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       className='group'
       style={{
         background: appTheme.palette.themeDark,
-        color: appTheme.palette.themeLighter
+        color: appTheme.palette.themeLighter,
       }}
     >
       <td colSpan={colSpan}>
@@ -310,57 +304,10 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     const { cargo, linkedFC, fcCargo, hideFCColumns, zeroNeed } = this.state;
 
     const displayName = mapCommodityNames[key] ?? key;
-    // const currentCmdr = store.cmdrName;
-
-    // const assigned = cmdrs
-    //   .filter(k => cmdrs.some(() => proj!.commanders && proj!.commanders[k].includes(key)))
-    //   .map(k => {
-    //     return <span className={`removable bubble ${cn.removable}`} key={`$${key}-${k}`} style={{ backgroundColor: k === currentCmdr ? appTheme.palette.themeLight : undefined }}>
-    //       <span className={`glue ${k === currentCmdr ? 'active-cmdr' : ''}`} >📌{k}</span>
-    //       <Icon
-    //         className={`btn ${cn.btn}`}
-    //         iconName='Delete'
-    //         title={`Remove assignment of ${displayName} from ${k}`}
-    //         style={{ color: appTheme.palette.themePrimary }}
-    //         onClick={() => this.onClickUnassign(k, key)}
-    //       />
-    //     </span>;
-    //   });
 
     const need = cargo[key] ?? 0;
     const sumFC = fcCargo[key] ?? 0;
     const delta = sumFC - need;
-
-    // const isContextTarget = false; //this.state.cargoContext === key;
-    const isReady = false; //this.state.editReady.has(key);
-
-    /*const menuItems: IContextualMenuItem[] = [
-      {
-        key: 'assign-cmdr',
-        text: 'Assign to a commander ...',
-        iconProps: { iconName: 'PeopleAdd' },
-        onClick: () => {
-          this.setState({ assignCommodity: key });
-          delayFocus('assign-cmdr');
-        },
-      },
-      { key: 'divider_1', itemType: ContextualMenuItemType.Divider, },
-      {
-        key: 'toggle-ready',
-        text: isReady ? 'Clear ready' : 'Mark ready',
-        onClick: () => this.onToggleReady(this.state.proj!.buildId, key, isReady),
-        iconProps: { iconName: 'StatusCircleCheckmark' },
-      }
-    ];
-
-    if (need > 0) {
-      menuItems.push({
-        key: 'set-to-zero',
-        text: 'Set to zero',
-        onClick: () => this.deliverToZero(key, need),
-        iconProps: { iconName: 'Download' },
-      });
-    }*/
 
     let deltaTxt = delta.toLocaleString();
     if (!deltaTxt.startsWith('-') && deltaTxt !== '0') deltaTxt = '+' + deltaTxt;
@@ -391,37 +338,13 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
 
     return <tr key={`cc-${key}`} className={className} style={style}>
 
-      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
+      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`} title={this.props.commodityTitles && this.props.commodityTitles[key]}>
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
-
           <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
-          &nbsp;
-          {isReady && <Icon className='icon-inline' iconName='CompletedSolid' title={`${displayName} is ready`} />}
-          &nbsp;
-          {/* {delta >= 0 && need > 0 && <Icon className='icon-inline' iconName='fleetCarrierSolid' title={fcSumTitle} />} */}
-
-          {/* {isContextTarget && <ContextualMenu
-          target={`#cn-${key}`}
-          onDismiss={() => this.setState({ cargoContext: undefined })}
-          items={menuItems}
-          styles={{
-            container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
-          }}
-        />}
-
-        <Icon
-          className={`btn ${cn.btn}`}
-          iconName='ContextMenu'
-          title={`Commands for: ${key}`}
-          style={{ color: appTheme.palette.themePrimary }}
-          onClick={() => {
-            this.setState({ cargoContext: key });
-          }}
-        /> */}
         </Stack>
       </td>
 
-      {!zeroNeed && <td className={`commodity-need ${cn.br}`} >
+      {!zeroNeed && <td className={`commodity-need ${cn.br}`} title={this.props.commodityTitles && this.props.commodityTitles[key]}>
         <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
       </td>}
 
@@ -438,8 +361,6 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           {fc.cargo[key] ? <span>{fc.cargo[key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
         </td>)}
       </>}
-
-      {/* {hasAssignments && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>} */}
     </tr>;
   }
 
