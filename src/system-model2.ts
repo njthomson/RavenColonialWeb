@@ -31,11 +31,10 @@ export const unknown = 'Unknown';
 export interface SysMap2 extends Sys {
   bodyMap: Record<string, BodyMap2>;
   siteMaps: SiteMap2[];
-  // countSites: number;
-  // countActive: number;
   tierPoints: TierPoints;
   economies: Record<string, number>;
   sumEffects: SysEffects;
+  systemScore: number;
 }
 
 export interface TierPoints {
@@ -108,7 +107,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   // https://forums.frontier.co.uk/threads/constructing-a-specific-economy.637363/
 
   // group sites by their bodies, extract system and architect names
-  const sysMap = initializeSysMap(sys);
+  const sysMap = initializeSysMap(sys, useIncomplete);
 
   // determine primary ports for each body
   const allBodies = Object.values(sysMap.bodyMap);
@@ -155,9 +154,10 @@ export const getUnknownBody = (): Bod => {
   };
 }
 
-const initializeSysMap = (sys: Sys) => {
+const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
 
   let siteMaps: SiteMap2[] = [];
+  let systemScore = 0;
 
   // first: group sites by their bodies
   if (!sys.sites) { sys.sites = []; }
@@ -191,6 +191,9 @@ const initializeSysMap = (sys: Sys) => {
       body.surface.push(site);
     }
 
+    if (site.status === 'complete' || useIncomplete) {
+      systemScore += site.type.score ?? 0;
+    }
     return map;
   }, {} as Record<string, BodyMap2>);
 
@@ -213,7 +216,7 @@ const initializeSysMap = (sys: Sys) => {
   const countSites = sys.sites.length;
   const sysMap = {
     ...sys,
-    siteMaps, bodyMap, countSites,
+    siteMaps, bodyMap, countSites, systemScore,
     // systemName, systemAddress, architect, bodies, primaryPort, allSites, countActive, countSites,
   };
   return sysMap;
@@ -568,6 +571,7 @@ export const getSnapshot = (newSys: Sys) => {
     sites: newSys.sites,
     pop: newSys.pop,
     stale: false,
+    score: snapshotFull.systemScore ?? -1,
   };
   return snapshot;
 };

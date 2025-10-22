@@ -4,9 +4,9 @@ import { FunctionComponent, useState } from 'react';
 import { appTheme, cn } from '../theme';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
 
-export const ShareFeedback: FunctionComponent<{ topic: string, onDismiss: () => void }> = (props) => {
+export const ShareFeedback: FunctionComponent<{ topic: string; body?: string; onDismiss: () => void }> = (props) => {
   const [subject, setSubject] = useState(props.topic);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(props.body ?? '');
   const [contact, setContact] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [sending, setSending] = useState(false);

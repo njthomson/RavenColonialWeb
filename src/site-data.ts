@@ -83,6 +83,8 @@ export interface SiteType {
 
   preReq?: 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourism' | 'settlementMilitary';
   unlocks?: string[];
+
+  score?: number;
 }
 
 export const mapName: Record<string, string> = {
@@ -324,6 +326,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 3 },
     "gives": { tier: 3, count: 1 },
     "inf": "colony",
+    "score": 8,
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 2, sol: 3, dev: 3 }
   },
   {
@@ -339,6 +342,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 3, count: 1 },
     "inf": "extraction",
     "fixed": "extraction",
+    "score": 8,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 5, tech: 3, sol: -4, dev: 7 }
   },
   {
@@ -353,6 +357,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
+    "score": 15,
     "effects": { pop: 5, mpop: 1, sec: -3, wealth: 8, tech: 7, sol: 5, dev: 9 }
   },
   {
@@ -368,6 +373,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
+    "score": 15,
     "effects": { pop: 5, mpop: 1, sec: -3, wealth: 8, tech: 7, sol: 5, dev: 9 }
   },
   {
@@ -382,6 +388,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "colony",
+    "score": 3,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 3, tech: 0, sol: 5, dev: 0 }
   },
   {
@@ -397,6 +404,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "industrial",
     "fixed": "industrial",
+    "score": 3,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 3 }
   },
   {
@@ -412,6 +420,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "service",
     "fixed": "service",
+    "score": 3,
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -426,6 +435,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "colony",
+    "score": 3,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 1, tech: 0, sol: 2, dev: 1 }
   },
   {
@@ -441,6 +451,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
     "fixed": "hightech",
+    "score": 3,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 0 }
   },
   {
@@ -456,6 +467,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "military",
     "fixed": "military",
+    "score": 3,
     "effects": { pop: 1, mpop: 1, sec: 2, wealth: 0, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -470,6 +482,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "none",
+    "score": 3,
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 1, tech: 0, sol: 2, dev: 1 },
     "unlocks": [
       'System unlock: Tourist Settlements',
@@ -489,6 +502,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "none",
+    "score": 3,
     "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 3, sol: 0, dev: 0 },
     "unlocks": [
       'System unlock: Exploration Hub',
@@ -509,6 +523,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "agriculture",
+    "score": 2,
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 5, dev: 1 },
     "unlocks": ['System unlock: Outpost Hub']
   },
@@ -524,6 +539,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "service",
+    "score": undefined, // TODO
     "effects": { pop: 0, mpop: 0, sec: -4, wealth: 4, tech: 0, sol: 0, dev: 0 },
     "unlocks": ['Strong link unlock: Black Market']
   },
@@ -539,6 +555,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "extraction",
+    "score": 2, // TODO: confirm
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 4, tech: 0, sol: -2, dev: 0 },
     "unlocks": ['System unlock: Industrial Hub']
   },
@@ -554,6 +571,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
+    "score": 3,
     "effects": { pop: 0, mpop: 0, sec: 1, wealth: 0, tech: 0, sol: 0, dev: 1 },
     "unlocks": [
       'Strong link unlock: Vista Genomics at T1 Surface or T2 orbital ports',
@@ -573,6 +591,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "military",
+    "score": 4, // TODO: confirm
     "effects": { pop: 0, mpop: 0, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 0 },
     "preReq": 'settlementMilitary',
     "unlocks": [
@@ -594,6 +613,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "military",
+    "score": undefined, // TODO
     "effects": { pop: 0, mpop: 0, sec: 9, wealth: 0, tech: 0, sol: 3, dev: 3 },
     "preReq": 'relay'
   },
@@ -609,6 +629,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "none",
+    "score": 3,
     "effects": { pop: 0, mpop: 0, sec: 2, wealth: 0, tech: 0, sol: 7, dev: 3 }
   },
   {
@@ -623,6 +644,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
+    "score": 4, // TODO: confirm
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 3, sol: 5, dev: 0 },
     "unlocks": ['System unlock: Vista Genomics at T1 Surface or T2 orbital ports']
   },
@@ -638,6 +660,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
+    "score": 4,
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 8, sol: 0, dev: 3 },
     "preReq": 'settlementBio',
     "unlocks": ['System unlock: Universal Cartographics at T1 Surface or T2 orbital ports']
@@ -654,6 +677,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
+    "score": undefined, // TODO
     "effects": { pop: 0, mpop: 0, sec: -3, wealth: 6, tech: 0, sol: 0, dev: 3 },
     "preReq": 'settlementTourism',
     "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
@@ -670,6 +694,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
+    "score": undefined, // TODO
     "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 0, sol: 3, dev: 0 },
     "unlocks": [
       'System unlock: Commodities at Pirate, Scientific or Military Outposts',
@@ -688,6 +713,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "colony",
+    "score": 6,
     "effects": { pop: 2, mpop: 1, sec: -2, wealth: 0, tech: 0, sol: 3, dev: 0 }
   },
   {
@@ -703,6 +729,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "industrial",
     "fixed": "industrial",
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 3, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -718,6 +745,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
     "fixed": "hightech",
+    "score": undefined, // TODO
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 5, sol: 0, dev: 1 }
   },
   {
@@ -732,6 +760,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
+    "score": 15,
     "effects": { pop: 10, mpop: 10, sec: -3, wealth: 5, tech: 5, sol: 7, dev: 10 }
   },
   {
@@ -746,6 +775,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "agriculture",
+    "score": 1,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 0, sol: 3, dev: 0 }
   },
   {
@@ -761,6 +791,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "agriculture",
+    "score": 2,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 0, sol: 7, dev: 0 }
   },
   {
@@ -775,6 +806,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "agriculture",
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 0, sol: 10, dev: 0 }
   },
   {
@@ -789,6 +821,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "extraction",
+    "score": 1,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 3, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -804,6 +837,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "extraction",
+    "score": 2,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 5, tech: 0, sol: 0, dev: 0 }
   },
   {
@@ -818,6 +852,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "extraction",
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 8, tech: 2, sol: -2, dev: 0 }
   },
   {
@@ -832,6 +867,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "industrial",
+    "score": 1,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 3 }
   },
   {
@@ -847,6 +883,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "industrial",
+    "score": 2,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 6 }
   },
   {
@@ -861,6 +898,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "industrial",
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 3, tech: 0, sol: 0, dev: 9 }
   },
   {
@@ -875,6 +913,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "military",
+    "score": 1,
     "effects": { pop: 1, mpop: 1, sec: 2, wealth: 0, tech: 0, sol: 0, dev: 0 },
     "unlocks": ['System unlock: Military Installations']
   },
@@ -891,6 +930,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "military",
+    "score": 2,
     "effects": { pop: 1, mpop: 1, sec: 4, wealth: 0, tech: 0, sol: 0, dev: 0 },
     "unlocks": ['System unlock: Military Installations']
   },
@@ -906,6 +946,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "military",
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: 7, wealth: 0, tech: 0, sol: 0, dev: 3 },
     "unlocks": ['System unlock: Military Installations']
   },
@@ -921,6 +962,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
+    "score": 2, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 3, sol: 0, dev: 1 },
     "unlocks": ['System unlock: Scientific Installations']
   },
@@ -936,6 +978,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
+    "score": 2,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 7, sol: 0, dev: 1 },
     "unlocks": ['System unlock: Scientific Installations']
   },
@@ -951,6 +994,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "hightech",
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 3 },
     "unlocks": ['System unlock: Scientific Installations']
   },
@@ -966,6 +1010,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
+    "score": 1,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 1, tech: 0, sol: 0, dev: 0 },
     "preReq": 'satellite',
     "unlocks": ['System unlock: Tourist Installations']
@@ -983,6 +1028,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
+    "score": 2,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 3, tech: 0, sol: 0, dev: 0 },
     "preReq": 'satellite',
     "unlocks": ['System unlock: Tourist Installations']
@@ -999,6 +1045,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "tourism",
+    "score": 8, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 5, tech: 0, sol: 0, dev: 0 },
     "preReq": 'satellite',
     "unlocks": ['System unlock: Tourist Installations']
@@ -1015,6 +1062,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "extraction",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 10, tech: 0, sol: -4, dev: 3 }
   },
   {
@@ -1029,6 +1077,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "none",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: -3, wealth: 0, tech: 0, sol: 3, dev: 3 },
     "preReq": 'settlementAgr'
   },
@@ -1044,6 +1093,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 7, sol: 0, dev: 3 },
     "preReq": 'comms',
     "unlocks": ['System unlock: Universal Cartographics at T1 Surface or T2 orbital ports']
@@ -1060,6 +1110,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "none",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 0, tech: 0, sol: 3, dev: 3 },
     "preReq": 'installationAgr',
     "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
@@ -1076,6 +1127,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 0 },
     "unlocks": ['System unlock: Vista Genomics at T1 Surface or T2 orbital ports']
   },
@@ -1091,6 +1143,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "military",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: 10, wealth: 0, tech: 0, sol: 0, dev: 0 },
     "preReq": 'installationMil'
   },
@@ -1106,6 +1159,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "refinery",
+    "score": 5,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 5, tech: 3, sol: -2, dev: 7 }
   },
   {
@@ -1120,6 +1174,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 10, sol: 0, dev: 0 },
     "unlocks": [
       'System unlock: Outfitting at non-Military Outposts',
@@ -1140,6 +1195,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "industrial",
+    "score": 5, // TODO: confirm
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 5, tech: 3, sol: -4, dev: 3 },
     "preReq": 'outpostMining',
     "unlocks": [

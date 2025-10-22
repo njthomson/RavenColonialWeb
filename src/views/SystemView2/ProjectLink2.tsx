@@ -53,7 +53,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
       <div style={{ width: 160, height: 20, padding: 0, margin: '10px 4px 0 4px' }}>
         <ChartGeneralProgress progress={proj.maxNeed - proj.sumNeed} maxNeed={proj.maxNeed} readyOnFC={0} minimal width={160} />
       </div>
-      <div>{progress.toFixed(0)}%</div>
+      <div style={{ marginLeft: 4 }}>{progress.toFixed(0)}%</div>
     </Stack>
     showChart = true;
   }
@@ -74,7 +74,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
         <Stack horizontal verticalAlign='center'>
           {progressElement}
           {!proj && <span style={{ color: appTheme.palette.themeTertiary, marginRight: 10 }}>Loading ... </span>}
-          <Icon iconName='OpenInNewWindow' style={{ marginLeft: 4, fontSize: 12 }} />
+          <Icon iconName='OpenInNewWindow' style={{ marginLeft: 6, fontSize: 12 }} />
         </Stack>
       </Link>
     </>;

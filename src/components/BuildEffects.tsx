@@ -84,6 +84,15 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
           </td>
         </tr>}
 
+        <tr>
+          <td className={tds} style={{ paddingTop }}>System score:</td>
+          <td className={tds} colSpan={3} style={{ paddingTop }}>
+            <div className='grey'>
+              <div className='grey'>{st.score ? `+${st.score}` : '?'}</div>
+            </div>
+          </td>
+        </tr>
+
         {!props.noPads && <tr>
           <td className={tds} style={{ paddingTop }}>Landing pads:</td>
           <td className={tds} colSpan={3} style={{ paddingTop }}>

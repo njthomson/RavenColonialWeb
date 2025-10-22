@@ -29,7 +29,7 @@ interface AppState {
   cmdrEdit: boolean;
   showDonate?: boolean;
   showThemes?: boolean;
-  showFeedback?: string;
+  showFeedback?: [string, string?];
 }
 
 export class App extends Component<AppProps, AppState> {
@@ -37,8 +37,8 @@ export class App extends Component<AppProps, AppState> {
   private static fakeScroll: HTMLDivElement;
   private static instance: App | undefined;
 
-  public static showFeedback(topic?: string) {
-    App.instance?.setState({ showFeedback: topic ?? 'Raven Colonial' });
+  public static showFeedback(topic?: string, body?: string) {
+    App.instance?.setState({ showFeedback: [topic ?? 'Raven Colonial', body] });
   }
 
   public static suspendPageScroll() {
@@ -340,7 +340,7 @@ export class App extends Component<AppProps, AppState> {
           </DialogFooter>
         </Dialog>}
 
-        {!!showFeedback && <ShareFeedback topic={showFeedback} onDismiss={() => this.setState({ showFeedback: undefined })} />}
+        {!!showFeedback && <ShareFeedback topic={showFeedback[0]} body={showFeedback[1]} onDismiss={() => this.setState({ showFeedback: undefined })} />}
       </ThemeProvider>
     );
   }

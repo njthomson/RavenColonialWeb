@@ -64,7 +64,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
     setTimeout(async () => {
 
       // exit early if nothing to re-calc
-      const stales = systems?.filter(s => s.stale) ?? [];
+      const stales = systems?.filter(s => s.stale || s.score < 0) ?? [];
       if (!systems || stales.length === 0) { return; }
 
       try {
@@ -169,9 +169,12 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
       </span>
       <div style={{ float: 'right' }}>
-        <TierPoint tier={2} count={snapshot.tierPoints.tier2} />
-        &nbsp;
-        <TierPoint tier={3} count={snapshot.tierPoints.tier3} />
+        <div>
+          <TierPoint tier={2} count={snapshot.tierPoints.tier2} />
+          &nbsp;
+          <TierPoint tier={3} count={snapshot.tierPoints.tier3} />
+        </div>
+        <div style={{ float: 'right', fontSize: 12, marginTop: 10 }}>Score: {snapshot.score < 0 ? '?' : snapshot.score}</div>
       </div>
 
       <div className={css.siteCardTable}>
@@ -206,15 +209,9 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
           ]
         })}
       </div>
-      {snapshot.stale && <>
-        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 11 }}>
+      {(snapshot.pendingPop || snapshot.stale || snapshot.score < 0) && <>
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>
           <Icon iconName='Processing' />
-          <span>updating</span>
-        </Stack>
-      </>}
-      {snapshot.pendingPop && <>
-        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 11 }}>
-          <Icon iconName='Save' />
           <span>updating</span>
         </Stack>
       </>}

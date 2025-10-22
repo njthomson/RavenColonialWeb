@@ -121,6 +121,7 @@ export interface SysSnapshot {
   stale?: boolean;
   pop?: Pop;
   pendingPop?: boolean;
+  score: number;
 }
 
 export interface History {

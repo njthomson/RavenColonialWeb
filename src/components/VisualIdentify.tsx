@@ -370,7 +370,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         this.setState({ showMissing: false });
       }}
     >
-      <div><Link id='send-feedback' onClick={() => App.showFeedback('Missing site images for: ')}><Icon className='icon-inline' iconName='ImageSearch' style={{ textDecoration: 'none', marginRight: 4 }} />Submit a missing image?</Link></div>
+      <div><Link id='send-feedback' onClick={() => App.showFeedback('Missing site images for: ', `(Optional)\nCredit to Commander: \nSystem/body name: \nSite name: `)} ><Icon className='icon-inline' iconName='ImageSearch' style={{ textDecoration: 'none', marginRight: 4 }} />Submit a missing image?</Link></div>
       <div style={{ textTransform: 'capitalize', cursor: 'default' }}>
         {rows}
       </div>

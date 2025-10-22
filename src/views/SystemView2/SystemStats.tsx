@@ -1,15 +1,16 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useState } from "react";
 import { Chevrons } from "../../components/Chevrons";
 import { TierPoint } from "../../components/TierPoints";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
 import { SysMap2 } from "../../system-model2";
 import { asPosNegTxt } from "../../util";
-import { appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 import { HaulList } from "./HaulList";
 import { ProjectLink2 } from "./ProjectLink2";
 import { SystemView2 } from "./SystemView2";
 import { SysPop } from "./SysPop";
-import { Icon } from "@fluentui/react";
+import { Callout, Icon, IconButton, Link, mergeStyles, Stack } from "@fluentui/react";
+import { App } from "../../App";
 
 // //cargoTypes["Asteroid Starport"].items.
 // // const cargoTypes2 = cargoTypes as Record<string, any>;
@@ -22,8 +23,16 @@ import { Icon } from "@fluentui/react";
 // }, {} as Record<string, Record<string, number>>);
 // console.log(JSON.stringify(foo));
 
+const uls = mergeStyles({
+  ul: {
+    margin: 0,
+    paddingLeft: 16
+  }
+});
+
 export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean; sysView: SystemView2 }> = (props) => {
   const { sysMap } = props;
+  const [showSysScoreInfo, setShowSysScoreInfo] = useState(false);
 
   const buildTypes = sysMap.siteMaps
     .filter(s => s.status === 'plan')
@@ -67,6 +76,70 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
     <div style={{ gridColumn: '2 / span 4' }}>
       {!sysMap.architect && <span style={{ color: 'grey' }}>-</span>}
       {sysMap.architect && <>Cmdr {sysMap.architect}</>}
+    </div>
+
+    <div>System Score:</div>
+    <div style={{ gridColumn: '2 / span 4' }}>
+      <Stack id='sys-score-info' horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'relative', width: 'min-content' }}>
+        <div>{sysMap.systemScore}</div>
+
+        <IconButton
+          className={cn.bBox}
+          iconProps={{ iconName: 'Info', style: { fontSize: 12 } }}
+          style={{ width: 18, height: 18 }}
+          onClick={ev => setShowSysScoreInfo(!showSysScoreInfo)}
+        />
+      </Stack>
+
+      {showSysScoreInfo && <Callout
+        target='#sys-score-info'
+        styles={{
+          beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+          calloutMain: {
+            backgroundColor: appTheme.palette.neutralTertiaryAlt,
+            color: appTheme.palette.neutralDark,
+          }
+        }}
+        onDismiss={() => setShowSysScoreInfo(false)}
+      >
+        <div className={uls}>
+          <div>Be aware: the game updates system scores during the weekly tick.</div>
+          <div>However Raven Colonial calculates system scores in real-time.</div>
+
+          <div>
+            Incorrect score? <Link
+              // style={{ marginLeft: 4, color: appTheme.palette.themeTertiary, fontSize: 11 }}
+              onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: \nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+            >
+              Share feedback
+            </Link>
+          </div>
+
+          <div style={{ margin: '8px 0' }}>Scores for the following buildings are not yet known or need confirmation:</div>
+          <ul>
+            <li>Pirate Base Installation</li>
+            <li>Mining/Industrial Installation</li>
+            <li>Military Installation</li>
+            <li>Security Installation</li>
+            <li>Medical Installation</li>
+            <li>Tourist Installation</li>
+            <li>Space Bar Installation</li>
+            <li>Scientific Surface Outpost</li>
+            <li>All surface Hubs, exception Refinery</li>
+          </ul>
+
+          <div style={{ margin: '8px 0' }}>If you are building any of these and would like to help:</div>
+          <ul>
+            <li>When completing construction, take note of your system score in the game.</li>
+            <li><Link
+              style={{ color: appTheme.palette.themePrimary }}
+              onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `Building: \nScore last week: \nScore this week: \nCalculated system score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+            >
+              After the weekly tick - please share new and old scores
+            </Link></li>
+          </ul>
+        </div>
+      </Callout>}
     </div>
 
     <div>Population:</div>
