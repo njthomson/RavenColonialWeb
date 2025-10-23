@@ -555,7 +555,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "extraction",
-    "score": 2, // TODO: confirm
+    "score": 2,
     "effects": { pop: 0, mpop: 0, sec: 0, wealth: 4, tech: 0, sol: -2, dev: 0 },
     "unlocks": ['System unlock: Industrial Hub']
   },

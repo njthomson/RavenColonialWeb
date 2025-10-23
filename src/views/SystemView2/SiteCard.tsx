@@ -163,7 +163,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
 
         <DialogFooter>
           {pending && <Spinner />}
-          <DefaultButton text='I am docked here' disabled={pending || !store.apiKey || props.sysView.isDirty()} iconProps={{ iconName: 'CheckMark' }} onClick={async () => {
+          <DefaultButton text='I am docked here' disabled={pending || !store.apiKey || props.sysView.isDirty() || !!errMsg} iconProps={{ iconName: 'CheckMark' }} onClick={async () => {
             setPending(true);
             setErrMsg('');
             try {
@@ -175,8 +175,12 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
               }
               setConfirmBuildIt(false);
             } catch (err: any) {
-              console.error(err.stack)
-              setErrMsg(err.message ?? 'Something failed, see browser console');
+              if (err.statusCode === 409) {
+                setErrMsg('A build project has already beed created. Please reload the page.');
+              } else {
+                console.error(err.stack)
+                setErrMsg(err.message ?? 'Something failed, see browser console');
+              }
             } finally {
               setPending(false);
             }
