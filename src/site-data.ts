@@ -1344,4 +1344,4 @@ export const averageHauls: Record<string, number> = {
   "Tourist Settlement: Small": 2849,
 };
 
-console.log(siteTypes.slice(5).map(st => `${st.score ?? '■'}: ${st.displayName2}`).join(`\n`));
+console.log(`System scores per building:\n` + siteTypes.slice(5).map(st => `${st.score ?? '■'}: ${st.displayName2}`).join(`\n`));
