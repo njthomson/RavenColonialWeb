@@ -231,7 +231,7 @@ export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
   let score = 0;
   Array.from(siteMaps)
     .filter(site => site.status === 'complete')
-    .sort((a, b) => a.buildType?.localeCompare(b.buildType))
+    .sort((a, b) => a.type.displayName2.localeCompare(b.type.displayName2) || a.buildType?.localeCompare(b.buildType))
     .forEach(site => {
       score += site.type.score ?? 0;
       lines.push([
