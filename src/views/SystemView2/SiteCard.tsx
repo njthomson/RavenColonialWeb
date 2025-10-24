@@ -21,7 +21,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
   const isPinned = props.sysView.state.pinnedSite?.id === site.id;
   const couldBuildIt = props.site.status !== 'complete' && !props.site.buildId && !!props.site.buildType;
   const couldRemoveDupes = props.site.status !== 'plan' && !!props.site.buildId;
-  const vagueBuildType = props.site.buildType.endsWith('?');
+  const vagueBuildType = props.site.buildType?.endsWith('?');
 
   return <div>
 
