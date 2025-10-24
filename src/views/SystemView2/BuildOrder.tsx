@@ -255,19 +255,21 @@ const getTierPointsDelta = (s: SiteMap2, tier: number, tp: TierPoints, first: bo
     p = s.type.gives.count;
   }
 
+  let title = '';
   let deficit = false;
   if (tier === 2) {
     tp.tier2 += p;
+    title = `Current total: ${tp.tier2}\n`;
     deficit = p < 0 && tp.tier2 < 0;
   } else {
     tp.tier3 += p;
+    title = `Current total: ${tp.tier3}\n`;
     deficit = p < 0 && tp.tier3 < 0;
   }
 
   // exit early if nothing to render
   if (!p) { return null; }
 
-  let title = '';
   const style = {} as CSSProperties;
   if (taxed) {
     title = 'Points tax applied.'
