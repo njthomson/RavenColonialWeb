@@ -224,7 +224,7 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
     + `------|-----------|------|----------|----------\n`;
 
   scoreTxt += Array.from(siteMaps)
-    .sort((a, b) => a.buildType.localeCompare(b.buildType))
+    .sort((a, b) => a.buildType?.localeCompare(b.buildType))
     .map(site => ` +${site.type.score ?? '■'} | ${site.name} | ${site.type.displayName2} | ${site.buildType} | ${site.body?.name.replace(sys.name, '').replaceAll(' ', '') || sys.name}`)
     .join(`\n`);
   scoreTxt += `\n= ${systemScore} | ${sys.name}\n\n`;
