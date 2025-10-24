@@ -1,4 +1,4 @@
-import { DefaultButton, PrimaryButton } from '@fluentui/react';
+import { DefaultButton, Link, PrimaryButton } from '@fluentui/react';
 import { RecentProjects } from '../components';
 import { store } from '../local-storage';
 import { Commander } from './Commander/Commander';
@@ -26,7 +26,7 @@ export class Home extends Component<HomeProps, HomeState> {
           {renderQuote()}
 
           <div className='home-box'>
-            <DefaultButton iconProps={{ iconName: 'AuthenticatorApp' }} text='Login' onClick={() => document.getElementById('current-cmdr')?.click()} /> to see your projects and assignments
+            <DefaultButton iconProps={{ iconName: 'SignIn' }} text='Login' onClick={() => document.getElementById('current-cmdr')?.click()} /> to see your projects and assignments
           </div>
 
           <ShowGlobalStats />
@@ -52,7 +52,7 @@ export class Home extends Component<HomeProps, HomeState> {
 }
 
 
-const renderQuote = () => {
+export const renderQuote = () => {
   return <div className='hint' style={{ textAlign: 'center', minWidth: 400, flexGrow: 1, margin: 8 }}>
     From the earliest times in history, mankind has looked to expand.  We have sought to explore and thrive.
     <br />
@@ -63,5 +63,6 @@ const renderQuote = () => {
       window.location.assign("#sys");
       window.location.reload();
     }} />
+    &nbsp;or view an existing system: <Link href='https://ravencolonial.com/#sys=HIP%2090297' target='_blank'>HIP 90297</Link>
   </div>
 };

@@ -1,6 +1,6 @@
 import './ViewAll.css';
 import '../ProjectView/ProjectView.css';
-import { ActionButton, Checkbox, CommandBar, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
+import { ActionButton, Checkbox, CommandBar, DefaultButton, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
@@ -12,6 +12,8 @@ import { FleetCarrier } from '../FleetCarrier';
 import { CopyButton } from '../../components/CopyButton';
 import { ModalCommander } from '../../components/ModalCommander';
 import { HaulSize } from '../../components/BigSiteTable/BigSiteTable';
+import { redirectToFrontierAuth } from '../../api/auth';
+import { renderQuote } from '../Home';
 
 interface ViewAllProps {
 }
@@ -217,10 +219,11 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     const fcRemaining = cargoRemaining - cargoOnHand;
 
     if (!store.cmdrName) {
-      return <div className='view-all'>
+      return <div className='contain-vert' style={{ minWidth: 800 }}>
+        {renderQuote()}
 
-        <div style={{ margin: 20 }}>
-          Commander name needed
+        <div className='home-box'>
+          <DefaultButton iconProps={{ iconName: 'SignIn' }} text='Login' onClick={() => redirectToFrontierAuth()} /> to see your projects.
         </div>
 
         {!hideLoginPrompt && <TeachingBubble
@@ -243,7 +246,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             onClick: () => this.setState({ hideLoginPrompt: true }),
           }}
         >
-          You must enter a Commander name to use this tool.
+          You must login through Frontier to save and fully use this tool.
         </TeachingBubble>}
       </div>;
     }

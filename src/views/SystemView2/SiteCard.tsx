@@ -16,10 +16,12 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
   const [confirmBuildIt, setConfirmBuildIt] = useState(false);
   const [pending, setPending] = useState(false);
   const [errMsg, setErrMsg] = useState('');
+  const [buildType, setBuildType] = useState<string>('');
   const site = props.site;
   const isPinned = props.sysView.state.pinnedSite?.id === site.id;
   const couldBuildIt = props.site.status !== 'complete' && !props.site.buildId && !!props.site.buildType;
   const couldRemoveDupes = props.site.status !== 'plan' && !!props.site.buildId;
+  const vagueBuildType = props.site.buildType.endsWith('?');
 
   return <div>
 
@@ -145,9 +147,26 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
         dialogContentProps={{ title: 'Ready to build?', subText: 'If you are currently docked at this construction site, a build project can be created using data from Fontier.' }}
         minWidth={480}
       >
-        <div style={{ paddingBottom: 16 }}>
+        {!vagueBuildType && <div style={{ paddingBottom: 16 }}>
           {getSiteType(props.site.buildType, true)?.displayName2} ({props.site.buildType})
-        </div>
+        </div>}
+
+        {vagueBuildType && <div>
+          <div style={{ color: appTheme.palette.yellow }}>
+            <Icon className='icon-inline' iconName='Warning' style={{ fontSize: 16, marginRight: 4 }} />
+            <span>Please choose an explicit build type:</span>
+          </div>
+          <Stack horizontal wrap tokens={{ childrenGap: 8 }} style={{ margin: 8 }}>
+            {getSiteType(site.buildType)?.subTypes.map(st => <ActionButton
+              className={cn.bBox2}
+              key={`mbt-${st}`}
+              iconProps={{ iconName: buildType === st ? 'SkypeCheck' : undefined }}
+              style={{ height: 22, textTransform: 'capitalize' }}
+              text={st}
+              onClick={() => setBuildType(st)}
+            />)}
+          </Stack>
+        </div>}
 
         {props.sysView.isDirty() && <div style={{ color: appTheme.palette.yellow }}>
           <Icon className='icon-inline' iconName='Warning' style={{ fontSize: 16, marginRight: 4 }} />
@@ -163,12 +182,12 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
 
         <DialogFooter>
           {pending && <Spinner />}
-          <DefaultButton text='I am docked here' disabled={pending || !store.apiKey || props.sysView.isDirty() || !!errMsg} iconProps={{ iconName: 'CheckMark' }} onClick={async () => {
+          <DefaultButton text='I am docked here' disabled={pending || !store.apiKey || props.sysView.isDirty() || !!errMsg || (vagueBuildType && !buildType)} iconProps={{ iconName: 'CheckMark' }} onClick={async () => {
             setPending(true);
             setErrMsg('');
             try {
               // create the project
-              const newProject = await api.project.createFrom(props.site.id);
+              const newProject = await api.project.createFrom(props.site.id, buildType);
               // inject buildId in various places, without triggering dirtyness
               if (newProject?.buildId) {
                 props.sysView.siteBuilding(props.site.id, newProject);
@@ -177,6 +196,11 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             } catch (err: any) {
               if (err.statusCode === 409) {
                 setErrMsg('A build project has already beed created. Please reload the page.');
+              } else if (err.statusCode === 424) {
+                // show special message for Epic users
+                window.alert(`✋ Frontier/Epic account link expired?\n\nPlease start playing the game with your Epic account and try again.`);
+              } else if (err.statusCode === 418) {
+                window.alert(`Frontier servers appear to be offline. Please try again later.`);
               } else {
                 console.error(err.stack)
                 setErrMsg(err.message ?? 'Something failed, see browser console');

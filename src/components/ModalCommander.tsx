@@ -44,7 +44,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     super(props);
 
     const cmdr = store.cmdr;
-    this.largeMax = cmdr?.largeMax ?? 784;
+    this.largeMax = cmdr?.largeMax ?? 1298;
     this.medMax = cmdr?.medMax ?? 400;
 
     this.state = {
@@ -132,7 +132,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 autoFocus
                 name='cmdr'
                 disabled={true}
-                value={cmdr}
+                value={cmdr ?? 'login needed'}
                 onChange={(_, v) => this.setState({ cmdr: v ?? '' })}
                 onKeyDown={(ev) => {
                   if (ev.key === 'Enter') { this.onSave(); }
@@ -143,7 +143,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
               {showLogin && <ActionButton
                 className={`${cn.bBox2} ${cn.bGrey}`}
                 style={{ height: 32, margin: '8px 0 8px 8px', minWidth: 88 }}
-                iconProps={{ iconName: 'AuthenticatorApp' }}
+                iconProps={{ iconName: 'SignIn' }}
                 text='Login'
                 onClick={() => {
                   if (cmdr && !apiKey) {
@@ -228,6 +228,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
                 padding: 2,
                 height: 26,
               }}
+              disabled={fetchingFCs || !apiKey}
               onClick={() => {
                 this.setState({
                   showAddFC: true

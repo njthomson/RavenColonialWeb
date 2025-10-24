@@ -257,6 +257,14 @@ export class App extends Component<AppProps, AppState> {
           farItems={[
             {
               className: cn.bBox,
+              id: 'view-table', key: 'tab',
+              iconProps: { iconName: 'ViewListGroup' },
+              iconOnly: true,
+              title: 'The table of everything',
+              onClick: () => window.open('/table', 'table'),
+            },
+            {
+              className: cn.bBox,
               id: 'view-vis', key: 'vis',
               iconProps: { iconName: 'View' },
               iconOnly: true,

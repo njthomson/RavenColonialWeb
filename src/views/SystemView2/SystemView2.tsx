@@ -285,7 +285,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   doImport = (type?: string) => {
-    if (!store.cmdrName) {
+    if (!store.cmdrName && this.state.sysOriginal !== undefined) {
       console.warn('You need to sign in in for this');
       return;
     }
@@ -673,7 +673,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           onClick: () => this.setState({ hideLoginPrompt: true }),
         }}
       >
-        You must enter a Commander name to save and fully use this tool.
+        You must login through Frontier to save and fully use this tool.
       </TeachingBubble >
     </>;
   }
@@ -1341,7 +1341,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       }
     }
 
-    if (slotCountUnknown.length > 0) {
+    if (slotCountUnknown.length > 0 && !anonymous) {
       slotCountUnknown.sort((ba, bb) => ba.num - bb.num);
       validations.push(<div key={`valSlotsUnknown`} id={`valSlotsUnknown`}>
         » There are {slotCountUnknown.length} bodies with unknown slot counts:
