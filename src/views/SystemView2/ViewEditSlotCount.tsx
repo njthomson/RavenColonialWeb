@@ -52,12 +52,14 @@ const mbsm = mergeStyles({
 });
 
 
-export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void, style?: CSSProperties }> = (props) => {
+export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void, style?: CSSProperties, hasPrimaryPort?: boolean }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
   const id = `view-edit-slots-${Date.now()}`;
-  const tooMany = props.max >= 0 && props.current > props.max;
+  let diff = props.current - props.max;
+  if (props.hasPrimaryPort && diff === 1) { diff -= 1; } // allow off by one, if we have the primary port
+  const tooMany = props.max >= 0 && diff > 0;
   const unknown = props.max === -1;
 
   const onSelect = (count: number) => {

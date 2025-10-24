@@ -667,6 +667,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const hasSites = !!orbitals?.length || !!surfaces?.length;
   const innerBorders = hasSites ? `2px dashed ${appTheme.palette.themeTertiary}` : undefined;
   const bottomGap = 10;
+  const hasPrimaryPort = node.map?.sites.some(s => s.id === sysView.state.orderIDs[0]);
 
   let bodyTitle = `${node.body.name}\nClick for more details`;
   const isLandable = node.body.features.includes(BodyFeature.landable);
@@ -711,6 +712,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     current={orbitals?.length ?? 0}
     isOrbital={true}
     showIcon={!hasSites}
+    hasPrimaryPort={hasPrimaryPort}
     style={{ marginLeft: hasSites ? undefined : 4 }}
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, true)}
   />;

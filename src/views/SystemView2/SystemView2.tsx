@@ -1275,7 +1275,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSystemValidationWarnings() {
-    const { sysMap } = this.state;
+    const { sysMap, orderIDs } = this.state;
     const { tierPoints, bodyMap, architect, reserveLevel, sites, siteMaps } = sysMap;
 
     const validations = [];
@@ -1332,7 +1332,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
       // warn if there are more sites than slots
       if (bodySlots) {
-        if (bodySlots[0] >= 0 && bm.orbital.length > bodySlots[0]) {
+        let diff = bm.orbital.length - bodySlots[0];
+        if (diff === 1 && bm.sites.some(s => s.id === orderIDs[0])) { diff -= 1; } // allow off by one, if we have the primary port
+        if (bodySlots[0] >= 0 && diff > 0) {
           slotTooMany.add(b);
         }
         if (bodySlots[1] >= 0 && bm.surface.length > bodySlots[1]) {
