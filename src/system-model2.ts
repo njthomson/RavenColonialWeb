@@ -158,9 +158,6 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
 
   let siteMaps: SiteMap2[] = [];
   let systemScore = 0;
-  let scoreTxt = `System score:\n`
-    + `score | site name | type | sub-type | body name\n`
-    + `------|-----------|------|----------|----------`;
 
   // first: group sites by their bodies
   if (!sys.sites) { sys.sites = []; }
@@ -196,13 +193,10 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
 
     if (site.status === 'complete' || useIncomplete) {
       systemScore += site.type.score ?? 0;
-      scoreTxt += `\n +${site.type.score ?? '■'} | ${site.name} | ${site.type.displayName2} | ${site.buildType} | ${site.body?.name.replace(sys.name, '').replaceAll(' ', '') || sys.name}`;
     }
     return map;
   }, {} as Record<string, BodyMap2>);
 
-  scoreTxt += `\n= ${systemScore} | ${sys.name}`;
-  console.log(scoreTxt);
   // // sort bodies name but force Unknown to be first in the list
   // const sortedKeys = Object.keys(bodies)
   //   .filter(n => n !== unknown)
@@ -225,6 +219,17 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
     siteMaps, bodyMap, countSites, systemScore,
     // systemName, systemAddress, architect, bodies, primaryPort, allSites, countActive, countSites,
   };
+  let scoreTxt = `\n\nSystem score:\n`
+    + `score | site name | type | sub-type | body name\n`
+    + `------|-----------|------|----------|----------\n`;
+
+  scoreTxt += Array.from(siteMaps)
+    .sort((a, b) => a.buildType.localeCompare(b.buildType))
+    .map(site => ` +${site.type.score ?? '■'} | ${site.name} | ${site.type.displayName2} | ${site.buildType} | ${site.body?.name.replace(sys.name, '').replaceAll(' ', '') || sys.name}`)
+    .join(`\n`);
+  scoreTxt += `\n= ${systemScore} | ${sys.name}\n\n`;
+  console.log(scoreTxt);
+
   return sysMap;
 };
 
