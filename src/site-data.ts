@@ -694,7 +694,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
-    "score": undefined, // TODO
+    "score": 4, // TODO: confirm
     "effects": { pop: 0, mpop: 0, sec: -2, wealth: 3, tech: 0, sol: 3, dev: 0 },
     "unlocks": [
       'System unlock: Commodities at Pirate, Scientific or Military Outposts',
@@ -1343,3 +1343,5 @@ export const averageHauls: Record<string, number> = {
   "Tourist Settlement: Medium": 5695,
   "Tourist Settlement: Small": 2849,
 };
+
+console.log(siteTypes.slice(5).map(st => `${st.score ?? '■'}: ${st.displayName2}`).join(`\n`));

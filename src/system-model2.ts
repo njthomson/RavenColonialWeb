@@ -158,6 +158,7 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
 
   let siteMaps: SiteMap2[] = [];
   let systemScore = 0;
+  let scoreTxt = `System score:`;
 
   // first: group sites by their bodies
   if (!sys.sites) { sys.sites = []; }
@@ -193,10 +194,13 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
 
     if (site.status === 'complete' || useIncomplete) {
       systemScore += site.type.score ?? 0;
+      scoreTxt += `\n\t+${site.type.score} : ${site.buildType} (${site.type.displayName2} on: ${site.body?.name.replace(sys.name, '').replaceAll(' ', '') || sys.name})`;
     }
     return map;
   }, {} as Record<string, BodyMap2>);
 
+  scoreTxt += `\n\t= ${systemScore} : ${sys.name}`;
+  console.log(scoreTxt);
   // // sort bodies name but force Unknown to be first in the list
   // const sortedKeys = Object.keys(bodies)
   //   .filter(n => n !== unknown)
