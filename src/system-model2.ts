@@ -226,7 +226,7 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
 export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
 
   const lines: string[][] = [];
-  lines.push(['score', 'site name', 'type', 'sub-type', 'body name']);
+  lines.push(['score', 'type', 'sub-type', 'site name', 'body name']);
 
   let score = 0;
   Array.from(siteMaps)
@@ -236,9 +236,9 @@ export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
       score += site.type.score ?? 0;
       lines.push([
         `  +${site.type.score ?? '■'}`,
-        site.name,
         site.type.displayName2,
         site.buildType,
+        site.name,
         site.body?.name || sys.name,
       ]);
     });
