@@ -217,20 +217,50 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
   const sysMap = {
     ...sys,
     siteMaps, bodyMap, countSites, systemScore,
-    // systemName, systemAddress, architect, bodies, primaryPort, allSites, countActive, countSites,
   };
-  let scoreTxt = `\n\nSystem score:\n`
-    + `score | site name | type | sub-type | body name\n`
-    + `------|-----------|------|----------|----------\n`;
-
-  scoreTxt += Array.from(siteMaps)
-    .sort((a, b) => a.buildType?.localeCompare(b.buildType))
-    .map(site => ` +${site.type.score ?? '■'} | ${site.name} | ${site.type.displayName2} | ${site.buildType} | ${site.body?.name.replace(sys.name, '').replaceAll(' ', '') || sys.name}`)
-    .join(`\n`);
-  scoreTxt += `\n= ${systemScore} | ${sys.name}\n\n`;
-  console.log(scoreTxt);
 
   return sysMap;
+};
+
+/** log a diagnostic audit for the system score - completed sites only */
+export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
+
+  const lines: string[][] = [];
+  lines.push(['score', 'site name', 'type', 'sub-type', 'body name']);
+
+  let score = 0;
+  Array.from(siteMaps)
+    .filter(site => site.status === 'complete')
+    .sort((a, b) => a.buildType?.localeCompare(b.buildType))
+    .forEach(site => {
+      score += site.type.score ?? 0;
+      lines.push([
+        `  +${site.type.score ?? '■'}`,
+        site.name,
+        site.type.displayName2,
+        site.buildType,
+        site.body?.name || sys.name,
+      ]);
+    });
+
+  const cw = lines.reduce((m, l) => {
+    for (let n = 0; n < 5; n++) {
+      m[n] = Math.max(m[n], l[n]?.length ?? 0);
+    }
+    return m;
+  }, [0, 0, 0, 0, 0])
+
+  lines.splice(1, 0, cw.map(n => '-'.repeat(n)));
+  lines.push(cw.map(n => '-'.repeat(n)));
+
+  let scoreTxt = lines.map(l => {
+    return l.map((c, i) => (c ?? '?').padEnd(cw[i])).join(' | ');
+  })
+    .join(`\n`);
+
+  scoreTxt += `\n` + `= ${score}`.padEnd(cw[0]) + ` | ${sys.name}\n\n`;
+  // console.log(`\n${scoreTxt}\n`);
+  return scoreTxt;
 };
 
 export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {

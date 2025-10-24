@@ -2,14 +2,14 @@ import { FunctionComponent, useState } from "react";
 import { Chevrons } from "../../components/Chevrons";
 import { TierPoint } from "../../components/TierPoints";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
-import { SysMap2 } from "../../system-model2";
-import { asPosNegTxt } from "../../util";
+import { getSysScoreDiagnostic, SysMap2 } from "../../system-model2";
+import { asPosNegTxt, isMobile } from "../../util";
 import { appTheme, cn } from "../../theme";
 import { HaulList } from "./HaulList";
 import { ProjectLink2 } from "./ProjectLink2";
 import { SystemView2 } from "./SystemView2";
 import { SysPop } from "./SysPop";
-import { Callout, Icon, IconButton, Link, mergeStyles, Stack } from "@fluentui/react";
+import { Callout, Icon, IconButton, Link, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
 import { App } from "../../App";
 
 // //cargoTypes["Asteroid Starport"].items.
@@ -33,6 +33,7 @@ const uls = mergeStyles({
 export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean; sysView: SystemView2 }> = (props) => {
   const { sysMap } = props;
   const [showSysScoreInfo, setShowSysScoreInfo] = useState(false);
+  const [scoreAudit, setScoreAudit] = useState(false);
 
   const buildTypes = sysMap.siteMaps
     .filter(s => s.status === 'plan')
@@ -102,11 +103,12 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
         }}
         onDismiss={() => setShowSysScoreInfo(false)}
       >
-        <div className={uls}>
+        <div className={uls} style={{ paddingLeft: 30, cursor: 'default' }}>
+          <Icon iconName='Lightbulb' style={{ float: 'left', fontSize: 28, marginTop: 4, marginLeft: -30 }} onDoubleClick={(ev) => { setScoreAudit(true); ev.preventDefault(); }} />
           <div>Be aware: the game updates system scores during the weekly tick.</div>
           <div>However Raven Colonial calculates system scores in real-time.</div>
 
-          <div>
+          <div style={{ marginTop: 8 }}>
             Incorrect score? <Link
               // style={{ marginLeft: 4, color: appTheme.palette.themeTertiary, fontSize: 11 }}
               onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: \nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
@@ -140,6 +142,24 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
           </ul>
         </div>
       </Callout>}
+
+      {!!scoreAudit && <Panel
+        isOpen
+        isLightDismiss
+        headerText='System score audit:'
+        allowTouchBodyScroll={isMobile()}
+        type={PanelType.custom}
+        customWidth='1000px'
+        styles={{
+          header: { textTransform: 'capitalize', cursor: 'default' },
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
+        }}
+        onDismiss={(ev: any) => setScoreAudit(false)}
+      >
+        <pre style={{ cursor: 'default', color: appTheme.palette.themePrimary, fontSize: 12 }}>
+          {getSysScoreDiagnostic(props.sysMap, props.sysMap.siteMaps)}
+        </pre>
+      </Panel>}
     </div>
 
     <div>Population:</div>
