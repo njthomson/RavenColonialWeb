@@ -3,7 +3,7 @@ import { FunctionComponent } from "react";
 import { appTheme } from "../theme";
 import { asPosNegTxt } from "../util";
 
-export const TierPoint: FunctionComponent<{ tier: number, count: number, disabled?: boolean }> = (props) => {
+export const TierPoint: FunctionComponent<{ tier: number, count: number, disabled?: boolean, titlePrefix?: string }> = (props) => {
   if (props.tier !== 2 && props.tier !== 3) return null;
 
   let { disabled } = props;
@@ -11,7 +11,10 @@ export const TierPoint: FunctionComponent<{ tier: number, count: number, disable
     disabled = true;
   }
 
-  const title = disabled ? '' : `${asPosNegTxt(props.count)} Tier ${props.tier} points`;
+  const title = disabled ? '' :
+    props.titlePrefix
+      ? `${props.titlePrefix} ${asPosNegTxt(Math.abs(props.count))} Tier ${props.tier} points`
+      : `${asPosNegTxt(props.count)} Tier ${props.tier} points`;
 
   let iconColor = props.disabled ? 'grey' : (props.tier === 2 ? appTheme.palette.yellow : appTheme.palette.green);
 

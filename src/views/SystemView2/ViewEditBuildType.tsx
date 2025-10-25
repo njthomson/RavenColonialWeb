@@ -8,6 +8,7 @@ import { store } from "../../local-storage";
 import { App } from "../../App";
 import { CalloutMsg } from "../../components/CalloutMsg";
 import { isTypeValid2, SysMap2 } from "../../system-model2";
+import { TierPoint } from "../../components/TierPoints";
 
 interface ViewEditBuildTypeProps {
   buildType: string;
@@ -239,7 +240,10 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
         }
       }}
     >
-      <span style={{ fontSize: 10, float: 'right', color: appTheme.palette.themeSecondary }}>Tier: {type.tier}</span>
+      <div style={{ float: 'right', fontSize: 12 }}>
+        {type.needs.count > 0 && <TierPoint tier={type.needs.tier} count={-type.needs.count} titlePrefix='Needs' />}
+        {type.gives.count > 0 && <TierPoint tier={type.gives.tier} count={type.gives.count} titlePrefix='Gives' />}
+      </div>
 
       <Stack horizontal verticalAlign='center' style={{ color: appTheme.palette.themePrimary }}>
         <span>{type.displayName2}</span>

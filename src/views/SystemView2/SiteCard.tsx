@@ -11,6 +11,7 @@ import { ViewEditBuildStatus } from "./ViewEditStatus";
 import { ProjectLink2 } from "./ProjectLink2";
 import { store } from '../../local-storage';
 import { getSiteType } from '../../site-data';
+import { TierPoint } from '../../components/TierPoints';
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
   const [confirmBuildIt, setConfirmBuildIt] = useState(false);
@@ -105,6 +106,11 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             <ProjectLink2 site={site} sysView={props.sysView} />
           </Stack>
 
+        </div>
+
+        <div style={{ float: 'right', marginTop: 2 }}>
+          {site.type.needs.count > 0 && <TierPoint tier={site.type.needs.tier} count={-site.type.needs.count} titlePrefix='Needs' />}
+          {site.type.gives.count > 0 && <TierPoint tier={site.type.gives.tier} count={site.type.gives.count} titlePrefix='Gives' />}
         </div>
 
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>

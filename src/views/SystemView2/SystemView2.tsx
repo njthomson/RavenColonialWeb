@@ -1389,7 +1389,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     // check for missing preReq's - grouping them by what they are missing
     const mapMissingPreReq: Record<string, SiteMap2[]> = {};
     for (const s of siteMaps) {
-      if (s.type.preReq && !hasPreReq2(sysMap, s.type)) {
+      if (s.type.preReq && !hasPreReq2(sysMap.siteMaps, s.type)) {
         mapMissingPreReq[s.type.preReq] = [...(mapMissingPreReq[s.type.preReq] ?? []), s];
       }
     }

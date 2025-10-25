@@ -1,8 +1,8 @@
-import { DefaultButton, Icon, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
+import { Callout, DefaultButton, DirectionalHint, Icon, IconButton, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
 import { Component, CSSProperties, FunctionComponent } from "react";
 import { appTheme, cn } from "../../theme";
 import { asPosNegTxt, isMobile } from "../../util";
-import { SiteMap2, sumTierPoints, SysMap2, TierPoints } from "../../system-model2";
+import { hasPreReq2, isTypeValid2, SiteMap2, SiteTypeValidity, sumTierPoints, SysMap2, TierPoints } from "../../system-model2";
 import { getSiteType } from "../../site-data";
 import { TierPoint } from "../../components/TierPoints";
 
@@ -35,9 +35,11 @@ interface BuildOrderProps {
 interface BuildOrderState {
   map: Record<string, SiteMap2>
   sortedIDs: string[];
-  dragId?: string;
+  dragId: string | undefined;
   dragging: boolean;
   tierPoints: TierPoints;
+  targetId?: string;
+  targetValidity?: SiteTypeValidity,
 }
 
 export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
@@ -55,6 +57,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     this.state = {
       map: map,
       sortedIDs: [...props.orderIDs],
+      dragId: undefined,
       dragging: false,
       tierPoints: tierPoints,
     };
@@ -74,8 +77,9 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
   }
 
   render() {
-    const { map, sortedIDs, dragId, dragging, tierPoints } = this.state;
+    const { map, sortedIDs, dragId, dragging, tierPoints, targetId, targetValidity } = this.state;
 
+    const priorSiteMaps: SiteMap2[] = [];
     const tp: TierPoints = { tier2: 0, tier3: 0 };
     const rows = sortedIDs.map((id, i) => {
       const s = map[id];
@@ -83,8 +87,14 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       if (dragId === id) {
         backgroundColor = appTheme.palette.blackTranslucent40;
       }
+      const validity = isTypeValid2(undefined, s.type, undefined);
+      validity.isValid = !s.type.preReq || hasPreReq2(priorSiteMaps, s.type);
+      const showValidityHint = !!validity.msg || !!validity?.unlocks;
+      priorSiteMaps.push(s);
+
+      const key = `bol${id.substring(1)}${i}`;
       return <tr
-        key={`bol${id}${i}`}
+        key={key}
         style={{
           backgroundColor: backgroundColor,
           cursor: 'row-resize',
@@ -95,7 +105,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         }}
         onMouseDown={ev => {
           ev.preventDefault();
-          this.setState({ dragging: true, dragId: id });
+          this.setState({ dragging: true, dragId: id, targetId: undefined });
         }}
         onMouseUp={ev => {
           ev.preventDefault();
@@ -110,7 +120,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       >
         <td className={`cr ${cn.br}`}>{i + 1}</td>
 
-        <td>
+        <td style={{ position: 'relative' }}>
           <span style={{ color: s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.accent, marginRight: 8 }}>
             <Icon iconName={s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
             &nbsp;
@@ -121,6 +131,18 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           {i === 0 && <Icon iconName='CrownSolid' style={{ marginLeft: 8 }} />}
           {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
           {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
+          {showValidityHint && <IconButton
+            id={key}
+            className={cn.bBox}
+            iconProps={{ iconName: validity.isValid ? 'Info' : 'Warning', style: { fontSize: 14 } }}
+            style={{ position: 'absolute', right: 10, width: 20, height: 20, color: validity.isValid ? undefined : appTheme.palette.yellow }}
+            onClick={() => {
+              this.setState({
+                targetId: targetId === key ? undefined : key,
+                targetValidity: validity,
+              });
+            }}
+          />}
         </td>
 
         <td className={`${cn.br}`}>
@@ -129,7 +151,6 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
               iconName={dragId === id ? 'GripperBarHorizontal' : 'GripperDotsVertical'}
               style={{ cursor: 'row-resize', }}
             />}
-
           </Stack>
         </td>
         <td className={`cc dc ${cn.br}`}>{getTierPointsDelta(s, 2, tp, i === 0)}</td>
@@ -139,7 +160,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     });
 
     // and add a totals row
-    rows.push(<tr style={{ fontSize: 16 }}>
+    rows.push(<tr key='bol-totals' style={{ fontSize: 16 }}>
       <td className={cn.bt} />
       <td className={`${cn.bt} ${cn.br}`} style={{ textAlign: 'right' }} colSpan={2}>Total points:</td>
       <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: tierPoints.tier2 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
@@ -215,6 +236,32 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
             {rows}
           </tbody>
         </table>
+        {!!targetId && targetValidity && <Callout
+          target={`#${targetId}`}
+          directionalHint={DirectionalHint.topRightEdge}
+          gapSpace={4}
+          styles={{
+            beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+            calloutMain: {
+              backgroundColor: appTheme.palette.neutralTertiaryAlt,
+              color: appTheme.palette.neutralDark,
+            }
+          }}
+          onDismiss={() => this.setState({ targetId: '' })}
+        >
+          {targetValidity.msg && <Stack horizontal verticalAlign='center'>
+            <Icon iconName={targetValidity.isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: targetValidity.isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
+            <span>{targetValidity.msg}</span>
+          </Stack>}
+          {targetValidity.unlocks && <>
+            {targetValidity.unlocks.map(t => {
+              return <div>
+                <Icon iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ marginRight: 4 }} />
+                <span>{t}</span>
+              </div>;
+            })}
+          </>}
+        </Callout>}
       </Panel>
     </>;
   }

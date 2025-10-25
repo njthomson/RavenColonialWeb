@@ -1,7 +1,7 @@
 import { SysSnapshot } from './api/v2-system';
 import { calculateColonyEconomies2 } from './economy-model2';
 import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
-import { SysMap } from './system-model';
+import { SiteMap, SysMap } from './system-model';
 import { BodyFeature } from './types';
 import { Bod, BT, Site, Sys } from './types2';
 
@@ -510,7 +510,13 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
   }
 };
 
-export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType | undefined, priorType: SiteType | undefined) => {
+export interface SiteTypeValidity {
+  isValid: boolean;
+  msg?: string;
+  unlocks?: string[];
+}
+
+export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType | undefined, priorType: SiteType | undefined): SiteTypeValidity => {
   if (!type) { return { isValid: true }; }
 
   if (sysMap) {
@@ -540,7 +546,7 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
   }
 
   if (type.preReq) {
-    const isValid = hasPreReq2(sysMap, type);
+    const isValid = hasPreReq2(sysMap?.siteMaps, type);
     return {
       isValid: isValid,
       msg: 'Requires ' + mapName[type.preReq],
@@ -558,39 +564,39 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
   return { isValid: true };
 }
 
-export const hasPreReq2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType) => {
-  if (!sysMap) { return true; }
+export const hasPreReq2 = (siteMaps: SiteMap2[] | SiteMap[] | undefined, type: SiteType) => {
+  if (!siteMaps) { return true; }
 
   switch (type.preReq) {
     case 'satellite':
-      return sysMap.siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType?.startsWith(n)));
 
     case 'comms':
-      return sysMap.siteMaps.some(s => ["pistis", "soter", "aletheia"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["pistis", "soter", "aletheia"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementAgr':
-      return sysMap.siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].some(n => s.buildType?.startsWith(n)));
 
     case 'installationAgr':
-      return sysMap.siteMaps.some(s => ["demeter"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["demeter"].some(n => s.buildType?.startsWith(n)));
 
     case 'installationMil':
-      return sysMap.siteMaps.some(s => ["vacuna", "alastor"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["vacuna", "alastor"].some(n => s.buildType?.startsWith(n)));
 
     case 'outpostMining':
-      return sysMap.siteMaps.some(s => ["euthenia", "phorcys"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["euthenia", "phorcys"].some(n => s.buildType?.startsWith(n)));
 
     case 'relay':
-      return sysMap.siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementBio':
-      return sysMap.siteMaps.some(s => ["pheobe", "asteria", "caerus", "chronos"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["pheobe", "asteria", "caerus", "chronos"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementTourism':
-      return sysMap.siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
 
     case 'settlementMilitary':
-      return sysMap.siteMaps.some(s => ["ioke", "bellona", "enyo", "polemos", "minerva"].some(n => s.buildType?.startsWith(n)));
+      return siteMaps.some(s => ["ioke", "bellona", "enyo", "polemos", "minerva"].some(n => s.buildType?.startsWith(n)));
 
     default:
       console.error(`Unexpected preReq: ${type.preReq}`)
