@@ -79,8 +79,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   getDefaultCargo(linkedFC: KnownFC[], hideFCColumns: boolean) {
     const defaultCargo: Cargo = {
       ...this.props.cargo,
-      // always show tritium
-      tritium: 0,
+      // always show tritium? Maybe not
+      // tritium: 0,
     };
 
     if (!hideFCColumns || this.state?.zeroNeed) {

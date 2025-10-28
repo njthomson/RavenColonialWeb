@@ -885,15 +885,19 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           this.setState({ assignCommodity: key });
           delayFocus('assign-cmdr');
         },
-      },
-      { key: 'divider_1', itemType: ContextualMenuItemType.Divider, },
-      {
-        key: 'toggle-ready',
-        text: isReady ? 'Clear ready' : 'Mark ready',
-        onClick: () => this.onToggleReady(this.state.proj!.buildId, key, isReady),
-        iconProps: { iconName: 'StatusCircleCheckmark' },
       }
     ];
+
+    if (need > 0 || isReady) {
+      menuItems.push({
+        key: 'toggle-ready',
+        text: isReady ? 'Clear ready' : 'Mark ready',
+        onClick: () => {
+          this.onToggleReady(this.state.proj!.buildId, key, isReady);
+        },
+        iconProps: { iconName: 'StatusCircleCheckmark' },
+      });
+    }
 
     if (need > 0) {
       menuItems.push({

@@ -745,7 +745,7 @@ export const siteTypes: SiteType[] = [
     "gives": { tier: 2, count: 1 },
     "inf": "hightech",
     "fixed": "hightech",
-    "score": undefined, // TODO
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 5, sol: 0, dev: 1 }
   },
   {
