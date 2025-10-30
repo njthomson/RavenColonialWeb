@@ -57,29 +57,32 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
             popData.push({
               xAxisCalloutData: dd.toLocaleString(),
               x: dd,
-              y: JSON.parse(entry.json),
+              y: entry.json[0] === '{' ? JSON.parse(entry.json).pop : JSON.parse(entry.json),
             });
             break;
 
           case HistoryEvent.build:
-            events.push({
-              date: dd,
-              event: parsed.name,
-              onRenderCard: () => {
-                // This is a total hack: to force styles on the Callout containing these elements :(
-                setTimeout(() => {
-                  let ep = document.getElementById('hack-me')?.parentElement;
-                  while (ep?.parentElement && !ep.classList.contains('ms-Callout-main')) { ep = ep.parentElement; }
-                  if (ep) {
-                    ep.style.border = '1px solid ' + appTheme.palette.themeTertiary;
-                    if (ep.parentElement) { ep.parentElement.style.boxShadow = `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px`; }
-                    const eb = ep.parentElement?.firstElementChild as HTMLElement;
-                    if (eb) { eb.style.backgroundColor = appTheme.palette.themeSecondary; }
-                  }
-                }, 25);
-                return <div id='hack-me'>•&nbsp;{parsed.name}</div>;
-              },
-            });
+            // do not render starting or destroyed events (yet)
+            if (!parsed.phase || parsed.phase === 'completed') {
+              events.push({
+                date: dd,
+                event: parsed.name,
+                onRenderCard: () => {
+                  // This is a total hack: to force styles on the Callout containing these elements :(
+                  setTimeout(() => {
+                    let ep = document.getElementById('hack-me')?.parentElement;
+                    while (ep?.parentElement && !ep.classList.contains('ms-Callout-main')) { ep = ep.parentElement; }
+                    if (ep) {
+                      ep.style.border = '1px solid ' + appTheme.palette.themeTertiary;
+                      if (ep.parentElement) { ep.parentElement.style.boxShadow = `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px`; }
+                      const eb = ep.parentElement?.firstElementChild as HTMLElement;
+                      if (eb) { eb.style.backgroundColor = appTheme.palette.themeSecondary; }
+                    }
+                  }, 25);
+                  return <div id='hack-me'>•&nbsp;{parsed.name}</div>;
+                },
+              });
+            }
             break;
         }
       }

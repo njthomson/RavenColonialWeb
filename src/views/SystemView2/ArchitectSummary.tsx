@@ -98,7 +98,6 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
       const snap = pendings[0];
 
       setUpdatingPop(true);
-
       api.systemV2.refreshPop(snap.id64)
         .then(newPop => {
           if (!snap.pop) {

@@ -77,7 +77,7 @@ const supportedTypes: Record<string, ImageData> = {
   'hera': { cmdr: 'Jayzet', location: `Manuwa Berth - HIP 7860` }, // more: [{ n: 'hera-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'hermes': { cmdr: 'Grinning2001' },
   'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5`, more: [{ n: 'hestia-plan.jpg', c: 'Cmdr Grinning2001' }] },
-  'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1` },
+  'ichnaea': { cmdr: 'Locke Denman', location: `Sullivan's Folly - Col 285 Sector CM-G b13-2, 1`, more: [{ n: 'ichnaea-sun.jpg', c: 'Cmdr Grinning2001' }] }, // + 2 plans?
   'io': { cmdr: 'Abe Andet', location: `Sakers Laboratory - Pegasi Sector IM-S a5-0` },
   'ioke': { cmdr: 'Disnaematter', location: `Yamaguchi Arms Hub - Synuefe FI-Z b46-1`, more: [{ n: 'ioke-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'lachesis': { cmdr: 'Abe Andet', location: `Crossland Reach - Col 285 Sector SU-O c6-3`, more: [{ n: 'lachesis-plan.jpg', c: 'Cmdr Grinning2001' }] },
