@@ -539,7 +539,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
     "inf": "service",
-    "score": undefined, // TODO
+    "score": 3, // TODO: confirm?
     "effects": { pop: 0, mpop: 0, sec: -4, wealth: 4, tech: 0, sol: 0, dev: 0 },
     "unlocks": ['Strong link unlock: Black Market']
   },
@@ -613,7 +613,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "military",
-    "score": undefined, // TODO
+    "score": +3, // TODO: confirm?
     "effects": { pop: 0, mpop: 0, sec: 9, wealth: 0, tech: 0, sol: 3, dev: 3 },
     "preReq": 'relay'
   },
@@ -677,7 +677,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
-    "score": undefined, // TODO
+    "score": +3, // TODO: confirm
     "effects": { pop: 0, mpop: 0, sec: -3, wealth: 6, tech: 0, sol: 0, dev: 3 },
     "preReq": 'settlementTourism',
     "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
@@ -1045,7 +1045,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 2 },
     "inf": "tourism",
-    "score": 8, // TODO: confirm
+    "score": 4,
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 5, tech: 0, sol: 0, dev: 0 },
     "preReq": 'satellite',
     "unlocks": ['System unlock: Tourist Installations']
