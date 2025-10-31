@@ -19,7 +19,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
   const isNotUsed = !sysView.state.useIncomplete && site.status !== 'complete';
   let nameColor = isNotUsed
     ? 'grey'
-    : (site.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);
+    : (site.status !== 'complete' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);
 
   const economy = site.primaryEconomy ?? site.type.inf;
   const siteGraphType = props.siteGraphType;
@@ -41,7 +41,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
 
         <Icon
           iconName={site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'}
-          style={{ color: isNotUsed ? nameColor : undefined }}
+          style={{ color: site.status === 'build' ? appTheme.palette.yellowDark : isNotUsed ? nameColor : undefined }}
         />
 
         {economy && <EconomyBlock economy={economy} size='10px' />}
