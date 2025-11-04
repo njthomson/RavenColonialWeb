@@ -1,4 +1,4 @@
-import { Cargo, CreateProject, FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectFC, SupplyStatsSummary } from "../types";
+import { Cargo, CmdrShip, CreateProject, FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectFC, SupplyStatsSummary } from "../types";
 import { callAPI } from "./api-util";
 
 /** Project APIs */
@@ -106,5 +106,9 @@ export const project = {
 
   findMarkets: async (options: FindMarketsOptions): Promise<FoundMarkets> => {
     return await callAPI<FoundMarkets>(`/api/project/markets`, 'POST', JSON.stringify(options));
+  },
+
+  getShips: async (buildId: string): Promise<CmdrShip[]> => {
+    return await callAPI<CmdrShip[]>(`/api/project/${encodeURIComponent(buildId)}/ships/`);
   },
 };

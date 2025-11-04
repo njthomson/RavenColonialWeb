@@ -126,7 +126,7 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
   const bodySlots = sysView.state.sysMap.slots[bod.num] ?? [-1, -1];
   const isLandable = bod.features.includes(BodyFeature.landable);
   const [data] = useState(calcForBody(bod, sysView));
-  const [helpNoGroundSlots, setHelpNoGroundSlots] = useState(true);
+  const [helpNoGroundSlots, setHelpNoGroundSlots] = useState(false);
 
   // only show the hint on bodies that could be landable
   const showMissingGroundSlotsHint = !isLandable && [BT.hmc, BT.ib, BT.mrb, BT.rb, BT.ri].includes(bod.type);

@@ -122,11 +122,9 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
             <li>Pirate Base Installation</li>
             <li>Mining/Industrial Installation</li>
             <li>Military Installation</li>
-            <li>Security Installation</li>
             <li>Medical Installation</li>
             <li>Tourist Installation</li>
             <li>Space Bar Installation</li>
-            <li>Scientific Surface Outpost</li>
             <li>All surface Hubs, exception Refinery</li>
           </ul>
 

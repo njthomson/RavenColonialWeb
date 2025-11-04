@@ -9,11 +9,12 @@ import { App } from "../../App";
 
 export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onClose: () => void }> = (props) => {
   const [onlyProblems, setOnlyProblems] = useState(window.location.hostname.includes('localhost'));
-  const loadingRealEconomies = !props.sysView.state.realEconomies?.length;
+  const loadingRealEconomies = props.sysView.state.realEconomies?.length === undefined;
 
-  var sites = props.sysView.state.sysMap.siteMaps
-    .filter(s => !!s.economies)
+  const sites = props.sysView.state.sysMap.siteMaps
+    .filter(s => !!s.economies && s.marketId > 4_200_000_000)
     .sort((a, b) => a.bodyNum - b.bodyNum);
+  const validSites = sites.filter(s => s.status === 'complete' && s.marketId > 0);
 
   const colorYellow = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
   const { sysMap, realEconomies } = props.sysView.state;
@@ -24,7 +25,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
     if (!site.economies) { return false; }
 
     // skip sites without matching Spansh data
-    const realEconomy = realEconomies?.find(r => r.id === site?.id)?.economies;
+    const realEconomy = realEconomies?.find(r => r.id === site?.marketId)?.economies;
     if (!realEconomy) { return false; }
 
     // does any economy not match?
@@ -71,6 +72,12 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
           <div>
             Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issues in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
           </div>
+          <div>
+            <Link onClick={() => {
+              props.sysView.doImport();
+              props.onClose();
+            }}>Re-import bodies and stations from Spansh</Link> if comparisons are missing on completed sites.
+          </div>
         </div>;
       }}
     >
@@ -98,9 +105,9 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
             </Link>
           </div>
 
-          {nonMatchingSites && nonMatchingSites.length === 0 && <Stack horizontal verticalAlign='center' style={{ fontSize: onlyProblems ? 18 : 12, marginTop: onlyProblems ? 20 : undefined }}>
+          {nonMatchingSites && nonMatchingSites.length === 0 && validSites.length > 0 && <Stack horizontal verticalAlign='center' style={{ fontSize: onlyProblems ? 18 : 12, marginTop: onlyProblems ? 20 : undefined }}>
             <Icon iconName='SkypeCircleCheck' style={{ color: appTheme.palette.greenLight, marginRight: 8, fontSize: onlyProblems ? 18 : undefined }} />
-            <span>All site economies match Spansh data</span>
+            <span>All valid site economies match Spansh data</span>
           </Stack>}
 
         </div>
@@ -113,7 +120,10 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
             }
 
             return <div key={`atws-s-${s.id.slice(1)}`}>
-              <h2 style={{ margin: '20px 0 0 0' }}>{s.name} <span style={{ color: 'grey' }}>- {s.body?.name}</span></h2>
+              <h2 style={{ margin: '20px 0 0 0' }}>
+                {s.status !== 'complete' && <Icon className='icon-inline' iconName={s.status === 'plan' ? 'WebAppBuilderFragment' : 'ConstructionCone'} style={{ marginRight: 8, color: s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.orangeLight }} />}
+                {s.name} <span style={{ color: 'grey' }}>- {s.body?.name}</span>
+              </h2>
               <div style={{ marginLeft: 40, width: 400 }}>
                 <EconomyTable2 site={s} sysView={props.sysView} noTableHeader noDisclaimer noChart />
               </div>

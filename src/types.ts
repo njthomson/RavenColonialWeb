@@ -156,6 +156,15 @@ export interface ProjectFC {
   assign: string[];
 }
 
+export interface CmdrShip {
+  cmdr: string,
+  name: string;
+  type: string;
+  time: string;
+  maxCargo: number;
+  cargo: Cargo;
+}
+
 export interface SupplyStatsSummary {
   buildId: string;
   totalCargo: number;
@@ -523,4 +532,52 @@ export const mapSourceEconomy: Record<string, string> = {
   "muonimager": "industrial/surface,hightech/surface",
   "landenrichmentsystems": "hightech",
   "microbialfurnaces": "hightech",
+};
+
+export const mapShipNames: Record<string, string> = {
+  'sidewinder': 'Sidewinder',
+  'eagle': 'Eagle',
+  'hauler': 'Hauler',
+  'adder': 'Adder',
+  'empire_eagle': 'Imperial Eagle',
+  'viper': 'Viper',
+  'cobrakiii': 'Cobra Mk III',
+  "cobramkiv": 'Cobra Mk IV',
+  'viper_mkiv': 'Viper Mk IV ',
+  'diamondback': 'Diamondback Scout',
+  'type6': 'Type-6 Transporter',
+  'dolphin': 'Dolphin',
+  'diamondbackxxl': 'Diamondback Explorer',
+  'empire_courier': 'Imperial Courier',
+  'independent_trader': 'Keelback',
+  'asp_scout': 'Asp Scout',
+  'vulture': 'Vulture',
+  'asp': 'Asp Explorer',
+  'federation_dropship': 'Federal Dropship',
+  'type7': 'Type-7 Transporter',
+  'typex': 'Alliance Chieftain',
+  'federation_dropship_mkii': 'Federal Assault Ship',
+  'empire_trader': 'Imperial Clipper',
+  'typex_2': 'Alliance Crusader',
+  'typex_3': 'Alliance Challenger',
+  'federation_gunship': 'Federal Gunship',
+  'krait_light': 'Krait Phantom',
+  'krait_mkii': 'Krait Mk II',
+  'orca': 'Orca',
+  'ferdelance': 'Fer-de-lance',
+  'mamba': 'Mamba',
+  'python': 'Python',
+  'python_nx': 'Python Mk II',
+  'type8': 'Type-8 Transporter',
+  'type9': 'Type-9 Heavy',
+  'belugaliner': 'Beluga Liner',
+  'type9_military': 'Type-10 Defender',
+  'anaconda': 'Anaconda',
+  'federation_corvette': 'Federal Corvette',
+  'cutter': 'Imperial Cutter',
+  'mandalay': 'Mandalay',
+  'cobramkv': 'Cobra Mk V',
+  'corsair': 'Corsair',
+  'panthermkii': 'Panther Mk 2',
+  'lakonminer': 'Type-11 Prospector',
 };
