@@ -150,7 +150,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
 
       {confirmBuildIt && <Dialog
         hidden={false}
-        dialogContentProps={{ title: 'Ready to build?', subText: 'If you are currently docked at this construction site, a build project can be created using data from Fontier.' }}
+        dialogContentProps={{ title: 'Ready to build?', subText: 'If you are currently docked at this construction site, a build project can be created using data from Frontier.' }}
         minWidth={480}
       >
         {!vagueBuildType && <div style={{ paddingBottom: 16 }}>
