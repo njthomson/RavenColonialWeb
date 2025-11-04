@@ -190,7 +190,7 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
             {showMissingGroundSlotsHint && <Link
               id='missing-ground-slots'
               style={{ marginLeft: 40, color: appTheme.palette.themeTertiary, fontSize: 12, position: 'relative' }}
-              onClick={() => setHelpNoGroundSlots(true)}
+              onClick={() => setHelpNoGroundSlots(v => !v)}
             >
               Missing ground slots?
             </Link>}

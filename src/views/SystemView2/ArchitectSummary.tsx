@@ -245,7 +245,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
 
       <Stack className={css.componentStack} horizontal wrap>
         {rows}
-        {rows?.length === 0 && <div style={{ color: appTheme.palette.themeSecondary }}>No known systems. Start by searching for a system.</div>}
+        {rows?.length === 0 && <div style={{ color: appTheme.palette.themeSecondary }}>No known systems. Start by searching for a system, add yourself as System Architect to see summaries here.</div>}
       </Stack>
 
     </div>
