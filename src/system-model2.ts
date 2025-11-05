@@ -113,13 +113,13 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   const allBodies = Object.values(sysMap.bodyMap);
   for (const body of allBodies) {
     body.surfacePrimary = getBodyPrimaryPort(body.surface, useIncomplete);
-    const siblingSites = findSiblingSites(allBodies, body, !!body.surfacePrimary);
+    const siblingSites = findSiblingSites(sys.bodies, sysMap.bodyMap, body, !!body.surfacePrimary);
     body.orbitalPrimary = getBodyPrimaryPort(siblingSites, useIncomplete);
   }
 
   // per body, calc strong/weak links
   for (const body of allBodies) {
-    calcBodyLinks(allBodies, body, sys, useIncomplete);
+    calcBodyLinks(sysMap.bodyMap, body, sys, useIncomplete);
   }
 
   // calc sum effects from all sites
@@ -144,18 +144,18 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
 
 const starsAndClusters = [...stellarRemnants, BT.ac, BT.st];
 
-const findSiblingSites = (allBodies: BodyMap2[], body: BodyMap2, onlyOrbitals: boolean) => {
+const findSiblingSites = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, onlyOrbitals: boolean) => {
   // skip logic below if body is not a star or an asteroid cluster
   if (!starsAndClusters.includes(body.type)) { return [...onlyOrbitals ? body.orbital : body.sites]; }
 
   // find parent, if we aren't it
   const parent = body.type !== BT.ac
     ? body
-    : allBodies.find(b => b.num === body.parents[0]);
+    : bods.find(b => b.num === body.parents[0]);
   if (!parent) throw new Error(`Why no parent for: ${body.name}`);
 
-  const bodies = [parent, ...allBodies.filter(b => b.type === BT.ac && parent.num === b.parents[0])];
-  const siblingSites = Array.from(new Set<SiteMap2>([...bodies.flatMap(x => onlyOrbitals ? x.orbital : x.sites)]));
+  const bodies = [parent, ...bods.filter(b => b.type === BT.ac && parent.num === b.parents[0])];
+  const siblingSites = bodies.flatMap(x => x.name in bodyMap ? onlyOrbitals ? bodyMap[x.name].orbital : bodyMap[x.name].sites : []);
   return siblingSites;
 };
 
@@ -398,17 +398,17 @@ const getBodyPrimaryPort = (sites: SiteMap2[], useIncomplete: boolean): SiteMap2
   return undefined;
 }
 
-const calcBodyLinks = (allBodies: BodyMap2[], body: BodyMap2, sys: Sys, useIncomplete: boolean) => {
+const calcBodyLinks = (bodyMap: Record<string, BodyMap2>, body: BodyMap2, sys: Sys, useIncomplete: boolean) => {
 
   // exit early if no primary port for this body
   if (!body.surfacePrimary && !body.orbitalPrimary) { return; }
 
   // calc strong/weaks links, for surface sites, then orbital
   if (body.surfacePrimary) {
-    calcSiteLinks(allBodies, body, body.surfacePrimary, useIncomplete);
+    calcSiteLinks(sys.bodies, bodyMap, body, body.surfacePrimary, useIncomplete);
   }
   if (body.orbitalPrimary) {
-    calcSiteLinks(allBodies, body, body.orbitalPrimary, useIncomplete);
+    calcSiteLinks(sys.bodies, bodyMap, body, body.orbitalPrimary, useIncomplete);
   }
 
   // // order by surface, then tier
@@ -429,10 +429,10 @@ const calcBodyLinks = (allBodies: BodyMap2[], body: BodyMap2, sys: Sys, useIncom
   }
 }
 
-const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteMap2, useIncomplete: boolean) => {
+const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, primarySite: SiteMap2, useIncomplete: boolean) => {
 
   // start with sites directly on the body
-  const siblingSites = findSiblingSites(allBodies, body, false);
+  const siblingSites = findSiblingSites(bods, bodyMap, body, false);
 
   // strong links are everything else tied to the current body, alpha sort by name
   const strongSites = siblingSites
@@ -460,7 +460,7 @@ const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteM
 
 
   // weak links are everything around any other body (and not a sibling), except primary ports
-  const weakSites = Object.values(allBodies)
+  const weakSites = Object.values(bodyMap)
     .filter(b => b !== body)
     .flatMap(b => b.sites)
     .filter(s => !siblingSites.includes(s) && s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (s.status === 'complete' || useIncomplete));
