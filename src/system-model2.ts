@@ -1,5 +1,5 @@
 import { SysSnapshot } from './api/v2-system';
-import { calculateColonyEconomies2 } from './economy-model2';
+import { calculateColonyEconomies2, stellarRemnants } from './economy-model2';
 import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
 import { SiteMap, SysMap } from './system-model';
 import { BodyFeature } from './types';
@@ -112,9 +112,9 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   // determine primary ports for each body
   const allBodies = Object.values(sysMap.bodyMap);
   for (const body of allBodies) {
-    // TODO: if we have a t3 on the surface - we need to funnel all surface links to that first
     body.surfacePrimary = getBodyPrimaryPort(body.surface, useIncomplete);
-    body.orbitalPrimary = getBodyPrimaryPort(!!body.surfacePrimary ? body.orbital : body.sites, useIncomplete);
+    const siblingSites = findSiblingSites(allBodies, body, !!body.surfacePrimary);
+    body.orbitalPrimary = getBodyPrimaryPort(siblingSites, useIncomplete);
   }
 
   // per body, calc strong/weak links
@@ -140,6 +140,23 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
   //   sysMapCache[finalMap.systemName] = finalMap;
   // }
   return finalMap;
+};
+
+const starsAndClusters = [...stellarRemnants, BT.ac, BT.st];
+
+const findSiblingSites = (allBodies: BodyMap2[], body: BodyMap2, onlyOrbitals: boolean) => {
+  // skip logic below if body is not a star or an asteroid cluster
+  if (!starsAndClusters.includes(body.type)) { return [...onlyOrbitals ? body.orbital : body.sites]; }
+
+  // find parent, if we aren't it
+  const parent = body.type !== BT.ac
+    ? body
+    : allBodies.find(b => b.num === body.parents[0]);
+  if (!parent) throw new Error(`Why no parent for: ${body.name}`);
+
+  const bodies = [parent, ...allBodies.filter(b => b.type === BT.ac && parent.num === b.parents[0])];
+  const siblingSites = Array.from(new Set<SiteMap2>([...bodies.flatMap(x => onlyOrbitals ? x.orbital : x.sites)]));
+  return siblingSites;
 };
 
 export const getUnknownBody = (): Bod => {
@@ -358,6 +375,7 @@ const getBodyPrimaryPort = (sites: SiteMap2[], useIncomplete: boolean): SiteMap2
   if (!useIncomplete) {
     sites = sites.filter(s => s.status === 'complete');
   }
+
   // do we have any Tier 3's ?
   const t3s = sites.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
   if (t3s.length > 0) {
@@ -414,17 +432,7 @@ const calcBodyLinks = (allBodies: BodyMap2[], body: BodyMap2, sys: Sys, useIncom
 const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteMap2, useIncomplete: boolean) => {
 
   // start with sites directly on the body
-  const siblingSites = body.sites;
-  // and if it's an asteroid cluster: include sites directly around the parent star
-  const sys = primarySite.sys;
-  if (body.type === BT.ac && sys.bodyMap) {
-    const parentStar = sys.bodies.find(b => b.num === body.parents[0]);
-    if (!parentStar) { throw new Error(`No parent star found for asteroid cluster ${body.name}`); }
-    const moreSites = sys.bodyMap[parentStar.name]?.sites;
-    if (moreSites) {
-      siblingSites.push(...moreSites);
-    }
-  }
+  const siblingSites = findSiblingSites(allBodies, body, false);
 
   // strong links are everything else tied to the current body, alpha sort by name
   const strongSites = siblingSites
@@ -451,13 +459,13 @@ const calcSiteLinks = (allBodies: BodyMap2[], body: BodyMap2, primarySite: SiteM
     .sort((a, b) => a.name.localeCompare(b.name));
 
 
-  // weak links are everything around any other body, except primary ports
+  // weak links are everything around any other body (and not a sibling), except primary ports
   const weakSites = Object.values(allBodies)
     .filter(b => b !== body)
     .flatMap(b => b.sites)
-    .filter(s => s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (s.status === 'complete' || useIncomplete));
+    .filter(s => !siblingSites.includes(s) && s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (s.status === 'complete' || useIncomplete));
 
-  if (strongSites.length > 0 || weakSites.length > 0) {
+  if (!primarySite.links && (strongSites.length > 0 || weakSites.length > 0)) {
     primarySite.links = {
       economies: {}, // we need to calculate strong/weak links across all sites before we can populate this
       strongSites,

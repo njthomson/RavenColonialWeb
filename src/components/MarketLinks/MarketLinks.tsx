@@ -40,8 +40,8 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
     const { strong, weak } = props.site.links.economies[key];
     const color = economyColors[key] ?? '#FFF';
 
-    const strongNames = props.site.links.strongSites.filter(s => s.type.inf === key || s.primaryEconomy === key).map((s: any) => `» ${s.name}`);
-    const weakNames = props.site.links.weakSites.filter(s => s.type.inf === key || s.primaryEconomy === key).map((s: any) => `» ${s.name}`);
+    const strongNames = props.site.links.strongSites.filter(s => s.type.inf === key || s.primaryEconomy === key).map((s: any) => `» ${s.name}`).sort();
+    const weakNames = props.site.links.weakSites.filter(s => s.type.inf === key || s.primaryEconomy === key).map((s: any) => `» ${s.name}`).sort();
 
     linkRows.push(<tr key={`link${props.site.buildId}-${key}`}>
       <td className={cn.br}>
@@ -165,7 +165,7 @@ export const EconomyBlocks: FunctionComponent<{ economies: Record<string, number
     let title = `${mapName[key]}: ${(v * 100).toFixed()}%`;
 
     const block = <div
-      key={`eb${key}`}
+      key={`eb${key}-${blockWidth}`}
       title={title}
       style={{
         display: 'inline-block',

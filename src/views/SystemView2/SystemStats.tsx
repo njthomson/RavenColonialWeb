@@ -111,7 +111,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
           <div style={{ marginTop: 8 }}>
             Incorrect score? <Link
               // style={{ marginLeft: 4, color: appTheme.palette.themeTertiary, fontSize: 11 }}
-              onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: \nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+              onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
             >
               Share feedback
             </Link>
@@ -133,7 +133,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
             <li>When completing construction, take note of your system score in the game.</li>
             <li><Link
               style={{ color: appTheme.palette.themePrimary }}
-              onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `Building: \nScore last week: \nScore this week: \nCalculated system score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+              onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `New building(s): ?\nScore last week: ?\nScore this week: ?\nCalculated system score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
             >
               After the weekly tick - please share new and old scores
             </Link></li>
