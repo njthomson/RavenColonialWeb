@@ -200,38 +200,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           return this.doImport('bodies');
         }
 
-        /*const canEditAsArchitect =*/ this.useLoadedData(newSys);
-
-        /*
-        // Do we need to create or update the snapshot for this system?
-        if (canEditAsArchitect) {
-          let genSnapshot = false;
-          return api.systemV2.getSnapshot(newSys.id64)
-            .then(snapshot => {
-              if (snapshot.stale) {
-                genSnapshot = true;
-              }
-            })
-            .catch(err => {
-              if (err.statusCode === 404) {
-                genSnapshot = true;
-              } else {
-                console.error(err.stack);
-                this.setState({ errorMsg: err?.message ?? 'Something failed' });
-              }
-            })
-            .finally(() => {
-              if (genSnapshot) {
-                console.log(`Generate a snapshot for: ${newSys.name} ... `);
-                // clear this cache any time we add a snapshot
-                api.systemV2.cache.snapshots = {};
-                // save a new snapshot
-                const snapshot = getSnapshot(newSys);
-                return api.systemV2.saveSnapshot(newSys.id64, snapshot);
-              }
-            });
-        }
-        */
+        return this.useLoadedData(newSys, true);
       })
       .catch(err => {
         if (err.statusCode === 404) {
@@ -244,7 +213,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       });
   };
 
-  useLoadedData = (newSys: Sys) => {
+  useLoadedData = (newSys: Sys, updateSnapshot: boolean) => {
     const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
     const orderIDs = newSysMap.sites.map(s => s.id);
 
@@ -274,7 +243,32 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     });
     window.document.title = 'Sys: ' + newSys.name;
 
-    return canEditAsArchitect;
+    // Should we create or update the snapshot for this system?
+    if (!canEditAsArchitect || !updateSnapshot) { return; }
+
+    let genSnapshot = false;
+    return api.systemV2.getSnapshot(newSys.id64)
+      .then(snapshot => {
+        genSnapshot = snapshot.stale || snapshot.score !== newSysMap.systemScore;
+      })
+      .catch(err => {
+        if (err.statusCode === 404) {
+          genSnapshot = true;
+        } else {
+          console.error(err.stack);
+          this.setState({ errorMsg: err?.message ?? 'Something failed checking the system snapshot' });
+        }
+      })
+      .finally(() => {
+        if (genSnapshot) {
+          console.log(`Generate a snapshot for: ${newSys.name} ... `);
+          // clear this cache any time we add a snapshot
+          api.systemV2.cache.snapshots = {};
+          // save a new snapshot
+          const snapshot = getSnapshot(newSys);
+          return api.systemV2.saveSnapshot(newSys.id64, snapshot);
+        }
+      });
   }
 
   doGetRealEconomies = () => {
@@ -287,6 +281,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   doImport = (type?: string) => {
     if (!store.cmdrName && this.state.sysOriginal !== undefined) {
       console.warn('You need to sign in in for this');
+      this.setState({ errorMsg: 'You need to sign in in for this' });
       return;
     }
 
@@ -294,11 +289,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     api.systemV2.import(this.props.systemName, type)
       .then(newSys => {
-        this.useLoadedData(newSys);
+        return this.useLoadedData(newSys, true);
       })
       .catch(err => {
         console.error(err.stack);
-        this.setState({ errorMsg: err?.message ?? 'Something failed' });
+        this.setState({ errorMsg: err?.message ?? 'Something failed importing the system' });
       });
   };
 
