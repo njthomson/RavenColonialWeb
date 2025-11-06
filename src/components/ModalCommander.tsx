@@ -69,21 +69,23 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       // fetch FCs from server, if the first time here
       ModalCommander.first = false;
 
-      api.cmdr.getCmdrLinkedFCs(store.cmdrName)
-        .then(cmdrLinkedFCs => {
-          const linkedFCs = cmdrLinkedFCs.reduce((map, fc) => {
-            map[fc.marketId.toString()] = fcFullName(fc.name, fc.displayName);
-            return map;
-          }, {} as Record<string, string>);
+      if (store.cmdrName) {
+        api.cmdr.getCmdrLinkedFCs(store.cmdrName)
+          .then(cmdrLinkedFCs => {
+            const linkedFCs = cmdrLinkedFCs.reduce((map, fc) => {
+              map[fc.marketId.toString()] = fcFullName(fc.name, fc.displayName);
+              return map;
+            }, {} as Record<string, string>);
 
-          this.setState({
-            cmdrLinkedFCs: { ...linkedFCs },
-            cmdrEditLinkedFCs: { ...linkedFCs }
-          });
-          // and push into local storage
-          store.cmdrLinkedFCs = linkedFCs;
-        })
-        .catch(err => console.error(err.stack));
+            this.setState({
+              cmdrLinkedFCs: { ...linkedFCs },
+              cmdrEditLinkedFCs: { ...linkedFCs }
+            });
+            // and push into local storage
+            store.cmdrLinkedFCs = linkedFCs;
+          })
+          .catch(err => console.error(err.stack));
+      }
     }
   }
 
