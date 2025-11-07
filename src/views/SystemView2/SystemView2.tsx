@@ -244,7 +244,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     window.document.title = 'Sys: ' + newSys.name;
 
     // Should we create or update the snapshot for this system?
-    if (!canEditAsArchitect || !updateSnapshot) { return; }
+    if (!isArchitect || !updateSnapshot) { return; }
 
     let genSnapshot = false;
     return api.systemV2.getSnapshot(newSys.id64)
