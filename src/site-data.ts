@@ -346,6 +346,21 @@ export const siteTypes: SiteType[] = [
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 5, tech: 3, sol: -4, dev: 7 }
   },
   {
+    "displayName": "Dodec",
+    "displayName2": "Dodec Starport",
+    "subTypes": ["dodec"],
+    "haul": 999999,
+    "buildClass": "starport",
+    "tier": 3,
+    "padSize": "large",
+    "orbital": true,
+    "needs": { tier: 3, count: 999 },
+    "gives": { tier: 0, count: 0 },
+    "inf": "colony",
+    "score": 0,
+    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+  },
+  {
     "displayName": "Ocellus",
     "displayName2": "Ocellus Starport",
     "subTypes": ["ocellus"],
@@ -1210,6 +1225,7 @@ export const siteTypes: SiteType[] = [
 export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
 
   // T2/T3  space ports
+  dodec: [8, 11, 5], // Dodec Starport
   no_truss: [8, 11, 5], // Coriolis Starport
   dual_truss: [8, 11, 5], // Coriolis Starport
   quad_truss: [8, 11, 5], // Coriolis Starport

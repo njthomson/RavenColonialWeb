@@ -119,7 +119,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
     const apiKeyTxt = !apiKey
       ? 'login needed'
-      : showApiKey ? apiKey : '(hidden)';
+      : showApiKey && !localStorage.getItem('streamer') ? apiKey : '(hidden)';
 
     return <>
       <div className="edit-cmdr half">

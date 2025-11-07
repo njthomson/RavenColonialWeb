@@ -247,9 +247,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (!isArchitect || !updateSnapshot) { return; }
 
     let genSnapshot = false;
+    let newSnapshot = getSnapshot(newSys);
     return api.systemV2.getSnapshot(newSys.id64)
-      .then(snapshot => {
-        genSnapshot = snapshot.stale || snapshot.score !== newSysMap.systemScore;
+      .then(currentSnapshot => {
+        genSnapshot = currentSnapshot.stale || newSnapshot.score !== currentSnapshot.score;
       })
       .catch(err => {
         if (err.statusCode === 404) {
@@ -265,8 +266,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           // clear this cache any time we add a snapshot
           api.systemV2.cache.snapshots = {};
           // save a new snapshot
-          const snapshot = getSnapshot(newSys);
-          return api.systemV2.saveSnapshot(newSys.id64, snapshot);
+          return api.systemV2.saveSnapshot(newSys.id64, newSnapshot);
         }
       });
   }

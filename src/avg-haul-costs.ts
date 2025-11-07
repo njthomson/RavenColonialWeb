@@ -282,6 +282,27 @@ export const avgHaulCosts: Record<string, Cargo> = {
     "water": 1527,
     "waterpurifiers": 79
   },
+  "Dodec Starport": {
+    "aluminium": 99999,
+    "ceramiccomposites": 99999,
+    "cmmcomposite": 99999,
+    "computercomponents": 99999,
+    "copper": 99999,
+    "foodcartridges": 99999,
+    "fruitandvegetables": 99999,
+    "insulatingmembrane": 99999,
+    "liquidoxygen": 99999,
+    "medicaldiagnosticequipment": 99999,
+    "nonlethalweapons": 99999,
+    "polymers": 99999,
+    "powergenerators": 99999,
+    "semiconductors": 99999,
+    "steel": 99999,
+    "superconductors": 99999,
+    "titanium": 99999,
+    "water": 99999,
+    "waterpurifiers": 99999
+  },
   "Exploration Hub": {
     "aluminium": 2524,
     "buildingfabricators": 90,
