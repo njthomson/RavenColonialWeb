@@ -44,7 +44,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
     super(props);
 
     const cmdr = store.cmdr;
-    this.largeMax = cmdr?.largeMax ?? 1298;
+    this.largeMax = cmdr?.largeMax ?? 1304;
     this.medMax = cmdr?.medMax ?? 400;
 
     this.state = {
@@ -187,7 +187,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
           <Label>Large ship max capacity:</Label>
           <Stack horizontal>
-            <Slider showValue={false} min={0} max={1298} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
+            <Slider showValue={false} min={0} max={1304} value={cargoLargeMax} onChange={v => this.setState({ cargoLargeMax: v })} />
             <SpinButton className='spin-slide' value={cargoLargeMax.toString()} onChange={(_, v) => this.setState({ cargoLargeMax: parseInt(v!) })} />
           </Stack>
 
