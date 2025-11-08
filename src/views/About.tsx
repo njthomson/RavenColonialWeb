@@ -28,7 +28,7 @@ export const learnAbout = (currentHelpId?: string) => {
   }
 
   return <div className={`home-box ${cn.greyer}`}>
-    <h3 className={cn.h3}>Learn more about:</h3>
+    <h3 className={cn.h3}>Learn more about: <span style={{ marginLeft: 10, fontSize: 10, fontWeight: 'normal' }}>Watch <LinkSrvSurvey href='https://youtu.be/Kt4MpUJ-ISI?si=FPTNMEBlNP4a3lQl' text="CMDR Mechan's tutorial"></LinkSrvSurvey></span></h3>
     <Stack horizontal wrap tokens={{ childrenGap: 10, padding: 10, }}>
       {Object.entries(topics).map(([key, text]) => <DefaultButton key={key} text={text} onClick={() => showHelp(key)} primary={currentHelpId === key} />)}
     </Stack>
@@ -48,7 +48,7 @@ export const About: React.FunctionComponent = () => {
     {(!helpId || helpId === 'feedback') && <div className={`home-box ${cn.greyer}`}>
       <h3 className={cn.h3}>Feedback</h3>
       If you have any issues or suggestions for Raven Colonial or SrvSurvey, please send me your <Link onClick={() => App.showFeedback()}>Feedback<Icon className='icon-inline' iconName='Feedback' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>.
-      If you would like to support my work, please consider <Link onClick={() => document.getElementById('send-support')?.click()}>a donation</Link>
+      If you would like to support my work, please consider <Link onClick={() => document.getElementById('send-support')?.click()}>a donation</Link>.
       <br />
       Bugs can be <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='reported on GitHub' title='Submit suggestions and bug reports' /> and general discussion happens through <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss SrvSurvey' />
       <br />

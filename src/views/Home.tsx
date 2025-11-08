@@ -5,6 +5,7 @@ import { Commander } from './Commander/Commander';
 import { learnAbout } from './About';
 import { ShowGlobalStats } from '../components/ShowGlobalStats/ShowGlobalStats';
 import { Component } from 'react';
+import { LinkSrvSurvey } from '../components/LinkSrvSurvey';
 
 interface HomeProps { }
 
@@ -58,6 +59,7 @@ export const renderQuote = () => {
     <br />
     From the old earth Abrahamic religions, we were told to "go forth, and multiply."
     <br />
+    <div style={{ marginTop: 20 }}>Watch <LinkSrvSurvey href='https://youtu.be/Kt4MpUJ-ISI?si=FPTNMEBlNP4a3lQl' text="CMDR Mechan's tutorial" title=''></LinkSrvSurvey></div>
     <br />
     <PrimaryButton text='Find or start a project ...' onClick={() => {
       window.location.assign("#sys");

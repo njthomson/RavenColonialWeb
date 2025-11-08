@@ -324,6 +324,8 @@ export class App extends Component<AppProps, AppState> {
             <LinkSrvSurvey text='About SrvSurvey' />
             <span style={{ color: 'grey' }}> | </span>
             <Link id='send-feedback' onClick={() => App.showFeedback()}>Feedback<Icon className='icon-inline' iconName='Feedback' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>
+            <span style={{ color: 'grey' }}> | </span>
+            <LinkSrvSurvey href='https://youtu.be/Kt4MpUJ-ISI?si=FPTNMEBlNP4a3lQl' text="Tutorial" title="Watch CMDR Mechan's tutorial"></LinkSrvSurvey>
           </div>
         </footer>
 
