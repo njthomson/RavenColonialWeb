@@ -29,8 +29,8 @@ const css = mergeStyleSets({
     padding: 10,
     marginRight: '20px!important',
     marginBottom: '20px!important',
-    // border: `4px solid ${appTheme.palette.neutralTertiaryAlt}`,
-    backgroundColor: appTheme.palette.themeLighter
+    backgroundColor: appTheme.palette.themeLighter,
+    overflow: 'hidden',
   },
   siteCardLink: {
     marginRight: 10,
@@ -40,7 +40,6 @@ const css = mergeStyleSets({
     position: 'relative',
     marginTop: 10,
     fontSize: 12,
-    overflow: 'hidden',
     display: 'grid',
     gridTemplateColumns: 'max-content min-content min-content auto',
     gap: '2px 10px',
@@ -50,6 +49,10 @@ const css = mergeStyleSets({
   },
   siteCardTableRow: {
   },
+  redChevrons: {
+    maxWidth: 60,
+    overflow: 'hidden',
+  }
 });
 
 export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
@@ -198,7 +201,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
 
           return [
             <div key={`se${key}1`}>{mapName[key]}:</div>,
-            <div key={`se${key}2`}>
+            <div key={`se${key}2`} className={css.redChevrons}>
               {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
             </div>,
             <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
