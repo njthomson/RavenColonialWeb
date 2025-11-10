@@ -193,7 +193,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             setErrMsg('');
             try {
               // create the project
-              const newProject = await api.project.createFrom(props.site.id, buildType);
+              const newProject = await api.project.createFrom(props.sysView.state.sysMap.id64, props.site.id, buildType);
               // inject buildId in various places, without triggering dirtyness
               if (newProject?.buildId) {
                 props.sysView.siteBuilding(props.site.id, newProject);

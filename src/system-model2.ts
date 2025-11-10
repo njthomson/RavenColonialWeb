@@ -627,6 +627,7 @@ export const getSnapshot = (newSys: Sys) => {
     pop: newSys.pop,
     stale: false,
     score: snapshotFull.systemScore ?? -1,
+    fav: false,
   };
   return snapshot;
 };

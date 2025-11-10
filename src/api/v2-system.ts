@@ -77,6 +77,10 @@ export const systemV2 = {
     return await callAPI<void>(`/api/v2/system/${encodeURIComponent(id64)}/snapshot`, 'PUT', JSON.stringify(data));
   },
 
+  setSysfav: async (id64: number, fav: boolean): Promise<void> => {
+    return await callAPI<void>(`/api/v2/system/${encodeURIComponent(id64)}/fav/${fav}`, 'POST');
+  },
+
   refreshPop: async (id64: number): Promise<Pop> => {
     return await callAPI<Pop>(`/api/v2/system/${encodeURIComponent(id64)}/refreshPop`, 'POST');
   },
@@ -122,6 +126,7 @@ export interface SysSnapshot {
   pop?: Pop;
   pendingPop?: boolean;
   score: number;
+  fav: boolean;
 }
 
 export interface History {

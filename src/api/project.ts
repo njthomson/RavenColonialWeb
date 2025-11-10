@@ -12,8 +12,8 @@ export const project = {
     );
   },
 
-  createFrom: async (systemSiteId: string, buildType?: string): Promise<Project> => {
-    return await callAPI<Project>(`/api/project/createFrom/${systemSiteId}/${buildType ?? ''}`, 'POST');
+  createFrom: async (id64: number, systemSiteId: string, buildType?: string): Promise<Project> => {
+    return await callAPI<Project>(`/api/project/from/${encodeURIComponent(id64.toString())}/${encodeURIComponent(systemSiteId)}/${encodeURIComponent(buildType ?? '')}`, 'POST');
   },
 
   get: async (buildId: string): Promise<Project> => {

@@ -1,6 +1,6 @@
 import * as api from '../../api';
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { ActionButton, Icon, Link, mergeStyleSets, Spinner, Stack } from "@fluentui/react";
+import { ActionButton, Icon, IconButton, Link, mergeStyleSets, Spinner, Stack, Toggle } from "@fluentui/react";
 import { appTheme, cn } from '../../theme';
 import { asPosNegTxt } from '../../util';
 import { BuildStatus, mapStatus } from '../../types2';
@@ -52,13 +52,18 @@ const css = mergeStyleSets({
   redChevrons: {
     maxWidth: 60,
     overflow: 'hidden',
-  }
+  },
+  btnFav: {
+    width: 20,
+    height: 20,
+  },
 });
 
 export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
   const [loading, setLoading] = useState(false);
   const [systems, setSystems] = useState<SysSnapshot[] | undefined>();
   const [updatingPop, setUpdatingPop] = useState(false);
+  const [onlyFav, setOnlyFav] = useState(store.archFav);
 
   // load, re-calc and save each stale snapshot
   useMemo(() => {
@@ -142,7 +147,8 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
     }
   }, [props.sysView, systems]);
 
-  var rows = systems?.map(snapshot => {
+  const filtered = systems?.filter(snapshot => snapshot.fav);
+  const rows = (onlyFav && filtered?.length ? filtered : systems)?.map(snapshot => {
 
     // consolidate count of sites per status
     const statusCountMap = snapshot.sites.reduce((map, s) => {
@@ -184,8 +190,10 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         <div key={`seSitePop1`}>Population:</div>
         <div key={`seSitePop2`} className={css.siteCardCol2Span}>
           <SysPop id64={snapshot.id64} name={snapshot.name} pop={snapshot.pop} onChange={newPop => {
-            snapshot.pop = newPop;
-            setSystems([...systems]);
+            if (systems) {
+              snapshot.pop = newPop;
+              setSystems([...systems]);
+            }
           }} />
         </div>
 
@@ -211,12 +219,28 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
           ]
         })}
       </div>
-      {(snapshot.pendingPop || snapshot.stale || snapshot.score < 0) && <>
-        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>
-          <Icon iconName='Processing' />
+
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'absolute', bottom: 4, right: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>
+        {(snapshot.pendingPop || snapshot.stale || snapshot.score < 0) && <>
+          <Icon iconName='SyncOccurence' />
           <span>updating</span>
-        </Stack>
-      </>}
+        </>}
+
+        <IconButton
+          className={`${cn.bBox} ${css.btnFav}`}
+          iconProps={{ iconName: snapshot.fav ? 'FavoriteStarFill' : 'FavoriteStar' }}
+          style={{ color: snapshot.fav ? appTheme.palette.yellow : appTheme.palette.themeTertiary }}
+          title='Set or clear this system as a favourite'
+          onClick={() => {
+            if (systems) {
+              api.systemV2.setSysfav(snapshot.id64, !snapshot.fav).then(() => {
+                snapshot.fav = !snapshot.fav;
+                setSystems([...systems]);
+              });
+            }
+          }}
+        />
+      </Stack>
     </div>;
   });
 
@@ -230,21 +254,44 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
       </h3>
       {loading && <Stack horizontal><Spinner labelPosition='right' label='Loading ...' /></Stack>}
 
-      {!!rows?.length && <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}>
-        <div>Total population: {totalPop.toLocaleString()}</div>
-        <ActionButton
-          className={cn.bBox2}
-          style={{ height: 24, fontSize: 12 }}
-          iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
-          text='Update all'
-          onClick={() => {
-            if (!systems) { return; }
-            systems.forEach(s => s.pendingPop = true);
-            setSystems([...systems]);
-          }}
-        />
-        {updatingPop && <div>Updating ...</div>}
-      </Stack>}
+      {!!rows?.length && <>
+        <Stack
+          horizontal
+          verticalAlign='center'
+          tokens={{ childrenGap: 4 }}
+          style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}
+        >
+          <div>Total population: {totalPop.toLocaleString()}</div>
+          <ActionButton
+            className={cn.bBox2}
+            style={{ height: 24, fontSize: 12 }}
+            iconProps={{ iconName: 'Refresh', style: { fontSize: 12 } }}
+            text='Update all'
+            disabled={updatingPop}
+            onClick={() => {
+              if (!systems) { return; }
+              systems.forEach(s => s.pendingPop = true);
+              setSystems([...systems]);
+            }}
+          />
+
+          <div style={{ marginLeft: 20, height: 24, paddingTop: 4 }}>
+            <Toggle
+              onText='Favourites'
+              offText='Favourites'
+              checked={onlyFav && !!filtered?.length}
+              disabled={!filtered?.length}
+              onChange={() => {
+                setOnlyFav(x => {
+                  store.archFav = !x;
+                  return !x
+                });
+              }}
+            />
+          </div>
+
+        </Stack>
+      </>}
 
       <Stack className={css.componentStack} horizontal wrap>
         {rows}

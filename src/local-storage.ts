@@ -28,6 +28,7 @@ enum Stored {
   viewEditBuiltTypeTab = 'viewEditBuiltTypeTab',
   siteGraphType = 'siteGraphType',
   autoCheckSpanshEconomies = 'autoCheckSpanshEconomies',
+  archFav = 'archFav',
 }
 
 interface CmdrData {
@@ -206,6 +207,9 @@ class LocalStorage {
 
   get autoCheckSpanshEconomies(): boolean { return readBoolean(Stored.autoCheckSpanshEconomies); }
   set autoCheckSpanshEconomies(newValue: boolean) { writeValue(Stored.autoCheckSpanshEconomies, newValue); }
+
+  get archFav(): boolean { return readBoolean(Stored.archFav); }
+  set archFav(newValue: boolean) { writeValue(Stored.archFav, newValue); }
 }
 
 export const store = new LocalStorage();
