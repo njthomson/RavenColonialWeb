@@ -117,6 +117,7 @@ const supportedTypes: Record<string, ImageData> = {
   'silenus': { cmdr: 'Grinning2001', location: `Hornby Vista - IC 2391 Sector LH-V b2-5, A 3` },
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point - Pegasi Sector MS-T b3-5` },
   'tellus_e': { cmdr: 'SheepyGrins', location: 'Vancouver Landing - HIP 69445, B 2 a' },
+  'tethys': { cmdr: 'The Blu Fox', location: 'Alasa Productions - HIP 108127, ABC 1 G' },
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon - Synuefe EM-M c23-8` },
   'vesta': { cmdr: 'Locke Denman', location: `Kusama Depot - 37 Sextantis, 2 D` },
   'vulcan': { cmdr: 'Grinning2001', location: `Garvey Gateway - IC 2391 Sector LH-V b2-5, A 3` },
