@@ -80,7 +80,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
   }
 
   render() {
-    const { buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking, isPrimaryPort } = this.state;
+    const { buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking } = this.state;
 
     const showNewBodies = !!this.props.bodies && !!this.props.bodyMap;
 
@@ -92,7 +92,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           Use this to manually create a new build project: for tracking delivery progress and cargo pre-loaded onto Fleet Carriers.
           <br />
           <br />
-          <b><Icon className='icon-inline' iconName='LightBulb' />&nbsp;Creating projects through<LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' /> is easier and highly recommended</b>
+          <Icon className='icon-inline' iconName='LightBulb' />&nbsp;Creating projects is much easier and more reliable using the "Docked? Build It" button or through<LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/wiki/Colonization#creating-a-project' title='How to create projects with SrvSurvey' />
         </MessageBar>
 
         {checking && <Spinner label='Searching for known construction sites...' labelPosition='right' style={{ maxWidth: 'fit-content' }} />}
@@ -130,14 +130,6 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
         </div>}
 
         <TextField name='buildName' title='Enter a descriptive name for this project' label='Build name:' value={buildName} required={true} onChange={(_, v) => this.setState({ buildName: v! })} />
-
-        <Label required>Primary port:</Label>
-        <Toggle
-          onText='Yes' offText='No'
-          defaultChecked={isPrimaryPort}
-          styles={{ root: { height: 25, margin: 0, marginLeft: 8 } }}
-          onChange={(_, checked) => this.setState({ isPrimaryPort: !!checked })}
-        />
 
         {showNewBodies && <Stack horizontal verticalAlign='center'>
           <Label required>Body:</Label>
@@ -203,7 +195,10 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
                 showMarketId: true
               });
             } else {
-              const newName = name.split(':')[1]?.trim() || name;
+              let newName = name.split(':')[1]?.trim() || name;
+              if (newName.startsWith('$EXT_PANEL_ColonisationShip;')) {
+                newName = 'Primary port';
+              }
               const siteMatch = foundStations.find(s => s.marketId === i?.key);
               const bodyMatch = siteMatch && this.props.bodyMap && this.props.bodyMap[siteMatch.body?.name ?? ''];
               this.setState({
