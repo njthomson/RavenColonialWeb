@@ -357,7 +357,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
-    "score": 0,
+    "score": 15, // TODO: confirm
     "effects": { pop: 8, mpop: 4, sec: -4, wealth: 9, tech: 8, sol: 7, dev: 10 }
   },
   {

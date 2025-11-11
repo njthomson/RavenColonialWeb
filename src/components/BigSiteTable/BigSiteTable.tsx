@@ -117,7 +117,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
         if (filterColumns.has('env') && !filterColumns.has(t.orbital ? 'orbital' : 'planetary')) { return false; }
         if (filterColumns.has('needs') && !filterColumns.has(`needT${t.needs.tier}`)) { return false; }
         if (filterColumns.has('gives') && !filterColumns.has(`giveT${t.gives.tier}`)) { return false; }
-        if (filterColumns.has('inf') && !filterColumns.has(t.inf)) { return false; }
+        if (filterColumns.has(infFilterColumn) && !filterColumns.has(t.inf)) { return false; }
         if (filterColumns.has('pad')) {
           if (t.padMap) {
             // check any padMap entry
@@ -127,6 +127,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
             if (!filterColumns.has(`pad:${t.padSize}`)) { return false; }
           }
         }
+        if (filterColumns.has('score') && !filterColumns.has(`+${t.score}`)) { return false; }
 
         return true;
       });
@@ -158,7 +159,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     const menuItems: IContextualMenuItem[] = [
       ...headerContextOptions.map(t => ({
         key: `tbh-${headerContextKey}-${t}`,
-        text: mapName[t],
+        text: mapName[t] ?? t,
         canCheck: true,
         checked: filterColumns.has(t),
         onClick: () => {
@@ -184,7 +185,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           return <>
             {defaultRenders.renderCheckMarkIcon(props)}
             {/* {defaultRenders.renderItemIcon(props)} */}
-            <EconomyBlock economy={t} size='10px' />
+            {headerContextKey === infFilterColumn ? <EconomyBlock economy={t} size='10px' /> : null}
             {defaultRenders.renderItemName(props)}
           </>;
         },
@@ -256,7 +257,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
             {this.renderLargeColumnHeader('tier', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('needs', `${cn.bb} ${cn.br}`)}
             {this.renderLargeColumnHeader('gives', `${cn.bb} ${cn.br}`)}
-            {this.renderLargeColumnHeader('inf', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader(infFilterColumn, `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('pop', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('mpop', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('sec', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
@@ -339,7 +340,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       }
     }
 
-    if (filterColumns.has('inf')) {
+    if (filterColumns.has(infFilterColumn)) {
       var txt = infEconomies
         .filter(inf => filterColumns.has(inf))
         .map(inf => mapName[inf])
@@ -351,6 +352,13 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       if (filterColumns.has(key)) {
         parts.push(mapName[key]);
       }
+    }
+
+    if (filterColumns.has('score')) {
+      var txt = systemScores
+        .filter(score => filterColumns.has(score))
+        .join('/');
+      parts.push(`Score: ${txt}`);
     }
 
     return <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 0 }}
@@ -418,13 +426,18 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           }
         }
 
-        else if (name === 'inf') {
+        else if (name === infFilterColumn) {
           this.setState({
-            headerContextKey: 'inf',
+            headerContextKey: infFilterColumn,
             headerContextOptions: infEconomies,
           });
         }
-
+        else if (name === 'score') {
+          this.setState({
+            headerContextKey: 'score',
+            headerContextOptions: systemScores,
+          });
+        }
         else if (isFilter) {
           filterColumns.delete(name);
         } else {
@@ -683,6 +696,10 @@ const infEconomies = [
   'service',
   'tourism',
 ];
+
+const infFilterColumn = 'inf';
+
+const systemScores = ['+1', '+2', '+3', '+4', '+5', '+8', '+15'];
 
 export const HaulSize: FunctionComponent<{ haul: number, size?: number, dim?: boolean }> = (props) => {
   const { haul } = props;
