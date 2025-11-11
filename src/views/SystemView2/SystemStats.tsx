@@ -57,153 +57,156 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
     cw = 4;
   }
 
-  return <div
-    style={{
-      display: 'grid',
-      gridTemplateColumns: 'max-content max-content max-content max-content 100%',
-      gap: '2px 4px',
-      fontSize: '14px',
-    }}
-  >
+  return <div>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'max-content max-content max-content max-content 100%',
+        gap: '2px 4px',
+        fontSize: '14px',
+      }}
+    >
 
-    <div>Calculating:</div>
-    <div style={{ gridColumn: '2 / span 4' }}>
-      <Icon className='icon-inline' iconName={props.useIncomplete ? 'TestBeakerSolid' : 'TestBeaker'} style={{ color: appTheme.palette.themePrimary }} />
-      &nbsp;
-      {props.useIncomplete ? 'All sites' : 'Completed sites only'}
-    </div>
-
-    <div>System architect:</div>
-    <div style={{ gridColumn: '2 / span 4' }}>
-      {!sysMap.architect && <span style={{ color: 'grey' }}>-</span>}
-      {sysMap.architect && <>Cmdr {sysMap.architect}</>}
-    </div>
-
-    <div>System Score:</div>
-    <div style={{ gridColumn: '2 / span 4' }}>
-      <Stack id='sys-score-info' horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'relative', width: 'min-content' }}>
-        <div>{sysMap.systemScore}</div>
-
-        <IconButton
-          className={cn.bBox}
-          iconProps={{ iconName: 'Info', style: { fontSize: 12 } }}
-          style={{ width: 18, height: 18 }}
-          onClick={ev => setShowSysScoreInfo(!showSysScoreInfo)}
-        />
-      </Stack>
-
-      {showSysScoreInfo && <Callout
-        target='#sys-score-info'
-        styles={{
-          beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
-          calloutMain: {
-            backgroundColor: appTheme.palette.neutralTertiaryAlt,
-            color: appTheme.palette.neutralDark,
-          }
-        }}
-        onDismiss={() => setShowSysScoreInfo(false)}
-      >
-        <div className={uls} style={{ paddingLeft: 30, cursor: 'default' }}>
-          <Icon iconName='Lightbulb' style={{ float: 'left', fontSize: 28, marginTop: 4, marginLeft: -30 }} onDoubleClick={(ev) => { setScoreAudit(true); ev.preventDefault(); }} />
-          <div>Be aware: the game updates system scores during the weekly tick.</div>
-          <div>However Raven Colonial calculates system scores in real-time.</div>
-
-          <div style={{ marginTop: 8 }}>
-            Incorrect score? <Link
-              // style={{ marginLeft: 4, color: appTheme.palette.themeTertiary, fontSize: 11 }}
-              onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
-            >
-              Share feedback
-            </Link>
-          </div>
-
-          <div style={{ margin: '8px 0' }}>Scores for the following buildings are not yet known or need confirmation:</div>
-          <ul>
-            <li>Pirate Base Installation</li>
-            <li>Mining/Industrial Installation</li>
-            <li>Military Installation</li>
-            <li>Medical Installation</li>
-            <li>Tourist Installation</li>
-            <li>Space Bar Installation</li>
-            <li>All surface Hubs, exception Refinery</li>
-          </ul>
-
-          <div style={{ margin: '8px 0' }}>If you are building any of these and would like to help:</div>
-          <ul>
-            <li>When completing construction, take note of your system score in the game.</li>
-            <li><Link
-              style={{ color: appTheme.palette.themePrimary }}
-              onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `New building(s): ?\nScore last week: ?\nScore this week: ?\nCalculated system score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
-            >
-              After the weekly tick - please share new and old scores
-            </Link></li>
-          </ul>
-        </div>
-      </Callout>}
-
-      {!!scoreAudit && <Panel
-        isOpen
-        isLightDismiss
-        headerText='System score audit:'
-        allowTouchBodyScroll={isMobile()}
-        type={PanelType.custom}
-        customWidth='1000px'
-        styles={{
-          header: { textTransform: 'capitalize', cursor: 'default' },
-          overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
-        }}
-        onDismiss={(ev: any) => setScoreAudit(false)}
-      >
-        <pre style={{ cursor: 'default', color: appTheme.palette.themePrimary, fontSize: 12 }}>
-          {getSysScoreDiagnostic(props.sysMap, props.sysMap.siteMaps)}
-        </pre>
-      </Panel>}
-    </div>
-
-    <div>Population:</div>
-    <div style={{ gridColumn: '2 / span 4' }}>
-      <SysPop id64={sysMap.id64} name={sysMap.name} pop={sysMap.pop} onChange={newPop => props.sysView.updatePop(newPop)} />
-    </div>
-
-    <div>Tier points:</div>
-    <div style={{ gridColumn: '2 / span 4' }}>
-      &nbsp;
-      <span style={{ color: sysMap.tierPoints.tier2 < 0 ? appTheme.palette.red : undefined }}>
-        <TierPoint tier={2} count={sysMap.tierPoints.tier2} />
-      </span>
-      &nbsp;
-      <span style={{ color: sysMap.tierPoints.tier3 < 0 ? appTheme.palette.red : undefined }}>
-        <TierPoint tier={3} count={sysMap.tierPoints.tier3} />
-      </span>
-    </div>
-
-    {sysEffects.map(key => {
-      const actual = sysMap.sumEffects[key as keyof SysEffects] ?? 0;
-
-      return [
-        <div key={`se${key}1`}>{mapName[key]}:</div>,
-        <div key={`se${key}2`} style={{ maxWidth: 100, overflowX: 'hidden' }}>
-          {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
-        </div>,
-        <div key={`se${key}3`} style={{ textAlign: 'right' }}>{asPosNegTxt(actual)}</div>,
-        <div key={`se${key}4`}>
-          {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
-        </div>,
-        <span key={`se${key}5`} style={{ width: '100%' }} />
-      ]
-    })}
-
-    {!!buildTypes.length && <>
-      <div style={{ alignContent: 'center' }}>Planned haul:</div>
+      <div>Calculating:</div>
       <div style={{ gridColumn: '2 / span 4' }}>
-        <HaulList buildTypes={buildTypes} />
+        <Icon className='icon-inline' iconName={props.useIncomplete ? 'TestBeakerSolid' : 'TestBeaker'} style={{ color: appTheme.palette.themePrimary }} />
+        &nbsp;
+        {props.useIncomplete ? 'All sites' : 'Completed sites only'}
       </div>
-    </>}
 
-    {!!activeBuilds?.length && <>
-      <div>Active builds:</div>
-      <div style={{ gridColumn: '2 / span 4' }}>{activeBuilds}</div>
-    </>}
+      <div>System architect:</div>
+      <div style={{ gridColumn: '2 / span 4' }}>
+        {!sysMap.architect && <span style={{ color: 'grey' }}>-</span>}
+        {sysMap.architect && <>Cmdr {sysMap.architect}</>}
+      </div>
 
+      <div>System Score:</div>
+      <div style={{ gridColumn: '2 / span 4' }}>
+        <Stack id='sys-score-info' horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ position: 'relative', width: 'min-content' }}>
+          <div>{sysMap.systemScore}</div>
+
+          <IconButton
+            className={cn.bBox}
+            iconProps={{ iconName: 'Info', style: { fontSize: 12 } }}
+            style={{ width: 18, height: 18 }}
+            onClick={ev => setShowSysScoreInfo(!showSysScoreInfo)}
+          />
+        </Stack>
+
+        {showSysScoreInfo && <Callout
+          target='#sys-score-info'
+          styles={{
+            beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+            calloutMain: {
+              backgroundColor: appTheme.palette.neutralTertiaryAlt,
+              color: appTheme.palette.neutralDark,
+            }
+          }}
+          onDismiss={() => setShowSysScoreInfo(false)}
+        >
+          <div className={uls} style={{ paddingLeft: 30, cursor: 'default' }}>
+            <Icon iconName='Lightbulb' style={{ float: 'left', fontSize: 28, marginTop: 4, marginLeft: -30 }} onDoubleClick={(ev) => { setScoreAudit(true); ev.preventDefault(); }} />
+            <div>Be aware: the game updates system scores during the weekly tick.</div>
+            <div>However Raven Colonial calculates system scores in real-time.</div>
+
+            <div style={{ marginTop: 8 }}>
+              Incorrect score? <Link
+                // style={{ marginLeft: 4, color: appTheme.palette.themeTertiary, fontSize: 11 }}
+                onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+              >
+                Share feedback
+              </Link>
+            </div>
+
+            <div style={{ margin: '8px 0' }}>Scores for the following buildings are not yet known or need confirmation:</div>
+            <ul>
+              <li>Pirate Base Installation</li>
+              <li>Mining/Industrial Installation</li>
+              <li>Military Installation</li>
+              <li>Medical Installation</li>
+              <li>Tourist Installation</li>
+              <li>Space Bar Installation</li>
+              <li>All surface Hubs, exception Refinery</li>
+            </ul>
+
+            <div style={{ margin: '8px 0' }}>If you are building any of these and would like to help:</div>
+            <ul>
+              <li>When completing construction, take note of your system score in the game.</li>
+              <li><Link
+                style={{ color: appTheme.palette.themePrimary }}
+                onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `New building(s): ?\nScore last week: ?\nScore this week: ?\nCalculated system score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+              >
+                After the weekly tick - please share new and old scores
+              </Link></li>
+            </ul>
+          </div>
+        </Callout>}
+
+        {!!scoreAudit && <Panel
+          isOpen
+          isLightDismiss
+          headerText='System score audit:'
+          allowTouchBodyScroll={isMobile()}
+          type={PanelType.custom}
+          customWidth='1000px'
+          styles={{
+            header: { textTransform: 'capitalize', cursor: 'default' },
+            overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
+          }}
+          onDismiss={(ev: any) => setScoreAudit(false)}
+        >
+          <pre style={{ cursor: 'default', color: appTheme.palette.themePrimary, fontSize: 12 }}>
+            {getSysScoreDiagnostic(props.sysMap, props.sysMap.siteMaps)}
+          </pre>
+        </Panel>}
+      </div>
+
+      <div>Population:</div>
+      <div style={{ gridColumn: '2 / span 4' }}>
+        <SysPop id64={sysMap.id64} name={sysMap.name} pop={sysMap.pop} onChange={newPop => props.sysView.updatePop(newPop)} />
+      </div>
+
+      <div>Tier points:</div>
+      <div style={{ gridColumn: '2 / span 4' }}>
+        &nbsp;
+        <span style={{ color: sysMap.tierPoints.tier2 < 0 ? appTheme.palette.red : undefined }}>
+          <TierPoint tier={2} count={sysMap.tierPoints.tier2} />
+        </span>
+        &nbsp;
+        <span style={{ color: sysMap.tierPoints.tier3 < 0 ? appTheme.palette.red : undefined }}>
+          <TierPoint tier={3} count={sysMap.tierPoints.tier3} />
+        </span>
+      </div>
+
+      {sysEffects.map(key => {
+        const actual = sysMap.sumEffects[key as keyof SysEffects] ?? 0;
+
+        return [
+          <div key={`se${key}1`}>{mapName[key]}:</div>,
+          <div key={`se${key}2`} style={{ maxWidth: 100, overflowX: 'hidden' }}>
+            {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
+          </div>,
+          <div key={`se${key}3`} style={{ textAlign: 'right' }}>{asPosNegTxt(actual)}</div>,
+          <div key={`se${key}4`}>
+            {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
+          </div>,
+          <span key={`se${key}5`} style={{ width: '100%' }} />
+        ]
+      })}
+
+      {!!buildTypes.length && <>
+        <div style={{ alignContent: 'center' }}>Planned haul:</div>
+        <div style={{ gridColumn: '2 / span 4' }}>
+          <HaulList buildTypes={buildTypes} />
+        </div>
+      </>}
+
+      {!!activeBuilds?.length && <>
+        <div>Active builds:</div>
+        <div style={{ gridColumn: '2 / span 4' }}>{activeBuilds}</div>
+      </>}
+    </div>
+
+    <div style={{ fontSize: 10 }}>* <Link href="https://www.elitedangerous.com/update-notes/4-2-2-0" target="fdev">Starports buff/nerf</Link> has not yet been implemented</div>
   </div>;
 }

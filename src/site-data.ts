@@ -348,17 +348,17 @@ export const siteTypes: SiteType[] = [
   {
     "displayName": "Dodec",
     "displayName2": "Dodec Starport",
-    "subTypes": ["dodec"],
-    "haul": 999999,
+    "subTypes": ["dodec", 'quint_truss', 'dec_truss'],
+    "haul": 236000,
     "buildClass": "starport",
     "tier": 3,
     "padSize": "large",
     "orbital": true,
-    "needs": { tier: 3, count: 999 },
+    "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
     "score": 0,
-    "effects": { pop: 0, mpop: 0, sec: 0, wealth: 0, tech: 0, sol: 0, dev: 0 }
+    "effects": { pop: 8, mpop: 4, sec: -4, wealth: 9, tech: 8, sol: 7, dev: 10 }
   },
   {
     "displayName": "Ocellus",
@@ -1321,7 +1321,7 @@ export const averageHauls: Record<string, number> = {
   "Extraction Hub": 9918,
   "Government Installation": 10075,
   "High Tech Hub": 9915,
-  "Industrial Hub": 36764,
+  "Industrial Hub": 9950,
   "Industrial Outpost": 20000,
   "Industrial Settlement: Large": 8538,
   "Industrial Settlement: Medium": 5776,
