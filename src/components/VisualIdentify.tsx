@@ -51,6 +51,7 @@ const supportedTypes: Record<string, ImageData> = {
   'coeus': { cmdr: 'Abe Andet', location: `Magnus Enterprise - Pegasi Sector MS-T b3-5` },
   'comus': { cmdr: 'Disnaematter', location: `Emem's Leisure - Synuefe FI-Z b46-1` },
   'consus': { cmdr: 'Kekosummer', location: `Tersoo Cultivation Collection - Col 285 Sector GL-X c1-11, A 4`, more: [{ n: 'consus-plan.jpg', c: 'Cmdr Grinning2001' }] },
+  'dec_truss': { cmdr: 'AeroMech91', location: `Kandrup's Folly - Bleae Thua JH-Y c1, C 9` },
   'decima': { cmdr: 'Kekosummer', location: `Venegas holdings - Col 285 Sector GL-X c1-11, A 2 a`, more: [{ n: 'decima-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'demeter': { cmdr: 'Abe Andet', location: `Hedley Horizons - Arietis Sector PJ-Q B5-5` },
   'dicaeosyne': { cmdr: 'Grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
