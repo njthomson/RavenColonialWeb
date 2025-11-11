@@ -162,29 +162,27 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
         text: mapName[t] ?? t,
         canCheck: true,
         checked: filterColumns.has(t),
-        onClick: () => {
+        onClick: e => {
           if (!this.state.headerContextKey) return;
 
           if (filterColumns.has(t)) {
             // remove both entries
             filterColumns.delete(t);
-            //filterColumns.delete(this.state.headerContextKey!);
             if (!headerContextOptions.some(o => filterColumns.has(o))) {
               filterColumns.delete(this.state.headerContextKey);
             }
 
           } else {
             // remove any other option and add choosen one
-            // headerContextOptions.forEach(o => filterColumns.delete(o));
             filterColumns.add(t);
             filterColumns.add(this.state.headerContextKey);
           }
           this.setState({ filterColumns });
+          if (filterColumns.size > 0) { e?.preventDefault(); }
         },
         onRenderContent(props, defaultRenders) {
           return <>
             {defaultRenders.renderCheckMarkIcon(props)}
-            {/* {defaultRenders.renderItemIcon(props)} */}
             {headerContextKey === infFilterColumn ? <EconomyBlock economy={t} size='10px' /> : null}
             {defaultRenders.renderItemName(props)}
           </>;
@@ -341,7 +339,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     }
 
     if (filterColumns.has(infFilterColumn)) {
-      var txt = infEconomies
+      const txt = infEconomies
         .filter(inf => filterColumns.has(inf))
         .map(inf => mapName[inf])
         .join('/');
@@ -355,7 +353,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     }
 
     if (filterColumns.has('score')) {
-      var txt = systemScores
+      const txt = systemScores
         .filter(score => filterColumns.has(score))
         .join('/');
       parts.push(`Score: ${txt}`);
