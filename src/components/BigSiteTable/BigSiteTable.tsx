@@ -237,6 +237,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
           <col width='75px' />{/* tech */}
           <col width='75px' />{/* sol */}
           <col width='75px' />{/* dev */}
+          <col width='80px' />{/* score */}
         </colgroup>
 
         <thead>
@@ -262,7 +263,8 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
             {this.renderLargeColumnHeader('wealth', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('tech', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
             {this.renderLargeColumnHeader('sol', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
-            {this.renderLargeColumnHeader('dev', `${cn.bb} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('dev', `${cn.bb} ${cn.br} ${cn.trh} btn`)}
+            {this.renderLargeColumnHeader('score', `${cn.bb} ${cn.trh} btn`)}
           </tr>
         </thead>
         <tbody>
@@ -553,7 +555,8 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       <td className={`${cn.br}`}><Chevrons name='wealth' count={type.effects.wealth} title={`Wealth: ${asPosNegTxt(type.effects.wealth!)}`} /></td>
       <td className={`${cn.br}`}><Chevrons name='tech' count={type.effects.tech} title={`Tech level: ${asPosNegTxt(type.effects.tech!)}`} /></td>
       <td className={`${cn.br}`}><Chevrons name='sol' count={type.effects.sol} title={`Standard of Living: ${asPosNegTxt(type.effects.sol!)}`} /></td>
-      <td style={{ borderRight: isCurrentSelection ? `8px solid ${appTheme.palette.accent}` : undefined }}><Chevrons name='dev' count={type.effects.dev} title={`Development level: ${asPosNegTxt(type.effects.dev!)}`} /></td>
+      <td className={`${cn.br}`}><Chevrons name='dev' count={type.effects.dev} title={`Development level: ${asPosNegTxt(type.effects.dev!)}`} /></td>
+      <td style={{ borderRight: isCurrentSelection ? `8px solid ${appTheme.palette.accent}` : undefined }}>+{type.score}</td>
     </tr>;
   }
 
@@ -617,10 +620,11 @@ const mapColumnNames: Record<string, string> = {
   tech: 'Tech',
   sol: 'SoL',
   dev: 'Dev',
+  score: 'Score',
 }
 
 const mapColumnTitle: Record<string, string> = {
-  buildType: `The overal type of a project. You must choose one of the sub-types`,
+  buildType: `The overall type of a project. You must choose one of the sub-types`,
   valid: `If the system has enough tier points and all pre-req's are build`,
   haul: `Approximately how much cargo needs to be delivered
 Grouped by:
@@ -656,6 +660,7 @@ Click to filter positive impacts.`,
   sol: `Changes to system standard of living once complete.
 Click to filter positive impacts.`,
   dev: `Changes to system development level once complete. Click to filter`,
+  score: `Score contributed to system score once complete.`,
 }
 
 const mapCyclicFilters: Record<string, string[]> = {
