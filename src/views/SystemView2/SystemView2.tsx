@@ -60,6 +60,7 @@ interface SystemView2State {
   siteGraphType: SiteGraphType;
   fssNeeded?: boolean;
   canEditAsArchitect: boolean;
+  buffNerf: boolean;
 }
 
 const viewTypes = [
@@ -87,6 +88,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       processingMsg: 'Loading ...',
       useIncomplete: store.useIncomplete,
       viewType: store.sysViewView,
+      buffNerf: true,
     };
   }
 
@@ -164,7 +166,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       showCreateBuildProject: false,
       siteGraphType: store.siteGraphType,
       canEditAsArchitect: false,
-    } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName'>;
+    } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName' | 'buffNerf'>;
   }
 
   doSystemSearch() {
@@ -214,7 +216,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   useLoadedData = (newSys: Sys, updateSnapshot: boolean) => {
-    const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
+    const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete, this.state.buffNerf);
     const orderIDs = newSysMap.sites.map(s => s.id);
 
     const dirties: Record<string, Site> = {};
@@ -342,7 +344,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     api.systemV2.saveSites(
       this.state.sysMap.id64.toString(), payload)
       .then(newSys => {
-        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete);
+        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete, this.state.buffNerf);
         this.setState({
           processingMsg: undefined,
           sysOriginal: newSys,
@@ -380,7 +382,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   recalc = () => {
     // console.log(this.state.sysMap);
-    const sysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete);
+    const sysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       sysMap: sysMap,
     });
@@ -388,7 +390,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
   toggleUseIncomplete = () => {
     const newValue = !this.state.useIncomplete;
-    const sysMap = buildSystemModel2(this.state.sysMap, newValue);
+    const sysMap = buildSystemModel2(this.state.sysMap, newValue, this.state.buffNerf);
     this.setState({
       sysMap: sysMap,
       useIncomplete: newValue,
@@ -441,7 +443,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     sysMap.sites.push(newSite);
     dirtySites[newSite.id] = newSite;
 
-    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete);
+    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       dirtySites,
       sysMap: newSysMap,
@@ -480,7 +482,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const { dirtySites } = this.state;
     dirtySites[site.id] = site;
 
-    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete);
+    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       dirtySites,
       sysMap: newSysMap,
@@ -506,7 +508,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       delete this.state.dirtySites[targetId];
     }
 
-    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete);
+    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       deletedIDs,
       sysMap: newSysMap,
@@ -552,7 +554,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       }
     }
 
-    const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete);
+    const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       sysMap: newSysMap,
       sysOriginal: sysOriginal,
@@ -582,6 +584,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       ;
     return dirty;
   };
+
+  doToggleBuffNerf = () => {
+    const newBuffNerf = !this.state.buffNerf;
+
+    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, newBuffNerf);
+    this.setState({
+      sysMap: newSysMap,
+      buffNerf: newBuffNerf,
+    });
+  }
 
   setBodySlot(num: number, newCount: number, isOrbital: boolean) {
     const bodySlots = this.state.bodySlots;
@@ -628,7 +640,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             if (orderIDs) {
               sysMap.primaryPortId = orderIDs[0];
               sysMap.sites = orderIDs.map(id => sysMap.sites.find(s => s.id === id)!);
-              const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete);
+              const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete, this.state.buffNerf);
               this.setState({ sysMap: newSysMap, orderIDs, showBuildOrder: false });
             } else {
               this.setState({ showBuildOrder: false });

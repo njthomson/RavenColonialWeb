@@ -93,7 +93,7 @@ export interface EconomyLink {
   weak: number;
 }
 
-export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: boolean): SysMap2 => {
+export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: boolean): SysMap2 => {
   // const orderIDs = sys.sites.map(s => s.id); // necessary?
 
   // the primary port is always the first site
@@ -124,7 +124,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, noCache?: bo
 
   // calc sum effects from all sites
   const tierPoints = sumTierPoints(sysMap.siteMaps, useIncomplete);
-  const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete);
+  const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete, buffNerf);
 
   // re-sort bodies by their num value
   // sys.bodies.sort((a, b) => a.num - b.num);
@@ -323,10 +323,11 @@ export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
   return tierPoints;
 }
 
-const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
+const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf?: boolean) => {
 
   const mapEconomies: Record<string, number> = {};
   const sumEffects: SysEffects = {};
+  let initialStarPort: SiteMap2 | undefined = undefined;
 
   for (const site of siteMaps) {
 
@@ -343,10 +344,19 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
       mapEconomies[inf] = (mapEconomies[inf] ?? 0) + 1;
     }
 
+    const isAfflictedStarport = site.type.orbital && site.type.buildClass === 'starport';
+    if (isAfflictedStarport && !initialStarPort) {
+      initialStarPort = site;
+      console.log(`Initial buffed starport: ${site.name} - ${site.type.displayName2} (${site.buildType})`);
+    }
+
     // sum total system effects
     for (const key of sysEffects) {
-      const effect = site.type.effects[key] ?? 0;
+      let effect = site.type.effects[key] ?? 0;
       if (effect === 0) continue;
+      if (buffNerf && isAfflictedStarport) {
+        effect = adjustAfflictedStarPortSumEffect(key, effect, site === initialStarPort);
+      }
       sumEffects[key] = (sumEffects[key] ?? 0) + effect;
     }
   }
@@ -366,6 +376,21 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
     economies,
     sumEffects,
   };
+}
+
+const adjustAfflictedStarPortSumEffect = (key: keyof SysEffects, effect: number, isInitial: boolean) => {
+  switch (key) {
+    case 'pop':
+    case 'mpop':
+      // no impact
+      return effect;
+
+    case 'dev': return isInitial ? effect * 1.2 : effect * 0.4; // +20% or -60%
+    case 'sec': return isInitial ? effect * 1.4 : effect * 0.8; // +40% or -20%
+    case 'sol': return isInitial ? effect * 1.4 : effect * 0.48; // +40% or -52%
+    case 'tech': return isInitial ? effect * 1.2 : effect * 0.33; // +20% or -66%
+    case 'wealth': return isInitial ? effect * 1.4 : effect * 0.3; // +40% or -70%
+  }
 }
 
 const getBodyPrimaryPort = (sites: SiteMap2[], useIncomplete: boolean): SiteMap2 | undefined => {

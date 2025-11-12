@@ -194,6 +194,12 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
         ]
       })}
 
+      <Stack horizontal verticalAlign='center' style={{ gridColumn: '1 / span 5', fontSize: 10, marginBottom: 4 }}>
+        <input type='checkbox' checked={props.sysView.state.buffNerf} onChange={() => props.sysView.doToggleBuffNerf()} />
+        <div>Apply <Link href="https://www.elitedangerous.com/update-notes/4-2-2-0" target="fdev">stats buff/nerf</Link> to starports only</div>
+        <div style={{ color: appTheme.palette.themeSecondary }}>&nbsp;(Experimental unconfirmed behaviour)</div>
+      </Stack>
+
       {!!buildTypes.length && <>
         <div style={{ alignContent: 'center' }}>Planned haul:</div>
         <div style={{ gridColumn: '2 / span 4' }}>
@@ -207,6 +213,5 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       </>}
     </div>
 
-    <div style={{ fontSize: 10 }}>* <Link href="https://www.elitedangerous.com/update-notes/4-2-2-0" target="fdev">Starports buff/nerf</Link> has not yet been implemented</div>
   </div>;
 }
