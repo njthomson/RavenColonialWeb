@@ -465,7 +465,7 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
       return;
 
     case 'tourism':
-      if (useNewModel) { // disable for now
+      if (useNewModel) {
         if (matches([BT.aw, BT.elw, BT.ww], site.body?.type)) {
           adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW`, map, site, 'body');
         }
