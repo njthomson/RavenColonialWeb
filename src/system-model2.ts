@@ -528,20 +528,14 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
   }
 
   for (const s of site.links.weakSites) {
-    const inf = s.type.inf;
+    let inf = s.type.inf;
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
-      calculateColonyEconomies2(s, useIncomplete);
+      inf = calculateColonyEconomies2(s, useIncomplete);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
-      // tally weak links from intrinsic economies
-      for (const intrinsicInf of s.intrinsic ?? []) {
-        if (!map[intrinsicInf]) { map[intrinsicInf] = { strong: 0, weak: 0 }; }
-        map[intrinsicInf].weak++;
-      }
-    } else {
-      if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
-      map[inf].weak += 1;
     }
+    if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
+    map[inf].weak += 1;
   }
 
   // sort by strong, then weak count, or alpha sort if all equal
