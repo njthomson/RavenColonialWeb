@@ -348,7 +348,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
         console.warn(`Unknown economy '${s.type.inf}' for site ${s.name} - ${s.type.displayName2} (${s.buildType})`);
       }
 
-      // also apply strong links from the emitting port
+      // also apply sub-strong links from the emitting port
       if (useNewModel && s.links?.strongSites && !subLink) {
         applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, s.type.inf);
       }
@@ -385,7 +385,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
       }
     }
 
-    // also apply strong links from the emitting port
+    // also apply sub-strong links from the emitting port
     if (useNewModel && fromColony && s.links?.strongSites && !subLink) {
       applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, "*");
     }
