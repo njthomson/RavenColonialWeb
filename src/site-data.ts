@@ -12,6 +12,8 @@ export type Economy =
   | 'colony'
   | 'terraforming'
   ;
+  
+export type ConcreteEconomy = Exclude<Economy, 'none' | 'colony'>;
 
 export type BuildClass =
   | 'starport'

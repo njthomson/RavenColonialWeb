@@ -603,7 +603,11 @@ const applyWeakLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolean)
         console.warn(`Why no primaryEconomy yet for '${s.name}' generating for: ${site.name} ?`);
         continue;
       } else {
-        inf = s.primaryEconomy;
+        // apply one weak link per intrinsic economy
+        for (const instrinsicInf of s.intrinsic ?? []) {
+          adjust(instrinsicInf, +0.05, `Apply weak link from: ${s.name} (intrinsic)`, map, site);
+        }
+        continue;
       }
     }
 

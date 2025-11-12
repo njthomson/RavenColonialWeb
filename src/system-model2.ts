@@ -1,7 +1,7 @@
 import { link } from 'fs';
 import { SysSnapshot } from './api/v2-system';
 import { calculateColonyEconomies2, stellarRemnants } from './economy-model2';
-import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
+import { canReceiveLinks, ConcreteEconomy, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
 import { SiteMap, SysMap } from './system-model';
 import { BodyFeature } from './types';
 import { Bod, BT, Site, Sys } from './types2';
@@ -503,43 +503,68 @@ const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: Bod
 const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => {
   if (!site.links) return;
 
-  const map: Record<string, EconomyLink> = {};
+  const map: Record<ConcreteEconomy, EconomyLink> = {
+    'agriculture': { strong: 0, weak: 0 },
+    'extraction': { strong: 0, weak: 0 },
+    'industrial': { strong: 0, weak: 0 },
+    'hightech': { strong: 0, weak: 0 },
+    'tourism': { strong: 0, weak: 0 },
+    'military': { strong: 0, weak: 0 },
+    'service': { strong: 0, weak: 0 },
+    'refinery': { strong: 0, weak: 0 },
+    'terraforming': { strong: 0, weak: 0 },
+  };
   for (const s of site.links.strongSites) {
     const inf = s.type.inf;
+    if (inf === 'none') continue;
+    // each supporting facility can provide up to one strong link of each economy type,
+    // this mimicks the in-game UI behavior
+    const curSiteLinks: Set<ConcreteEconomy> = new Set();
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
       calculateColonyEconomies2(s, useIncomplete);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
       // tally strong links from intrinsic economies
       for (const intrinsicInf of s.intrinsic ?? []) {
-        if (!map[intrinsicInf]) { map[intrinsicInf] = { strong: 0, weak: 0 }; }
-        map[intrinsicInf].strong++;
-      }
-      // tally sub-strong links from supporting facilities
-      for (const strongLink of s.links?.strongSites ?? []) {
-        const linkInf = strongLink.type.inf;
-        if (!map[linkInf]) { map[linkInf] = { strong: 0, weak: 0 }; }
-        map[linkInf].strong++;
+        if (intrinsicInf === 'none' || intrinsicInf === 'colony') continue;
+        curSiteLinks.add(intrinsicInf);
       }
     } else {
-      if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
-      map[inf].strong += 1;
+      curSiteLinks.add(inf);
+    }
+    
+    // if the linked site has its own strong links, we treat those as sub-strong links
+    for (const strongLink of s.links?.strongSites ?? []) {
+      const linkInf = strongLink.type.inf;
+      if (linkInf === 'none' || linkInf === 'colony') continue;
+      curSiteLinks.add(linkInf);
+    }
+
+    for (const link of curSiteLinks) {
+      map[link].strong++;
     }
   }
 
   for (const s of site.links.weakSites) {
-    let inf = s.type.inf;
+    const inf = s.type.inf;
+    if (inf === 'none') continue;
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
-      inf = calculateColonyEconomies2(s, useIncomplete);
+      calculateColonyEconomies2(s, useIncomplete);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
+      // tally weak links from intrinsic economies
+      for (const intrinsicInf of s.intrinsic ?? []) {
+        if (intrinsicInf === 'none' || intrinsicInf === 'colony') continue;
+        map[intrinsicInf].weak++;
+      }
+    } else {
+      if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
+      map[inf].weak++;
     }
-    if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
-    map[inf].weak += 1;
   }
 
   // sort by strong, then weak count, or alpha sort if all equal
-  const sorted = Object.keys(map).sort((ka, kb) => {
+  const sorted = (Object.keys(map) as Array<ConcreteEconomy>).sort((ka, kb) => {
     const a = map[ka];
     const b = map[kb];
     if (a.strong !== b.strong) {
