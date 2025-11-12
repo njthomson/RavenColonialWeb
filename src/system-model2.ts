@@ -576,6 +576,7 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
     }
   });
   for (const key of sorted) {
+    if (map[key].strong === 0 && map[key].weak === 0) { continue; }
     site.links.economies[key] = map[key];
   }
 };
