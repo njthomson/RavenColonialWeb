@@ -323,7 +323,7 @@ export const applyStrongLinks0 = (map: EconomyMap, site: SiteMap2, useIncomplete
 export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, useIncomplete: boolean, subLink?: Economy | '*') => {
   // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
   // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
-  let isC2C = false;
+  let fromColony = false;
 
   for (let s of strongSites) {
     if (s.type.inf === 'none') { continue; }
@@ -367,7 +367,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
       const val = s.economies[ee];
       // only boost intrinsic economies from initial body influences (not from links)
       if (s.intrinsic?.includes(ee)) {
-        isC2C = site.type.inf === 'colony' && s.type.inf === 'colony';
+        fromColony = s.type.inf === 'colony';
         if (useNewModel /* && s.type.tier === site.type.tier*/) {
           const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2)
           adjust(ee, infSize, `Apply colony ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
@@ -386,12 +386,12 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     }
 
     // also apply strong links from the emitting port
-    if (useNewModel && isC2C && s.links?.strongSites && !subLink) {
+    if (useNewModel && fromColony && s.links?.strongSites && !subLink) {
       applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, "*");
     }
   }
 
-  return isC2C;
+  return fromColony;
 };
 
 export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, reason: string) => {
