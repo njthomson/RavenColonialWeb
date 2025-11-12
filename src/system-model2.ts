@@ -1,3 +1,4 @@
+import { link } from 'fs';
 import { SysSnapshot } from './api/v2-system';
 import { calculateColonyEconomies2, stellarRemnants } from './economy-model2';
 import { canReceiveLinks, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
@@ -504,26 +505,43 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
 
   const map: Record<string, EconomyLink> = {};
   for (const s of site.links.strongSites) {
-    let inf = s.type.inf;
+    const inf = s.type.inf;
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
-      inf = calculateColonyEconomies2(s, useIncomplete);
+      calculateColonyEconomies2(s, useIncomplete);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
+      // tally strong links from intrinsic economies
+      for (const intrinsicInf of s.intrinsic ?? []) {
+        if (!map[intrinsicInf]) { map[intrinsicInf] = { strong: 0, weak: 0 }; }
+        map[intrinsicInf].strong++;
+      }
+      // tally sub-strong links from supporting facilities
+      for (const strongLink of s.links?.strongSites ?? []) {
+        const linkInf = strongLink.type.inf;
+        if (!map[linkInf]) { map[linkInf] = { strong: 0, weak: 0 }; }
+        map[linkInf].strong++;
+      }
+    } else {
+      if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
+      map[inf].strong += 1;
     }
-
-    if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
-    map[inf].strong += 1;
   }
 
   for (const s of site.links.weakSites) {
-    let inf = s.type.inf;
+    const inf = s.type.inf;
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
-      inf = calculateColonyEconomies2(s, useIncomplete);
+      calculateColonyEconomies2(s, useIncomplete);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
+      // tally weak links from intrinsic economies
+      for (const intrinsicInf of s.intrinsic ?? []) {
+        if (!map[intrinsicInf]) { map[intrinsicInf] = { strong: 0, weak: 0 }; }
+        map[intrinsicInf].weak++;
+      }
+    } else {
+      if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
+      map[inf].weak += 1;
     }
-    if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
-    map[inf].weak += 1;
   }
 
   // sort by strong, then weak count, or alpha sort if all equal
