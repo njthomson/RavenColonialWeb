@@ -385,11 +385,11 @@ const adjustAfflictedStarPortSumEffect = (key: keyof SysEffects, effect: number,
       // no impact
       return effect;
 
-    case 'dev': return isInitial ? effect * 1.2 : effect * 0.4; // +20% or -60%
-    case 'sec': return isInitial ? effect * 1.4 : effect * 0.8; // +40% or -20%
-    case 'sol': return isInitial ? effect * 1.4 : effect * 0.48; // +40% or -52%
-    case 'tech': return isInitial ? effect * 1.2 : effect * 0.33; // +20% or -66%
-    case 'wealth': return isInitial ? effect * 1.4 : effect * 0.3; // +40% or -70%
+    case 'dev': return isInitial ? effect * 1.4 : effect * 0.9; // +40% or -10%
+    case 'sec': return isInitial ? effect * 1.4 : effect * 0.9; // +40% or -10%
+    case 'sol': return isInitial ? effect * 1.4 : effect * 0.8; // +40% or -20%
+    case 'tech': return isInitial ? effect * 1.2 : effect * 0.75; // +20% or -25%
+    case 'wealth': return isInitial ? effect * 1.4 : effect * 0.75; // +40% or -25%
   }
 }
 
