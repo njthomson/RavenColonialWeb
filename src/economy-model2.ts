@@ -65,7 +65,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
     }
 
     if (useNewModel) {
-      applyBuffs(map, site, false, false);
+      applyBuffs(map, site, false);
     }
   }
 
@@ -75,11 +75,11 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
 
   // these apply for fixed and economy ports
   if (site.links) {
-    const fromColony = applyStrongLinks2(map, site.links!.strongSites, site, useIncomplete);
+    applyStrongLinks2(map, site.links!.strongSites, site, useIncomplete);
 
     if (!site.type.fixed) {
       if (!useNewModel) {
-        applyBuffs(map, site, false, fromColony);
+        applyBuffs(map, site, false);
       }
       // // identical to buffs?
       // for (const inf in map) {
@@ -172,7 +172,7 @@ const applySpecializedPort = (map: EconomyMap, site: SiteMap2) => {
   // apply boost as if it were a strong link
   // applyStrongLinkBoost(site.type.fixed, map, site, 'Specialized port');
   if (useNewModel) {
-    applyBuffs(map, site, false, false);
+    applyBuffs(map, site, false);
   }
 };
 
@@ -323,8 +323,6 @@ export const applyStrongLinks0 = (map: EconomyMap, site: SiteMap2, useIncomplete
 export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, useIncomplete: boolean, subLink?: Economy | '*') => {
   // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
   // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
-  let fromColony = false;
-
   for (let s of strongSites) {
     if (s.type.inf === 'none') { continue; }
 
@@ -367,7 +365,6 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
       const val = s.economies[ee];
       // only boost intrinsic economies from initial body influences (not from links)
       if (s.intrinsic?.includes(ee)) {
-        fromColony = s.type.inf === 'colony';
         if (useNewModel /* && s.type.tier === site.type.tier*/) {
           const infSize = s.type.tier === 1 ? 0.4 : (s.type.tier === 2 ? 0.8 : 1.2)
           adjust(ee, infSize, `Apply colony ${prefix} from: ${s.name} (T${s.type.tier})`, map, site);
@@ -386,12 +383,10 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
     }
 
     // also apply sub-strong links from the emitting port
-    if (useNewModel && fromColony && s.links?.strongSites && !subLink) {
+    if (useNewModel && s.links?.strongSites && !subLink) {
       applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, "*");
     }
   }
-
-  return fromColony;
 };
 
 export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMap2, reason: string) => {
@@ -487,7 +482,7 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
   }
 }
 
-export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean, fromColony?: boolean) => {
+export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean) => {
 
   // Do not apply any negative buffs to Odyssey settlements
 
