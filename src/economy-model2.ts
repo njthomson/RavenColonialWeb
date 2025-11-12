@@ -75,11 +75,11 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
 
   // these apply for fixed and economy ports
   if (site.links) {
-    const isC2C = applyStrongLinks2(map, site.links!.strongSites, site, useIncomplete);
+    const fromColony = applyStrongLinks2(map, site.links!.strongSites, site, useIncomplete);
 
     if (!site.type.fixed) {
       if (!useNewModel) {
-        applyBuffs(map, site, false, isC2C);
+        applyBuffs(map, site, false, fromColony);
       }
       // // identical to buffs?
       // for (const inf in map) {
@@ -487,7 +487,7 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
   }
 }
 
-export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean, isC2C?: boolean) => {
+export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolean, fromColony?: boolean) => {
 
   // Do not apply any negative buffs to Odyssey settlements
 
