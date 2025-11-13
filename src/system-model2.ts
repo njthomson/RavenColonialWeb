@@ -1,4 +1,3 @@
-import { link } from 'fs';
 import { SysSnapshot } from './api/v2-system';
 import { calculateColonyEconomies2, stellarRemnants } from './economy-model2';
 import { canReceiveLinks, ConcreteEconomy, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
@@ -532,7 +531,7 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
     } else {
       curSiteLinks.add(inf);
     }
-    
+
     // if the linked site has its own strong links, we treat those as sub-strong links
     for (const strongLink of s.links?.strongSites ?? []) {
       const linkInf = strongLink.type.inf;
