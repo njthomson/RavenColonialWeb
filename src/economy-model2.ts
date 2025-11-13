@@ -460,7 +460,7 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
       return;
 
     case 'tourism':
-      if (useNewModel && false) { // disable for now
+      if (useNewModel) {
         if (matches([BT.aw, BT.elw, BT.ww], site.body?.type)) {
           adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW`, map, site, 'body');
         }
@@ -470,13 +470,22 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
         if (matches([BodyFeature.geo], site.body?.features)) {
           adjust(inf, +0.4, `+ ${reason} boost: Body has GEO`, map, site, 'body');
         }
+        if (site.sys.bodies.some(b => b.type === BT.ns)) {
+          adjust(inf, +0.4, `+ ${reason} boost: System has Neutron Star`, map, site, 'sys');
+        }
+        if (site.sys.bodies.some(b => b.type === BT.bh)) {
+          adjust(inf, +0.4, `+ ${reason} boost: System has Black Hole`, map, site, 'sys');
+        }
+        if (site.sys.bodies.some(b => b.type === BT.wd)) {
+          adjust(inf, +0.4, `+ ${reason} boost: System has White Dwarf`, map, site, 'sys');
+        }
       } else {
         if (matches([BT.aw, BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
           adjust(inf, +0.4, `+ ${reason} boost: Body is AW/ELW/WW or has BIO/GEO`, map, site, 'body');
         }
-      }
-      if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
-        adjust(inf, +0.4, `+ ${reason} boost: System has System has BH/NS/WD`, map, site, 'sys');
+        if (site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
+          adjust(inf, +0.4, `+ ${reason} boost: System has BH/NS/WD`, map, site, 'sys');
+        }
       }
       return;
   }
