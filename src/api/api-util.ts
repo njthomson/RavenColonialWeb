@@ -3,7 +3,7 @@ import { RequestError } from "../types";
 
 export const apiSvcUrl =
   // 'https://localhost:7007'; /*
-  window.location.hash === '#r2' ? 'https://ravencolonial200.azurewebsites.net' : 'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
+  'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
 
 const logApiCalls = true;
 
