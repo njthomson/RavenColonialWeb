@@ -205,6 +205,9 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.vis, pivotArg];
     } else if (params.has('table') || window.location.pathname === '/table') {
       return [TopPivot.table, pivotArg];
+    } else if (params.has('r2') || window.location.pathname === '/r2') {
+      window.location.hash = '#sys';
+      return [TopPivot.sys, pivotArg];
     } else {
       return [TopPivot.home, pivotArg];
     }
