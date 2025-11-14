@@ -327,8 +327,8 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf
 
   const mapEconomies: Record<string, number> = {};
   const sumEffects: SysEffects = {};
-  let initialStarPort: SiteMap2 | undefined = undefined;
 
+  let first = true;
   for (const site of siteMaps) {
 
     // skip incomplete sites, unless ...
@@ -344,21 +344,17 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf
       mapEconomies[inf] = (mapEconomies[inf] ?? 0) + 1;
     }
 
-    const isAfflictedStarport = site.type.orbital && site.type.buildClass === 'starport';
-    if (isAfflictedStarport && !initialStarPort) {
-      initialStarPort = site;
-      console.log(`Initial buffed starport: ${site.name} - ${site.type.displayName2} (${site.buildType})`);
-    }
-
     // sum total system effects
     for (const key of sysEffects) {
       let effect = site.type.effects[key] ?? 0;
       if (effect === 0) continue;
-      if (buffNerf && isAfflictedStarport) {
-        effect = adjustAfflictedStarPortSumEffect(key, effect, site === initialStarPort);
+      if (buffNerf) {
+        effect = adjustAfflictedStarPortSumEffect(key, effect, first);
       }
       sumEffects[key] = (sumEffects[key] ?? 0) + effect;
     }
+
+    first = false;
   }
 
   // sort: highest count first, or alpha if equal

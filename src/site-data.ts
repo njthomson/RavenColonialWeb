@@ -12,7 +12,7 @@ export type Economy =
   | 'colony'
   | 'terraforming'
   ;
-  
+
 export type ConcreteEconomy = Exclude<Economy, 'none' | 'colony'>;
 
 export type BuildClass =
@@ -1079,7 +1079,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "extraction",
-    "score": 5, // TODO: confirm
+    "score": 5,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 10, tech: 0, sol: -4, dev: 3 }
   },
   {
@@ -1110,7 +1110,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "tourism",
-    "score": 5, // TODO: confirm
+    "score": 5,
     "effects": { pop: 1, mpop: 1, sec: -1, wealth: 0, tech: 7, sol: 0, dev: 3 },
     "preReq": 'comms',
     "unlocks": ['System unlock: Universal Cartographics at T1 Surface or T2 orbital ports']
@@ -1144,7 +1144,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "score": 5, // TODO: confirm
+    "score": 5,
     "effects": { pop: 1, mpop: 1, sec: 0, wealth: 0, tech: 10, sol: 0, dev: 0 },
     "unlocks": ['System unlock: Vista Genomics at T1 Surface or T2 orbital ports']
   },
@@ -1191,7 +1191,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 2, count: 1 },
     "gives": { tier: 3, count: 1 },
     "inf": "hightech",
-    "score": 5, // TODO: confirm
+    "score": 5,
     "effects": { pop: 1, mpop: 1, sec: -2, wealth: 3, tech: 10, sol: 0, dev: 0 },
     "unlocks": [
       'System unlock: Outfitting at non-Military Outposts',

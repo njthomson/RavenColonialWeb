@@ -186,7 +186,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
           <div key={`se${key}2`} style={{ maxWidth: 100, overflowX: 'hidden' }}>
             {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={cw} />}
           </div>,
-          <div key={`se${key}3`} style={{ textAlign: 'right' }}>{asPosNegTxt(actual)}</div>,
+          <div key={`se${key}3`} style={{ textAlign: 'right', alignContent: 'center', fontSize: props.sysView.state.buffNerf ? 12 : undefined }}>{asPosNegTxt(actual)}</div>,
           <div key={`se${key}4`}>
             {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
           </div>,
@@ -196,7 +196,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
 
       <Stack horizontal verticalAlign='center' style={{ gridColumn: '1 / span 5', fontSize: 10, marginBottom: 4 }}>
         <input type='checkbox' checked={props.sysView.state.buffNerf} onChange={() => props.sysView.doToggleBuffNerf()} />
-        <div>Apply <Link href="https://www.elitedangerous.com/update-notes/4-2-2-0" target="fdev">stats buff/nerf</Link> to starports only</div>
+        <div>Apply <Link href="https://forums.frontier.co.uk/threads/elite-dangerous-update-on-balancing-changes-to-system-development.643111/" target="fdev">stats buff/nerf</Link> to ALL facilities</div>
         <div style={{ color: appTheme.palette.themeSecondary }}>&nbsp;(Experimental unconfirmed behaviour)</div>
       </Stack>
 
