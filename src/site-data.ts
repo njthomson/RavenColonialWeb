@@ -359,7 +359,7 @@ export const siteTypes: SiteType[] = [
     "needs": { tier: 3, count: 6 },
     "gives": { tier: 0, count: 0 },
     "inf": "colony",
-    "score": 15, // TODO: confirm
+    "score": 15,
     "effects": { pop: 8, mpop: 4, sec: -4, wealth: 9, tech: 8, sol: 7, dev: 10 }
   },
   {
@@ -1227,7 +1227,7 @@ export const siteTypes: SiteType[] = [
 export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
 
   // T2/T3  space ports
-  dodec: [8, 11, 5], // Dodec Starport
+  dodec: [4, 8, 6], // Dodec Starport
   no_truss: [8, 11, 5], // Coriolis Starport
   dual_truss: [8, 11, 5], // Coriolis Starport
   quad_truss: [8, 11, 5], // Coriolis Starport

@@ -53,6 +53,7 @@ interface SystemView2State {
   originalBodySlots: string;
   showEditSys?: boolean;
   showConfirmAction?: () => void;
+  showConfirmMessage?: string;
   activeProjects: Record<string, Project | null>
   realEconomies?: GetRealEconomies[];
   auditWholeSystem?: boolean;
@@ -299,6 +300,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       });
   };
 
+  confirmDoSaveData = () => {
+    this.doSaveData();
+  }
+
   doSaveData = () => {
 
     if (!store.cmdrName) {
@@ -316,8 +321,17 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     // warn before lockout
     const aboutToLock = !this.state.sysMap.open && !!this.state.sysMap?.architect && !isMatchingCmdr(this.state.sysMap?.architect, store.cmdrName);
     if (aboutToLock) {
-      if (!window.confirm(`Are you sure?\n\nYou are not the system architect. You are about to lose permission to save future changes`)) {
+      if (this.state.showConfirmAction !== this.confirmDoSaveData) {
+        this.setState({
+          showConfirmMessage: 'You are about to lose permission to save future changes.',
+          showConfirmAction: this.confirmDoSaveData,
+        });
         return;
+      } else {
+        this.setState({
+          showConfirmMessage: undefined,
+          showConfirmAction: undefined,
+        });
       }
     }
 
@@ -344,19 +358,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     api.systemV2.saveSites(
       this.state.sysMap.id64.toString(), payload)
       .then(newSys => {
-        const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete, this.state.buffNerf);
-        this.setState({
-          processingMsg: undefined,
-          sysOriginal: newSys,
-          sysMap: newSysMap,
-          dirtySites: {},
-          deletedIDs: [],
-          bodySlots: newSys.slots,
-          originalBodySlots: JSON.stringify(newSys.slots),
-        });
-
         // clear this cache any time we save a system
         api.systemV2.cache.snapshots = {};
+
+        return this.useLoadedData(newSys, false);
       })
       .catch(err => {
         console.error(`saveData failed:`, err.stack);
@@ -709,7 +714,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderTitleAndCommands() {
-    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect } = this.state;
+    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, showConfirmMessage, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
@@ -1119,9 +1124,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       >
         <Icon iconName='Warning' style={{ fontSize: 40, float: 'left', marginRight: 10 }} />
         <div>
-          You have unsaved changed.
-          <br />
-          Are you sure you want to proceed?
+          {showConfirmMessage ?? 'You have unsaved changed.'}
+          <div style={{ marginTop: 10 }}>Are you sure you want to proceed?</div>
         </div>
         <DialogFooter>
           <DefaultButton text='Yes' iconProps={{ iconName: 'CheckMark' }} onClick={() => showConfirmAction()} />

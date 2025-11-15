@@ -15,6 +15,9 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
 
   const isOpen = sysMap.open;
 
+  // const isArchitect = !!props.sysView.state.sysOriginal.architect && isMatchingCmdr(props.sysView.state.sysOriginal.architect, store.cmdrName);
+  // const couldEditAsArchitect = props.sysView.state.sysOriginal.open || !props.sysView.state.sysOriginal.architect || isArchitect;
+  // const aboutToLock = couldEditAsArchitect && !props.sysView.state.sysMap.open && !!props.sysView.state.sysMap?.architect && !isMatchingCmdr(props.sysView.state.sysMap?.architect, store.cmdrName);
   return <div>
 
     <Callout
@@ -180,6 +183,14 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
             </div>
           </Callout>}
         </div>}
+
+        {/* {aboutToLock && <>
+          <div style={{ gridColumn: '1 / span 2', color: appTheme.palette.yellowDark, fontWeight: 'bold' }}
+          >
+            <Icon className='icon-inline' iconName='Warning' />
+            Warning! You will lose permissions after saving
+          </div>
+        </>} */}
       </div>
 
       {<ContextualMenu
