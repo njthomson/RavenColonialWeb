@@ -22,7 +22,7 @@ export const BodyOverride: FunctionComponent<{ body: Bod; sysView: SystemView2; 
   });
 
   const rows = (Object.entries(mapBodyFeature) as [BodyFeature, string][]).map(([key, val]) => {
-    if ([BodyFeature.atmos, BodyFeature.landable].includes(key)) { return null; }
+    if ([BodyFeature.atmosphere, BodyFeature.landable].includes(key)) { return null; }
 
     return <Checkbox
       key={`chbf-${key}`}

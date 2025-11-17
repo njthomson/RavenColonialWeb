@@ -416,7 +416,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
             onRender: () => (<div style={{ height: 2, backgroundColor: appTheme.palette.themeSecondary }} />)
           },
 
-          ...Object.values(BodyFeature).filter(f => f !== BodyFeature.atmos).map(f => ({
+          ...Object.values(BodyFeature).map(f => ({
             key: `bf-${f}`,
             text: mapBodyFeature[f],
             title: `Show bodies with ${mapBodyFeature[f]}?`,
@@ -885,7 +885,7 @@ export const mapBodyFeatureIcon = {
   terraformable: 'World',
   tidal: 'Contrast',
   landable: 'DrillDownSolid',
-  atmos: 'Cloudy',
+  atmosphere: 'Cloud',
 };
 
 export const mapBodyFeatureColor = {
@@ -896,7 +896,7 @@ export const mapBodyFeatureColor = {
   terraformable: 'rgb(100,200,200)',
   tidal: appTheme.isInverted ? 'rgb(170,170,255)' : 'rgb(50,50,255)',
   landable: 'rgb(200,150,100)',
-  atmos: 'rgb(167, 203, 218)',
+  atmosphere: 'rgb(167, 203, 218)',
 };
 
 // c1 is fill / c2 is stroke
