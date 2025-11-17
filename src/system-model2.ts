@@ -168,6 +168,9 @@ export const getUnknownBody = (): Bod => {
     parents: [],
     subType: 'Unknown',
     type: BT.un,
+    radius: -1,
+    temp: -1,
+    gravity: -1,
   };
 }
 

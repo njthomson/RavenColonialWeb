@@ -42,6 +42,9 @@ export interface Bod {
   type: BT;
   subType: string;
   features: BodyFeature[];
+  radius: number;
+  temp: number;
+  gravity: number;
 }
 
 /** Body Type */

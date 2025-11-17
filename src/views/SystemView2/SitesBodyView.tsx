@@ -22,6 +22,9 @@ const rootBC = {
   parents: [],
   subType: 'barycentre',
   type: BT.bc,
+  radius: -1,
+  temp: -1,
+  gravity: -1,
 } as Bod;
 
 class BodyMapTreeNode {
