@@ -6,7 +6,7 @@ import { appTheme, cn } from "../../theme";
 const bsn = mergeStyles({
   marginLeft: 5.5,
   padding: 0,
-  width: 16,
+  width: 24,
   height: 16,
   color: appTheme.palette.themeTertiary,
   ':hover': {
@@ -90,13 +90,14 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
       style={{ border: tooMany ? `2px dashed ${appTheme.palette.redDark}` : undefined }}
       styles={{
         icon: { color: props.bright ? appTheme.semanticColors.bodyText : appTheme.palette.themeTertiary },
-        textContainer: { color: tooMany || unknown || props.isPredicted ? appTheme.palette.red : 'unset' },
       }}
       iconProps={{ iconName: !props.showIcon ? undefined : (props.isOrbital ? 'ProgressRingDots' : 'GlobeFavorite'), }}
-      text={buttonText}
       title={`${props.isOrbital ? 'Orbital' : 'Surface'} slots: ${props.max < 0 ? 'unknown' : props.max}`}
       onClick={() => setDropDown(!dropDown)}
-    />
+    >
+      {!unknown && <span style={{color: tooMany ? appTheme.palette.red : 'unset'}}>{props.max}</span>}
+      {(tooMany || unknown || props.isPredicted) && <span style={{color: appTheme.palette.red}}>?</span>}
+    </ActionButton>
 
     {dropDown && <Callout
       target={`#${id}`}
