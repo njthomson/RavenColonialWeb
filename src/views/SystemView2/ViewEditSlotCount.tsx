@@ -1,6 +1,6 @@
-import { ActionButton, DirectionalHint, mergeStyles, Callout, Stack, ContextualMenu, IContextualMenuItem } from "@fluentui/react";
+import { ActionButton, Callout, ContextualMenu, DirectionalHint, IContextualMenuItem, mergeStyles, Stack } from "@fluentui/react";
 import { CSSProperties, FunctionComponent, useState } from "react";
-import { cn, appTheme } from "../../theme";
+import { appTheme, cn } from "../../theme";
 
 /** Button Slot Number (no icon) */
 const bsn = mergeStyles({
@@ -52,7 +52,7 @@ const mbsm = mergeStyles({
 });
 
 
-export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void, style?: CSSProperties, hasPrimaryPort?: boolean }> = (props) => {
+export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, isPredicted: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void, style?: CSSProperties, hasPrimaryPort?: boolean }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
@@ -61,6 +61,9 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
   if (props.hasPrimaryPort && diff === 1) { diff -= 1; } // allow off by one, if we have the primary port
   const tooMany = props.max >= 0 && diff > 0;
   const unknown = props.max === -1;
+  const buttonText = unknown ? '?'
+    : props.isPredicted ? `${props.max}?`
+    : props.max.toString();
 
   const onSelect = (count: number) => {
     setDropDown(false);
@@ -87,10 +90,10 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
       style={{ border: tooMany ? `2px dashed ${appTheme.palette.redDark}` : undefined }}
       styles={{
         icon: { color: props.bright ? appTheme.semanticColors.bodyText : appTheme.palette.themeTertiary },
-        textContainer: { color: tooMany || unknown ? appTheme.palette.red : 'unset' },
+        textContainer: { color: tooMany || unknown || props.isPredicted ? appTheme.palette.red : 'unset' },
       }}
       iconProps={{ iconName: !props.showIcon ? undefined : (props.isOrbital ? 'ProgressRingDots' : 'GlobeFavorite'), }}
-      text={props.max >= 0 ? props.max.toString() : '?'}
+      text={buttonText}
       title={`${props.isOrbital ? 'Orbital' : 'Surface'} slots: ${props.max < 0 ? 'unknown' : props.max}`}
       onClick={() => setDropDown(!dropDown)}
     />
