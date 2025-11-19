@@ -2,12 +2,13 @@ import { BodyFeature } from './types';
 import { Bod, BT } from './types2';
 
 export const predictSurfaceSlots = (body: Bod): number => {
+  if (body.type === BT.un) return -1;
+
   const features = new Set(body.features);
-  if (body.type === BT.un
-    || body.temp > 700
+  if (body.temp > 700
     || body.gravity > 2.7
     || !features.has(BodyFeature.landable)) {
-    return -1;
+    return 0;
   }
 
   let predictedSlots = body.radius < 1500 ? 1
