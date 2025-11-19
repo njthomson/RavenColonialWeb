@@ -1,17 +1,17 @@
-import * as api from '../../api';
-import { Stack, IconButton, Callout, DirectionalHint, ActionButton, ContextualMenu, ContextualMenuItemType, Icon, IContextualMenuItem, Dialog, DefaultButton, DialogFooter, PrimaryButton, Link, Spinner, MessageBar, MessageBarType } from "@fluentui/react";
+import { ActionButton, Callout, ContextualMenu, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, PrimaryButton, Spinner, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
+import * as api from '../../api';
+import { TierPoint } from '../../components/TierPoints';
+import { store } from '../../local-storage';
+import { getSiteType } from '../../site-data';
 import { SiteMap2 } from "../../system-model2";
 import { appTheme, cn } from "../../theme";
+import { ProjectLink2 } from "./ProjectLink2";
+import { SystemView2 } from "./SystemView2";
 import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ViewEditName } from "./ViewEditName";
-import { SystemView2 } from "./SystemView2";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
-import { ProjectLink2 } from "./ProjectLink2";
-import { store } from '../../local-storage';
-import { getSiteType } from '../../site-data';
-import { TierPoint } from '../../components/TierPoints';
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
   const [confirmBuildIt, setConfirmBuildIt] = useState(false);
@@ -20,7 +20,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
   const [buildType, setBuildType] = useState<string>('');
   const site = props.site;
   const isPinned = props.sysView.state.pinnedSite?.id === site.id;
-  const couldBuildIt = props.site.status !== 'complete' && !props.site.buildId && !!props.site.buildType && props.site.buildType !== 'dodec';
+  const couldBuildIt = props.site.status !== 'complete' && !props.site.buildId && !!props.site.buildType;
   const couldRemoveDupes = props.site.status !== 'plan' && !!props.site.buildId;
   const vagueBuildType = props.site.buildType?.endsWith('?');
 
