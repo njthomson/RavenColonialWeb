@@ -106,7 +106,7 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
         icon: { color: props.bright ? appTheme.semanticColors.bodyText : appTheme.palette.themeTertiary },
       }}
       iconProps={{ iconName: !props.showIcon ? undefined : (props.isOrbital ? 'ProgressRingDots' : 'GlobeFavorite'), }}
-      title={`${props.isOrbital ? 'Orbital' : 'Surface'} slots: ${props.max < 0 ? 'unknown' : props.max}`}
+      title={`${props.isOrbital ? 'Orbital' : 'Surface'} slots: ${props.max < 0 ? 'unknown' : props.max}${props.isPredicted ? ' (predicted)' : ''}`}
       onClick={() => setDropDown(!dropDown)}
     >
       <div style={{ margin: '0px 4px' }}>
