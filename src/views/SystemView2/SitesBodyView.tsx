@@ -722,7 +722,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, true)}
   />;
   const btnSlotsSurface = <ViewEditSlotCount
-    max={bodySlots[1] >= 0 ? bodySlots[1] : predictSurfaceSlots(node.body)}
+    max={bodySlots[1] < 0 ? predictSurfaceSlots(node.body) : bodySlots[1]}
     current={surfaces?.length ?? 0}
     isOrbital={false}
     isPredicted={bodySlots[1] < 0}
