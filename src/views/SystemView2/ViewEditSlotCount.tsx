@@ -96,10 +96,10 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
     <ActionButton
       id={id}
       className={
-        (props.showIcon && props.bright) ? bsnib :
-        props.showIcon ? bsni :
-        props.isPredicted ? bsnp :
-        bsn
+        (props.showIcon && props.bright) ? bsnib
+        : props.showIcon ? bsni
+        : props.isPredicted ? bsnp
+        : bsn
       }
       style={{ border: tooMany ? `2px dashed ${redVariant}` : undefined }}
       styles={{
