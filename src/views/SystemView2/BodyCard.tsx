@@ -183,7 +183,7 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
 
             {isLandable && <ViewEditSlotCount
               showIcon bright
-              max={bodySlots[1] >= 0 ? bodySlots[1] : predictSurfaceSlots(bod)}
+              max={bodySlots[1] < 0 ? predictSurfaceSlots(bod) : bodySlots[1] }
               current={0}
               isOrbital={false}
               isPredicted={bodySlots[1] < 0}
