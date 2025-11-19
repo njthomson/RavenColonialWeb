@@ -2,17 +2,26 @@ import { ActionButton, Callout, ContextualMenu, DirectionalHint, IContextualMenu
 import { CSSProperties, FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 
-/** Button Slot Number (no icon) */
-const bsn = mergeStyles({
-  marginLeft: 5.5,
+const bsnBase = {
   padding: 0,
-  width: 24,
   height: 16,
   color: appTheme.palette.themeTertiary,
   ':hover': {
     color: appTheme.palette.themePrimary,
     border: `1px solid ${appTheme.palette.themeTertiary} !important`,
   },
+}
+
+/** Button Slot Number (no icon) */
+const bsn = mergeStyles(bsnBase, {
+  marginLeft: 5.5,
+  width: 16
+});
+
+/** Button Slot number (no icon) with predicted slots */
+const bsnp = mergeStyles(bsnBase, {
+  marginLeft: 1.5,
+  width: 24,
 });
 
 /** DIM Button Slot number (showing icon) */
@@ -61,9 +70,9 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
   if (props.hasPrimaryPort && diff === 1) { diff -= 1; } // allow off by one, if we have the primary port
   const tooMany = props.max >= 0 && diff > 0;
   const unknown = props.max === -1;
-  const buttonText = unknown ? '?'
-    : props.isPredicted ? `${props.max}?`
-    : props.max.toString();
+  const redVariant = props.isPredicted && !tooMany ?
+    appTheme.palette.redDark :
+    appTheme.palette.red;
 
   const onSelect = (count: number) => {
     setDropDown(false);
@@ -86,8 +95,13 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
   return <div style={{ ...props.style }}>
     <ActionButton
       id={id}
-      className={props.showIcon ? (props.bright ? bsnib : bsni) : bsn}
-      style={{ border: tooMany ? `2px dashed ${appTheme.palette.redDark}` : undefined }}
+      className={
+        (props.showIcon && props.bright) ? bsnib :
+        props.showIcon ? bsni :
+        props.isPredicted ? bsnp :
+        bsn
+      }
+      style={{ border: tooMany ? `2px dashed ${redVariant}` : undefined }}
       styles={{
         icon: { color: props.bright ? appTheme.semanticColors.bodyText : appTheme.palette.themeTertiary },
       }}
@@ -95,8 +109,16 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
       title={`${props.isOrbital ? 'Orbital' : 'Surface'} slots: ${props.max < 0 ? 'unknown' : props.max}`}
       onClick={() => setDropDown(!dropDown)}
     >
-      {!unknown && <span style={{color: tooMany ? appTheme.palette.red : 'unset'}}>{props.max}</span>}
-      {(tooMany || unknown || props.isPredicted) && <span style={{color: appTheme.palette.red}}>?</span>}
+      <div style={{ margin: '0px 4px' }}>
+        {!unknown &&
+          <span style={{ color: tooMany ? appTheme.palette.red : undefined }}>
+            {props.max}
+          </span>}
+        {(unknown || props.isPredicted) &&
+          <span style={{ color: redVariant }}>
+            ?
+          </span>}
+      </div>
     </ActionButton>
 
     {dropDown && <Callout
