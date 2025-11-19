@@ -60,6 +60,22 @@ const mbsm = mergeStyles({
   fontWeight: 'bold',
 });
 
+const getAbsolutePositionByCount = (count: number, showIcon: boolean) => {
+  switch (count) {
+    // for unknown cases, position between and just below 1 and 2
+    case -1: return { left: showIcon ? -12 : -16, top: -60 };
+    case 0: return { left: +55, top: -40 };
+    case 1: return { left: showIcon ? +15 : +5, top: -40 };
+    case 2: return { left: showIcon ? -25 : -35, top: -40 };
+    case 3: return { left: showIcon ? +75 : +70, top: -75 };
+    case 4: return { left: showIcon ? +40 : +35, top: -75 };
+    case 5: return { left: showIcon ? +5 : -5, top: -75 };
+    case 6: return { left: showIcon ? -25 : -35, top: -75 };
+    case 7: return { left: showIcon ? +75 : +70, top: -110 };
+    default: // 8+
+      return { left: showIcon ? +40 : +35, top: -110 };
+  }
+}
 
 export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number, isOrbital: boolean, isPredicted: boolean, showIcon: boolean, bright?: boolean, onChange: (count: number) => void, style?: CSSProperties, hasPrimaryPort?: boolean }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
@@ -92,14 +108,15 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
     } as IContextualMenuItem);
   }
 
-  return <div style={{ ...props.style }}>
+  return <div style={{ ...props.style, position: 'relative' }}>
+    <div id={id} style={{ position: 'absolute', width: 0, height: 0, ...getAbsolutePositionByCount(props.max, props.showIcon) }} />
     <ActionButton
       id={id}
       className={
         (props.showIcon && props.bright) ? bsnib
-        : props.showIcon ? bsni
-        : props.isPredicted ? bsnp
-        : bsn
+          : props.showIcon ? bsni
+            : props.isPredicted ? bsnp
+              : bsn
       }
       style={{ border: tooMany ? `2px dashed ${redVariant}` : undefined }}
       styles={{
@@ -129,7 +146,6 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
       role="dialog"
       coverTarget
       directionalHint={DirectionalHint.topCenter}
-      gapSpace={-60}
       onDismiss={() => {
         setDropDown(false);
         setShowMore(false);
