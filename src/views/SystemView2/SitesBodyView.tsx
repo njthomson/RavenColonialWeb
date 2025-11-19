@@ -1,15 +1,16 @@
-import { Component, FunctionComponent, useState } from "react";
-import { Bod, BT } from "../../types2";
 import { ActionButton, ContextualMenu, ContextualMenuItemType, DefaultButton, Icon, IconButton, IContextualMenuItem, Link, Stack } from "@fluentui/react";
-import { appTheme, cn } from "../../theme";
-import { BodyMap2, SysMap2 } from "../../system-model2";
-import { SitesViewProps, SystemView2 } from "./SystemView2";
-import { store } from "../../local-storage";
-import { BodyFeature, mapBodyFeature } from "../../types";
-import { SiteLink } from "./SiteLink";
+import { Component, FunctionComponent, useState } from "react";
 import { stellarRemnants } from "../../economy-model2";
-import { ViewEditSlotCount } from "./ViewEditSlotCount";
+import { store } from "../../local-storage";
+import { predictSurfaceSlots } from '../../slot-prediction';
+import { BodyMap2, SysMap2 } from "../../system-model2";
+import { appTheme, cn } from "../../theme";
+import { BodyFeature, mapBodyFeature } from "../../types";
+import { Bod, BT } from "../../types2";
 import { BodyCard } from "./BodyCard";
+import { SiteLink } from "./SiteLink";
+import { SitesViewProps, SystemView2 } from "./SystemView2";
+import { ViewEditSlotCount } from "./ViewEditSlotCount";
 
 let nnn = 0;
 const indent = 20;
@@ -714,15 +715,17 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
     max={bodySlots[0]}
     current={orbitals?.length ?? 0}
     isOrbital={true}
+    isPredicted={false}
     showIcon={!hasSites}
     hasPrimaryPort={hasPrimaryPort}
     style={{ marginLeft: hasSites ? undefined : 4 }}
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, true)}
   />;
   const btnSlotsSurface = <ViewEditSlotCount
-    max={bodySlots[1]}
+    max={bodySlots[1] < 0 ? predictSurfaceSlots(node.body) : bodySlots[1]}
     current={surfaces?.length ?? 0}
     isOrbital={false}
+    isPredicted={bodySlots[1] < 0}
     showIcon={!hasSites}
     style={{ marginLeft: hasSites ? undefined : 4 }}
     onChange={newCount => sysView.setBodySlot(bodyNum, newCount, false)}

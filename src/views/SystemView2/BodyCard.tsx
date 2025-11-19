@@ -1,17 +1,18 @@
 import { ActionButton, Callout, DirectionalHint, Icon, IconButton, Link, mergeStyles, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
-import { appTheme, cn } from "../../theme";
-import { SystemView2 } from "./SystemView2";
-import { Bod, BT } from "../../types2";
-import { BodyFeature, mapBodyFeature } from "../../types";
-import { mapBodyFeatureColor, mapBodyFeatureIcon } from "./SitesBodyView";
-import { ViewEditSlotCount } from "./ViewEditSlotCount";
-import { AuditEconomy, BodyMap2, EconomyMap, SiteMap2 } from "../../system-model2";
-import { applyBodyType, applyBuffs, applyStrongLinkBoost } from "../../economy-model2";
-import { Economy, getSiteType, mapName } from "../../site-data";
-import { asPosNegTxt2 } from "../../util";
-import { store } from "../../local-storage";
 import { LinkSrvSurvey } from "../../components/LinkSrvSurvey";
+import { applyBodyType, applyBuffs, applyStrongLinkBoost } from "../../economy-model2";
+import { store } from "../../local-storage";
+import { Economy, getSiteType, mapName } from "../../site-data";
+import { predictSurfaceSlots } from '../../slot-prediction';
+import { AuditEconomy, BodyMap2, EconomyMap, SiteMap2 } from "../../system-model2";
+import { appTheme, cn } from "../../theme";
+import { BodyFeature, mapBodyFeature } from "../../types";
+import { Bod, BT } from "../../types2";
+import { asPosNegTxt2 } from "../../util";
+import { mapBodyFeatureColor, mapBodyFeatureIcon } from "./SitesBodyView";
+import { SystemView2 } from "./SystemView2";
+import { ViewEditSlotCount } from "./ViewEditSlotCount";
 
 const cbt = mergeStyles({
   color: appTheme.semanticColors.bodyText
@@ -176,14 +177,16 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
               max={bodySlots[0]}
               current={0}
               isOrbital={true}
+              isPredicted={false}
               onChange={newCount => sysView.setBodySlot(bod.num, newCount, true)}
             />
 
             {isLandable && <ViewEditSlotCount
               showIcon bright
-              max={bodySlots[1]}
+              max={bodySlots[1] < 0 ? predictSurfaceSlots(bod) : bodySlots[1] }
               current={0}
               isOrbital={false}
+              isPredicted={bodySlots[1] < 0}
               onChange={newCount => sysView.setBodySlot(bod.num, newCount, false)}
             />}
 
