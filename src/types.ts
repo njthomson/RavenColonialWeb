@@ -210,6 +210,9 @@ export interface GlobalStats {
   totalArchitects: number;
   totalPlannedSystems: number;
   topArchitects: Record<string, number>;
+  topSystemScores: Record<number, Record<string, string>>;
+  topSystemPops: Record<number, Record<string, string>>;
+  topSystemEffects: Record<string, Record<number, Record<string, string>>>;
 }
 
 export interface QueryProject {
