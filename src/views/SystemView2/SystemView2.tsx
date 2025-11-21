@@ -250,10 +250,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (!isArchitect || !updateSnapshot) { return; }
 
     let genSnapshot = false;
-    let newSnapshot = getSnapshot(newSys);
+    let newSnapshot = getSnapshot(newSys, undefined);
     return api.systemV2.getSnapshot(newSys.id64)
       .then(currentSnapshot => {
         genSnapshot = currentSnapshot.stale || newSnapshot.score !== currentSnapshot.score;
+        newSnapshot.fav = currentSnapshot.fav;
       })
       .catch(err => {
         if (err.statusCode === 404) {
@@ -341,7 +342,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       update: Object.values(this.state.dirtySites),
       delete: this.state.deletedIDs,
       orderIDs: this.state.orderIDs,
-      snapshot: this.state.sysMap.architect ? getSnapshot(this.state.sysMap) : undefined,
+      snapshot: this.state.sysMap.architect ? getSnapshot(this.state.sysMap, undefined) : undefined,
       slots: this.state.bodySlots,
     };
 

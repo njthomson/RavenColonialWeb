@@ -783,7 +783,7 @@ export const hasPreReq2 = (siteMaps: SiteMap2[] | SiteMap[] | undefined, type: S
   }
 }
 
-export const getSnapshot = (newSys: Sys) => {
+export const getSnapshot = (newSys: Sys, isFav: boolean | undefined) => {
   // prepare a snapshot without using incomplete sites
   const snapshotFull = buildSystemModel2(newSys, false, true);
   const snapshot: SysSnapshot = {
@@ -798,7 +798,7 @@ export const getSnapshot = (newSys: Sys) => {
     pop: newSys.pop,
     stale: false,
     score: snapshotFull.systemScore ?? -1,
-    fav: false,
+    fav: isFav,
   };
   return snapshot;
 };

@@ -79,7 +79,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         const snap = stales[0];
         console.log(`Recalculating snapshot for: ${snap.name} (${snap.id64})`);
         const newSys = await api.systemV2.getSys(snap.id64.toString());
-        const newSnapshot = getSnapshot(newSys);
+        const newSnapshot = getSnapshot(newSys, snap.fav);
         await api.systemV2.saveSites(snap.id64.toString(), {
           update: [],
           delete: [],

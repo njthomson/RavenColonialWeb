@@ -126,7 +126,7 @@ export interface SysSnapshot {
   pop?: Pop;
   pendingPop?: boolean;
   score: number;
-  fav: boolean;
+  fav?: boolean;
 }
 
 export interface History {
