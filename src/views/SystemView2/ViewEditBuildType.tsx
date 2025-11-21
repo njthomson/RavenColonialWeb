@@ -64,7 +64,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
     const displayName2 = getSiteType(this.props.buildType, true)?.displayName2 ?? '?';
 
-    return <div style={{ minWidth: 275 }}>
+    return <div style={{ minWidth: 290 }}>
 
       <ActionButton
         id={`bt-${id}`}

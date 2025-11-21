@@ -11,6 +11,7 @@ import { SystemView2 } from "./SystemView2";
 import { SysPop } from "./SysPop";
 import { Callout, Icon, IconButton, Link, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
 import { App } from "../../App";
+import { ViewUnlockedFeatures } from "./ViewUnlocked";
 
 // //cargoTypes["Asteroid Starport"].items.
 // // const cargoTypes2 = cargoTypes as Record<string, any>;
@@ -194,11 +195,16 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
         ]
       })}
 
-      <Stack horizontal verticalAlign='center' style={{ gridColumn: '1 / span 5', fontSize: 10, marginBottom: 4 }}>
+      <Stack horizontal verticalAlign='center' style={{ gridColumn: '1 / span 5', fontSize: 10, marginLeft: 0 }}>
         <input type='checkbox' checked={props.sysView.state.buffNerf} onChange={() => props.sysView.doToggleBuffNerf()} />
         <div>Apply <Link href="https://forums.frontier.co.uk/threads/elite-dangerous-update-on-balancing-changes-to-system-development.643111/" target="fdev">stats buff/nerf</Link> to ALL facilities</div>
         <div style={{ color: appTheme.palette.themeSecondary }}>&nbsp;(Experimental unconfirmed behaviour)</div>
       </Stack>
+
+      <div>System unlocks:</div>
+      <div style={{ gridColumn: '2 / span 4', alignContent: 'center' }}>
+        <ViewUnlockedFeatures sysMap={props.sysMap} useIncomplete={props.useIncomplete} />
+      </div>
 
       {!!buildTypes.length && <>
         <div style={{ alignContent: 'center' }}>Planned haul:</div>

@@ -194,7 +194,7 @@ export const ViewEditSlotCount: FunctionComponent<{ max: number, current: number
       {showMore && <ContextualMenu
         target={`#more-slots`}
         styles={{ list: { width: 102 } }}
-        calloutProps={{ style: { margin: 0, padding: 0, width: 102, border: '1px solid ' + appTheme.palette.themePrimary }, }}
+        calloutProps={{ style: { margin: 0, padding: 0, width: 102, border: '1px solid ' + appTheme.palette.themePrimary } }}
         directionalHint={DirectionalHint.rightTopEdge}
         gapSpace={-32}
         onDismiss={() => setShowMore(false)}

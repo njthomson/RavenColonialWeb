@@ -31,6 +31,8 @@ export type PadSize =
   | 'large'
   ;
 
+export type PreReq = 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourism' | 'settlementMilitary';
+
 export interface SiteType {
   /** Display name for group */
   displayName: string;
@@ -83,7 +85,7 @@ export interface SiteType {
   /** Effects upon the system */
   effects: SysEffects;
 
-  preReq?: 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourism' | 'settlementMilitary';
+  preReq?: PreReq;
   unlocks?: string[];
 
   score?: number;
@@ -1202,7 +1204,7 @@ export const siteTypes: SiteType[] = [
   {
     "displayName": "Industrial",
     "displayName2": "Industrial Hub",
-    "subTypes": ["eunostus", "molae", "tellus_i",],
+    "subTypes": ["eunostus", "molae", "tellus_i"],
     "altTypes": ["tellus"],
     "haul": 9950,
     "buildClass": "hub",
@@ -1363,3 +1365,5 @@ export const averageHauls: Record<string, number> = {
 };
 
 //console.log(`System scores per building:\n` + siteTypes.slice(5).map(st => `${st.score ?? '■'}: ${st.displayName2}`).join(`\n`));
+// console.log(`Orbital buildTypes:\n` + siteTypes.filter(st => st.orbital).flatMap(st => st.subTypes).map(t => `"${t}"`).join(','));
+// console.log(`Surface buildTypes:\n` + siteTypes.filter(st => !st.orbital).flatMap(st => st.subTypes).map(t => `"${t}"`).join(','));

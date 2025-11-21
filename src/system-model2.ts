@@ -27,6 +27,106 @@ export const unknown = 'Unknown';
 //   return sysMap;
 // }
 
+export type SysUnlocks =
+  | 'SettlementTourist'
+  | 'InstallationTourist'
+  | 'InstallationScientific'
+  | 'InstallationMilitary'
+  | 'HubCivilian'
+  | 'HubMilitary'
+  | 'HubExploration'
+  | 'HubOutpost'
+  | 'HubIndustrial'
+
+  | 'ShipyardT1'
+  | 'OutfittingNonMilOutpost'
+  | 'OutfittingT1Surface'
+  | 'VistaGenomics'
+  | 'UniversalCartographics'
+  | 'MarketOutposts'
+  | 'CrewLounge'
+  ;
+
+export const mapSysUnlocks: Record<SysUnlocks, { icon: string, title: string, needTypes: string[], needs: string }> = {
+  'SettlementTourist': {
+    icon: 'Suitcase', title: 'Tourist Settlements', needTypes: ["hermes", "angelia", "eirene"], // a satellite
+    needs: 'A satellite',
+  },
+  'InstallationTourist': {
+    icon: 'Cocktails', title: 'Tourist Installations', needTypes: ["aergia", "comus", "gelos", "fufluns"], // a tourist settlement
+    needs: 'A tourist settlement',
+  },
+  'InstallationScientific': {
+    icon: 'NetworkTower', title: 'Scientific Installations', needTypes: ["pheobe", "asteria", "caerus", "chronos"], // a bio settlement
+    needs: 'A bio settlement',
+  },
+  'InstallationMilitary': {
+    icon: 'Shield', title: 'Military Installations', needTypes: ["ioke", "bellona", "enyo", "polemos", "minerva"], // a military settlement
+    needs: 'A military settlement',
+  },
+  'HubMilitary': {
+    icon: 'ReportHacked', title: 'Military Hub', needTypes: ["vacuna", "alastor"], // a military installation
+    needs: 'A military installation',
+  },
+  'HubCivilian': {
+    icon: 'Home', title: 'Civilian Hub', needTypes: ["consus", "picumnus", "annona", "ceres", "fornax"], // an agricultural settlement
+    needs: 'An agricultural settlement',
+  },
+  'HubExploration': {
+    icon: 'Camera', title: 'Exploration Hub', needTypes: ["pistis", "soter", "aletheia"], // comms
+    needs: 'A comms installation',
+  },
+  'HubOutpost': {
+    icon: 'HardDriveGroup', title: 'Outpost Hub', needTypes: ['demeter'], // a space farm
+    needs: 'A space farm',
+  },
+  'HubIndustrial': {
+    icon: 'Manufacturing', title: 'Industrial Hub', needTypes: ["euthenia", "phorcys"], // mining/industrial installation
+    needs: 'A mining/industrial installation',
+  },
+
+  'ShipyardT1': {
+    icon: 'Airplane', title: 'Shipyard at T1 surface ports', needTypes: [
+      "eunostus", "molae", "tellus_i", // industrial hub
+      "vacuna", "alastor",// military installation
+    ], needs: 'An industrial hub or military installation',
+  },
+  'OutfittingNonMilOutpost': {
+    icon: 'Dataflows', title: 'Outfitting at non-Military Outposts', needTypes: [
+      "janus", // high-tech hub
+      "vacuna", "alastor",// military installation
+    ], needs: 'A high-tech hub or military installation',
+  },
+  'OutfittingT1Surface': {
+    icon: 'FlowChart', title: 'Outfitting at non-Industrial T1 surface ports', needTypes: [
+      "athena", "caelus", // high-tech hub
+      "vacuna", "alastor",// military installation
+    ], needs: 'A high-tech hub or military installation',
+  },
+  'VistaGenomics': {
+    icon: 'ClassroomLogo', title: 'Vista Genomics at T1 Surface or T2 orbital ports', needTypes: [
+      "asclepius", "eupraxia", // a Medical Installation
+      "janus", // scientific hub
+    ], needs: 'A scientific hub or medical installation',
+  },
+  'UniversalCartographics': {
+    icon: 'HomeGroup', title: 'Universal Cartographics at T1 Surface or T2 orbital ports', needTypes: [
+      "astraeus", "coeus", "dione", "dodona", // a Medical Installation
+      "tellus_e", // exploration hub
+    ], needs: 'An exploration hub or research installation',
+  },
+  'MarketOutposts': {
+    icon: 'Shop', title: 'Commodities at Pirate, Scientific or Military Outposts', needTypes: [
+      "bacchus", "dionysus", // space bar
+      "hedone", "opora", "pasithea", // tourist installation
+      "io", // outpost hub
+    ], needs: 'An outpost hub, tourist installation or space bar',
+  },
+  'CrewLounge': {
+    icon: 'People', title: 'Crew Lounge at non-Civilian T1 ports', needTypes: ["bacchus", "dionysus"], // space bar
+    needs: 'A space bar',
+  },
+};
 
 export interface SysMap2 extends Sys {
   bodyMap: Record<string, BodyMap2>;
@@ -35,6 +135,7 @@ export interface SysMap2 extends Sys {
   economies: Record<string, number>;
   sumEffects: SysEffects;
   systemScore: number;
+  sysUnlocks: Record<SysUnlocks, boolean>,
 }
 
 export interface TierPoints {
@@ -126,6 +227,14 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
   const tierPoints = sumTierPoints(sysMap.siteMaps, useIncomplete);
   const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete, buffNerf);
 
+  // calc system unlocks
+  const sysUnlocks = {} as Record<SysUnlocks, boolean>;
+  for (let key of Object.keys(mapSysUnlocks) as SysUnlocks[]) {
+    const unlocked = sysMap.sites.some(s => (s.status === 'complete' || useIncomplete) && mapSysUnlocks[key].needTypes.some(n => s.buildType?.startsWith(n)));
+    sysUnlocks[key] = unlocked;
+  }
+  console.log(sysUnlocks);
+
   // re-sort bodies by their num value
   // sys.bodies.sort((a, b) => a.num - b.num);
 
@@ -133,6 +242,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
     ...sysMap,
     ...sumEffects,
     tierPoints,
+    sysUnlocks,
   });
 
   // // store in the cache

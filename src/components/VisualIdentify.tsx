@@ -1,5 +1,5 @@
 
-import { ActionButton, Icon, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, Callout, Icon, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../theme";
 import { getSiteType, SiteType, siteTypes } from "../site-data";
@@ -145,6 +145,7 @@ interface VisualIdentifyState {
   typeNames: string[];
   showMissing?: boolean;
   showInGroups: boolean;
+  showHowTo?: boolean;
 }
 
 export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentifyState> {
@@ -174,7 +175,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
   }
 
   render() {
-    const { zoom, showInGroups, showMissing, showSurface } = this.state;
+    const { zoom, showInGroups, showMissing, showSurface, showHowTo } = this.state;
 
     return <div style={{ marginLeft: 10, fontSize: 12 }}>
       {!zoom && <>
@@ -207,16 +208,14 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
               }}
             />
             <ActionButton
+              id='btn-how-to'
               className={cn.bBox}
+              text='How to identify?'
               title='View table of site properties in a new tab'
-              iconProps={{ iconName: 'ViewListGroup', style: { cursor: 'pointer' } }}
+              iconProps={{ iconName: 'Equalizer', style: { cursor: 'pointer' } }}
               style={{ height: 24, marginBottom: 8, padding: '14px 8px' }}
-              href='/table'
-              target='table'
-            >
-              Table&nbsp;
-              <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ cursor: 'pointer' }} />
-            </ActionButton>
+              onClick={() => this.setState({ showHowTo: !showHowTo })}
+            />
           </Stack>
 
           <ActionButton
@@ -232,6 +231,24 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
         {!showInGroups && this.renderGrid()}
 
         {showMissing && this.renderMissing()}
+
+        {showHowTo && <Callout
+          target='#btn-how-to'
+          styles={{
+            beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+            calloutMain: {
+              backgroundColor: appTheme.palette.neutralTertiaryAlt,
+              color: appTheme.palette.neutralDark,
+            }
+          }}
+          onDismiss={() => this.setState({ showHowTo: false })}
+        >
+          <ul>
+            <li>Completed facilities can be identified through the Demolish UI</li>
+            <li>In progress facilities can be identified through the Cancel Construction UI</li>
+            <li>If you are not the architect, you will have to identify by visual comparison</li>
+          </ul>
+        </Callout>}
       </>}
       {zoom && this.renderZoom()}
     </div>;
