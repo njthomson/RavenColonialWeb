@@ -24,7 +24,8 @@ export const ViewUnlockedFeatures: FunctionComponent<{ sysMap: SysMap2, useIncom
       responsiveMode={ResponsiveMode.large}
       onDismiss={() => setShowMore(false)}
       styles={{
-        main: { border: '1px solid ' + appTheme.palette.themePrimary }
+        main: { border: '1px solid ' + appTheme.palette.themePrimary },
+        scrollableContent: { overflow: 'hidden' },
       }}
     >
       <h3>System wide unlocks:</h3>
