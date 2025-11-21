@@ -2,7 +2,7 @@ import { store } from "../local-storage";
 import { RequestError } from "../types";
 
 export const apiSvcUrl =
-  'https://localhost:7007'; /*
+  // 'https://localhost:7007'; /*
   'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
 
 const logApiCalls = true;
