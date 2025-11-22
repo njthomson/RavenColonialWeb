@@ -233,7 +233,6 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
     const unlocked = sysMap.sites.some(s => (s.status === 'complete' || useIncomplete) && mapSysUnlocks[key].needTypes.some(n => s.buildType?.startsWith(n)));
     sysUnlocks[key] = unlocked;
   }
-  console.log(sysUnlocks);
 
   // re-sort bodies by their num value
   // sys.bodies.sort((a, b) => a.num - b.num);
@@ -480,6 +479,12 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf
   });
   const economies: Record<string, number> = {};
   sorted.forEach(key => economies[key] = mapEconomies[key]);
+
+  // work-around JS floating point nonense
+  for (const k in sumEffects) {
+    const v = sumEffects[k as keyof SysEffects]!;
+    sumEffects[k as keyof SysEffects] = parseFloat((v * 1000).toFixed()) / 1000;
+  }
 
   return {
     economies,

@@ -2,17 +2,18 @@ import './ShowGlobalStats.css';
 import * as api from '../../api';
 import { Component, FunctionComponent } from "react";
 import { store } from '../../local-storage';
-import { DirectionalHint, Link, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, DirectionalHint, Link, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { GlobalStats } from '../../types';
 import { cn } from '../../theme';
 import { CalloutMsg } from '../CalloutMsg';
 import { delay } from '../../util';
 
-
 interface ShowGlobalStatsProps { }
 
+type ShowGroup = 'tops' | 'others' | 'pops' | 'sec' | 'sol';
 interface ShowGlobalStatsState {
   stats?: GlobalStats;
+  showGroup: Set<ShowGroup>
 }
 
 export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalStatsState> {
@@ -26,6 +27,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
     this.state = {
       // only use cached stats if timestamp is valid
       stats: currentTimeStamp === initialStats?.timeStamp ? initialStats : undefined,
+      showGroup: new Set(['tops']),
     };
   }
 
@@ -43,7 +45,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
   }
 
   render() {
-    const { stats } = this.state;
+    const { stats, showGroup } = this.state;
 
     if (!stats) {
       return <div className='global-stats half'>
@@ -58,8 +60,23 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
       </div>;
     }
 
+    const topSystemRatios = Object.keys(stats.topSystemRatios).map(t => parseFloat(t)).reduce((m, k) => {
+      const v = k * 1000;
+      m[v] = stats.topSystemRatios[k];
+      return m;
+    }, {} as Record<number, Record<string, string>>);
+
+    const disclaimer = <div>
+      <div>• Statistics are generated hourly.</div>
+      <div>• Systems with no  population or bogus conditions are not considered.</div>
+      <div>• Systems stats are calculated using only completed sites and with buff/nerf applied.</div>
+    </div>;
+
     return <div className='global-stats half'>
-      <h3 className={cn.h3}>Raven Colonial Statistics:</h3>
+      <h3 className={cn.h3}>
+        <span>Raven Colonial Statistics: </span>
+        <CalloutMsg msg={disclaimer} iconStyle={{ fontSize: 12 }} />
+      </h3>
 
       <Stack horizontal>
         <Stack>
@@ -103,24 +120,60 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
         />
       </Stack>
 
-      <Stack horizontal>
-        < StatsBox2 label='Top systems by score' data={stats.topSystemScores} />
-        < StatsBox2 label='Top systems by population' data={stats.topSystemPops} />
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+        <span>Systems by:</span>
+        {(Object.keys(mapGroups) as ShowGroup[]).map(k => <DefaultButton
+          key={k}
+          className={cn.bBox2}
+          style={{ height: 28 }}
+          text={mapGroups[k]}
+          checked={showGroup.has(k)}
+          iconProps={{ iconName: showGroup.has(k) ? 'CheckMark' : undefined }}
+          onClick={ev => {
+            if (ev.ctrlKey) {
+              // add/remove groups if CTRL is being held
+              if (showGroup.has(k)) {
+                showGroup.delete(k);
+              } else {
+                showGroup.add(k);
+              }
+              this.setState({ showGroup });
+            } else {
+              // otherwise replace current groups
+              this.setState({ showGroup: new Set([k]) });
+            }
+          }}
+        />)}
       </Stack>
 
-      {/* NOT QUITE READY
-      <Stack horizontal wrap style={{ maxWidth: 800 }}>
-        <StatsBox2 label='Top systems by Pop' data={stats.topSystemEffects['+pop']} count={5} />
-        <StatsBox2 label='Top systems by MPop' data={stats.topSystemEffects['+mpop']} count={5} />
-        <StatsBox2 label='Top systems by Sec' data={stats.topSystemEffects['+sec']} count={5} />
-        <StatsBox2 label='Bottom systems by Sec' data={stats.topSystemEffects['-sec']} count={5} negative />
-        <StatsBox2 label='Top systems by Wealth' data={stats.topSystemEffects['+wealth']} count={5} />
-        <StatsBox2 label='Top systems by Tech' data={stats.topSystemEffects['+tech']} count={5} />
-        <StatsBox2 label='Top systems by SoL' data={stats.topSystemEffects['+sol']} count={5} />
-        <StatsBox2 label='Bottom systems by SoL' data={stats.topSystemEffects['-sol']} count={5} negative />
-        <StatsBox2 label='Top systems by Dev' data={stats.topSystemEffects['+dev']} count={5} />
-      </Stack>
-      */}
+
+      {showGroup.has('tops') && <Stack horizontal>
+        <StatsBox2 keyPrefix='topSysRatio' label='Top systems' data={topSystemRatios} title='Calculated from: <system score> / <system population> * 1000' />
+        <StatsBox2 keyPrefix='topSysScore' label='Top systems by score' data={stats.topSystemScores} />
+        <StatsBox2 keyPrefix='topSysPop' label='Top systems by population' data={stats.topSystemPops} />
+      </Stack>}
+
+      {showGroup.has('pops') && <Stack horizontal>
+        <StatsBox2 keyPrefix='pop' label='Top systems by Pop' data={stats.topSystemEffects['+pop']} />
+        <StatsBox2 keyPrefix='mpop' label='Top systems by MPop' data={stats.topSystemEffects['+mpop']} />
+      </Stack>}
+
+      {showGroup.has('others') && <Stack horizontal>
+        <StatsBox2 keyPrefix='wealth' label='Top systems by Wealth' data={stats.topSystemEffects['+wealth']} />
+        <StatsBox2 keyPrefix='tech' label='Top systems by Tech' data={stats.topSystemEffects['+tech']} />
+        <StatsBox2 keyPrefix='dev' label='Top systems by Dev' data={stats.topSystemEffects['+dev']} />
+      </Stack>}
+
+      {showGroup.has('sec') && <Stack horizontal>
+        <StatsBox2 keyPrefix='sec+' label='Top systems by Sec' data={stats.topSystemEffects['+sec']} />
+        <StatsBox2 keyPrefix='sec-' label='Bottom systems by Sec' data={stats.topSystemEffects['-sec']} negative />
+      </Stack>}
+
+      {showGroup.has('sol') && <Stack horizontal>
+        <StatsBox2 keyPrefix='sol+' label='Top systems by SoL' data={stats.topSystemEffects['+sol']} />
+        <StatsBox2 keyPrefix='sol-' label='Bottom systems by SoL' data={stats.topSystemEffects['-sol']} negative />
+      </Stack>}
+
     </div>;
   };
 }
@@ -146,7 +199,7 @@ const StatsBox: FunctionComponent<{ label: string, title?: string, small?: strin
   </div>
 };
 
-const StatsBox2: FunctionComponent<{ label: string, title?: string, data: Record<number, Record<string, string>>, count?: number, negative?: boolean }> = (props) => {
+const StatsBox2: FunctionComponent<{ keyPrefix: string, label: string, title?: string, data: Record<number, Record<string, string>>, count?: number, negative?: boolean }> = (props) => {
   if (!props.data) { return null; }
 
   const rows: JSX.Element[] = [];
@@ -157,6 +210,7 @@ const StatsBox2: FunctionComponent<{ label: string, title?: string, data: Record
     .slice(0, props.count ?? 10);
 
   for (const k of sorted) {
+    i++;
     let score = k.toLocaleString();
     if (k > 1_000_000_000) {
       score = (k / 1_000_000_000).toFixed(2) + ` B`;
@@ -165,11 +219,12 @@ const StatsBox2: FunctionComponent<{ label: string, title?: string, data: Record
     }
 
     const hits = Object.entries(props.data[k as any] ?? []);
-    rows.push(<div key={`${props.label}-${k}${++i}`} style={{ gridRow: `span ${hits.length}` }}>{score}</div>);
-
+    rows.push(<div key={`${props.keyPrefix}-${k}-${i}a`} style={{ gridRow: `span ${hits.length}` }}>{score}</div>);
+    // 
     hits.forEach(([n, a], i) => {
-      rows.push(<div key={`${props.label}-${k}${++i}`}><Link href={`/#sys=${n}`}>{n}</Link></div>);
-      rows.push(<div key={`${props.label}-${k}${++i}`} style={{ fontSize: 10 }}>{a}</div>);
+      const url = `/#sys=${encodeURIComponent(mapSpecialNames[n] ?? n)}`;
+      rows.push(<div key={`${props.keyPrefix}-${k}-${i}b`}><Link href={url}>{n}</Link></div>);
+      rows.push(<div key={`${props.keyPrefix}-${k}-${i}c`} style={{ fontSize: 10 }}>{a}</div>);
     });
   }
 
@@ -191,3 +246,14 @@ const StatsBox2: FunctionComponent<{ label: string, title?: string, data: Record
   </div>
 };
 
+const mapSpecialNames: Record<string, string> = {
+  '2MASS J05351131+1000502': '9472415114065'
+}
+
+const mapGroups: Record<ShowGroup, string> = {
+  tops: 'Score + Population',
+  pops: 'Pop + MPop',
+  others: 'Wealth + Tech + Dev',
+  sec: 'Security',
+  sol: 'Standard of Living',
+}

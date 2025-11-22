@@ -247,7 +247,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     window.document.title = 'Sys: ' + newSys.name;
 
     // Should we create or update the snapshot for this system?
-    if (!isArchitect || !updateSnapshot) { return; }
+    if (!updateSnapshot) { return; }
 
     let genSnapshot = false;
     let newSnapshot = getSnapshot(newSys, undefined);
@@ -255,6 +255,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       .then(currentSnapshot => {
         genSnapshot = currentSnapshot.stale || newSnapshot.score !== currentSnapshot.score;
         newSnapshot.fav = currentSnapshot.fav;
+        // if system effects have changed, save a new snapshot
+        if (JSON.stringify(currentSnapshot.sumEffects) !== JSON.stringify(newSnapshot.sumEffects)) {
+          genSnapshot = true;
+        }
       })
       .catch(err => {
         if (err.statusCode === 404) {
@@ -265,8 +269,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         }
       })
       .finally(() => {
-        if (genSnapshot) {
-          console.log(`Generate a snapshot for: ${newSys.name} ... `);
+        if (genSnapshot && !!store.apiKey) {
           // clear this cache any time we add a snapshot
           api.systemV2.cache.snapshots = {};
           // save a new snapshot

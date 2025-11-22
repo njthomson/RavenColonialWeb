@@ -106,7 +106,8 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
           onDismiss={() => setShowSysScoreInfo(false)}
         >
           <div className={uls} style={{ paddingLeft: 30, cursor: 'default' }}>
-            <Icon iconName='Lightbulb' style={{ float: 'left', fontSize: 28, marginTop: 4, marginLeft: -30 }} onDoubleClick={(ev) => { setScoreAudit(true); ev.preventDefault(); }} />
+            <Link style={{ float: 'right', fontSize: 10 }} onClick={() => setScoreAudit(true)}>Audit?</Link>
+            <Icon iconName='Lightbulb' style={{ float: 'left', fontSize: 28, marginTop: 4, marginLeft: -30 }} />
             <div>Be aware: the game updates system scores during the weekly tick.</div>
             <div>However Raven Colonial calculates system scores in real-time.</div>
 

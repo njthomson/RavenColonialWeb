@@ -212,6 +212,7 @@ export interface GlobalStats {
   topArchitects: Record<string, number>;
   topSystemScores: Record<number, Record<string, string>>;
   topSystemPops: Record<number, Record<string, string>>;
+  topSystemRatios: Record<number, Record<string, string>>;
   topSystemEffects: Record<string, Record<number, Record<string, string>>>;
 }
 
