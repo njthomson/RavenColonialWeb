@@ -14,6 +14,7 @@ import { SystemView2 } from './views/SystemView2/SystemView2';
 import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
 import { processLoginCodes } from './api/auth';
 import { ShareFeedback } from './components/ShareFeedback';
+import { GalMap } from './map/GalMap';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -169,6 +170,8 @@ export class App extends Component<AppProps, AppState> {
       // do not change any state
     } else if (window.location.pathname.endsWith('/user')) {
       nextState.cmdrEdit = true;
+    } else if (params.has('map')) {
+      nextState.pivot = TopPivot.map;
     } else {
       nextState.pivot = TopPivot.home;
     }
@@ -205,6 +208,8 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.vis, pivotArg];
     } else if (params.has('table') || window.location.pathname === '/table') {
       return [TopPivot.table, pivotArg];
+    } else if (params.has('map')) {
+      return [TopPivot.map, pivotArg];
     } else {
       return [TopPivot.home, pivotArg];
     }
@@ -368,6 +373,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
       case TopPivot.table: return <BigSiteTablePage />;
       case TopPivot.login: return <div><Spinner style={{ marginTop: 100 }} size={SpinnerSize.large} label='Logging in ...' /></div>;
+      case TopPivot.map: return <GalMap />;
     }
   }
 

@@ -703,8 +703,8 @@ export const HaulSize: FunctionComponent<{ haul: number, size?: number, dim?: bo
   const { haul } = props;
 
   const dark = appTheme.isInverted
-    ? 'rgb(48, 48, 48)'
-    : 'rgb(200, 200, 200)';
+    ? (props.dim ? 'rgb(32, 32, 32)' : 'rgb(48, 48, 48)')
+    : (props.dim ? 'rgb(222, 222, 222)' : 'rgb(200, 200, 200)');
 
   // start large
   let w = 4;
@@ -732,13 +732,11 @@ export const HaulSize: FunctionComponent<{ haul: number, size?: number, dim?: bo
       marginBottom: 2,
     }}
   >
-    <div style={{ position: 'absolute', left: g * 0, bottom: 0, width: w, height: h * 1, backgroundColor: 'lime', }} />
-    <div style={{ position: 'absolute', left: g * 1, bottom: 0, width: w, height: h * 2, backgroundColor: haul >= 4_000 ? 'lightgreen' : dark, }} />
-    <div style={{ position: 'absolute', left: g * 2, bottom: 0, width: w, height: h * 3, backgroundColor: haul >= 8_000 ? 'yellow' : dark }} />
-    <div style={{ position: 'absolute', left: g * 3, bottom: 0, width: w, height: h * 4, backgroundColor: haul >= 20_000 ? 'orange' : dark }} />
-    <div style={{ position: 'absolute', left: g * 4, bottom: 0, width: w, height: h * 5, backgroundColor: haul >= 50_000 ? 'red' : dark }} />
-    <div style={{ position: 'absolute', left: g * 5, bottom: 0, width: w, height: h * 6, backgroundColor: haul >= 200_000 ? 'darkred' : dark }} />
-
-    {props.dim && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, right: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />}
+    <div style={{ position: 'absolute', left: g * 0, bottom: 0, width: w, height: h * 1, backgroundColor: props.dim ? '#00AA00' : 'lime', }} />
+    <div style={{ position: 'absolute', left: g * 1, bottom: 0, width: w, height: h * 2, backgroundColor: haul >= 4_000 ? (props.dim ? '#009900' : 'lightgreen') : dark, }} />
+    <div style={{ position: 'absolute', left: g * 2, bottom: 0, width: w, height: h * 3, backgroundColor: haul >= 8_000 ? (props.dim ? '#999900' : '#DDDD00') : dark }} />
+    <div style={{ position: 'absolute', left: g * 3, bottom: 0, width: w, height: h * 4, backgroundColor: haul >= 20_000 ? (props.dim ? '#997700' : 'orange') : dark }} />
+    <div style={{ position: 'absolute', left: g * 4, bottom: 0, width: w, height: h * 5, backgroundColor: haul >= 50_000 ? (props.dim ? '#990000' : 'red') : dark }} />
+    <div style={{ position: 'absolute', left: g * 5, bottom: 0, width: w, height: h * 6, backgroundColor: haul >= 200_000 ? (props.dim ? '#550000' : 'darkred') : dark }} />
   </div>;
 }

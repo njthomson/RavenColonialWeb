@@ -71,7 +71,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
     >
 
       <td style={{ textAlign: 'center' }}>
-        <IconButton className={props.pinnedId === site.id ? cn.ibBri : cn.ibDim} iconProps={{ iconName: site.id === pinnedId ? 'PinnedSolid' : 'Pinned' }} />
+        <IconButton className={props.pinnedId === site.id ? cn.ibBri : cn.ibDim} iconProps={{ iconName: site.id === pinnedId ? 'PinnedSolid' : 'Pinned' }} title={`Pin this site to see:\n• Estimated economies and commodities\n• Strong and weak links\n• System effects`} />
       </td>
 
       <td style={{ textAlign: 'end' }}>

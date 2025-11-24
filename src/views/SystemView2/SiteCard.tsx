@@ -113,16 +113,17 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           {site.type.gives.count > 0 && <TierPoint tier={site.type.gives.tier} count={site.type.gives.count} titlePrefix='Gives' />}
         </div>
 
+        <IconButton
+          className={cn.bBox}
+          iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
+          title={`Pin this site to see:\n• Estimated economies and commodities\n• Strong and weak links\n• System effects`}
+          style={{ position: 'absolute', right: 4, top: 4, width: 24, height: 24 }}
+          onClick={() => {
+            props.sysView.sitePinned(site.id);
+          }}
+        />
+
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
-          <IconButton
-            className={cn.bBox}
-            iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
-            title='Pin this site'
-            style={{ width: 24, height: 24 }}
-            onClick={() => {
-              props.sysView.sitePinned(site.id);
-            }}
-          />
 
           <IconButton
             className={cn.bBox}

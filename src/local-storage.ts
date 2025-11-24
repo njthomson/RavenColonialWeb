@@ -29,6 +29,7 @@ enum Stored {
   siteGraphType = 'siteGraphType',
   autoCheckSpanshEconomies = 'autoCheckSpanshEconomies',
   archFav = 'archFav',
+  viewAllHiddenFC = 'viewAllHiddenFC',
 }
 
 interface CmdrData {
@@ -210,6 +211,9 @@ class LocalStorage {
 
   get archFav(): boolean { return readBoolean(Stored.archFav); }
   set archFav(newValue: boolean) { writeValue(Stored.archFav, newValue); }
+
+  get viewAllHiddenFC(): number[] { return readValue(Stored.viewAllHiddenFC, [])!; }
+  set viewAllHiddenFC(newValue: number[]) { writeValue(Stored.viewAllHiddenFC, newValue); }
 }
 
 export const store = new LocalStorage();

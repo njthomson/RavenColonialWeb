@@ -60,6 +60,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
 
         {!props.noPin && <IconButton
           className={isPinned ? cn.ibBri : cn.ibDim}
+          title={`Pin this site to see:\n• Estimated economies and commodities\n• Strong and weak links\n• System effects`}
           iconProps={{ iconName: isPinned ? 'PinnedSolid' : 'Pinned' }}
           style={{ marginLeft: 4, width: 20, height: 20 }}
           onMouseUp={(ev) => {

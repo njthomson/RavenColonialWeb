@@ -816,7 +816,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         <Stack horizontal verticalAlign='center' title={highlightTitleTxt}>
           <ActionButton
             className={cn.bBox}
-            iconProps={{ iconName: expandTopBubbles ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
+            iconProps={{ iconName: expandTopBubbles ? 'ChevronUpSmall' : 'ChevronDownSmall' }}
             text={'Highlight:'}
             style={{ height: 26, paddingLeft: 0, }}
             onClick={() => this.setState({ expandTopBubbles: !expandTopBubbles })}

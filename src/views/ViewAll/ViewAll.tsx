@@ -24,6 +24,7 @@ interface ViewAllState {
   allProjects: Project[],
   projects: Project[],
   linkedFC: KnownFC[],
+  hiddenFC: Set<number>,
   hiddenIDs: Set<string>,
   originalHiddenIDs: string,
 
@@ -50,6 +51,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       allProjects: [],
       projects: [],
       linkedFC: [],
+      hiddenFC: new Set<number>(store.viewAllHiddenFC),
       hiddenIDs: new Set<string>(),
       originalHiddenIDs: '',
       sumCargo: {},
@@ -89,14 +91,19 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       const projects = allProjects.filter(p => !hiddenIDs.includes(p.buildId));
       const newSumCargo = mergeCargo(projects.map(p => p.commodities));
       const newCommodityTitles = this.generateCommodityTitles(newSumCargo, projects);
+      const visibleFC = linkedFC.filter(fc => !this.state.hiddenFC.has(fc.marketId));
       this.setState({
         loading: false,
         allProjects, projects, sumCargo: newSumCargo,
         commodityTitles: newCommodityTitles,
-        linkedFC, fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
+        linkedFC: linkedFC,
+        fcCargo: mergeCargo(visibleFC.map(fc => fc.cargo)),
         hiddenIDs: new Set(hiddenIDs),
         originalHiddenIDs: hiddenIDs.sort().join(),
       });
+      // remove any stray FC marketIDs
+      const marketIDlinkedFC = linkedFC.map(fc => fc.marketId);
+      store.viewAllHiddenFC = store.viewAllHiddenFC.filter(mid => marketIDlinkedFC.includes(mid));
 
     } catch (err: any) {
       console.error(`Error loading data: ${err.message}`);
@@ -212,7 +219,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityTitles } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityTitles, linkedFC, hiddenFC } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -250,6 +257,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         </TeachingBubble>}
       </div>;
     }
+
+    const visibleFC = linkedFC.filter(fc => !hiddenFC.has(fc.marketId));
 
     const whereToBuy = !projects?.length
       ? undefined
@@ -303,7 +312,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         <div className='half' style={{ minWidth: 540 }}>
           <CargoGrid
             cargo={this.state.sumCargo}
-            linkedFC={this.state.linkedFC}
+            linkedFC={visibleFC}
             whereToBuy={whereToBuy}
             minWidthNeed={55}
             commodityTitles={commodityTitles}
@@ -330,10 +339,11 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             if (fc) { fc.cargo = cargoUpdated; }
           }
 
+          const visibleFC = linkedFC.filter(fc => !this.state.hiddenFC.has(fc.marketId));
           this.setState({
             fcEditMarketId: undefined,
             linkedFC: linkedFC,
-            fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
+            fcCargo: mergeCargo(visibleFC.map(fc => fc.cargo)),
           });
         }}
       />}
@@ -346,7 +356,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   renderActiveProjectsAndFCs() {
-    const { allProjects, projects, linkedFC, fcCargo, loading, hiddenIDs, originalHiddenIDs } = this.state;
+    const { allProjects, projects, linkedFC, hiddenFC, fcCargo, loading, hiddenIDs, originalHiddenIDs } = this.state;
 
     const mapBySystem = allProjects.reduce((map, p) => {
       if (!map[p.systemName]) { map[p.systemName] = []; }
@@ -487,12 +497,52 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       </div>
 
       <div className='linked-fc' style={{ marginTop: 20, fontSize: 14 }}>
-        <h3 className={cn.h3}>
+        <h3 className={cn.h3} style={{}}>
           {linkedFC.length} Fleet Carriers:
         </h3>
-        <h4 style={{ color: appTheme.palette.themePrimary }}>
-          <Stack horizontal>
-            <span>Commander linked only:</span>
+        <div style={{ color: appTheme.palette.themeTertiary, marginTop: -4, marginBottom: 4 }}>Note: FCs must be linked to a project to update automatically</div>
+
+        {!linkedFC.length && <span className='hint' style={{ color: appTheme.palette.neutralTertiaryAlt }} >None</span>}
+        {linkedFC.length && linkedFC.map(fc => <Stack key={`@${fc.marketId}`} horizontal tokens={{ childrenGap: 4 }} style={{ marginBottom: 4 }}>
+          <Checkbox checked={!hiddenFC.has(fc.marketId)} onChange={(e, c) => {
+            setTimeout(() => {
+              const { hiddenFC } = this.state;
+              if (c) {
+                hiddenFC.delete(fc.marketId);
+              } else {
+                hiddenFC.add(fc.marketId);
+              }
+
+              const visibleFC = linkedFC.filter(fc => !this.state.hiddenFC.has(fc.marketId));
+              const fcCargoNew = mergeCargo(visibleFC.map(fc => fc.cargo));
+              this.setState({ hiddenFC, fcCargo: fcCargoNew });
+              store.viewAllHiddenFC = Array.from(hiddenFC);
+            }, 10);
+          }} />
+
+          <Icon iconName='Contact' style={{ color: fc.marketId in cmdrLinkedFCs ? appTheme.palette.accent : 'grey', fontWeight: '' }} title='Commander linked FC' />
+
+          <Icon iconName='Manufacturing' style={{ color: projectLinkedFC.includes(fc) ? appTheme.palette.accent : 'grey' }} title='Project linked FC' />
+
+          <span className={`removable ${cn.removable}`}>
+            {fcFullName(fc.name, fc.displayName)}
+            &nbsp;
+            <Icon
+              className={`btn ${cn.btn}`}
+              iconName='Edit'
+              title={`Edit FC: ${fc.displayName} (${fc.name})`}
+              style={{ color: appTheme.palette.themePrimary }}
+              onClick={() => {
+                this.setState({ fcEditMarketId: fc.marketId.toString() });
+              }}
+            />
+          </span>
+        </Stack>)}
+
+        <div style={{ marginTop: 10, marginLeft: 30, color: appTheme.palette.themeSecondary }}>
+          <Stack horizontal verticalAlign='center'>
+            <Icon iconName='Contact' style={{ fontWeight: '' }} />
+            <span>&nbsp;Commander linked FC</span>
             <ActionButton
               iconProps={{ iconName: 'Add' }}
               text='Add'
@@ -508,39 +558,15 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               }}
             />
           </Stack>
-        </h4>
-        <ul>
-          {this.getLinkedFCRows(cmdrLinkedFC)}
-        </ul>
-        <h4 style={{ color: appTheme.palette.themePrimary }}>Project linked:</h4>
-        <div className='hint small'>These Fleet Carriers may also be linked to your commander</div>
-        <ul>
-          {this.getLinkedFCRows(projectLinkedFC)}
-        </ul>
+
+          <div>
+            <Icon iconName='Manufacturing' style={{}} />
+            <span>&nbsp;Project linked FC. Click projects above to link.</span>
+          </div>
+        </div>
       </div>
     </>;
   }
 
-  getLinkedFCRows(fcs: KnownFC[]) {
-    if (fcs.length === 0) {
-      return <span className='hint' style={{ color: appTheme.palette.neutralTertiaryAlt }} >None</span>;
-    }
-
-    return fcs.map(fc => <li key={`@${fc.marketId}`}>
-      <span className={`removable ${cn.removable}`}>
-        {fcFullName(fc.name, fc.displayName)}
-        &nbsp;
-        <Icon
-          className={`btn ${cn.btn}`}
-          iconName='Edit'
-          title={`Edit FC: ${fc.displayName} (${fc.name})`}
-          style={{ color: appTheme.palette.themePrimary }}
-          onClick={() => {
-            this.setState({ fcEditMarketId: fc.marketId.toString() });
-          }}
-        />
-      </span>
-    </li>);
-  }
 
 }
