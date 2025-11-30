@@ -1,5 +1,5 @@
 import { FunctionComponent } from "react";
-import { cn } from "../theme";
+import { appTheme, cn } from "../theme";
 
 export const PadSize: FunctionComponent<{ size: string; title?: string }> = (props) => {
   if (!props.size || props.size === 'none') return <></>;
@@ -25,6 +25,6 @@ export const PadSize: FunctionComponent<{ size: string; title?: string }> = (pro
       height: 10,
     }}
   >
-    <span style={{ position: 'relative', top: -2 }}>{t}</span>
+    <span style={{ position: 'relative', top: -2, color: appTheme.palette.themeDark }}>{t}</span>
   </div>;
 };

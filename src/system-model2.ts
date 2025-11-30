@@ -94,19 +94,19 @@ export const mapSysUnlocks: Record<SysUnlocks, { icon: string, title: string, ne
   'OutfittingNonMilOutpost': {
     icon: 'Dataflows', title: 'Outfitting at non-Military Outposts', needTypes: [
       "janus", // high-tech hub
-      "vacuna", "alastor",// military installation
+      "vacuna", "alastor", // military installation
     ], needs: 'A high-tech hub or military installation',
   },
   'OutfittingT1Surface': {
     icon: 'FlowChart', title: 'Outfitting at non-Industrial T1 surface ports', needTypes: [
-      "athena", "caelus", // high-tech hub
-      "vacuna", "alastor",// military installation
+      "janus", // high-tech hub
+      "vacuna", "alastor", // military installation
     ], needs: 'A high-tech hub or military installation',
   },
   'VistaGenomics': {
     icon: 'ClassroomLogo', title: 'Vista Genomics at T1 Surface or T2 orbital ports', needTypes: [
       "asclepius", "eupraxia", // a Medical Installation
-      "janus", // scientific hub
+      "athena", "caelus", // scientific hub
     ], needs: 'A scientific hub or medical installation',
   },
   'UniversalCartographics': {

@@ -752,7 +752,7 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
         }}>
           <svg
             id={bodId}
-            width={7 + indent + sz * 2}
+            width={9 + indent + sz * 2}
             height={2 + sz * 2}
             style={{
               zIndex: 1,
