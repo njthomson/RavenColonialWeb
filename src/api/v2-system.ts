@@ -104,6 +104,9 @@ export interface SitesPut {
   snapshot?: SysSnapshot;
   slots?: Record<number, number[]>,
   open?: boolean;
+  nickname?: string;
+  notes?: string;
+  // editors?: string[];
 }
 
 export interface GetRealEconomies {
@@ -118,6 +121,7 @@ export interface SysSnapshot {
   architect: string;
   id64: number;
   name: string;
+  nickname?: string;
   pos: number[];
   sites: Site[];
   tierPoints: TierPoints;

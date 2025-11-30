@@ -4,7 +4,7 @@ import { appTheme, cn } from "../../theme";
 import { ViewEditName } from "./ViewEditName";
 import { SystemView2 } from "./SystemView2";
 import { ReserveLevel } from "../../types";
-import { isMobile } from "../../util";
+import { isMatchingCmdr, isMobile } from "../../util";
 import { Sys } from "../../types2";
 import { store } from "../../local-storage";
 
@@ -12,10 +12,15 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
   const { sysMap, sysOriginal, canEditAsArchitect } = props.sysView.state;
   const [dropDown, setDropDown] = useState(false);
   const [showStuckHelp, setShowStuckHelp] = useState(false);
+  const [editingArchitect, setEditingArchitect] = useState(false);
+
+  // const [newEditor, setNewEditor] = useState<string | undefined>();
+  // const [editors, setEditors] = useState<Set<string>>(new Set<string>(sysMap.editors));
 
   const isOpen = sysMap.open;
 
-  // const isArchitect = !!props.sysView.state.sysOriginal.architect && isMatchingCmdr(props.sysView.state.sysOriginal.architect, store.cmdrName);
+  const hasArchitect = !!props.sysView.state.sysOriginal.architect;
+  const isArchitect = hasArchitect && isMatchingCmdr(props.sysView.state.sysOriginal.architect, store.cmdrName);
   // const couldEditAsArchitect = props.sysView.state.sysOriginal.open || !props.sysView.state.sysOriginal.architect || isArchitect;
   // const aboutToLock = couldEditAsArchitect && !props.sysView.state.sysMap.open && !!props.sysView.state.sysMap?.architect && !isMatchingCmdr(props.sysView.state.sysMap?.architect, store.cmdrName);
   return <div>
@@ -37,9 +42,12 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
         }
       }}
       role="dialog"
-      onDismiss={() => props.onClose()}
+      onDismiss={() => {
+        // sysMap.editors = Array.from(editors);
+        props.onClose();
+      }}
     >
-      <div className='system-view2' style={{ position: 'relative', padding: 10 }}>
+      <div className='system-view2' style={{ position: 'relative', padding: 10, cursor: 'default' }}>
 
         <div style={{
           display: 'grid',
@@ -48,6 +56,19 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
           fontSize: '14px',
           alignItems: 'center'
         }}>
+
+          {isArchitect && <>
+            <div>Nickname:</div>
+            <Stack horizontal verticalAlign='center'>
+              <ViewEditName
+                name={sysMap.nickname || sysMap.name}
+                onChange={newName => {
+                  sysMap.nickname = newName;
+                  props.sysView.setState({ sysMap: sysMap });
+                }}
+              />
+            </Stack>
+          </>}
 
           <div>Architect:</div>
           <Stack horizontal verticalAlign='center'>
@@ -59,8 +80,64 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
                 sysMap.architect = newName;
                 props.sysView.setState({ sysMap: sysMap });
               }}
+              onEditing={editing => setEditingArchitect(editing)}
             />}
+            {!editingArchitect && !sysMap.architect && <ActionButton
+              className={cn.bBox}
+              iconProps={{ iconName: 'AddFriend', style: { fontSize: 12 } }}
+              text={'I am the architect'}
+              title='Claim this system for yourself'
+              disabled={!canEditAsArchitect}
+              onClick={() => {
+                sysMap.architect = store.cmdrName;
+                props.sysView.setState({ sysMap: sysMap });
+              }}
+            />}
+
+            {/* {isArchitect && <IconButton
+              className={cn.bBox}
+              iconProps={{ iconName: 'AddFriend', style: { fontSize: 12 } }}
+              text={'Add someone?'}
+              title='Add a system editor'
+              disabled={!canEditAsArchitect}
+              style={{ textDecoration: !hasArchitect ? 'line-through 2px' : undefined, float: 'right' }}
+              onClick={() => setNewEditor(" ")}
+            />} */}
           </Stack>
+
+          {/* {(!!newEditor || editors.size > 0) && <>
+            <div style={{ alignContent: 'start' }}>Editors:</div>
+            <Stack>
+              {newEditor !== undefined && <ViewEditName
+                editing
+                name={newEditor}
+                onChange={newName => {
+                  if (newName) {
+                    const newEditors = new Set<string>(editors);
+                    newEditors.add(newName);
+                    setEditors(newEditors);
+                  }
+                  setNewEditor(undefined);
+                }}
+                onEditing={editing => {
+                  setNewEditor(undefined);
+                }}
+              />}
+
+              {Array.from(editors).map(ed => <div key={`ed-${ed}`}>
+                ▸ <span>{ed}</span>
+                <IconButton
+                  className={cn.bBox}
+                  iconProps={{ iconName: 'Trash', style: { fontSize: 10 } }}
+                  onClick={() => {
+                    const newEditors = new Set<string>(editors);
+                    newEditors.delete(ed);
+                    setEditors(newEditors);
+                  }}
+                />
+              </div>)}
+            </Stack>
+          </>} */}
 
           <div>Reserve level:</div>
           <ActionButton
@@ -97,6 +174,7 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
               text={isOpen ? 'Open' : 'Secured'}
               title='Only architects can edit a secured system'
               disabled={!canEditAsArchitect}
+              style={{ textDecoration: !hasArchitect && !isOpen ? 'line-through 1px' : undefined }}
               onClick={() => {
                 props.sysView.updateOpen(!isOpen);
               }}

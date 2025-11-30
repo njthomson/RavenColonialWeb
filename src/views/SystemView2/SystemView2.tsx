@@ -3,7 +3,7 @@ import * as api from '../../api';
 import spansh16 from '../../assets/spansh-16x16.png';
 import inara16 from '../../assets/inara-16x16.png';
 import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
-import { Component, createRef, FunctionComponent } from "react";
+import { Component, createRef, FunctionComponent, useState } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
 import { buildSystemModel2, getSnapshot, hasPreReq2, SiteMap2, SysMap2, unknown } from '../../system-model2';
@@ -62,6 +62,7 @@ interface SystemView2State {
   fssNeeded?: boolean;
   canEditAsArchitect: boolean;
   buffNerf: boolean;
+  showEditNotes?: boolean;
 }
 
 const viewTypes = [
@@ -133,7 +134,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         SystemView2.nextID64 = 0;
         // reload a new system
         window.document.title = 'Sys: ' + this.props.systemName;
-        this.loadData(nameOrNum, true);
+        this.loadData(nameOrNum, true, undefined, this.props.systemName);
       } else {
         this.doSystemSearch();
       }
@@ -167,6 +168,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       showCreateBuildProject: false,
       siteGraphType: store.siteGraphType,
       canEditAsArchitect: false,
+      showEditNotes: false,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName' | 'buffNerf'>;
   }
 
@@ -187,9 +189,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
   };
 
-  loadData = (nameOrNum: string, reset?: boolean, rev?: number) => {
+  loadData = (nameOrNum: string, reset?: boolean, rev?: number, name?: string) => {
     this.setState({
       ...(reset ? this.getResetState() : {} as any),
+      systemName: name || nameOrNum,
       processingMsg: 'Loading ...',
       showConfirmAction: undefined,
       errorMsg: '',
@@ -229,7 +232,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     const isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
-    const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect;
+    const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect; // || !!newSys.editors?.includes(store.cmdrName);
 
     this.setState({
       systemName: newSys.name,
@@ -347,6 +350,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       orderIDs: this.state.orderIDs,
       snapshot: this.state.sysMap.architect ? getSnapshot(this.state.sysMap, undefined) : undefined,
       slots: this.state.bodySlots,
+      notes: this.state.sysMap.notes,
     };
 
     if (this.state.sysOriginal.architect !== this.state.sysMap.architect) {
@@ -358,6 +362,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (this.state.sysOriginal.open !== this.state.sysMap.open) {
       payload.open = this.state.sysMap.open;
     }
+    if (this.state.sysOriginal.nickname !== this.state.sysMap.nickname) {
+      payload.nickname = this.state.sysMap.nickname;
+    }
+    if (this.state.sysOriginal.notes !== this.state.sysMap.notes) {
+      payload.notes = this.state.sysMap.notes;
+    }
+    // if (JSON.stringify(this.state.sysOriginal.editors) !== JSON.stringify(this.state.sysMap.editors)) {
+    //   payload.editors = this.state.sysMap.editors;
+    // }
 
     api.systemV2.saveSites(
       this.state.sysMap.id64.toString(), payload)
@@ -584,12 +597,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || deletedIDs.length > 0
       || orderIDs.length !== sysOriginal.sites?.length
       || sysMap.architect !== sysOriginal.architect
+      || sysMap.nickname !== sysOriginal.nickname
+      || sysMap.notes !== sysOriginal.notes
       || sysMap.open !== sysOriginal.open
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
       // consider any other revision to be dirty
       || sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0)
       || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
+      // || JSON.stringify(sysMap.editors) !== JSON.stringify(sysOriginal.editors)
       ;
     return dirty;
   };
@@ -631,7 +647,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const { errorMsg, sysMap, processingMsg, showBuildOrder, showCreateBuildProject } = this.state;
 
-    return <div className='sys'>
+    return <div className='sys' style={{ position: 'relative' }}>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
       {this.renderTitleAndCommands()}
@@ -718,7 +734,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderTitleAndCommands() {
-    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, showConfirmMessage, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect } = this.state;
+    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, showConfirmMessage, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect, showEditNotes } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
@@ -884,12 +900,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       ? appTheme.palette.themeLight
       : enableSave ? appTheme.palette.yellowDark : undefined;
 
+    const nicknameDiffers = !!sysMap?.nickname && sysMap.nickname !== systemName;
     return <>
       {!onMobile && <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>}
       <h2 style={{ margin: 10, height: 32, fontSize: onMobile ? 18 : undefined }}>
         <Stack horizontal verticalAlign='baseline'>
-          <CopyButton text={systemName} fontSize={16} />
-          <Link href={pageLink} style={{ marginLeft: 4 }}>{systemName}</Link>
+          {nicknameDiffers && <Link href={pageLink} style={{ marginRight: 4 }}>{sysMap.nickname}</Link>}
+          <CopyButton text={systemName} fontSize={nicknameDiffers ? 12 : 16} />
+          <Link href={pageLink} style={{ marginLeft: 4, fontSize: nicknameDiffers ? 12 : undefined, color: nicknameDiffers ? appTheme.palette.themeTertiary : undefined }}>{systemName}</Link>
 
           <BothTierPoints disable={!this.state.sysMap} tier2={this.state.sysMap?.tierPoints.tier2 ?? 0} tier3={this.state.sysMap?.tierPoints.tier3 ?? 0} fontSize={onMobile ? 18 : 24} />
 
@@ -1066,6 +1084,18 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
+            key: 'sys-edit-notes',
+            title: 'Edit system notes',
+            className: cn.bBox,
+            iconProps: { iconName: showEditNotes ? 'QuickNoteSolid' : 'QuickNote' },
+            disabled: !!processingMsg,
+            onClick: () => {
+              this.setState({ showEditNotes: !showEditNotes });
+              delayFocus('edit-system-notes');
+            }
+          },
+
+          {
             key: 'open-in',
             title: 'View this site in other websites',
             iconProps: { iconName: 'OpenInNewWindow' },
@@ -1149,7 +1179,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSys() {
-    const { pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot } = this.state;
+    const { sysMap, pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot, showEditNotes, canEditAsArchitect } = this.state;
 
     const pinnedSitePanel = pinnedSite && <div ref={this.snapshotRef}>
       <ViewSite
@@ -1165,6 +1195,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </div>;
 
     return <div className='system-view2' style={{}}>
+      {showEditNotes && <EditSystemNotes systemNotes={sysMap.notes ?? ''} readonly={!canEditAsArchitect} onChange={(newNotes) => {
+        if (newNotes) {
+          sysMap.notes = newNotes;
+          this.setState({ sysMap, showEditNotes: false });
+        } else {
+          this.setState({ showEditNotes: false });
+        }
+      }} />}
+
       <Stack horizontal>
         {viewType === 'table' && this.renderBasicTable()}
         {viewType === 'body' && this.renderByBody()}
@@ -1558,4 +1597,61 @@ export interface SitesViewProps {
   onPin: (id?: string) => void;
   onChange: (site: Site) => void;
   onRemove: (id: string) => void;
+}
+
+
+export const EditSystemNotes: FunctionComponent<{ systemNotes: string, readonly?: boolean, onChange: (notes: string | undefined) => void }> = (props) => {
+  const [editNotes, setEditNotes] = useState(props.systemNotes);
+
+  return <div
+    style={{
+      position: 'sticky',
+      zIndex: 2,
+      right: 20,
+      top: 46,
+      width: 280,
+      float: 'right',
+      border: `1px solid ${appTheme.palette.themeDarker}`,
+      backgroundColor: appTheme.palette.themeLighter,
+      padding: '10px 10px 5px 10px',
+      fontSize: 14,
+    }}
+  >
+    <div>
+      <span>System notes:</span>
+
+      {!props.readonly && <>
+        <IconButton
+          className={cn.bBox}
+          title='Cancel changes'
+          iconProps={{ iconName: 'Cancel' }}
+          style={{ float: 'right', marginRight: 4 }}
+          onClick={() => props.onChange(undefined)}
+        />
+        <IconButton
+          className={cn.bBox}
+          title='Accept changes'
+          iconProps={{ iconName: 'Accept' }}
+          style={{ float: 'right', marginRight: 4 }}
+          onClick={() => props.onChange(editNotes)}
+        />
+      </>}
+    </div>
+
+    <textarea
+      id='edit-system-notes'
+      value={editNotes}
+      readOnly={props.readonly}
+      onChange={(ev) => setEditNotes(ev.target.value)}
+      style={{
+        width: 275,
+        height: 225,
+        marginTop: 5,
+        backgroundColor: appTheme.palette.themeLight,
+        color: appTheme.palette.black,
+      }}
+      maxLength={2000}
+    />
+    <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary }}>Max length: 2000. Remaining: {2000 - editNotes.length}</div>
+  </div>;
 }

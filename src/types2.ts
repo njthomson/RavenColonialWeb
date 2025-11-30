@@ -5,6 +5,8 @@ export interface Sys {
   v: number;
   rev: number;
   name: string;
+  nickname?: string;
+  notes?: string;
   id64: number;
   architect: string;
   pos: number[];
@@ -18,6 +20,7 @@ export interface Sys {
   revs: Rev[];
   pop?: Pop;
   open?: boolean;
+  // editors?: string[];
 }
 
 export interface Pop {

@@ -168,13 +168,20 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
       cw = 4;
     }
 
+    const nicknameDiffers = !!snapshot.nickname && snapshot.nickname !== snapshot.name;
+
     return <div
       key={`snap-${snapshot.id64}-${snapshot.pop?.timeSaved}`}
       className={css.siteCard}
     >
-      <span>
-        <CopyButton text={snapshot.name} fontSize={10} />
-        <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
+      <span style={{ position: 'relative' }}>
+        {nicknameDiffers && <>
+          <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} style={{ fontWeight: 'bold' }} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.nickname}</Link>
+        </>}
+        {!nicknameDiffers && <>
+          <CopyButton text={snapshot.nickname || snapshot.name} fontSize={10} />
+          <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.nickname || snapshot.name}</Link>
+        </>}
       </span>
       <div style={{ float: 'right' }}>
         <div>
@@ -184,6 +191,11 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         </div>
         <div style={{ float: 'right', fontSize: 12, marginTop: 10 }}>Score: {snapshot.score < 0 ? '?' : snapshot.score}</div>
       </div>
+
+      {nicknameDiffers && <div style={{ height: 10, fontSize: 10 }}>
+        <CopyButton text={snapshot.name} fontSize={8} />
+        <Link href={`/#sys=${encodeURIComponent(snapshot.name)}`} className={css.siteCardLink} style={{ color: appTheme.palette.themeTertiary }} onClick={() => SystemView2.nextID64 = snapshot.id64}>{snapshot.name}</Link>
+      </div>}
 
       <div className={css.siteCardTable}>
 

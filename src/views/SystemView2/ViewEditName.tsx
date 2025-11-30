@@ -3,14 +3,15 @@ import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { delayFocus } from "../../util";
 
-export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; }> = (props) => {
-  const [editing, setEditing] = useState(false);
+export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; editing?: boolean, onEditing?: (editing: boolean) => void }> = (props) => {
+  const [editing, setEditing] = useState(props.editing);
   const [name, setName] = useState(props.name);
   const [editName, setEditName] = useState('');
 
   if (name !== props.name) {
     setName(props.name);
     setEditing(false);
+    props.onEditing && props.onEditing(false);
   }
 
   const id = `ed-${Date.now()}`;
@@ -32,6 +33,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
           ev.preventDefault();
           setEditName(props.name);
           setEditing(true);
+          props.onEditing && props.onEditing(true);
           delayFocus(id);
         }}
       />
@@ -53,8 +55,8 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
         onClick={ev => ev.preventDefault()}
         onChange={(ev) => setEditName(ev.target.value)}
         onKeyDown={(ev) => {
-          if (ev.key === 'Enter') { props.onChange(editName.trim()); setEditing(false); }
-          if (ev.key === 'Escape') { ev.preventDefault(); setEditing(false); }
+          if (ev.key === 'Enter') { props.onChange(editName.trim()); setEditing(false); props.onEditing && props.onEditing(false); }
+          if (ev.key === 'Escape') { ev.preventDefault(); setEditing(false); props.onEditing && props.onEditing(false); }
         }}
         onFocus={(ev) => {
           ev.target.setSelectionRange(0, -1);
@@ -62,6 +64,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
       />
 
       <IconButton
+        className={cn.bBox}
         title='Accept changes'
         iconProps={{ iconName: 'Accept' }}
         style={{ marginLeft: 4 }}
@@ -69,15 +72,18 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
           ev.preventDefault();
           props.onChange(editName.trim());
           setEditing(false);
+          props.onEditing && props.onEditing(false);
         }}
       />
       <IconButton
+        className={cn.bBox}
         title='Cancel changes'
         iconProps={{ iconName: 'Cancel' }}
         style={{ marginLeft: 4 }}
         onClick={(ev) => {
           ev.preventDefault();
           setEditing(false);
+          props.onEditing && props.onEditing(false);
         }}
       />
     </>}
