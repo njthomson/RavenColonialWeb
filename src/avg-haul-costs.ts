@@ -7,7 +7,7 @@ export const getAverageHauls = (type: string): number => {
 }
 
 export const getAvgHaulCosts = (type: string): Cargo => {
-  type = type.replace('?', '');
+  type = type?.replace('?', '');
   switch (type) {
     case '':
     case ' (primary)':

@@ -194,7 +194,7 @@ export const isOrbital = (buildType: string | undefined): boolean => {
 
 export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | undefined => {
   if (noThrow && !buildType) { buildType = '' };
-  buildType = buildType.replace(' (primary)', '');
+  buildType = buildType?.replace(' (primary)', '');
 
   const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType) || st.subTypes.includes(buildType?.slice(0, -1)));
   if (!match && buildType) {
@@ -206,7 +206,7 @@ export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | un
 
 export const getBuildTypeDisplayName = (buildType: string | undefined) => {
   if (!buildType) return '?';
-  buildType = buildType.replace(' (primary)', '');
+  buildType = buildType?.replace(' (primary)', '');
 
   const type = getSiteType(buildType)!;
   let txt = type.buildClass === 'starport'
