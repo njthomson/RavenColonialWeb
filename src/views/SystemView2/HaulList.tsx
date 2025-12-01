@@ -3,16 +3,16 @@ import { Stack, ActionButton, Panel, PanelType, Link, Modal } from "@fluentui/re
 import { FunctionComponent, useMemo, useState } from "react";
 import { CargoGrid, CargoRemaining } from "../../components";
 import { HaulSize } from "../../components/BigSiteTable/BigSiteTable";
-import { getSiteType, averageHauls, primaryPortsT1, primaryPortsT2, primaryPortsT3 } from "../../site-data";
+import { getSiteType, primaryPortsT1, primaryPortsT2, primaryPortsT3 } from "../../site-data";
 import { appTheme, cn } from "../../theme";
 import { mergeCargo, isMobile, getCargoCountOnHand, sumCargo } from "../../util";
-import { avgHaulCosts } from "../../avg-haul-costs";
+import { getAvgHaulCosts } from "../../avg-haul-costs";
 import { store } from "../../local-storage";
 import { KnownFC } from '../../types';
 import { ModalCommander } from '../../components/ModalCommander';
 import { CalloutMsg } from '../../components/CalloutMsg';
 
-export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number }> = (props) => {
+export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, isPrimary?: boolean }> = (props) => {
   const [showList, setShowList] = useState(false);
   const [knownFC, setKnownFC] = useState<KnownFC[]>([]);
   const [showCmdr, setShowCmdr] = useState(false);
@@ -22,10 +22,11 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number }
   const cargos = [];
   const mapBuildTypeCount: Record<string, number> = {};
   for (const buildType of props.buildTypes) {
-    const type = getSiteType(buildType)!;
-    totalHaul += averageHauls[type.displayName2] ?? type.haul;
-    if (avgHaulCosts[type.displayName2]) {
-      cargos.push(avgHaulCosts[type.displayName2]);
+    const haulCost = getAvgHaulCosts(buildType);
+    const total = Object.values(haulCost).reduce((sum, val) => sum += val, 0);
+    totalHaul += total;
+    if (haulCost) {
+      cargos.push(haulCost);
       mapBuildTypeCount[buildType] = (mapBuildTypeCount[buildType] ?? 0) + 1;
     }
   }
@@ -75,7 +76,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number }
   }
 
   return <>
-    <Stack horizontal verticalAlign='center' style={{ width: 200 }}>
+    <Stack horizontal verticalAlign='center' style={{ width: 300 }}>
       <HaulSize haul={totalHaul} size={props.size} />
 
       <ActionButton
@@ -86,7 +87,9 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number }
         onClick={() => setShowList(true)}
       />
 
-      {msg && <CalloutMsg msg={msg} iconStyle={{ marginTop: 6 }} />}
+      {props.isPrimary === true && <span style={{ marginLeft: 6, fontSize: 12, color: appTheme.palette.accent }}>(primary port)</span>}
+      {props.isPrimary === false && <span style={{ marginLeft: 6, fontSize: 12, color: appTheme.palette.accent }}>(non-primary)</span>}
+      {props.isPrimary === undefined && msg && <CalloutMsg msg={msg} iconStyle={{ marginTop: 6 }} />}
     </Stack>
 
     {showList && <>

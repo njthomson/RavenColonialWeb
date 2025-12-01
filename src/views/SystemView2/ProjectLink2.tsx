@@ -41,7 +41,11 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
   });
 
   if (props.site.status !== 'complete' && !props.site.buildId) {
-    return <HaulList buildTypes={[props.site.buildType]} />;
+    const isPrimary = !!props.site.buildType && props.site.id === props.sysView.state.sysMap.primaryPortId;
+    const type = isPrimary
+      ? `${props.site.buildType} (primary)`
+      : props.site.buildType;
+    return <HaulList buildTypes={[type]} isPrimary={isPrimary} />;
   }
 
   if (!props.site.buildId) { return null; }

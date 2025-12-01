@@ -194,6 +194,8 @@ export const isOrbital = (buildType: string | undefined): boolean => {
 
 export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | undefined => {
   if (noThrow && !buildType) { buildType = '' };
+  buildType = buildType.replace(' (primary)', '');
+
   const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType) || st.subTypes.includes(buildType?.slice(0, -1)));
   if (!match && buildType) {
     console.error(`No SiteType match found for: '${buildType}'`);
@@ -204,6 +206,7 @@ export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | un
 
 export const getBuildTypeDisplayName = (buildType: string | undefined) => {
   if (!buildType) return '?';
+  buildType = buildType.replace(' (primary)', '');
 
   const type = getSiteType(buildType)!;
   let txt = type.buildClass === 'starport'
@@ -1305,64 +1308,7 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
 
 export const primaryPortsT1 = ['plutus', 'vulcan', 'dysnomia', 'vesta', 'prometheus', 'nemesis'];
 export const primaryPortsT2 = ['no_truss', 'dual_truss', 'quad_truss', 'asteroid'];
-export const primaryPortsT3 = ['apollo', 'artemis', 'ocellus'];
-
-/** generated from analyzing build data */
-export const averageHauls: Record<string, number> = {
-  "Agriculture Settlement: Large": 8514,
-  "Agriculture Settlement: Medium": 5679,
-  "Agriculture Settlement: Small": 2831,
-  "Asteroid Starport": 57129,
-  "Bio Settlement: Large": 8538,
-  "Bio Settlement: Medium": 8456,
-  "Bio Settlement: Small": 2850,
-  "Civilian Outpost": 20000,
-  "Civilian Surface Outpost": 36863,
-  "Commercial Outpost": 20000,
-  "Communication Installation": 6721,
-  "Coriolis Starport": 52000,
-  "Exploration Hub": 9855,
-  "Extraction Hub": 9918,
-  "Government Installation": 10075,
-  "High Tech Hub": 9915,
-  "Industrial Hub": 9950,
-  "Industrial Outpost": 20000,
-  "Industrial Settlement: Large": 8538,
-  "Industrial Settlement: Medium": 5776,
-  "Industrial Settlement: Small": 2978,
-  "Industrial Surface Outpost": 36731,
-  "Large Planetary Port": 215544,
-  "Medical Installation": 10057,
-  "Military Hub": 9882,
-  "Military Installation": 10094,
-  "Military Outpost": 20000,
-  "Military Settlement: Large": 8526,
-  "Military Settlement: Medium": 5682,
-  "Military Settlement: Small": 3150,
-  "Mining Settlement: Large": 8569,
-  "Mining Settlement: Medium": 5685,
-  "Mining Settlement: Small": 2849,
-  "Mining/Industrial Installation": 6725,
-  "Ocellus Starport": 205000,
-  "Orbis Starport": 205000,
-  "Outpost Hub": 9853,
-  "Pirate Base Installation": 6711,
-  "Pirate Outpost": 20000,
-  "Refinery Hub": 9921,
-  "Relay Installation": 6744,
-  "Research Installation": 10456,
-  "Satellite Installation": 6727,
-  "Scientific Hub": 9839,
-  "Scientific Outpost": 20000,
-  "Scientific Surface Outpost": 36860,
-  "Security Installation": 10085,
-  "Space Bar Installation": 10085,
-  "Space Farm": 6720,
-  "Tourist Installation": 10115,
-  "Tourist Settlement: Large": 8512,
-  "Tourist Settlement: Medium": 5695,
-  "Tourist Settlement: Small": 2849,
-};
+export const primaryPortsT3 = ['apollo', 'artemis', 'ocellus', 'dodec', 'quint_truss', 'dec_truss'];
 
 //console.log(`System scores per building:\n` + siteTypes.slice(5).map(st => `${st.score ?? '■'}: ${st.displayName2}`).join(`\n`));
 // console.log(`Orbital buildTypes:\n` + siteTypes.filter(st => st.orbital).flatMap(st => st.subTypes).map(t => `"${t}"`).join(','));

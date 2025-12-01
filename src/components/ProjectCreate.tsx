@@ -11,6 +11,7 @@ import { CopyButton } from './CopyButton';
 import { ViewEditBody } from '../views/SystemView2/ViewEditBody';
 import { Bod } from '../types2';
 import { BodyMap2 } from '../system-model2';
+import { getAvgHaulCosts } from '../avg-haul-costs';
 
 interface ProjectCreateProps {
   systemName: string;
@@ -297,6 +298,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
       const body = {
         ...this.state,
       };
+      body.commodities = getAvgHaulCosts(buildType);
       delete body.foundStations;
       delete body.msgError;
       delete body.msgClass;

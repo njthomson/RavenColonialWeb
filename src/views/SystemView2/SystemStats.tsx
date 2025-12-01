@@ -13,17 +13,6 @@ import { Callout, Icon, IconButton, Link, mergeStyles, Panel, PanelType, Stack }
 import { App } from "../../App";
 import { ViewUnlockedFeatures } from "./ViewUnlocked";
 
-// //cargoTypes["Asteroid Starport"].items.
-// // const cargoTypes2 = cargoTypes as Record<string, any>;
-// const foo = Object.entries(cargoTypes).reduce((map, [k, v]) => {
-//   map[k] = {};
-//   for (const [x, y] of Object.entries(v.items)) {
-//     map[k][x] = y.avg;
-//   }
-//   return map;
-// }, {} as Record<string, Record<string, number>>);
-// console.log(JSON.stringify(foo));
-
 const uls = mergeStyles({
   ul: {
     margin: 0,
@@ -38,7 +27,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
 
   const buildTypes = sysMap.siteMaps
     .filter(s => s.status === 'plan')
-    .reduce((list, s) => ([...list, s.buildType]), [] as string[]);
+    .reduce((list, s) => ([...list, sysMap.primaryPortId === s.id ? `${s.buildType} (primary)` : s.buildType]), [] as string[]);
 
   const activeBuilds = sysMap.siteMaps
     .filter(s => s.status === 'build' && s.buildId)

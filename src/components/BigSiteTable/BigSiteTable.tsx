@@ -1,7 +1,7 @@
 import './BigSiteTable.css';
 import { IContextualMenuItem, ContextualMenuItemType, ContextualMenu, ActionButton, Icon, Stack, IconButton, Panel, PanelType, DirectionalHint } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
-import { averageHauls, getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
+import { getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
 import { asPosNegTxt, isMobile } from "../../util";
 import { SysMap } from "../../system-model";
@@ -13,6 +13,7 @@ import { TierPoint } from "../TierPoints";
 import { BuildEffects } from '../BuildEffects';
 import { SiteImage } from '../VisualIdentify';
 import { isTypeValid2, SysMap2 } from '../../system-model2';
+import { getAverageHauls } from '../../avg-haul-costs';
 
 
 export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => {
@@ -473,7 +474,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     }
 
     // use measured size, but defer to static size if not known
-    const haulSize = averageHauls[type.displayName2] ?? type.haul;
+    const haulSize = getAverageHauls(type.displayName2);
 
     return <tr
       key={`btr${type.subTypes}1`}
