@@ -12,7 +12,7 @@ import { KnownFC } from '../../types';
 import { ModalCommander } from '../../components/ModalCommander';
 import { CalloutMsg } from '../../components/CalloutMsg';
 
-export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, isPrimary?: boolean }> = (props) => {
+export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, isPrimary?: boolean, shopNearSystem?: string }> = (props) => {
   const [showList, setShowList] = useState(false);
   const [knownFC, setKnownFC] = useState<KnownFC[]>([]);
   const [showCmdr, setShowCmdr] = useState(false);
@@ -137,7 +137,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, 
           </Modal>}
         </div>
 
-        <CargoGrid cargo={cargoNeeded} linkedFC={knownFC} onRefresh={() => setRefetch(refetch + 1)} />
+        <CargoGrid cargo={cargoNeeded} linkedFC={knownFC} onRefresh={() => setRefetch(refetch + 1)} whereToBuy={props.shopNearSystem ? { refSystem: props.shopNearSystem, buildIds: [] } : undefined} />
       </Panel>
     </>}
   </>;

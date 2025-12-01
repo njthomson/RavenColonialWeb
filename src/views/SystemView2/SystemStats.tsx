@@ -199,7 +199,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       {!!buildTypes.length && <>
         <div style={{ alignContent: 'center' }}>Planned haul:</div>
         <div style={{ gridColumn: '2 / span 4' }}>
-          <HaulList buildTypes={buildTypes} />
+          <HaulList buildTypes={buildTypes} shopNearSystem={props.sysMap.name} />
         </div>
       </>}
 
