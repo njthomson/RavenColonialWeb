@@ -42,6 +42,7 @@ export const getAvgHaulCosts = (type: string): Cargo => {
       return avgHaulCosts['orbital-outpost-primary'];
 
     case 'no_truss':
+    case 'no truss':
     case 'dual_truss':
     case 'quad_truss':
     case 'Coriolis Starport':
@@ -120,6 +121,10 @@ export const getAvgHaulCosts = (type: string): Cargo => {
   if (!costs) {
     const groupType = getSiteType(type)!;
     costs = avgHaulCosts[groupType.displayName2];
+  }
+
+  if (!costs && type.endsWith(' (primary)')) {
+    return getAvgHaulCosts(type.replace(' (primary)', ''));
   }
 
   if (!costs) {
