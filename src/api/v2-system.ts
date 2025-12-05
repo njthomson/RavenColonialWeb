@@ -15,21 +15,31 @@ export const systemV2 = {
     snapshots: {} as Record<string, SysSnapshot[]>,
   },
 
-  getSys: async (nameOrNum: string, force?: boolean, rev?: number): Promise<Sys> => {
+  getSys: async (nameOrNum: string, force?: boolean, revOrSaveName?: string): Promise<Sys> => {
     if (!force) {
       const match = Object.values(systemV2.cache.sys).find(s => s.name === nameOrNum || s.id64.toString() === nameOrNum);
       if (match) { return match; }
     }
 
-    if (rev) {
-      // do not cache older revisions
-      const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/.${rev}`);
-      return result;
+    // do not cache older revisions
+    if (revOrSaveName) {
+      const rev = parseInt(revOrSaveName, 10);
+      if (rev) {
+        const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/.${rev}`);
+        return result;
+      } else {
+        const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/!${encodeURIComponent(revOrSaveName)}`);
+        return result;
+      }
     }
 
     const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}`);
     systemV2.cache.sys[result.id64] = result;
     return result;
+  },
+
+  deleteNamedSave: async (nameOrNum: string, saveName: string): Promise<void> => {
+    return await callAPI<void>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/!${encodeURIComponent(saveName)}`, 'DELETE');
   },
 
   getBodies: async (systemName: string): Promise<Site> => {
@@ -106,6 +116,7 @@ export interface SitesPut {
   open?: boolean;
   nickname?: string;
   notes?: string;
+  saveName?: string;
   // editors?: string[];
 }
 

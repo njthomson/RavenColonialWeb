@@ -2,7 +2,8 @@ import './SystemView2.css';
 import * as api from '../../api';
 import spansh16 from '../../assets/spansh-16x16.png';
 import inara16 from '../../assets/inara-16x16.png';
-import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
+import canonn16 from '../../assets/canonn-16x16.png';
+import { ActionButton, CommandBar, ContextualMenuItemType, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, IconButton, IContextualMenuItem, Link, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component, createRef, FunctionComponent, useState } from "react";
 import { CopyButton } from '../../components/CopyButton';
 import { appTheme, cn } from '../../theme';
@@ -12,7 +13,7 @@ import { SystemStats } from './SystemStats';
 import { BothTierPoints, BuildOrder } from './BuildOrder';
 import { ViewSite } from './ViewSite';
 import { SitesTableView } from './SitesTableView';
-import { Bod, BT, Pop, Site, SiteGraphType, Sys } from '../../types2';
+import { Bod, BT, NamedSave, Pop, Site, SiteGraphType, Sys } from '../../types2';
 import { GetRealEconomies, SitesPut } from '../../api/v2-system';
 import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
@@ -63,6 +64,7 @@ interface SystemView2State {
   canEditAsArchitect: boolean;
   buffNerf: boolean;
   showEditNotes?: boolean;
+  showSaveAs?: boolean;
 }
 
 const viewTypes = [
@@ -169,6 +171,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       siteGraphType: store.siteGraphType,
       canEditAsArchitect: false,
       showEditNotes: false,
+      showSaveAs: false,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName' | 'buffNerf'>;
   }
 
@@ -181,24 +184,25 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     delayFocus('find-system-input');
   }
 
-  doLoad = (rev?: number) => {
+  doLoad = (revOrSaveName?: string) => {
     if (this.isDirty()) {
-      this.setState({ showConfirmAction: () => this.loadData(this.props.systemName, false, rev) });
+      this.setState({ showConfirmAction: () => this.loadData(this.props.systemName, false, revOrSaveName) });
     } else {
-      this.loadData(this.props.systemName, false, rev);
+      this.loadData(this.props.systemName, false, revOrSaveName);
     }
   };
 
-  loadData = (nameOrNum: string, reset?: boolean, rev?: number, name?: string) => {
+  loadData = (nameOrNum: string, reset?: boolean, revOrSaveName?: string, sysName?: string) => {
     this.setState({
       ...(reset ? this.getResetState() : {} as any),
-      systemName: name || nameOrNum,
+      systemName: sysName || nameOrNum,
       processingMsg: 'Loading ...',
       showConfirmAction: undefined,
       errorMsg: '',
+      showEditNotes: false,
     });
 
-    return api.systemV2.getSys(nameOrNum, true, rev)
+    return api.systemV2.getSys(nameOrNum, true, revOrSaveName)
       .then(newSys => {
 
         if (newSys.v < api.systemV2.currentSchemaVersion) {
@@ -246,6 +250,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       bodySlots: newSys.slots,
       originalBodySlots: JSON.stringify(newSys.slots),
       canEditAsArchitect: canEditAsArchitect,
+      showEditNotes: false,
     });
     window.document.title = 'Sys: ' + newSys.name;
 
@@ -281,6 +286,39 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       });
   }
 
+  doDeleteNamedSave = (saveName: string) => {
+    this.setState({
+      processingMsg: 'Deleting ...',
+      showConfirmAction: undefined,
+      errorMsg: '',
+    });
+
+    // delete this named save
+    return api.systemV2.deleteNamedSave(this.state.systemName, saveName)
+      .then(() => {
+        const { sysMap } = this.state;
+        if (sysMap.saveName === saveName) {
+          // reload current if we just deleted what we're looking at
+          this.doLoad();
+        } else {
+          // otherwise just remove from the list
+          sysMap.savedNames = sysMap.savedNames?.filter(s => s.name !== saveName);
+          this.setState({
+            processingMsg: undefined,
+            sysMap: sysMap,
+          });
+        }
+      })
+      .catch(err => {
+        if (err.statusCode === 404) {
+          console.error(`No data for: ${this.props.systemName} / ${saveName}...`);
+        } else {
+          console.error(err.stack);
+          this.setState({ errorMsg: err?.message ?? 'Something failed' });
+        }
+      });
+  };
+
   doGetRealEconomies = () => {
     api.systemV2.getRealEconomies(this.state.sysMap.id64.toString())
       .then(realEconomies => {
@@ -311,7 +349,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     this.doSaveData();
   }
 
-  doSaveData = () => {
+  doSaveData = (saveName?: string) => {
 
     if (!store.cmdrName) {
       console.warn('You need to sign in in for this');
@@ -320,14 +358,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return;
     }
 
-    if (!this.state.canEditAsArchitect) {
+    if (!this.state.canEditAsArchitect && !saveName) {
       console.warn('Edit permission is denied');
       return;
     }
 
     // warn before lockout
     const aboutToLock = !this.state.sysMap.open && !!this.state.sysMap?.architect && !isMatchingCmdr(this.state.sysMap?.architect, store.cmdrName);
-    if (aboutToLock) {
+    if (aboutToLock && !saveName) {
       if (this.state.showConfirmAction !== this.confirmDoSaveData) {
         this.setState({
           showConfirmMessage: 'You are about to lose permission to save future changes.',
@@ -342,7 +380,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       }
     }
 
-    this.setState({ processingMsg: 'Saving ...', errorMsg: '' });
+    this.setState({ processingMsg: 'Saving ...', errorMsg: '', showEditNotes: false });
 
     const payload: SitesPut = {
       update: Object.values(this.state.dirtySites),
@@ -351,6 +389,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       snapshot: this.state.sysMap.architect ? getSnapshot(this.state.sysMap, undefined) : undefined,
       slots: this.state.bodySlots,
       notes: this.state.sysMap.notes,
+      saveName: saveName,
     };
 
     if (this.state.sysOriginal.architect !== this.state.sysMap.architect) {
@@ -593,16 +632,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     // we cannot be dirty if either of these are missing
     if (!sysMap || !sysOriginal) return false;
 
-    const dirty = !!Object.keys(dirtySites).length
-      || deletedIDs.length > 0
+    const dirty = Object.keys(dirtySites).length !== sysOriginal.updateIDs?.length
+      || deletedIDs.length !== sysOriginal.deleteIDs?.length
       || orderIDs.length !== sysOriginal.sites?.length
       || sysMap.architect !== sysOriginal.architect
       || sysMap.nickname !== sysOriginal.nickname
       || sysMap.notes !== sysOriginal.notes
       || sysMap.open !== sysOriginal.open
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
-      // consider any other revision to be dirty
-      || sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0)
+      // consider any other revision to be dirty (if not named)
+      || (!sysMap.saveName && sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0))
       || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
       // || JSON.stringify(sysMap.editors) !== JSON.stringify(sysOriginal.editors)
@@ -734,13 +773,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderTitleAndCommands() {
-    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, showConfirmMessage, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect, showEditNotes } = this.state;
+    const { systemName, processingMsg, sysMap, useIncomplete, showEditSys, showConfirmAction, showConfirmMessage, auditWholeSystem, siteGraphType, bodySlots, canEditAsArchitect, showEditNotes, showSaveAs } = this.state;
 
     // prepare rich copy link
     const pageLink = `${window.location.origin}/#sys=${encodeURIComponent(systemName)}`;
 
     const isAllowed = canEditAsArchitect;
-    const enableSave = isAllowed && this.isDirty() && !processingMsg && !anonymous;
+    const isDirty = this.isDirty();
+    const enableSave = isAllowed && isDirty && !processingMsg && !anonymous;
     const noSplitAddButton = isMobile();
 
     const itemAddNewSite = {
@@ -846,8 +886,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         className: anonymous ? undefined : cn.bBox,
         disabled: !!processingMsg || anonymous,
         canCheck: true,
-        checked: sysMap.rev === r.rev,
-        onClick: () => this.doLoad(r.rev),
+        checked: sysMap.rev === r.rev && !sysMap.saveName,
+        onClick: () => this.doLoad(r.rev.toString()),
         onRenderContent(props, defaultRenders) {
           props.item.text = `#${r.rev} by ${r.cmdr} ${getRelativeDuration(new Date(r.time))}`;
           return <>
@@ -865,6 +905,53 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         disabled: !!processingMsg || anonymous,
         text: `Prior revisions:`,
       } as IContextualMenuItem);
+    }
+    if (sysMap?.savedNames?.length) {
+      loadRevisionItems.push({
+        key: `load-named-header`,
+        itemType: ContextualMenuItemType.Header,
+        disabled: !!processingMsg || anonymous,
+        text: `Named saves:`,
+      });
+      for (const ns of sysMap.savedNames) {
+        const d = new Date(ns.time);
+        const isCurrent = sysMap.saveName === ns.name;
+        const canDelete = canEditAsArchitect || isMatchingCmdr(ns.cmdr, store.cmdrName);
+        const btnDelete = canDelete ? <Icon
+          className={cn.bBox}
+          iconName='Delete'
+          title={`Delete named save "${ns.name}"`}
+          style={{ width: 24, textAlign: 'center', borderWidth: 2 }}
+          onClick={ev => {
+            ev.preventDefault();
+            this.doDeleteNamedSave(ns.name);
+          }
+          }
+        /> : undefined;
+
+        loadRevisionItems.push({
+          key: `load-named-${ns.name}`,
+          text: `"${ns.name}" by ${ns.cmdr} ${getRelativeDuration(d)}`,
+          title: `"${ns.name}" by ${ns.cmdr} - ${d.toLocaleString()}`,
+          className: anonymous ? undefined : cn.bBox,
+          disabled: !!processingMsg || anonymous,
+          canCheck: true,
+          checked: isCurrent,
+          onClick: ev => {
+            if (!ev?.defaultPrevented) {
+              this.doLoad(ns.name);
+            }
+          },
+          onRenderContent(props, defaultRenders) {
+            props.item.text = `"${ns.name}" by ${ns.cmdr} ${getRelativeDuration(new Date(ns.time))}`;
+            return <>
+              {defaultRenders.renderCheckMarkIcon(props)}
+              {defaultRenders.renderItemName(props)}
+              {btnDelete}
+            </>;
+          },
+        } as IContextualMenuItem);
+      }
     }
 
     // get total count of orbital and surface slots
@@ -899,6 +986,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const saveIconColor = !canEditAsArchitect
       ? appTheme.palette.themeLight
       : enableSave ? appTheme.palette.yellowDark : undefined;
+    const saveAsIconColor = isDirty
+      ? appTheme.palette.yellowDark
+      : undefined;
 
     const nicknameDiffers = !!sysMap?.nickname && sysMap.nickname !== systemName;
     return <>
@@ -919,7 +1009,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             className={cn.bBox}
             onClick={() => {
               // if needed, prompt to save first
-              if (this.isDirty()) {
+              if (isDirty) {
                 this.setState({ showConfirmAction: () => window.location.assign('/#sys') });
               } else {
                 window.location.assign('/#sys')
@@ -965,17 +1055,30 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           },
 
           {
+            key: `sys-save-as`,
+            iconProps: { iconName: 'SaveAs', style: { color: saveAsIconColor } },
+            text: canEditAsArchitect ? undefined : 'Save as',
+            title: `Save a named copy of this system`,
+            className: anonymous ? undefined : cn.bBox,
+            disabled: !!processingMsg || anonymous,
+            style: {
+              border: !isDirty || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
+            },
+            onClick: () => this.setState({ showSaveAs: true }),
+          },
+
+          {
             key: 'sys-save',
             title: isAllowed ? 'Save changes to this system' : 'Save permission is denied',
-            text: 'Save',
+            text: canEditAsArchitect ? 'Save' : undefined,
             className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'Save', style: { color: saveIconColor } },
-            disabled: !enableSave || anonymous,
+            disabled: !!enableSave || anonymous,
             style: {
               color: saveTextColor,
               border: !enableSave || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
             },
-            onClick: this.doSaveData,
+            onClick: () => this.doSaveData(),
           },
 
           {
@@ -1121,6 +1224,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                   onClick: () => {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
                   },
+                },
+                {
+                  key: 'btn-open-canonn',
+                  text: 'View on Canonn',
+                  iconProps: { imageProps: { src: canonn16 } },
+                  className: cn.bBox,
+                  onClick: () => {
+                    window.open(`https://signals.canonn.tech/index.html?system=${systemName}`, 'Canonn');
+                  },
                 }
               ]
             }
@@ -1175,6 +1287,18 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           }}
         />
       </>}
+
+      {sysMap && showSaveAs && <SystemSaveAs
+        saveName={sysMap?.saveName ?? `Copy of #${sysMap.rev}`}
+        priorSaves={sysMap.savedNames}
+        onDismiss={(saveName) => {
+          if (!saveName) {
+            this.setState({ showSaveAs: false });
+            return;
+          }
+          this.doSaveData(saveName);
+          this.setState({ showSaveAs: false });
+        }} />}
     </>;
   }
 
@@ -1195,7 +1319,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </div>;
 
     return <div className='system-view2' style={{}}>
-      {showEditNotes && <EditSystemNotes systemNotes={sysMap.notes ?? ''} readonly={!canEditAsArchitect} onChange={(newNotes) => {
+      {showEditNotes && <EditSystemNotes systemNotes={sysMap.notes ?? ''} onChange={(newNotes) => {
         if (newNotes) {
           sysMap.notes = newNotes;
           this.setState({ sysMap, showEditNotes: false });
@@ -1600,7 +1724,7 @@ export interface SitesViewProps {
 }
 
 
-export const EditSystemNotes: FunctionComponent<{ systemNotes: string, readonly?: boolean, onChange: (notes: string | undefined) => void }> = (props) => {
+const EditSystemNotes: FunctionComponent<{ systemNotes: string, onChange: (notes: string | undefined) => void }> = (props) => {
   const [editNotes, setEditNotes] = useState(props.systemNotes);
 
   return <div
@@ -1620,28 +1744,26 @@ export const EditSystemNotes: FunctionComponent<{ systemNotes: string, readonly?
     <div>
       <span>System notes:</span>
 
-      {!props.readonly && <>
-        <IconButton
-          className={cn.bBox}
-          title='Cancel changes'
-          iconProps={{ iconName: 'Cancel' }}
-          style={{ float: 'right', marginRight: 4 }}
-          onClick={() => props.onChange(undefined)}
-        />
-        <IconButton
-          className={cn.bBox}
-          title='Accept changes'
-          iconProps={{ iconName: 'Accept' }}
-          style={{ float: 'right', marginRight: 4 }}
-          onClick={() => props.onChange(editNotes)}
-        />
-      </>}
+
+      <IconButton
+        className={cn.bBox}
+        title='Cancel changes'
+        iconProps={{ iconName: 'Cancel' }}
+        style={{ float: 'right', marginRight: 4 }}
+        onClick={() => props.onChange(undefined)}
+      />
+      <IconButton
+        className={cn.bBox}
+        title='Accept changes'
+        iconProps={{ iconName: 'Accept' }}
+        style={{ float: 'right', marginRight: 4 }}
+        onClick={() => props.onChange(editNotes)}
+      />
     </div>
 
     <textarea
       id='edit-system-notes'
       value={editNotes}
-      readOnly={props.readonly}
       onChange={(ev) => setEditNotes(ev.target.value)}
       style={{
         width: 275,
@@ -1654,4 +1776,38 @@ export const EditSystemNotes: FunctionComponent<{ systemNotes: string, readonly?
     />
     <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary }}>Max length: 2000. Remaining: {2000 - editNotes.length}</div>
   </div>;
+}
+
+
+const SystemSaveAs: FunctionComponent<{ saveName: string, priorSaves?: NamedSave[], onDismiss: (saveName?: string) => void }> = (props) => {
+  const [saveName, setSaveName] = useState(props.saveName);
+
+  const match = props.priorSaves?.find(s => s.name.toLowerCase() === saveName.toLowerCase());
+  const nameClobber = !!match;
+  const wrongCmdr = match && match?.cmdr !== store.cmdrName;
+
+  return <>
+    <Dialog
+      hidden={false}
+      dialogContentProps={{ title: 'Save as:' }}
+      onDismiss={() => props.onDismiss()}
+      minWidth={420}
+      styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
+    >
+      <TextField
+        value={saveName}
+        onChange={(_, newValue) => setSaveName(newValue || '')}
+      />
+      <div style={{ marginTop: 4, color: appTheme.palette.themeSecondary, fontSize: 12 }}>
+        <div>Anyone is allowed to save a named copy of a system.</div>
+        <div>Only the architect can save without a name.</div>
+        {nameClobber && <div style={{ color: appTheme.palette.yellowDark }}><Icon className='icon-inline' iconName='Warning' /> Overwriting a prior named save.</div>}
+        {wrongCmdr && <div style={{ color: appTheme.palette.yellowDark }}><Icon className='icon-inline' iconName='Warning' /> Cannot overwrite saves by other Commanders.</div>}
+      </div>
+      <DialogFooter>
+        <PrimaryButton text="Save as" iconProps={{ iconName: 'Save' }} onClick={() => props.onDismiss(saveName)} disabled={!saveName || wrongCmdr} />
+        <DefaultButton text="Cancel" iconProps={{ iconName: 'Cancel' }} onClick={() => props.onDismiss()} />
+      </DialogFooter>
+    </Dialog>
+  </>;
 }

@@ -32,7 +32,7 @@ export const validIncDecLocale = (txt: string, step: number, max: number) => {
   }
 }
 
-export const isMobile = (agentOnly?: boolean) => {
+export const isMobile = (agentOnly?: boolean): boolean => {
   if (agentOnly) {
     return (navigator as any).userAgentData?.mobile || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   } else {

@@ -6,6 +6,7 @@ export interface Sys {
   rev: number;
   name: string;
   nickname?: string;
+  saveName?: string;
   notes?: string;
   id64: number;
   architect: string;
@@ -18,6 +19,7 @@ export interface Sys {
   updateIDs?: string[];
   slots: Record<number, number[]>;
   revs: Rev[];
+  savedNames?: NamedSave[];
   pop?: Pop;
   open?: boolean;
   // editors?: string[];
@@ -32,6 +34,13 @@ export interface Pop {
 /** Info about a saved revision */
 export interface Rev {
   rev: number;
+  cmdr: string;
+  time: string;
+}
+
+/** Info about a named save */
+export interface NamedSave {
+  name: string;
   cmdr: string;
   time: string;
 }
