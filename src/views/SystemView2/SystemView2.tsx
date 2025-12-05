@@ -1303,7 +1303,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   renderSys() {
-    const { sysMap, pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot, showEditNotes, canEditAsArchitect } = this.state;
+    const { sysMap, pinnedSite, viewType, pinnedSnapshot, sysStatsSnapshot, showEditNotes } = this.state;
 
     const pinnedSitePanel = pinnedSite && <div ref={this.snapshotRef}>
       <ViewSite
