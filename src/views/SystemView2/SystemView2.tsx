@@ -1073,7 +1073,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: canEditAsArchitect ? 'Save' : undefined,
             className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'Save', style: { color: saveIconColor } },
-            disabled: !!enableSave || anonymous,
+            disabled: !enableSave || anonymous,
             style: {
               color: saveTextColor,
               border: !enableSave || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
