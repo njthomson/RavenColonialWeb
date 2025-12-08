@@ -102,7 +102,7 @@ export const About: React.FunctionComponent = () => {
       <br /><br />
       The original client app for Raven Colonial is <LinkSrvSurvey /> and is maintained by the same author as this website, but there are alternatives with differing levels of integration:
       <ul>
-        <li><LinkSrvSurvey href='https://github.com/aussig/BGS-Tally' text='https://github.com/aussig/BGS-Tally' title='' /></li>
+        <li><LinkSrvSurvey href='https://github.com/aussig/BGS-Tally' text='https://github.com/aussig/BGS-Tally' title='' /> or Discord: <Link href='https://discord.gg/xGJfksTm' target="_blank">https://discord.gg/xGJfksTm</Link></li>
         <li><LinkSrvSurvey href='https://github.com/toemaus313/ravencolonial_edmc' text='https://github.com/toemaus313/ravencolonial_edmc' title='' /></li>
       </ul>
       It is worth noting that Raven Colonial pulls data from other Elite Dangerous community sites, namely <LinkSrvSurvey href='https://spansh.co.uk' text='Spansh' title='' /> and <LinkSrvSurvey href='https://www.edsm.net/' text='EDSM' title='' />. These sites are fed by players running apps that upload to <LinkSrvSurvey href='https://github.com/EDCD/EDDN/blob/master/README.md' text='EDDN' title='' /> as they play and without these contributions we are all starved for data. If not already, please consider running such an app when you play. My favourites are:

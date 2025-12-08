@@ -57,6 +57,7 @@ const supportedTypes: Record<string, ImageData> = {
   'dicaeosyne': { cmdr: 'Grinning2001', location: `Acton's Pride - IC 2391 Sector LH-V b2-5, A 2` },
   'dione': { cmdr: 'd34m0n', location: `Col 285 Sector PS-P b7-2, A 3` },
   'dionysus': { cmdr: 'Abe Andet', location: `Poyser's Inheritance - Col 285 Sector LK-D b13-8` },
+  'dodec': { cmdr: 'James Razor', location: `Razor's Fortress - 69 f1 Orionis`, more: [{ n: 'dodec-2.jpg', l: 'Reagan Relay - Musca Dark Region AQ-P B5-1', c: 'Cmdr Natalia Renault' }, { n: 'dodec-3.jpg', l: 'Sky Harbour - Polaris Australis, 5', c: 'Cmdr Shaleclaw' }] },
   'dodona': { cmdr: 'Abe Andet', location: `Karman Vision - Arietis Sector PJ-Q B5-5` },
   'dual_truss': { cmdr: 'Abe Andet', location: `McCulley Gateway - Pegasi Sector IM-S a5-0` },
   'dysnomia': { cmdr: 'Disnaematter', location: `Campus Hub - Synuefe EM-M c23-8` },
@@ -115,6 +116,7 @@ const supportedTypes: Record<string, ImageData> = {
   'prometheus': { cmdr: 'Abe Andet', location: `Fuller Depot - Arietis Sector PJ-Q B5-5` },
   'providentia': { cmdr: 'Grinning2002', location: `Okpara Honour - IC 2602 Sector DL-Y d62` },
   'quad_truss': { cmdr: 'Grinning2001', location: `Crowley Gateway - Synuefe DL-N c23-20` },
+  'quint_truss': { cmdr: 'Aydenane', location: `The Ayden's - Synuefai DO-J c25-4, A 9` },
   'silenus': { cmdr: 'Grinning2001', location: `Hornby Vista - IC 2391 Sector LH-V b2-5, A 3` },
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point - Pegasi Sector MS-T b3-5` },
   'tellus_e': { cmdr: 'SheepyGrins', location: 'Vancouver Landing - HIP 69445, B 2 a' },
@@ -592,7 +594,7 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
           />
         </span>
         {props.imgs.length > 1 && <>
-          <Stack horizontal style={{
+          <Stack horizontal verticalAlign='start' style={{
             position: 'absolute',
             left: 2,
             top: 2,
@@ -617,6 +619,9 @@ export const SiteImages: FunctionComponent<{ imgs: ImageRef[]; height: number; w
                 setImgIdx(idx);
               }}
             />
+
+            <div style={{ color: appTheme.palette.themeSecondary }}>{imgIdx + 1} of {props.imgs.length}</div>
+
             <IconButton
               className={cn.bBox}
               title='Next image'
