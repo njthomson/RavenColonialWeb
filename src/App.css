@@ -135,6 +135,14 @@ h3 {
   margin: 10px;
 }
 
+.abs {
+  position: absolute;
+}
+
+.rel {
+  position: relative;
+}
+
 /* misc  */
 
 .ib {

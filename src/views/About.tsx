@@ -18,6 +18,7 @@ export const learnAbout = (currentHelpId?: string) => {
     feedback: 'Feedback',
     raven: 'Raven Colonial',
     srvsurvey: 'SrvSurvey',
+    apps: 'Apps and clients',
     sys: 'Planning a system',
     find: 'Finding a project',
     create: 'Creating a project',
@@ -27,7 +28,7 @@ export const learnAbout = (currentHelpId?: string) => {
     markets: 'Finding markets',
   }
 
-  return <div className={`home-box ${cn.greyer}`}>
+  return <div className={`home-box rel ${cn.greyer}`}>
     <h3 className={cn.h3}>Learn more about: <span style={{ marginLeft: 10, fontSize: 10, fontWeight: 'normal' }}>Watch <LinkSrvSurvey href='https://youtu.be/Kt4MpUJ-ISI?si=FPTNMEBlNP4a3lQl' text="CMDR Mechan's tutorial"></LinkSrvSurvey></span></h3>
     <Stack horizontal wrap tokens={{ childrenGap: 10, padding: 10, }}>
       {Object.entries(topics).map(([key, text]) => <DefaultButton key={key} text={text} onClick={() => showHelp(key)} primary={currentHelpId === key} />)}
@@ -45,7 +46,7 @@ export const About: React.FunctionComponent = () => {
     {learnAbout(helpId)}
 
 
-    {(!helpId || helpId === 'feedback') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'feedback') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Feedback</h3>
       If you have any issues or suggestions for Raven Colonial or SrvSurvey, please send me your <Link onClick={() => App.showFeedback()}>Feedback<Icon className='icon-inline' iconName='Feedback' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>.
       If you would like to support my work, please consider <Link onClick={() => document.getElementById('send-support')?.click()}>a donation</Link>.
@@ -61,7 +62,7 @@ export const About: React.FunctionComponent = () => {
     </div >}
 
 
-    {(!helpId || helpId === 'raven') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'raven') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>The Raven Colonial Corporation</h3>
       From the earliest times in history, mankind has looked to expand. We have sought to explore and thrive.  From the old earth Abrahamic religions, we were told to "go forth, and multiply."  This was the task given to Noah in the days after the dove returned with signs of land. Go forth, and Multiply.
       <br />
@@ -81,7 +82,7 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'srvsurvey') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'srvsurvey') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>About SrvSurvey</h3>
       Issues can be <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='reported on GitHub' title='Submit suggestions and bug reports' /> and general discussion happens through <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss SrvSurvey' />
       <ul>
@@ -95,27 +96,46 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'sys') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'apps') && <div className={`home-box rel ${cn.greyer}`}>
+      <h3 className={cn.h3}>Apps and Clients</h3>
+      Raven Colonial is able to track things automatically through the use of client apps running on your PC as you play the game.
+      <br /><br />
+      The original client app for Raven Colonial is <LinkSrvSurvey /> and is maintained by the same author as this website, but there are alternatives with differing levels of integration:
+      <ul>
+        <li><LinkSrvSurvey href='https://github.com/aussig/BGS-Tally' text='https://github.com/aussig/BGS-Tally' title='' /></li>
+        <li><LinkSrvSurvey href='https://github.com/toemaus313/ravencolonial_edmc' text='https://github.com/toemaus313/ravencolonial_edmc' title='' /></li>
+        <li><LinkSrvSurvey href='https://gitlab.com/CMDR-WDX/edmc-raven-colonial/' text='https://gitlab.com/CMDR-WDX/edmc-raven-colonial/' title='' /></li>
+      </ul>
+      It is worth noting that Raven Colonial pulls data from other Elite Dangerous community sites, namely <LinkSrvSurvey href='https://spansh.co.uk' text='Spansh' title='' /> and <LinkSrvSurvey href='https://www.edsm.net/' text='EDSM' title='' />. These sites are fed by players running apps that upload to <LinkSrvSurvey href='https://github.com/EDCD/EDDN/blob/master/README.md' text='EDDN' title='' /> as they play and without these contributions we are all starved for data. If not already, please consider running such an app when you play. My favourites are:
+      <ul>
+        <li><LinkSrvSurvey href='https://github.com/EDCD/EDMarketConnector/wiki' text='EDMC' title='' /> paired with <LinkSrvSurvey href='https://github.com/canonn-science/EDMC-Canonn/releases' text='The Canonn plugin' title='' /></li>
+        <li><LinkSrvSurvey href='https://github.com/EDDiscovery/EDDiscovery/wiki' text='EDDiscovery' title='' /></li>
+      </ul>
+      <IconBtnScrollTop />
+    </div>}
+
+
+    {(!helpId || helpId === 'sys') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Planning a system</h3>
       The game doesn't allow us to change or remove anything once started so it is vital to plan out a system. Use <Link href='/#sys'><Icon className="icon-inline" iconName='HomeGroup' style={{ textDecoration: 'none', marginRight: 4 }} />system</Link> to view a summary of all systems you have architected.
       You may need to search once to make them appear.
       <br />
       Once viewing a system:
       <ul>
-        <li>When first viewed, Raven Colonial will automatically import body and port data from Spansh. If needed, you can manually import again from the <span style={{ color: appTheme.palette.themePrimary }}><Icon className="icon-inline" iconName='Add' style={{ textDecoration: 'none' }} /> Add</span> sub-menu.</li>
+        <li>When first viewed, Raven Colonial will automatically import body and port data from <LinkSrvSurvey href='https://spansh.co.uk' text='Spansh' title='spansh.co.uk' />. If needed, you can manually import again from the <span style={{ color: appTheme.palette.themePrimary }}><Icon className="icon-inline" iconName='Add' style={{ textDecoration: 'none' }} /> Add</span> sub-menu.</li>
         <li>Raven Colonial tracks the whole system, showing a list of things to fix in the right panel, eg: not enough tier points, missing pre-req's or similar issues.</li>
         <li>Toggle between <Icon className="icon-inline" iconName='Nav2DMapView' style={{ color: appTheme.palette.themePrimary }} /> Map and <Icon className="icon-inline" iconName='GridViewSmall' style={{ color: appTheme.palette.themePrimary }} /> Table view to easily edit many sites or to get a sense of where everything is located.</li>
         <li>Add new sites in any location or at any project phase: <Icon className="icon-inline" iconName={mapStatusIcon.plan} style={{ color: appTheme.palette.themePrimary }} /> planning, <Icon className="icon-inline" iconName={mapStatusIcon.build} style={{ color: appTheme.palette.themePrimary }} /> building, or <Icon className="icon-inline" iconName={mapStatusIcon.complete} style={{ color: appTheme.palette.themePrimary }} /> construction complete.</li>
         <li>View the impact each site has on the system and other sites nearby. Pin a site to see details about it. This will update in real time as you make changes.</li>
         <li>Use <Icon className="icon-inline" iconName='Camera' style={{ color: appTheme.palette.themePrimary }} /> to snapshot panels. This allows for easily comparing differences whilst making changes to your system.</li>
         <li>Use <Icon className="icon-inline" iconName='TestBeakerSolid' style={{ color: appTheme.palette.themePrimary }} /> to control if incomplete stations are included in calculations or not.</li>
-        <li>Use <Icon className="icon-inline" iconName='FabricFolderSearch' style={{ color: appTheme.palette.themePrimary }} /> to view a list of all economies in your system. This also lets you compare with values from Spansh, if they are known.</li>
+        <li>Use <Icon className="icon-inline" iconName='FabricFolderSearch' style={{ color: appTheme.palette.themePrimary }} /> to view a list of all economies in your system. This also lets you compare with values from <LinkSrvSurvey href='https://spansh.co.uk' text='Spansh' title='spansh.co.uk' />, if they are known.</li>
         <IconBtnScrollTop />
       </ul>
     </div >}
 
 
-    {(!helpId || helpId === 'find') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'find') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Finding a project</h3>
       <ul>
         <li>The home page will show any projects linked to your Commander, active or completed, as well as the last 5 projects you have viewed.</li>
@@ -128,7 +148,7 @@ export const About: React.FunctionComponent = () => {
     </div >}
 
 
-    {(!helpId || helpId === 'create') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'create') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Creating a project</h3>
       <ul>
         <li>Creating projects is best done through <LinkSrvSurvey /> as it can pre-populate required cargo as well as other details pulled from journal files.</li>
@@ -142,7 +162,7 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'build') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'build') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Building project</h3>
       Building a project is where the real work is. Running <LinkSrvSurvey /> automates the process, sending updates to Raven Colonial as you progress. Most operations can be performed through the site for those not running SrvSurvey.
       <ul>
@@ -164,7 +184,7 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'groups') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'groups') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Working in groups</h3>
       Some colonization projects are huge and best done by groups of Commanders. SrvSurvey and RavenColonial will support groups working together on a single project.
       <ul>
@@ -181,12 +201,12 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'fc') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'fc') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Working with Fleet Carriers</h3>
       Small or large, using a Fleet Carrier is an essential way to speed up building colonies. SrvSurvey and Raven Colonial support this by linking Fleet Carriers to specific projects or Commanders.
       <ul>
         <li>The simplest way to add your personal and squadron Fleet Carriers is to use <span style={{ color: appTheme.palette.themePrimary }}><Icon className="btn icon-inline" iconName='AuthenticatorApp' /> Login</span> from the button top/right, then hit the <span style={{ color: appTheme.palette.themePrimary }}><Icon className="btn icon-inline" iconName='Refresh' /> My FC</span> button. This will pull their cargo contents too.</li>
-        <li>Other Fleet Carriers can be added using the <span style={{ color: appTheme.palette.themePrimary }}><Icon className="btn icon-inline" iconName='Add' /> Add</span> button next to "Fleet Carriers". Searching is by by name queried from Spansh, though it is common for display names not to be known. If not found by name: use their 6 digit ID code, eg: <code>N3M-T4R</code>, or 4 digit squadron tag.</li>
+        <li>Other Fleet Carriers can be added using the <span style={{ color: appTheme.palette.themePrimary }}><Icon className="btn icon-inline" iconName='Add' /> Add</span> button next to "Fleet Carriers". Searching is by by name queried from <LinkSrvSurvey href='https://spansh.co.uk' text='Spansh' title='spansh.co.uk' />, though it is common for display names not to be known. If not found by name: use their 6 digit ID code, eg: <code>N3M-T4R</code>, or 4 digit squadron tag.</li>
         <li>You can edit cargo amounts and the display name used by Raven Colonial by clicking the <Icon className="btn icon-inline" iconName='Edit' style={{ color: appTheme.palette.themePrimary }} /> button, or unlink from a project by <Icon className="btn icon-inline" iconName='Delete' style={{ color: appTheme.palette.themePrimary }} /></li>
         <li>SrvSurvey will automatically track items bought, sold or transferred to any linked Fleet Carrier. When docked it will update with amounts of items for sale in the market place. You can also update cargo counts manually as needed via the <Icon className="btn icon-inline" iconName='Edit' style={{ color: appTheme.palette.themePrimary }} /> button.</li>
         <li>For those not running SrvSurvey, the <span style={{ color: appTheme.palette.themePrimary }}><Icon className="btn icon-inline" iconName='DeliveryTruck' /> Deliver</span> button can also be used to capture cargo delivered to a linked Fleet Carrier.</li>
@@ -198,7 +218,7 @@ export const About: React.FunctionComponent = () => {
     </div>}
 
 
-    {(!helpId || helpId === 'markets') && <div className={`home-box ${cn.greyer}`}>
+    {(!helpId || helpId === 'markets') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Finding markets</h3>
       Minimizing trips and distance travelled is key to completing constructions quickly. Use the <Icon iconName='ShoppingCart' className='icon-inline' style={{ color: appTheme.palette.themePrimary }} /> button above the commodities table to find markets near your construction site with the required supplies.
       <ul>
@@ -221,8 +241,7 @@ export const About: React.FunctionComponent = () => {
 };
 
 const IconBtnScrollTop: React.FunctionComponent = () => <IconButton
-  className="right"
-  style={{ position: 'relative', top: -8 }}
+  style={{ position: 'absolute', bottom: 8, right: 8 }}
   iconProps={{ iconName: 'DoubleChevronUp12' }}
   onClick={() => window.scrollTo({ top: 0 })}
 />;

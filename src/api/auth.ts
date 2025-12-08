@@ -82,7 +82,7 @@ export const processLoginCodes = async () => {
     } else {
       // Otherwise, log raw error and show a generic error to users
       console.error(`processLoginCodes:`, err.stack);
-      window.alert('Login failed');
+      window.alert('Login failed. Please check browser console for more information.');
       window.location.replace('/user');
     }
   }
