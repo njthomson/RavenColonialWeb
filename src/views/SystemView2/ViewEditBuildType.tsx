@@ -9,6 +9,7 @@ import { App } from "../../App";
 import { CalloutMsg } from "../../components/CalloutMsg";
 import { isTypeValid2, SysMap2 } from "../../system-model2";
 import { TierPoint } from "../../components/TierPoints";
+import { EconomyBlock } from "../../components/EconomyBlock";
 
 interface ViewEditBuildTypeProps {
   buildType: string;
@@ -213,7 +214,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       </Stack>}
       {unlocks && <>
         {unlocks.map(t => {
-          return <div>
+          return <div key={`${id}-${t}}`}>
             <Icon iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ marginRight: 4 }} />
             <span>{t}</span>
           </div>;
@@ -260,7 +261,9 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
         </span>}
       </Stack>
 
-      <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
+      <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }} verticalAlign='center'>
+        <EconomyBlock economy={type.inf} size='10px' />
+        <span>&nbsp;</span>
         {type.subTypes.map(st => (<ActionButton
           key={`st-${st}`}
           id={`st-${st}`}

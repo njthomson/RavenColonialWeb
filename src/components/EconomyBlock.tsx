@@ -105,4 +105,3 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
     {isOrbital && <Icon iconName='ProgressRingDots' style={{ position: 'absolute', left: 3, top: 3, color: 'black' }} />}
   </div>;
 };
-  

@@ -908,7 +908,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
             title={marketLocationTitle}
             style={{ fontSize: 12 }}
           />
-          <EconomyBlock economy={market.economy.toLowerCase()} size='10px' ratio={market.economies} />
+          <EconomyBlock economy={market.economy?.toLowerCase() ?? ''} size='10px' ratio={market.economies} />
           <PadSize size={market.padSize} />
         </Stack>
       </td>

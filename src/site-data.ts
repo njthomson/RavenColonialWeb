@@ -182,8 +182,8 @@ export const economyColors: Record<string, string> = {
 
   terraforming: 'rgb(0, 153, 0)',
   // colony: 'rgb(51, 128, 255)', // TODO: change this to something more obvious?
-  colony: 'rgb(150, 150, 150)', // TODO: change this to something more obvious?
-  none: 'rgb(102, 102, 102)',
+  colony: 'rgb(156, 156, 156)', // TODO: change this to something more obvious?
+  none: 'rgb(86, 86, 86)',
 }
 
 
