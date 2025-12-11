@@ -79,8 +79,8 @@ export const systemV2 = {
     return await callAPI<Record<string, number>>(`/api/v2/system/revs`);
   },
 
-  getSnapshot: async (id64: number): Promise<SysSnapshot> => {
-    return await callAPI<SysSnapshot>(`/api/v2/system/${encodeURIComponent(id64)}/snapshot`);
+  getSnapshot: async (id64: number, architect: string): Promise<SysSnapshot> => {
+    return await callAPI<SysSnapshot>(`/api/v2/system/${encodeURIComponent(id64)}/snapshot/${architect}`);
   },
 
   saveSnapshot: async (id64: number, data: SysSnapshot): Promise<void> => {

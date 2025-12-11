@@ -259,7 +259,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     let genSnapshot = false;
     let newSnapshot = getSnapshot(newSys, undefined);
-    return api.systemV2.getSnapshot(newSys.id64)
+    return api.systemV2.getSnapshot(newSys.id64, newSys.architect)
       .then(currentSnapshot => {
         genSnapshot = currentSnapshot.stale || newSnapshot.score !== currentSnapshot.score;
         newSnapshot.fav = currentSnapshot.fav;
@@ -974,8 +974,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           surfaceSlotsAllKnown = false;
       }
     }
-    const countOrbital = sysMap?.sites.filter(s => getSiteType(s?.buildType)?.orbital).length ?? 0;
-    const countSurface = sysMap?.sites.filter(s => !getSiteType(s?.buildType)?.orbital).length ?? 0;
+    const countOrbital = sysMap?.sites.filter(s => (s.status === 'complete' || useIncomplete) && getSiteType(s?.buildType)?.orbital).length ?? 0;
+    const countSurface = sysMap?.sites.filter(s => (s.status === 'complete' || useIncomplete) && !getSiteType(s?.buildType)?.orbital).length ?? 0;
     const orbitalSlotsTitle = `Total orbital slots: ${orbitalSlots}` + (orbitalSlotsAllKnown ? `, remaining: ${orbitalSlots - countOrbital}` : '+?');
     const surfaceSlotsTitle = `Total surface slots: ${surfaceSlots}` + (surfaceSlotsAllKnown ? `, remaining: ${surfaceSlots - countSurface}` : '+?');
 

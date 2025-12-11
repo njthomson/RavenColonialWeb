@@ -48,7 +48,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     super(props);
 
     // limit to the given names, or all relevant commodities if not
-    this.cargoNames = props.validNames ?? Object.keys(mapCommodityNames)
+    this.cargoNames = props.validNames ?? Object.keys(mapCommodityNames).slice(0, -4) // exclude the last 4 prior-error commodities
     this.cargoNames.sort();
 
     this.state = {
