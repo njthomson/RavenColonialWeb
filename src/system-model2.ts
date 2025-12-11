@@ -136,6 +136,7 @@ export interface SysMap2 extends Sys {
   sumEffects: SysEffects;
   systemScore: number;
   sysUnlocks: Record<SysUnlocks, boolean>,
+  taxCount: number;
 }
 
 export interface TierPoints {
@@ -224,7 +225,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
   }
 
   // calc sum effects from all sites
-  const tierPoints = sumTierPoints(sysMap.siteMaps, useIncomplete);
+  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, useIncomplete);
   const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete, buffNerf);
 
   // calc system unlocks
@@ -241,6 +242,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
     ...sysMap,
     ...sumEffects,
     tierPoints,
+    taxCount,
     sysUnlocks,
   });
 
@@ -407,13 +409,7 @@ export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
       let needCount = site.type.needs.count;
       if (site.type.buildClass === 'starport' && site.type.tier > 1) {
         taxCount++;
-        if (taxCount > 0) {
-          if (site.type.tier === 3) {
-            needCount *= taxCount + 1;
-          } else {
-            needCount += 2 * taxCount;
-          }
-        }
+        needCount = applyTax(site.type.tier, needCount, taxCount);
       }
 
       const tierName = site.type.needs.tier === 2 ? 'tier2' : 'tier3';
@@ -432,8 +428,19 @@ export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
     }
   }
 
-  return tierPoints;
+  return { tierPoints, taxCount };
 }
+
+export const applyTax = (tier: number, cost: number, taxCount: number) => {
+  if (taxCount > 0) {
+    if (tier === 3) {
+      cost *= taxCount + 1;
+    } else {
+      cost += 2 * taxCount;
+    }
+  }
+  return cost;
+};
 
 const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf?: boolean) => {
 

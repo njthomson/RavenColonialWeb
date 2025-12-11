@@ -23,6 +23,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
   const couldBuildIt = props.site.status !== 'complete' && !props.site.buildId && !!props.site.buildType;
   const couldRemoveDupes = props.site.status !== 'plan' && !!props.site.buildId;
   const vagueBuildType = props.site.buildType?.endsWith('?');
+  const needPoints = props.site?.calcNeeds?.count ?? props.site.type.needs.count;
 
   return <div>
 
@@ -109,7 +110,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
         </div>
 
         <div style={{ float: 'right', marginTop: 2 }}>
-          {site.type.needs.count > 0 && <TierPoint tier={site.type.needs.tier} count={-site.type.needs.count} titlePrefix='Needs' />}
+          {site.type.needs.count > 0 && <TierPoint tier={site.type.needs.tier} count={-needPoints} titlePrefix='Needs' />}
           {site.type.gives.count > 0 && <TierPoint tier={site.type.gives.tier} count={site.type.gives.count} titlePrefix='Gives' />}
         </div>
 

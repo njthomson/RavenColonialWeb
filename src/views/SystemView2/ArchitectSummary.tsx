@@ -1,24 +1,25 @@
 import * as api from '../../api';
 import { FunctionComponent, useEffect, useMemo, useState } from "react";
-import { ActionButton, Icon, IconButton, Link, mergeStyleSets, Spinner, Stack, Toggle } from "@fluentui/react";
+import { ActionButton, DirectionalHint, Icon, IconButton, Link, mergeStyleSets, Panel, PanelType, Spinner, Stack, Toggle } from "@fluentui/react";
 import { appTheme, cn } from '../../theme';
-import { asPosNegTxt } from '../../util';
+import { asPosNegTxt, isMobile } from '../../util';
 import { BuildStatus, mapStatus } from '../../types2';
 import { SysSnapshot } from '../../api/v2-system';
 import { store } from '../../local-storage';
 import { TierPoint } from '../../components/TierPoints';
 import { Chevrons } from '../../components/Chevrons';
-import { SysEffects, mapName } from '../../site-data';
+import { SysEffects, getSiteType, mapName } from '../../site-data';
 import { SystemView2 } from './SystemView2';
 import { SysPop } from './SysPop';
 import { getSnapshot } from '../../system-model2';
 import { mapStatusIcon } from './ViewEditStatus';
 import { CopyButton } from '../../components/CopyButton';
+import { CalloutMsg } from '../../components/CalloutMsg';
 
 const css = mergeStyleSets({
   component: {
     marginTop: 40,
-    userSelect: 'none',
+    cursor: 'default',
   },
   componentStack: {
     margin: '20px 0',
@@ -57,13 +58,30 @@ const css = mergeStyleSets({
     width: 20,
     height: 20,
   },
+  statBox: {
+    padding: 4,
+    color: appTheme.palette.themeDark,
+    backgroundColor: appTheme.palette.neutralLight,
+  }
 });
+
+type ArchStats = {
+  sumScore: number,
+  sumPop: number,
+  cw: number,
+  sumStatus: Record<string, number>;
+  sumEffects: Record<string, number>;
+  builds: Record<string, Record<string, number>>;
+  excluded: Record<string, string[]>;
+}
 
 export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (props) => {
   const [loading, setLoading] = useState(false);
   const [systems, setSystems] = useState<SysSnapshot[] | undefined>();
   const [updatingPop, setUpdatingPop] = useState(false);
   const [onlyFav, setOnlyFav] = useState(store.archFav);
+  const [showMoreStats, setShowMoreStats] = useState(false);
+  const [moreStats, setMoreStats] = useState<ArchStats | undefined>(undefined);
 
   // load, re-calc and save each stale snapshot
   useMemo(() => {
@@ -137,7 +155,64 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
           // alpha sort by name
           snapshots.sort((a, b) => a.name.localeCompare(b.name));
 
+          const stats: ArchStats = {
+            sumScore: 0,
+            sumPop: 0,
+            sumStatus: { plan: 0, build: 0, complete: 0 },
+            cw: 5,
+            sumEffects: {},
+            builds: {},
+            excluded: {}
+          };
+          if (snapshots.length) {
+
+            for (const sys of snapshots) {
+              stats.sumPop += sys.pop?.pop ?? 0;
+              stats.sumScore += sys.score;
+
+              for (const [key, val] of Object.entries(sys.sumEffects as Record<string, number>)) {
+                if (!stats.sumEffects[key]) { stats.sumEffects[key] = 0; }
+                stats.sumEffects[key] += val;
+              }
+
+              // per each site in the system
+              for (const s of sys.sites) {
+                if (!stats.sumStatus[s.status]) { stats.sumStatus[s.status] = 0; }
+                stats.sumStatus[s.status] += 1;
+
+                if (!stats.builds[s.status]) { stats.builds[s.status] = {}; }
+
+                const type = getSiteType(s.buildType)!
+                if (!stats.builds[s.status][type.displayName2]) { stats.builds[s.status][type.displayName2] = 0; }
+                stats.builds[s.status][type.displayName2] += 1;
+              }
+
+              // is this system excluded from global stats?
+              if (!sys.pop?.pop) {
+                if (!stats.excluded[sys.name]) { stats.excluded[sys.name] = []; }
+                stats.excluded[sys.name].push('No population recorded');
+              }
+              if (sys.tierPoints.tier2 < 0 && sys.tierPoints.tier3 < 0) {
+                if (!stats.excluded[sys.name]) { stats.excluded[sys.name] = []; }
+                stats.excluded[sys.name].push('Both T2 and T3 points are negative');
+              }
+            }
+
+            const maxEffectCount = Math.max(...Object.values(stats.sumEffects));
+            stats.cw = 5;
+            if (maxEffectCount > 64) {
+              stats.cw = 2.5;
+            } else if (maxEffectCount > 50) {
+              stats.cw = 2.5;
+            } else if (maxEffectCount > 42) {
+              stats.cw = 3;
+            } else if (maxEffectCount > 30) {
+              stats.cw = 4;
+            }
+          }
+
           setSystems(snapshots);
+          setMoreStats(stats);
           setLoading(false);
         })
         .catch(err => {
@@ -226,7 +301,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
             </div>,
             <div key={`se${key}3`}>{asPosNegTxt(actual)}</div>,
             <div key={`se${key}4`}>
-              {actual > 0 && < Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
+              {actual > 0 && <Chevrons name={`sys${key}r`} count={actual} cw={cw} />}
             </div>,
           ]
         })}
@@ -256,7 +331,9 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
     </div>;
   });
 
-  const totalPop = systems?.reduce((sum, s) => sum + (s.pop?.pop ?? 0), 0) ?? 0;
+  const sumRatio = moreStats && moreStats.sumScore / moreStats.sumPop * 1000;
+  const excludedSystemNames = moreStats?.excluded && Object.keys(moreStats?.excluded).sort();
+
   return <>
     <div className={css.component}>
       <h3 className={cn.h3}>
@@ -270,10 +347,10 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         <Stack
           horizontal
           verticalAlign='center'
-          tokens={{ childrenGap: 4 }}
-          style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}
+          tokens={{ childrenGap: 8 }}
+          style={{ fontSize: 16, color: appTheme.palette.themeSecondary }}
         >
-          <div>Total population: {totalPop.toLocaleString()}</div>
+          <div className={css.statBox}>Total population: {moreStats?.sumPop.toLocaleString()}</div>
           <ActionButton
             className={cn.bBox2}
             style={{ height: 24, fontSize: 12 }}
@@ -285,6 +362,16 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
               systems.forEach(s => s.pendingPop = true);
               setSystems([...systems]);
             }}
+          />
+
+          <div className={css.statBox}>Total score: {moreStats?.sumScore.toLocaleString()}</div>
+          <ActionButton
+            className={cn.bBox2}
+            style={{ height: 24, fontSize: 12 }}
+            iconProps={{ iconName: 'BarChart4', style: { fontSize: 12 } }}
+            text='More stats'
+            disabled={updatingPop}
+            onClick={() => setShowMoreStats(v => !v)}
           />
 
           <div style={{ marginLeft: 20, height: 24, paddingTop: 4 }}>
@@ -311,5 +398,96 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
       </Stack>
 
     </div>
+
+    {moreStats && showMoreStats && <Panel
+      isOpen
+      isLightDismiss
+      headerText={`Architect statistics: ${store.cmdrName}`}
+      allowTouchBodyScroll={isMobile()}
+      type={PanelType.custom}
+      customWidth='1000px'
+      styles={{
+        header: { textTransform: 'capitalize', cursor: 'default' },
+        overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
+      }}
+      onDismiss={(ev: any) => setShowMoreStats(false)}
+    >
+      <div>
+        <Stack
+          horizontal
+          verticalAlign='center'
+          tokens={{ childrenGap: 8 }}
+          style={{ fontSize: 16, color: appTheme.palette.themeSecondary }}
+        >
+          <div className={css.statBox}>Systems colonized: {systems?.length.toLocaleString()}</div>
+          <div className={css.statBox}>Total score: {moreStats.sumScore.toLocaleString()}</div>
+          <div className={css.statBox}>Total population: {moreStats.sumPop.toLocaleString()}</div>
+          <div className={css.statBox}>Score/pop ratio:<CalloutMsg msg='Calculated from: <score> / <population> * 1000' iconStyle={{ fontSize: 12 }} directionalHint={DirectionalHint.bottomCenter} /> {sumRatio?.toLocaleString()}</div>
+        </Stack>
+
+        <h2 style={{ fontWeight: 'normal' }}>
+          Aggregate system effects:
+          <CalloutMsg msg='Calculated from completed sites only' iconStyle={{ fontSize: 12 }} directionalHint={DirectionalHint.rightCenter} />
+        </h2>
+
+        <div className={css.siteCardTable}>
+          {Object.keys(moreStats.sumEffects).map(key => {
+            const actual = moreStats.sumEffects[key as keyof SysEffects] ?? 0;
+
+            return [
+              <div key={`mse${key}1`}>{mapName[key]}:</div>,
+              <div key={`mse${key}2`} className={css.redChevrons}>
+                {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={5} />}
+              </div>,
+              <div key={`mse${key}3`}>{asPosNegTxt(actual)}</div>,
+              <div key={`mse${key}4`}>
+                {actual > 0 && <Chevrons name={`sys${key}r`} count={actual} cw={5} />}
+              </div>,
+            ]
+          })}
+        </div>
+
+        {['complete', 'build', 'plan'].map(status => <div>
+          <h2 style={{ fontWeight: 'normal' }}>{mapStatusLabels[status]}: {moreStats.sumStatus[status]}</h2>
+
+          <Stack
+            horizontal wrap
+            verticalAlign='center'
+            tokens={{ childrenGap: 8 }}
+            style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}
+          >
+            {Object.keys(moreStats.builds[status]).sort().map(buildGroup => <div key={`bt-${buildGroup}`} className={css.statBox}>
+              {moreStats.builds[status][buildGroup]} {buildGroup}
+            </div>)}
+          </Stack>
+        </div>)}
+
+        {excludedSystemNames && <div>
+          <h2 style={{ fontWeight: 'normal' }}>Systems excluded from global statistics:</h2>
+
+          <Stack
+            horizontal wrap
+            verticalAlign='center'
+            tokens={{ childrenGap: 8 }}
+            style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}
+          >
+            {excludedSystemNames.map((name, i) => <div
+              key={`esn-${i}`}
+              className={css.statBox}
+              title={moreStats.excluded[name].map(t => `● ${t}`).join(`\n`)}
+            >
+              {name}
+            </div>)}
+          </Stack>
+        </div>}
+      </div>
+    </Panel>}
+
   </>;
+}
+
+const mapStatusLabels: Record<string, string> = {
+  complete: 'Completed sites',
+  build: 'Building in-progress',
+  plan: 'Planned sites'
 }

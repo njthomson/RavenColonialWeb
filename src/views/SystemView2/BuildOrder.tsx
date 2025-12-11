@@ -52,7 +52,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       return m;
     }, {} as Record<string, SiteMap2>);
 
-    const tierPoints = sumTierPoints(props.sysMap.siteMaps, true);
+    const { tierPoints } = sumTierPoints(props.sysMap.siteMaps, true);
 
     this.state = {
       map: map,
@@ -72,7 +72,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     newSorted.splice(idx, 0, dragId);
 
     const sortedSiteMaps = newSorted.map(id => map[id]);
-    const tierPoints = sumTierPoints(sortedSiteMaps, true);
+    const { tierPoints } = sumTierPoints(sortedSiteMaps, true);
     this.setState({ sortedIDs: newSorted, tierPoints });
   }
 

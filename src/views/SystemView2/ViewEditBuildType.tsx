@@ -7,7 +7,7 @@ import { BuildType } from "../../components/BuildType/BuildType";
 import { store } from "../../local-storage";
 import { App } from "../../App";
 import { CalloutMsg } from "../../components/CalloutMsg";
-import { isTypeValid2, SysMap2 } from "../../system-model2";
+import { applyTax, isTypeValid2, SysMap2 } from "../../system-model2";
 import { TierPoint } from "../../components/TierPoints";
 import { EconomyBlock } from "../../components/EconomyBlock";
 
@@ -21,6 +21,7 @@ interface ViewEditBuildTypeState {
   dropDown: boolean;
   location: string;
   showTable: boolean;
+  alreadyTaxed: boolean;
 }
 
 export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEditBuildTypeState> {
@@ -31,7 +32,8 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
     // match the current site's location where if possible
     let defaultLocation = store.viewEditBuiltTypeTab;
-    const isOrbital = props.buildType && getSiteType(props.buildType, true)?.orbital;
+    const type = getSiteType(props.buildType, true);
+    const isOrbital = props.buildType && type?.orbital;
     if (typeof isOrbital === 'boolean') {
       defaultLocation = isOrbital ? 'orbital' : 'surface';
     }
@@ -40,6 +42,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       dropDown: false,
       location: defaultLocation,
       showTable: false,
+      alreadyTaxed: !!type && type.tier > 1,
     };
   }
 
@@ -222,6 +225,10 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       </>}
     </div>;
 
+    let taxCount = this.props.sysMap?.taxCount ?? 0;
+    if (!this.state.alreadyTaxed && type.needs.tier > 1) { taxCount++; }
+    const needCount = applyTax(type.needs.tier, type.needs.count, taxCount);
+
     return <div
       key={id}
       id={id}
@@ -242,7 +249,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       }}
     >
       <div style={{ float: 'right', fontSize: 12 }}>
-        {type.needs.count > 0 && <TierPoint tier={type.needs.tier} count={-type.needs.count} titlePrefix='Needs' />}
+        {type.needs.count > 0 && <TierPoint tier={type.needs.tier} count={-needCount} titlePrefix='Needs' />}
         {type.gives.count > 0 && <TierPoint tier={type.gives.tier} count={type.gives.count} titlePrefix='Gives' />}
       </div>
 

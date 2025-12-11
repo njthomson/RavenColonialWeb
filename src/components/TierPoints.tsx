@@ -13,7 +13,7 @@ export const TierPoint: FunctionComponent<{ tier: number, count: number, disable
 
   const title = disabled ? '' :
     props.titlePrefix
-      ? `${props.titlePrefix} ${asPosNegTxt(Math.abs(props.count))} Tier ${props.tier} points`
+      ? `${props.titlePrefix} ${Math.abs(props.count)} Tier ${props.tier} points`
       : `${asPosNegTxt(props.count)} Tier ${props.tier} points`;
 
   let iconColor = props.disabled ? 'grey' : (props.tier === 2 ? appTheme.palette.yellow : appTheme.palette.green);
