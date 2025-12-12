@@ -437,17 +437,17 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
             return [
               <div key={`mse${key}1`}>{mapName[key]}:</div>,
               <div key={`mse${key}2`} className={css.redChevrons}>
-                {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={5} />}
+                {actual < 0 && <Chevrons name={`sys${key}l`} count={actual} cw={moreStats.cw} />}
               </div>,
               <div key={`mse${key}3`}>{asPosNegTxt(actual)}</div>,
               <div key={`mse${key}4`}>
-                {actual > 0 && <Chevrons name={`sys${key}r`} count={actual} cw={5} />}
+                {actual > 0 && <Chevrons name={`sys${key}r`} count={actual} cw={moreStats.cw} />}
               </div>,
             ]
           })}
         </div>
 
-        {['complete', 'build', 'plan'].map(status => <div>
+        {['complete', 'build', 'plan'].map(status => !moreStats.sumStatus[status] ? null : <div>
           <h2 style={{ fontWeight: 'normal' }}>{mapStatusLabels[status]}: {moreStats.sumStatus[status]}</h2>
 
           <Stack
