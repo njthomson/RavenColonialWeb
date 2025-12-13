@@ -244,7 +244,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       sysOriginal: newSys,
       sysMap: newSysMap,
       dirtySites: dirties,
-      deletedIDs: newSys.deleteIDs ?? [],
+      deletedIDs: [...newSys.deleteIDs ?? []],
       orderIDs: orderIDs,
       originalSiteIDs: [...orderIDs],
       bodySlots: newSys.slots,
