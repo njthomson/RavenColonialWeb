@@ -193,8 +193,8 @@ export const isOrbital = (buildType: string | undefined): boolean => {
 };
 
 export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | undefined => {
-  if (noThrow && !buildType) { buildType = '' };
   buildType = buildType?.replace(' (primary)', '');
+  if (noThrow && !buildType) { buildType = '' };
 
   const match = siteTypes.find(st => st.subTypes.includes(buildType) || st.altTypes?.includes(buildType) || st.subTypes.includes(buildType?.slice(0, -1)));
   if (!match && buildType) {

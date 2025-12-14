@@ -182,7 +182,8 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
 
                 if (!stats.builds[s.status]) { stats.builds[s.status] = {}; }
 
-                const type = getSiteType(s.buildType)!
+                const type = getSiteType(s.buildType);
+                if (!type) { continue; }
                 if (!stats.builds[s.status][type.displayName2]) { stats.builds[s.status][type.displayName2] = 0; }
                 stats.builds[s.status][type.displayName2] += 1;
               }
