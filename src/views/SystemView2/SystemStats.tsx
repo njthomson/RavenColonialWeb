@@ -26,7 +26,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
   const [scoreAudit, setScoreAudit] = useState(false);
 
   const buildTypes = sysMap.siteMaps
-    .filter(s => s.status === 'plan')
+    .filter(s => s.status === 'plan' && props.sysMap.calcIds?.includes(s.id))
     .reduce((list, s) => ([...list, sysMap.primaryPortId === s.id ? `${s.buildType} (primary)` : s.buildType]), [] as string[]);
 
   const activeBuilds = sysMap.siteMaps
