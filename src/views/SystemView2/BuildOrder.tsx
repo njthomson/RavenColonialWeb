@@ -277,11 +277,11 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     // and add a totals row
     rows.push(<tr key='bol-totals' style={{ fontSize: 16 }}>
       <td className={cn.bt} />
-      <td className={`${cn.bt} ${cn.br}`} style={{ textAlign: 'right' }} colSpan={2}>Total points:</td>
-      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: totalTierPoints.tier2 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
+      <td className={`${cn.bt} ${cn.br}`} style={{ textAlign: 'right', color: 'grey' }} colSpan={2}>Total points:</td>
+      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: totalTierPoints.tier2 < 0 ? appTheme.palette.redDark : appTheme.palette.green }}>
         {asPosNegTxt(totalTierPoints.tier2)}
       </td>
-      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: totalTierPoints.tier3 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
+      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: totalTierPoints.tier3 < 0 ? appTheme.palette.redDark : appTheme.palette.green }}>
         {asPosNegTxt(totalTierPoints.tier3)}
       </td>
       <td className={cn.bt} />
