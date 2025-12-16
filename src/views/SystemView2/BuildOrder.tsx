@@ -414,7 +414,8 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         <div style={{ marginBottom: 8, color: appTheme.palette.themeDark }}>
           Calculations are performed on sites in the following order up to the cut line.
           <br />
-          Drag rows up and down to adjust the order.
+          {onMobile && <>Tap any row to adjust it up and down.</>}
+          {!onMobile && <>Drag rows up and down to adjust the order.</>}
         </div>
 
         <Stack horizontal tokens={{ childrenGap: 8 }} style={{ marginBottom: 8 }}>
