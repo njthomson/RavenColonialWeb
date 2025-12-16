@@ -136,7 +136,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           } else {
             // match parent body
             if (!bp) {
-              console.warn(`Assuming missing bodyNum: #${p} is a bary-center, for: ${b.name} (#${b.num})`);
+              console.debug(`Assuming missing bodyNum: #${p} is a bary-center, for: ${b.name} (#${b.num})`);
               let bpi = b.parents.indexOf(p);
               let fakeParents = b.parents.slice(bpi + 1);
               bp = {

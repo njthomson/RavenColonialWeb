@@ -592,7 +592,7 @@ const getStatusNum = (status: string) => {
 
 const autoReOrderSites = (map: Record<string, SiteMap2>) => {
 
-  // re-order sites based on status and some number: complete < build < plan
+  // FIRST: re-order sites based on status: complete < build < plan ... and by marketID if known
   const newSortedIDs = Object.values(map)
     .sort((a, b) => {
 
@@ -606,12 +606,7 @@ const autoReOrderSites = (map: Record<string, SiteMap2>) => {
         return a.marketId - b.marketId;
       }
 
-      // then to some numeric part of the ID
-      if (!isNaN(a.id.substring(1) as any) && !isNaN(b.id.substring(1) as any)) {
-        const an = parseInt(a.id.substring(1), 10);
-        const bn = parseInt(b.id.substring(1), 10);
-        return an - bn;
-      }
+      // do not order by the timestamp component of IDs - I think it is more harmful than helpful
 
       return 0;
     })
