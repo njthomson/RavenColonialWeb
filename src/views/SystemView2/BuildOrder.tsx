@@ -424,7 +424,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
             style={{ height: 30 }}
             iconProps={{ iconName: 'AutoEnhanceOn' }}
             text='Auto re-order sites'
-            title={`Re-orders sites by:\n\n1st  : Completed sites\n2nd : Building in-progress\n3rd  : Planning sites\n(Using time created, if known, to break any ties)\n\nThen attempt to satisfy any pre-reqs.`}
+            title={`Re-orders sites by:\n\n1st  : Completed sites\n2nd : Building in-progress\n3rd  : Planning sites\n\nThen attempts to satisfy any pre-reqs or tier point deficits.`}
             onClick={() => {
               const newSortedIDs = autoReOrderSites(map);
               this.setNewCalcIDs(newSortedIDs, cutoffIdx);
@@ -593,7 +593,7 @@ const getStatusNum = (status: string) => {
 const autoReOrderSites = (map: Record<string, SiteMap2>) => {
 
   // FIRST: re-order sites based on status: complete < build < plan ... and by marketID if known
-  const newSortedIDs = Object.values(map)
+  let sortedIDs = Object.values(map)
     .sort((a, b) => {
 
       // give precedent to status
@@ -607,44 +607,73 @@ const autoReOrderSites = (map: Record<string, SiteMap2>) => {
       }
 
       // do not order by the timestamp component of IDs - I think it is more harmful than helpful
-
       return 0;
     })
     .map(s => s.id);
 
-  // if anything is missing a pre-req and the pre-req exists somethere, shift it down below the pre-req
-  const priorSiteMaps: SiteMap2[] = [];
+  console.log(`** FIRST sort **\n\n${sortedIDs.map((id, i) => `#${i} : ${id} (${map[id].status}) / ${map[id].name} / ${map[id].buildType} - ${map[id].type.displayName2}`).join(`\n`)}\n\n`);
 
-  let startOver = false;
-  do {
-    startOver = false;
-    const sortedSites = newSortedIDs.map(id => map[id]);
-    // console.log(`** sorted A **\n${newSortedIDs.map((id, i) => `#${i} : ${id} (${map[id].status}) / ${map[id].name}`).join(`\n`)}`);
+  // SECOND: re-order to satisfy pre-reqs and tier point deficits
+  let n = 0;
+  const allSites = sortedIDs.map(id => map[id]);
+  for (let i = 0; i < sortedIDs.length; i++) {
+    n++;
+    if (n > sortedIDs.length * 3) {
+      console.warn(`Interrupting run away 2nd sort`);
+      break;
+    }
+    const id = sortedIDs[i];
+    const site = map[id];
+    const priorSiteIDs = sortedIDs.slice(0, i);
+    const priorSites = priorSiteIDs.map(id => map[id]);
+    const trailingSites = sortedIDs.slice(i).map(id => map[id]);
 
-    for (const id of newSortedIDs) {
-      const site = map[id];
-      if (site.type.preReq) {
-        const isValid = hasPreReq2(priorSiteMaps, site.type);
-        if (!isValid) {
-          // find the next site that satisfies the pre-req
-          const neededBuildTypes = getPreReqNeeded(site.type);
-          if (!neededBuildTypes.length) { continue; }
-          const nextSuitableIdx = sortedSites.findIndex(s => neededBuildTypes.includes(s.buildType));
-          if (nextSuitableIdx < 0) { continue; }
+    // do we have any pre-reqs to satisfy?
+    if (site.type.preReq) {
+      const isValid = hasPreReq2(priorSites, site.type);
+      if (!isValid) {
+        // find the next site that satisfies the pre-req
+        const neededBuildTypes = getPreReqNeeded(site.type);
+        if (!neededBuildTypes.length) { continue; }
 
-          // inject satisfying pre-req where we are - then start over
-          const myIdx = newSortedIDs.indexOf(id);
-          const [removed] = newSortedIDs.splice(nextSuitableIdx, 1);
-          newSortedIDs.splice(myIdx, 0, removed);
-
-          startOver = true;
-          break;
+        const fixIdx = trailingSites.findIndex(s => neededBuildTypes.includes(s.buildType));
+        if (fixIdx < 0) {
+          console.log(`AutoSort: #${i + 1} '${site.name}' (${site.buildType}) needs pre-req: ${site.type.preReq} - no fix found`);
+          continue;
         }
+
+        // inject satisfying pre-req where we are, then process that item next
+        const [fixSite] = trailingSites.splice(fixIdx, 1);
+        console.log(`AutoSort: #${i + 1} '${site.name}' (${site.buildType}) needs pre-req: ${site.type.preReq} - fixing with: '${fixSite.name}' (${fixSite.buildType}, ${fixSite.id})`);
+        const [fixId] = sortedIDs.splice(i + fixIdx, 1);
+        sortedIDs.splice(i, 0, fixId);
+        i--;
+        continue;
+      }
+    }
+
+    // do we have a tier-point decifit?
+    const { tierPoints } = sumTierPoints(allSites, [...priorSiteIDs, id]);
+    let pointsDelta = site.type.needs.tier === 2 ? tierPoints.tier2 : tierPoints.tier3;
+    if (i > 0 && pointsDelta < 0) {
+      // find next site that can provide points for needed tier
+      const fixIdx = trailingSites.findIndex(s => s.type.gives.tier === site.type.needs.tier && s.type.gives.count > 0);
+      if (fixIdx < 0) {
+        console.log(`AutoSort: #${i + 1} '${site.name}' (${site.buildType}) needs ${Math.abs(pointsDelta)} T${site.type.needs.tier} points - no fix found`);
+        continue;
       }
 
-      priorSiteMaps.push(site);
+      // inject fix where we are
+      const [fixSite] = trailingSites.splice(fixIdx, 1);
+      console.log(`AutoSort: #${i + 1} '${site.name}' (${site.buildType}) needs ${Math.abs(pointsDelta)} T${site.type.needs.tier} points - fixing with: '${fixSite.name}' (${fixSite.buildType}, ${fixSite.id}) for +${fixSite.type.gives.count} T${fixSite.type.gives.tier} points`);
+      const [fixId] = sortedIDs.splice(i + fixIdx, 1);
+      sortedIDs.splice(i, 0, fixId);
+      pointsDelta += fixSite.type.gives.count;
+      i--;
+      continue;
     }
-  } while (startOver);
+  }
 
-  return newSortedIDs;
+  console.log(`** FINAL sort (${n} iterations over ${sortedIDs.length}) **\n\n${sortedIDs.map((id, i) => `#${i} : ${id} (${map[id].status}) / ${map[id].name} / ${map[id].buildType} - ${map[id].type.displayName2}`).join(`\n`)}\n\n`);
+  return sortedIDs;
 }
