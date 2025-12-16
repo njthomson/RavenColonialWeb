@@ -33,6 +33,7 @@ interface ModalCommanderState {
   hideShipTrips: boolean
   useNativeDiscord: boolean;
   fetchingFCs?: boolean;
+  applyBuffNerf: boolean;
 }
 
 export class ModalCommander extends Component<ModalCommanderProps, ModalCommanderState> {
@@ -57,6 +58,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       cmdrEditLinkedFCs: { ...store.cmdrLinkedFCs },
       hideShipTrips: store.hideShipTrips,
       useNativeDiscord: store.useNativeDiscord,
+      applyBuffNerf: store.applyBuffNerf,
     };
 
     if (props.preAddFC) {
@@ -90,7 +92,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   render() {
-    const { cmdr, apiKey, showApiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, fetchingFCs } = this.state;
+    const { cmdr, apiKey, showApiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, applyBuffNerf, fetchingFCs } = this.state;
     const showLogin = true;
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
@@ -214,6 +216,11 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
               &nbsp;
               <CalloutMsg msg='Requires Discord app to be installed on this device.' directionalHint={DirectionalHint.rightCenter} iconStyle={{ fontSize: 12 }} />
             </Stack>
+            <Checkbox
+              checked={applyBuffNerf}
+              label='Apply buff/nerf by default'
+              onChange={(_ev, checked) => this.setState({ applyBuffNerf: !!checked })}
+            />
           </Stack>
 
           <br />
@@ -334,6 +341,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       store.cmdrLinkedFCs = { ...this.state.cmdrEditLinkedFCs };
       store.hideShipTrips = this.state.hideShipTrips;
       store.useNativeDiscord = this.state.useNativeDiscord;
+      store.applyBuffNerf = this.state.applyBuffNerf;
       if (window.location.pathname.endsWith('/user')) {
         window.location.assign('/#about');
       } else {

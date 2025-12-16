@@ -30,6 +30,7 @@ enum Stored {
   autoCheckSpanshEconomies = 'autoCheckSpanshEconomies',
   archFav = 'archFav',
   viewAllHiddenFC = 'viewAllHiddenFC',
+  applyBuffNerf = 'applyBuffNerf',
 }
 
 interface CmdrData {
@@ -214,6 +215,9 @@ class LocalStorage {
 
   get viewAllHiddenFC(): number[] { return readValue(Stored.viewAllHiddenFC, [])!; }
   set viewAllHiddenFC(newValue: number[]) { writeValue(Stored.viewAllHiddenFC, newValue); }
+
+  get applyBuffNerf(): boolean { return readBoolean(Stored.applyBuffNerf, true); }
+  set applyBuffNerf(newValue: boolean) { writeValue(Stored.applyBuffNerf, newValue); }
 }
 
 export const store = new LocalStorage();
