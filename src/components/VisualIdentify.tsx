@@ -1,4 +1,5 @@
 
+import demolishUI from '../assets/demolish-ui.jpg';
 import { ActionButton, Callout, Icon, IconButton, Link, Panel, Stack, Toggle } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../theme";
@@ -250,6 +251,7 @@ export class VisualIdentify extends Component<VisualIdentifyProps, VisualIdentif
             <li>In progress facilities can be identified through the Cancel Construction UI</li>
             <li>If you are not the architect, you will have to identify by visual comparison</li>
           </ul>
+          <img src={demolishUI} alt='Location of build-types in demolish and cancel UIs' />
         </Callout>}
       </>}
       {zoom && this.renderZoom()}

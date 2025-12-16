@@ -12,7 +12,7 @@ const useNewModel = true;
 /** Black hole, Neutron star or White Dwarf */
 export const stellarRemnants = [BT.bh, BT.ns, BT.wd];
 
-export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean): Economy => {
+export const calculateColonyEconomies2 = (site: SiteMap2, calcIds: string[]): Economy => {
   // use pre-computed data?
   if (site.economies && site.primaryEconomy) {
     return site.primaryEconomy;
@@ -75,7 +75,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
 
   // these apply for fixed and economy ports
   if (site.links) {
-    applyStrongLinks2(map, site.links!.strongSites, site, useIncomplete);
+    applyStrongLinks2(map, site.links!.strongSites, site, calcIds);
 
     if (!site.type.fixed) {
       if (!useNewModel) {
@@ -87,7 +87,7 @@ export const calculateColonyEconomies2 = (site: SiteMap2, useIncomplete: boolean
       //   applyStrongLinkBoost(inf as keyof EconomyMap, map, site, 'Self2');
       // }
     }
-    applyWeakLinks(map, site, useIncomplete);
+    applyWeakLinks(map, site, calcIds);
   }
 
   return finishUp(map, site);
@@ -320,14 +320,14 @@ export const applyStrongLinks0 = (map: EconomyMap, site: SiteMap2, useIncomplete
 };
 */
 
-export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, useIncomplete: boolean, subLink?: Economy | '*') => {
+export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, calcIds: string[], subLink?: Economy | '*') => {
   // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
   // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
   for (let s of strongSites) {
     if (s.type.inf === 'none') { continue; }
 
     // skip incomplete sites ?
-    if (s.status !== 'complete' && !useIncomplete) { continue; }
+    if (!calcIds.includes(s.id)) { continue; }
 
     // skip if we have a sub-link and this inf doesn't match it
 
@@ -348,7 +348,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
 
       // also apply sub-strong links from the emitting port
       if (useNewModel && s.links?.strongSites && !subLink) {
-        applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, s.type.inf);
+        applyStrongLinks2(map, s.links?.strongSites, site, calcIds, s.type.inf);
       }
       continue;
     }
@@ -384,7 +384,7 @@ export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site
 
     // also apply sub-strong links from the emitting port
     if (useNewModel && s.links?.strongSites && !subLink) {
-      applyStrongLinks2(map, s.links?.strongSites, site, useIncomplete, "*");
+      applyStrongLinks2(map, s.links?.strongSites, site, calcIds, "*");
     }
   }
 };
@@ -596,12 +596,12 @@ export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolea
   }
 };
 
-const applyWeakLinks = (map: EconomyMap, site: SiteMap2, useIncomplete: boolean) => {
+const applyWeakLinks = (map: EconomyMap, site: SiteMap2, calcIds: string[]) => {
   if (!site.links?.weakSites) { return; }
 
   for (let s of site.links.weakSites) {
     // skip incomplete sites ?
-    if (s.status !== 'complete' && !useIncomplete) { continue; }
+    if (!calcIds.includes(s.id)) { continue; }
     // skip primary port from the other body
     if (s === s.body?.orbitalPrimary) { continue; }
 

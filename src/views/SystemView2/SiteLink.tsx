@@ -16,7 +16,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
 
   const id = `id-${props.prefix}-${site.id.replace('&', '')}`;
 
-  const isNotUsed = !sysView.state.useIncomplete && site.status !== 'complete';
+  const isNotUsed = !sysView.state.sysMap.calcIds?.includes(site.id);
   let nameColor = isNotUsed
     ? 'grey'
     : (site.status !== 'complete' ? appTheme.palette.yellowDark : appTheme.palette.themePrimary);

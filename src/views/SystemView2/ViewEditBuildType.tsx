@@ -14,6 +14,7 @@ import { EconomyBlock } from "../../components/EconomyBlock";
 interface ViewEditBuildTypeProps {
   buildType: string;
   sysMap?: SysMap2;
+  dim?: boolean;
   onChange: (buildType: string) => void;
 }
 
@@ -77,6 +78,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
           ev.preventDefault();
           this.setState({ dropDown: !dropDown, showTable: false, });
         }}
+        style={{ color: this.props.dim ? 'grey' : undefined }}
       >
         {displayName2} ({this.props.buildType || '?'})
         <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />

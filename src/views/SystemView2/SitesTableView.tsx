@@ -50,6 +50,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const siteGraphType = props.sysView.state.siteGraphType;
 
   sortedSites.forEach((site, i) => {
+    const inCalcIds = !!sysMap.calcIds?.includes(site.id);
     const isNewGroup = site[sortColumn] !== lastGroupVal && sortColumn !== 'name';
     lastGroupVal = site[sortColumn];
 
@@ -64,7 +65,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       className={cn.trhi}
       style={{
         backgroundColor: i % 2 ? appTheme.palette.neutralLighter : undefined,
-        color: site.status === 'complete' ? undefined : (!props.sysView.state.useIncomplete ? 'grey' : appTheme.palette.yellowDark),
+        color: site.status === 'complete' ? undefined : (!inCalcIds ? 'grey' : appTheme.palette.yellowDark),
         fontStyle: site.status === 'plan' ? 'italic' : undefined,
       }}
       onClick={(ev) => { if (!ev.defaultPrevented) { props.onPin(site.id); } }}
@@ -82,6 +83,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
           bodies={sysMap.bodies}
           bodyMap={sysMap.bodyMap}
           pinnedSiteId={props.sysView.state.pinnedSite?.id}
+          dim={!inCalcIds}
           onChange={newNum => {
             site.original.bodyNum = newNum;
             props.onChange(site.original);
@@ -94,6 +96,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
           <ViewEditName
             noBold
             name={site.name}
+            dim={!inCalcIds}
             onChange={newName => {
               site.original.name = newName;
               props.onChange(site.original);
@@ -135,6 +138,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
           <ViewEditBuildType
             buildType={site.buildType}
             sysMap={sysMap}
+            dim={!inCalcIds}
             onChange={(newType) => {
               site.original.buildType = newType;
               props.onChange(site.original);
@@ -146,6 +150,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       <td>
         <ViewEditBuildStatus
           status={site.status}
+          dim={!inCalcIds}
           onChange={newStatus => {
             site.original.status = newStatus;
             props.sysView.siteChanged(site.original);

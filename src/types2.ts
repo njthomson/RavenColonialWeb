@@ -22,6 +22,7 @@ export interface Sys {
   savedNames?: NamedSave[];
   pop?: Pop;
   open?: boolean;
+  idxCalcLimit?: number;
   // editors?: string[];
 }
 

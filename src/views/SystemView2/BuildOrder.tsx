@@ -1,10 +1,13 @@
-import { Callout, DefaultButton, DirectionalHint, Icon, IconButton, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
+import { ActionButton, Callout, DefaultButton, DirectionalHint, Icon, IconButton, Link, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
 import { Component, CSSProperties, FunctionComponent } from "react";
 import { appTheme, cn } from "../../theme";
 import { asPosNegTxt, isMobile } from "../../util";
-import { hasPreReq2, isTypeValid2, SiteMap2, SiteTypeValidity, sumTierPoints, SysMap2, TierPoints } from "../../system-model2";
+import { getPreReqNeeded, hasPreReq2, isTypeValid2, SiteMap2, SiteTypeValidity, sumTierPoints, SysMap2, TierPoints } from "../../system-model2";
 import { getSiteType } from "../../site-data";
 import { TierPoint } from "../../components/TierPoints";
+import { App } from "../../App";
+
+const onMobile = isMobile();
 
 const ts = mergeStyles({
   "th": {
@@ -22,14 +25,18 @@ const ts = mergeStyles({
   },
   ".dc": {
     cursor: 'default',
-  }
+  },
 } as Record<string, CSSProperties>);
+
+const icb = mergeStyles({
+  width: 20,
+  height: 20,
+});
 
 interface BuildOrderProps {
   sysMap: SysMap2;
   orderIDs: string[];
-  useIncomplete: boolean;
-  onClose: (orderIDs: string[] | undefined) => void
+  onClose: (orderIDs: string[] | undefined, cutoffIdx: number | undefined) => void
 };
 
 interface BuildOrderState {
@@ -38,8 +45,12 @@ interface BuildOrderState {
   dragId: string | undefined;
   dragging: boolean;
   tierPoints: TierPoints;
+  totalTierPoints: TierPoints;
   targetId?: string;
   targetValidity?: SiteTypeValidity,
+  cutoffIdx: number;
+  calcIds: string[];
+  invalidOrdering: boolean;
 }
 
 export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
@@ -52,35 +63,88 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       return m;
     }, {} as Record<string, SiteMap2>);
 
-    const { tierPoints } = sumTierPoints(props.sysMap.siteMaps, true);
+    const sortedIDs = [...props.orderIDs];
+    const cutoffIdx = props.sysMap.idxCalcLimit ?? props.sysMap.sites.length;
+    const calcIds = this.getNewCalcIDs(map, sortedIDs, cutoffIdx);
+
+    const { tierPoints } = sumTierPoints(props.sysMap.siteMaps, calcIds);
+    const { tierPoints: totalTierPoints } = sumTierPoints(props.sysMap.siteMaps, props.orderIDs);
 
     this.state = {
       map: map,
-      sortedIDs: [...props.orderIDs],
+      sortedIDs: sortedIDs,
       dragId: undefined,
       dragging: false,
       tierPoints: tierPoints,
+      totalTierPoints: totalTierPoints,
+      cutoffIdx: cutoffIdx,
+      calcIds: calcIds,
+      invalidOrdering: this.isOrderingInvalid(map, sortedIDs),
     };
   }
 
+  getNewCalcIDs(map: Record<string, SiteMap2>, sortedIDs: string[], cutoffIdx: number) {
+    const newCalcIds = sortedIDs.filter((id, i) => cutoffIdx < 0 ? map[id].status === 'complete' : i < cutoffIdx);
+    return newCalcIds;
+  }
+
+  isOrderingInvalid(map: Record<string, SiteMap2>, sortedIDs: string[]) {
+    let foundIncomplete = false;
+    for (const id of sortedIDs) {
+      const site = map[id];
+      if (site.status !== 'complete') {
+        foundIncomplete = true;
+      } else if (foundIncomplete) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   shiftRow(dragId: string, rowId: string) {
-    const { sortedIDs, map } = this.state;
+    const { sortedIDs, cutoffIdx } = this.state;
 
-    // filter dragging item out of the list, then insert it ahead of the current row (getting idx before filtering, so we can drag it to the very bottom)
-    const idx = sortedIDs.indexOf(rowId);
-    const newSorted = sortedIDs.filter(id => id !== dragId);
-    newSorted.splice(idx, 0, dragId);
+    if (dragId === 'cut') {
+      let newCutOffIdx = sortedIDs.indexOf(rowId);
+      if (newCutOffIdx === cutoffIdx) {
+        newCutOffIdx++;
+      }
+      this.setNewCalcIDs(sortedIDs, newCutOffIdx || 1);
+    } else {
+      // filter dragging item out of the list, then insert it ahead of the current row (getting idx before filtering, so we can drag it to the very bottom)
+      const idx = sortedIDs.indexOf(rowId);
+      const newSorted = sortedIDs.filter(id => id !== dragId);
+      newSorted.splice(idx, 0, dragId);
 
+      this.setNewCalcIDs(newSorted, cutoffIdx);
+    }
+  }
+
+  setNewCalcIDs(newSorted: string[], newCutOffIdx: number) {
+    const { map } = this.state;
     const sortedSiteMaps = newSorted.map(id => map[id]);
-    const { tierPoints } = sumTierPoints(sortedSiteMaps, true);
-    this.setState({ sortedIDs: newSorted, tierPoints });
+
+    const newCalcIds = this.getNewCalcIDs(map, newSorted, newCutOffIdx);
+
+    const { tierPoints } = sumTierPoints(sortedSiteMaps, newCalcIds);
+    const { tierPoints: totalTierPoints } = sumTierPoints(sortedSiteMaps, newSorted);
+    this.setState({
+      sortedIDs: newSorted,
+      tierPoints, totalTierPoints,
+      calcIds: newCalcIds,
+      cutoffIdx: newCutOffIdx,
+      invalidOrdering: this.isOrderingInvalid(map, newSorted),
+    });
   }
 
   render() {
-    const { map, sortedIDs, dragId, dragging, tierPoints, targetId, targetValidity } = this.state;
+    const { map, sortedIDs, dragId, dragging, tierPoints, totalTierPoints, targetId, targetValidity, cutoffIdx, calcIds, invalidOrdering } = this.state;
 
     const priorSiteMaps: SiteMap2[] = [];
     const tp: TierPoints = { tier2: 0, tier3: 0 };
+
+    let foundIncomplete = false;
     const rows = sortedIDs.map((id, i) => {
       const s = map[id];
       let backgroundColor = i % 2 ? appTheme.palette.neutralLighter : undefined;
@@ -93,36 +157,53 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       priorSiteMaps.push(s);
 
       const key = `bol${id.substring(1)}${i}`;
+      const isCutOff = !calcIds.includes(id);
+      if (s.status !== 'complete') { foundIncomplete = true; }
+
       return <tr
         key={key}
         style={{
           backgroundColor: backgroundColor,
-          cursor: 'row-resize',
+          cursor: onMobile ? 'pointer' : 'row-resize',
+          color: isCutOff ? 'grey' : undefined,
         }}
         onMouseOver={ev => {
-          ev.preventDefault();
-          if (!dragging) { this.setState({ dragId: id }); }
+          if (!onMobile) {
+            ev.preventDefault();
+            if (!dragging) { this.setState({ dragId: id }); }
+          }
         }}
         onMouseDown={ev => {
+          if (ev.defaultPrevented) { return; }
           ev.preventDefault();
-          this.setState({ dragging: true, dragId: id, targetId: undefined });
+          if (onMobile) {
+            this.setState({ dragId: dragId === id ? undefined : id, targetId: undefined });
+          } else {
+            this.setState({ dragging: true, dragId: id, targetId: undefined });
+          }
         }}
         onMouseUp={ev => {
-          ev.preventDefault();
-          this.setState({ dragging: false, dragId: undefined });
+          if (!onMobile) {
+            ev.preventDefault();
+            this.setState({ dragging: false, dragId: undefined });
+          }
         }}
         onMouseEnter={ev => {
+          if (ev.defaultPrevented || onMobile) { return; }
           ev.preventDefault();
           if (ev.buttons > 0 && dragId && id !== dragId) {
             this.shiftRow(dragId, id);
           }
         }}
       >
-        <td className={`cr ${cn.br}`}>{i + 1}</td>
+        <td className={`cr ${cn.br}`} style={{}}>
+          {foundIncomplete && s.status === 'complete' && <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, float: 'left' }} iconName='WarningSolid' title='Completed sites should be ordered ahead of incomplete ones' />}
+          <div>{i + 1}</div>
+        </td>
 
         <td style={{ position: 'relative' }}>
-          <span style={{ color: s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.accent, marginRight: 8 }}>
-            <Icon iconName={s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
+          <span style={{ color: isCutOff ? 'grey' : s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.accent, marginRight: 8 }}>
+            <Icon iconName={s.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} style={{ color: isCutOff ? 'grey' : undefined }} />
             &nbsp;
             {s.name}
           </span>
@@ -153,8 +234,42 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
             />}
           </Stack>
         </td>
-        <td className={`cc dc ${cn.br}`}>{getTierPointsDelta(s, 2, tp, i === 0)}</td>
-        <td className={`cc dc ${cn.br}`}>{getTierPointsDelta(s, 3, tp, i === 0)}</td>
+
+        <td className={`cc dc ${cn.br}`}>
+          {(!onMobile || dragId !== id) && getTierPointsDelta(s, 2, tp, i === 0, isCutOff)}
+          {onMobile && dragId === id && i > 0 && <IconButton
+            className={`${icb} ${cn.bBox2}`}
+            iconProps={{ iconName: 'ChevronUpSmall' }}
+            style={{ backgroundColor: appTheme.palette.white, height: 16 }}
+            onMouseDown={ev => {
+              ev.preventDefault();
+              const priorIdx = sortedIDs.indexOf(id);
+              if (priorIdx === cutoffIdx) {
+                this.shiftRow('cut', dragId);
+              } else {
+                this.shiftRow(dragId, sortedIDs[priorIdx - 1]);
+              }
+            }}
+          />}
+        </td>
+        <td className={`cc dc ${cn.br}`}>
+          {(!onMobile || dragId !== id) && getTierPointsDelta(s, 3, tp, i === 0, isCutOff)}
+          {onMobile && dragId === id && i < sortedIDs.length - 1 && <IconButton
+            className={`${icb} ${cn.bBox2}`}
+            iconProps={{ iconName: 'ChevronDownSmall' }}
+            style={{ backgroundColor: appTheme.palette.white, height: 16 }}
+            onMouseDown={ev => {
+              ev.preventDefault();
+              const nextIdx = sortedIDs.indexOf(id);
+              if (nextIdx + 1 === cutoffIdx) {
+                this.shiftRow('cut', dragId);
+              } else {
+                this.shiftRow(dragId, sortedIDs[nextIdx + 1]);
+              }
+            }}
+          />}
+        </td>
+
         <td className='cr'>{s.body?.name?.replace(this.props.sysMap.name, '')}</td>
       </tr>;
     });
@@ -163,14 +278,103 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     rows.push(<tr key='bol-totals' style={{ fontSize: 16 }}>
       <td className={cn.bt} />
       <td className={`${cn.bt} ${cn.br}`} style={{ textAlign: 'right' }} colSpan={2}>Total points:</td>
-      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: tierPoints.tier2 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
-        {asPosNegTxt(tierPoints.tier2)}
+      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: totalTierPoints.tier2 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
+        {asPosNegTxt(totalTierPoints.tier2)}
       </td>
-      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: tierPoints.tier3 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
-        {asPosNegTxt(tierPoints.tier3)}
+      <td className={`cc ${cn.bt} ${cn.br}`} style={{ fontWeight: 'bold', color: totalTierPoints.tier3 < 0 ? appTheme.palette.red : appTheme.palette.greenLight }}>
+        {asPosNegTxt(totalTierPoints.tier3)}
       </td>
       <td className={cn.bt} />
     </tr>);
+
+    // insert CUT LINE row
+    if (cutoffIdx >= 0) {
+      const stripeBackground = dragId === 'cut' ? appTheme.palette.blackTranslucent40 : appTheme.palette.themeLight;
+      const tierPointsBackground = appTheme.palette.white;
+      rows.splice(cutoffIdx, 0, <tr
+        key='bol-cutoff'
+        className="cutRow"
+        style={{
+          height: 28,
+          cursor: onMobile ? 'pointer' : 'row-resize',
+          background: `repeating-linear-gradient(45deg, ${stripeBackground}, ${stripeBackground} 10px, ${appTheme.palette.white} 10px, ${appTheme.palette.white} 20px)`,
+          color: cutoffIdx === sortedIDs.length ? 'grey' : undefined,
+        }}
+        onMouseOver={ev => {
+          if (!onMobile) {
+            ev.preventDefault();
+            if (!dragging) { this.setState({ dragId: 'cut' }); }
+          }
+        }}
+        onMouseDown={ev => {
+          if (ev.defaultPrevented) { return; }
+          ev.preventDefault();
+          if (onMobile) {
+            this.setState({ dragId: dragId === 'cut' ? undefined : 'cut' });
+          } else {
+            this.setState({ dragging: true, dragId: 'cut', targetId: undefined });
+          }
+        }}
+        onMouseUp={ev => {
+          if (!onMobile) {
+            ev.preventDefault();
+            this.setState({ dragging: false, dragId: undefined });
+          }
+        }}
+        onMouseEnter={ev => {
+          if (ev.defaultPrevented || onMobile || !dragging) { return; }
+          ev.preventDefault();
+          if (ev.buttons > 0 && dragId && 'cut' !== dragId) {
+            this.shiftRow('cut', dragId);
+          }
+        }}
+      >
+        <td className={cn.br} />
+        <td className={`cc`} colSpan={1}>
+          <div style={{ fontSize: 16, fontWeight: 'bold' }}>CUT LINE</div>
+        </td>
+
+        <td className={cn.br} >
+          {dragId === 'cut' && <Icon
+            iconName='GripperBarHorizontal'
+            style={{ cursor: onMobile ? undefined : 'row-resize', }}
+          />}
+        </td>
+
+        <td className={`cc ${cn.br}`} style={{}}>
+          {(!onMobile || dragId !== 'cut') && <div style={{ fontWeight: 'bold', color: tierPoints.tier2 < 0 ? appTheme.palette.red : appTheme.palette.greenLight, backgroundColor: tierPointsBackground }}
+          >
+            {asPosNegTxt(tierPoints.tier2)}
+          </div>}
+          {onMobile && dragId === 'cut' && cutoffIdx > 1 && <IconButton
+            className={`${icb} ${cn.bBox2}`}
+            iconProps={{ iconName: 'ChevronUpSmall' }}
+            style={{ backgroundColor: appTheme.palette.white }}
+            onMouseDown={ev => {
+              ev.preventDefault();
+              this.setNewCalcIDs(sortedIDs, cutoffIdx - 1);
+            }}
+          />}
+        </td>
+        <td className={`cc ${cn.br}`}>
+          {(!onMobile || dragId !== 'cut') && <div style={{ fontWeight: 'bold', color: tierPoints.tier3 < 0 ? appTheme.palette.red : appTheme.palette.greenLight, backgroundColor: tierPointsBackground }}
+          >
+            {asPosNegTxt(tierPoints.tier3)}
+          </div>}
+          {onMobile && dragId === 'cut' && cutoffIdx < sortedIDs.length && <IconButton
+            className={`${icb} ${cn.bBox2}`}
+            iconProps={{ iconName: 'ChevronDownSmall' }}
+            style={{ backgroundColor: appTheme.palette.white }}
+            onMouseDown={ev => {
+              ev.preventDefault();
+              this.setNewCalcIDs(sortedIDs, cutoffIdx + 1);
+            }}
+          />}
+        </td>
+        <td />
+
+      </tr >)
+    }
 
     return <>
       <Panel
@@ -178,49 +382,86 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         isLightDismiss
 
         headerText='Order for calculations:'
-        allowTouchBodyScroll={isMobile()}
+        allowTouchBodyScroll={onMobile}
         type={PanelType.custom}
         customWidth='800px'
         styles={{
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
         }}
-        onDismiss={(ev) => this.props.onClose(undefined)}
+        onDismiss={(ev) => this.props.onClose(undefined, undefined)}
         onRenderFooterContent={() => <div style={{ marginBottom: 10 }}>
           <Stack horizontal horizontalAlign='end' verticalAlign='center' tokens={{ childrenGap: 10 }}>
 
-            <div style={{ fontSize: 16, color: appTheme.semanticColors.disabledBodyText }}>
-              <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, marginRight: 4 }} iconName='Warning' />
-              Including all sites in tier points calculations
-            </div>
+            {invalidOrdering && <div style={{ fontSize: 14, color: appTheme.semanticColors.disabledBodyText }}>
+              <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, marginRight: 4 }} iconName='WarningSolid' />
+              Completed sites should be ordered ahead of incomplete ones
+            </div>}
 
             <DefaultButton
               iconProps={{ iconName: 'Accept' }}
               text='Okay'
               style={{ marginLeft: 40 }}
-              onClick={() => this.props.onClose(this.state.sortedIDs)}
+              onClick={() => this.props.onClose(this.state.sortedIDs, this.state.cutoffIdx)}
             />
             <DefaultButton
               iconProps={{ iconName: 'Cancel' }}
               text='Cancel'
-              onClick={() => this.props.onClose(undefined)}
+              onClick={() => this.props.onClose(undefined, undefined)}
             />
           </Stack>
         </div>}
       >
         <div style={{ marginBottom: 8, color: appTheme.palette.themeDark }}>
-          Calculations are performed on sites in the following order.
+          Calculations are performed on sites in the following order up to the cut line.
           <br />
           Drag rows up and down to adjust the order.
         </div>
 
+        <Stack horizontal tokens={{ childrenGap: 8 }} style={{ marginBottom: 8 }}>
+          {<ActionButton
+            className={cn.bBox2}
+            style={{ height: 30 }}
+            iconProps={{ iconName: 'AutoEnhanceOn' }}
+            text='Auto re-order sites'
+            title={`Re-orders sites by:\n\n1st  : Completed sites\n2nd : Building in-progress\n3rd  : Planning sites\n(Using time created, if known, to break any ties)\n\nThen attempt to satisfy any pre-reqs.`}
+            onClick={() => {
+              const newSortedIDs = autoReOrderSites(map);
+              this.setNewCalcIDs(newSortedIDs, cutoffIdx);
+            }}
+          />}
+
+          <ActionButton
+            className={cn.bBox2}
+            style={{ height: 30 }}
+            iconProps={{ iconName: 'TestBeaker' }}
+            text="Completed sites only"
+            title='Set cut line before the first non-complete site'
+            onClick={() => {
+              const firstIncomplete = sortedIDs.findIndex(id => map[id].status !== 'complete');
+              this.setNewCalcIDs(sortedIDs, firstIncomplete);
+            }}
+          />
+
+          <ActionButton
+            className={cn.bBox2}
+            style={{ height: 30 }}
+            iconProps={{ iconName: 'TestBeakerSolid' }}
+            text='Use all Sites'
+            title='Set cut line to the bottom'
+            onClick={() => {
+              this.setNewCalcIDs(sortedIDs, sortedIDs.length);
+            }}
+          />
+        </Stack>
+
         <table className={ts} cellPadding={0} cellSpacing={0} style={{ userSelect: 'none', fontSize: 14, width: '100%' }}>
           <colgroup>
-            <col width='30px' />
+            <col width='40px' />
             <col width='auto' />
             <col width='30px' />
             <col width='36px' />
             <col width='36px' />
-            <col width='50px' />
+            <col width='max-content' />
           </colgroup>
 
           <thead>
@@ -236,6 +477,11 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
             {rows}
           </tbody>
         </table>
+
+        <div className='small' style={{ marginBottom: 8 }}>
+          Auto re-ordering sites is a work in progress, please <Link onClick={() => App.showFeedback(`Auto re-order issue in: ${this.props.sysMap.name}`)}>report errors or issues</Link>
+        </div>
+
         {!!targetId && targetValidity && <Callout
           target={`#${targetId}`}
           directionalHint={DirectionalHint.topRightEdge}
@@ -291,7 +537,7 @@ export const BothTierPoints: FunctionComponent<{ tier2: number; tier3: number; d
   </div>;
 }
 
-const getTierPointsDelta = (s: SiteMap2, tier: number, tp: TierPoints, first: boolean) => {
+const getTierPointsDelta = (s: SiteMap2, tier: number, tp: TierPoints, first: boolean, isCutOff: boolean) => {
   let p = 0;
 
   let taxed = false;
@@ -320,16 +566,89 @@ const getTierPointsDelta = (s: SiteMap2, tier: number, tp: TierPoints, first: bo
   const style = {} as CSSProperties;
   if (taxed) {
     title = 'Points tax applied.'
-    style.color = appTheme.palette.yellow;
+    style.color = isCutOff ? appTheme.palette.yellowDark : appTheme.palette.yellow;
     style.fontWeight = 'bold';
   }
   if (deficit) {
     if (taxed) { title += '\n'; }
     const d = tier === 2 ? tp.tier2 : tp.tier3;
     title += `Insufficient points.\nNeed ${asPosNegTxt(-d)} Tier ${tier} points`;
-    style.color = appTheme.palette.red;
+    style.color = isCutOff ? appTheme.palette.redDark : appTheme.palette.red;
     style.fontWeight = 'bold';
   }
 
   return <span style={style} title={title}>{asPosNegTxt(p)}</span>;
+}
+
+const getStatusNum = (status: string) => {
+  switch (status) {
+    case 'complete': return 1;
+    case 'build': return 2;
+    case 'plan': return 3;
+    default: throw new Error(`Unexpected status: ${status}`);
+  }
+}
+
+const autoReOrderSites = (map: Record<string, SiteMap2>) => {
+
+  // re-order sites based on status and some number: complete < build < plan
+  const newSortedIDs = Object.values(map)
+    .sort((a, b) => {
+
+      // give precedent to status
+      const as = getStatusNum(a.status);
+      const bs = getStatusNum(b.status);
+      if (as !== bs) { return as - bs; }
+
+      // then to market IDs
+      if (!!a.marketId && !!b.marketId) {
+        return a.marketId - b.marketId;
+      }
+
+      // then to some numeric part of the ID
+      if (!isNaN(a.id.substring(1) as any) && !isNaN(b.id.substring(1) as any)) {
+        const an = parseInt(a.id.substring(1), 10);
+        const bn = parseInt(b.id.substring(1), 10);
+        return an - bn;
+      }
+
+      return 0;
+    })
+    .map(s => s.id);
+
+  // if anything is missing a pre-req and the pre-req exists somethere, shift it down below the pre-req
+  const priorSiteMaps: SiteMap2[] = [];
+
+  let startOver = false;
+  do {
+    startOver = false;
+    const sortedSites = newSortedIDs.map(id => map[id]);
+    // console.log(`** sorted A **\n${newSortedIDs.map((id, i) => `#${i} : ${id} (${map[id].status}) / ${map[id].name}`).join(`\n`)}`);
+
+    for (const id of newSortedIDs) {
+      const site = map[id];
+      if (site.type.preReq) {
+        const isValid = hasPreReq2(priorSiteMaps, site.type);
+        if (!isValid) {
+          // find the next site that satisfies the pre-req
+          const neededBuildTypes = getPreReqNeeded(site.type);
+          if (!neededBuildTypes.length) { continue; }
+          const nextSuitableIdx = sortedSites.findIndex(s => neededBuildTypes.includes(s.buildType));
+          if (nextSuitableIdx < 0) { continue; }
+
+          // inject satisfying pre-req where we are - then start over
+          const myIdx = newSortedIDs.indexOf(id);
+          const [removed] = newSortedIDs.splice(nextSuitableIdx, 1);
+          newSortedIDs.splice(myIdx, 0, removed);
+
+          startOver = true;
+          break;
+        }
+      }
+
+      priorSiteMaps.push(site);
+    }
+  } while (startOver);
+
+  return newSortedIDs;
 }

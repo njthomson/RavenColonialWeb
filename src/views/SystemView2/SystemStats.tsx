@@ -193,7 +193,7 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
 
       <div>System unlocks:</div>
       <div style={{ gridColumn: '2 / span 4', alignContent: 'center' }}>
-        <ViewUnlockedFeatures sysMap={props.sysMap} useIncomplete={props.useIncomplete} />
+        <ViewUnlockedFeatures sysMap={props.sysMap} />
       </div>
 
       {!!buildTypes.length && <>

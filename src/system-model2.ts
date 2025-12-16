@@ -137,6 +137,8 @@ export interface SysMap2 extends Sys {
   systemScore: number;
   sysUnlocks: Record<SysUnlocks, boolean>,
   taxCount: number;
+  /** The set of IDs to use for system/economy calculations */
+  calcIds?: string[];
 }
 
 export interface TierPoints {
@@ -197,6 +199,7 @@ export interface EconomyLink {
 
 export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: boolean): SysMap2 => {
   // const orderIDs = sys.sites.map(s => s.id); // necessary?
+  const idxLimit = sys.idxCalcLimit ?? sys.sites.length;
 
   // the primary port is always the first site
   sys.primaryPortId = sys.sites?.length > 0
@@ -209,29 +212,29 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
   // https://forums.frontier.co.uk/threads/constructing-a-specific-economy.637363/
 
   // group sites by their bodies, extract system and architect names
-  const sysMap = initializeSysMap(sys, useIncomplete);
+  const sysMap = initializeSysMap(sys, useIncomplete, idxLimit);
 
   // determine primary ports for each body
   const allBodies = Object.values(sysMap.bodyMap);
   for (const body of allBodies) {
-    body.surfacePrimary = getBodyPrimaryPort(body.surface, useIncomplete);
+    body.surfacePrimary = getBodyPrimaryPort(body.surface, sysMap.calcIds);
     const siblingSites = findSiblingSites(sys.bodies, sysMap.bodyMap, body, !!body.surfacePrimary);
-    body.orbitalPrimary = getBodyPrimaryPort(siblingSites, useIncomplete);
+    body.orbitalPrimary = getBodyPrimaryPort(siblingSites, sysMap.calcIds);
   }
 
   // per body, calc strong/weak links
   for (const body of allBodies) {
-    calcBodyLinks(sysMap.bodyMap, body, sys, useIncomplete);
+    calcBodyLinks(sysMap.bodyMap, body, sys, sysMap.calcIds);
   }
 
   // calc sum effects from all sites
-  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, useIncomplete);
-  const sumEffects = sumSystemEffects(sysMap.siteMaps, useIncomplete, buffNerf);
+  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, sysMap.calcIds);
+  const sumEffects = sumSystemEffects(sysMap.siteMaps, sysMap.calcIds, buffNerf);
 
   // calc system unlocks
   const sysUnlocks = {} as Record<SysUnlocks, boolean>;
   for (let key of Object.keys(mapSysUnlocks) as SysUnlocks[]) {
-    const unlocked = sysMap.sites.some(s => (s.status === 'complete' || useIncomplete) && mapSysUnlocks[key].needTypes.some(n => s.buildType?.startsWith(n)));
+    const unlocked = sysMap.sites.some(s => (sysMap.calcIds.includes(s.id)) && mapSysUnlocks[key].needTypes.some(n => s.buildType?.startsWith(n)));
     sysUnlocks[key] = unlocked;
   }
 
@@ -285,10 +288,14 @@ export const getUnknownBody = (): Bod => {
   };
 }
 
-const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
+const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number) => {
 
   let siteMaps: SiteMap2[] = [];
   let systemScore = 0;
+
+  const calcIds = useIncomplete
+    ? sys.sites.filter((s, i) => i < idxLimit).map(s => s.id) // include up to idxLimit
+    : sys.sites.filter(s => s.status === 'complete').map(s => s.id); // include only completed sites
 
   // first: group sites by their bodies
   if (!sys.sites) { sys.sites = []; }
@@ -322,7 +329,7 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
       body.surface.push(site);
     }
 
-    if (site.status === 'complete' || useIncomplete) {
+    if (calcIds.includes(site.id)) {
       systemScore += site.type.score ?? 0;
     }
     return map;
@@ -347,7 +354,7 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean) => {
   const countSites = sys.sites.length;
   const sysMap = {
     ...sys,
-    siteMaps, bodyMap, countSites, systemScore,
+    siteMaps, bodyMap, countSites, systemScore, calcIds,
   };
 
   return sysMap;
@@ -394,7 +401,7 @@ export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
   return scoreTxt;
 };
 
-export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
+export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[]) => {
 
   const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
   const primaryPortId = siteMaps && siteMaps[0]?.id;
@@ -402,7 +409,7 @@ export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
   let taxCount = -2;
   for (const site of siteMaps) {
     // skip mock sites, unless ...
-    if (site.status === 'plan' && !useIncomplete) continue;
+    if (!calcIds.includes(site.id)) continue;
 
     // sum system tier points needed - these are already spent for projects in-progress
     if (site.id !== primaryPortId && site.type.needs.count > 0 && site.type.needs.tier > 1) {
@@ -419,7 +426,7 @@ export const sumTierPoints = (siteMaps: SiteMap2[], useIncomplete: boolean) => {
     }
 
     // skip incomplete sites, unless ...
-    if (site.status !== 'complete' && !useIncomplete) continue;
+    if (!calcIds.includes(site.id)) continue;
 
     // sum system tier points given
     if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
@@ -442,7 +449,7 @@ export const applyTax = (tier: number, cost: number, taxCount: number) => {
   return cost;
 };
 
-const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf?: boolean) => {
+const sumSystemEffects = (siteMaps: SiteMap2[], calcIds: string[], buffNerf?: boolean) => {
 
   const mapEconomies: Record<string, number> = {};
   const sumEffects: SysEffects = {};
@@ -451,11 +458,11 @@ const sumSystemEffects = (siteMaps: SiteMap2[], useIncomplete: boolean, buffNerf
   for (const site of siteMaps) {
 
     // skip incomplete sites, unless ...
-    if (site.status !== 'complete' && !useIncomplete) continue;
+    if (!calcIds.includes(site.id)) continue;
 
     // calc total system economic influence
     if (['settlement', 'outpost', 'starport'].includes(site.type.buildClass)) {
-      calculateColonyEconomies2(site, useIncomplete);
+      calculateColonyEconomies2(site, calcIds);
     }
     const inf = site.primaryEconomy ?? site.type.inf;
 
@@ -514,12 +521,12 @@ const adjustAfflictedStarPortSumEffect = (key: keyof SysEffects, effect: number,
   }
 }
 
-const getBodyPrimaryPort = (sites: SiteMap2[], useIncomplete: boolean): SiteMap2 | undefined => {
+const getBodyPrimaryPort = (sites: SiteMap2[], calcIds: string[]): SiteMap2 | undefined => {
   if (sites.length === 0) return undefined;
 
   // skip incomplete sites?
-  if (!useIncomplete) {
-    sites = sites.filter(s => s.status === 'complete');
+  if (calcIds.length) {
+    sites = sites.filter(s => calcIds.includes(s.id));
   }
 
   // do we have any Tier 3's ?
@@ -544,17 +551,17 @@ const getBodyPrimaryPort = (sites: SiteMap2[], useIncomplete: boolean): SiteMap2
   return undefined;
 }
 
-const calcBodyLinks = (bodyMap: Record<string, BodyMap2>, body: BodyMap2, sys: Sys, useIncomplete: boolean) => {
+const calcBodyLinks = (bodyMap: Record<string, BodyMap2>, body: BodyMap2, sys: Sys, calcIds: string[]) => {
 
   // exit early if no primary port for this body
   if (!body.surfacePrimary && !body.orbitalPrimary) { return; }
 
   // calc strong/weaks links, for surface sites, then orbital
   if (body.surfacePrimary) {
-    calcSiteLinks(sys.bodies, bodyMap, body, body.surfacePrimary, useIncomplete);
+    calcSiteLinks(sys.bodies, bodyMap, body, body.surfacePrimary, calcIds);
   }
   if (body.orbitalPrimary) {
-    calcSiteLinks(sys.bodies, bodyMap, body, body.orbitalPrimary, useIncomplete);
+    calcSiteLinks(sys.bodies, bodyMap, body, body.orbitalPrimary, calcIds);
   }
 
   // // order by surface, then tier
@@ -571,11 +578,11 @@ const calcBodyLinks = (bodyMap: Record<string, BodyMap2>, body: BodyMap2, sys: S
 
   // then calculate the economies after that
   for (const site of body.sites) {
-    calcSiteEconomies(site, sys, useIncomplete);
+    calcSiteEconomies(site, calcIds);
   }
 }
 
-const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, primarySite: SiteMap2, useIncomplete: boolean) => {
+const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, primarySite: SiteMap2, calcIds: string[]) => {
 
   // start with sites directly on the body
   const siblingSites = findSiblingSites(bods, bodyMap, body, false);
@@ -583,7 +590,7 @@ const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: Bod
   // strong links are everything else tied to the current body, alpha sort by name
   const strongSites = siblingSites
     .filter(s => {
-      if (s.parentLink || s.type.inf === 'none' || s === primarySite || (s.status !== 'complete' && !useIncomplete)) {
+      if (s.parentLink || s.type.inf === 'none' || s === primarySite || (!calcIds.includes(s.id))) {
         // skip anything already strong-linked, things without influence, ourself or incompletes
         return false;
       }
@@ -609,7 +616,7 @@ const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: Bod
   const weakSites = Object.values(bodyMap)
     .filter(b => b !== body)
     .flatMap(b => b.sites)
-    .filter(s => !siblingSites.includes(s) && s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (s.status === 'complete' || useIncomplete));
+    .filter(s => !siblingSites.includes(s) && s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (calcIds.includes(s.id)));
 
   if (!primarySite.links && (strongSites.length > 0 || weakSites.length > 0)) {
     primarySite.links = {
@@ -620,7 +627,7 @@ const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: Bod
   }
 }
 
-const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => {
+const calcSiteEconomies = (site: SiteMap2, calcIds: string[]) => {
   if (!site.links) return;
 
   const map: Record<ConcreteEconomy, EconomyLink> = {
@@ -642,7 +649,7 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
     const curSiteLinks: Set<ConcreteEconomy> = new Set();
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
-      calculateColonyEconomies2(s, useIncomplete);
+      calculateColonyEconomies2(s, calcIds);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
       // tally strong links from intrinsic economies
       for (const intrinsicInf of s.intrinsic ?? []) {
@@ -670,7 +677,7 @@ const calcSiteEconomies = (site: SiteMap2, sys: Sys, useIncomplete: boolean) => 
     if (inf === 'none') continue;
     if (inf === 'colony') {
       // we need to calculate what the economy actually is for these
-      calculateColonyEconomies2(s, useIncomplete);
+      calculateColonyEconomies2(s, calcIds);
       // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
       // tally weak links from intrinsic economies
       for (const intrinsicInf of s.intrinsic ?? []) {
@@ -755,44 +762,30 @@ export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteTyp
   return { isValid: true };
 }
 
+export const getPreReqNeeded = (type: SiteType): string[] => {
+
+  switch (type.preReq) {
+    case 'satellite': return ["hermes", "angelia", "eirene"];
+    case 'comms': return ["pistis", "soter", "aletheia"];
+    case 'settlementAgr': return ["consus", "picumnus", "annona", "ceres", "fornax"];
+    case 'installationAgr': return ["demeter"];
+    case 'installationMil': return ["vacuna", "alastor"];
+    case 'outpostMining': return ["euthenia", "phorcys"];
+    case 'relay': return ["enodia", "ichnaea"];
+    case 'settlementBio': return ["pheobe", "asteria", "caerus", "chronos"];
+    case 'settlementTourist': return ["aergia", "comus", "gelos", "fufluns"];
+    case 'settlementMilitary': return ["ioke", "bellona", "enyo", "polemos", "minerva"];
+    default:
+      console.error(`Unexpected preReq: ${type.preReq}`)
+      return [];
+  }
+}
+
 export const hasPreReq2 = (siteMaps: SiteMap2[] | SiteMap[] | undefined, type: SiteType) => {
   if (!siteMaps) { return true; }
 
-  switch (type.preReq) {
-    case 'satellite':
-      return siteMaps.some(s => ["hermes", "angelia", "eirene"].some(n => s.buildType?.startsWith(n)));
-
-    case 'comms':
-      return siteMaps.some(s => ["pistis", "soter", "aletheia"].some(n => s.buildType?.startsWith(n)));
-
-    case 'settlementAgr':
-      return siteMaps.some(s => ["consus", "picumnus", "annona", "ceres", "fornax"].some(n => s.buildType?.startsWith(n)));
-
-    case 'installationAgr':
-      return siteMaps.some(s => ["demeter"].some(n => s.buildType?.startsWith(n)));
-
-    case 'installationMil':
-      return siteMaps.some(s => ["vacuna", "alastor"].some(n => s.buildType?.startsWith(n)));
-
-    case 'outpostMining':
-      return siteMaps.some(s => ["euthenia", "phorcys"].some(n => s.buildType?.startsWith(n)));
-
-    case 'relay':
-      return siteMaps.some(s => ["enodia", "ichnaea"].some(n => s.buildType?.startsWith(n)));
-
-    case 'settlementBio':
-      return siteMaps.some(s => ["pheobe", "asteria", "caerus", "chronos"].some(n => s.buildType?.startsWith(n)));
-
-    case 'settlementTourism':
-      return siteMaps.some(s => ["aergia", "comus", "gelos", "fufluns"].some(n => s.buildType?.startsWith(n)));
-
-    case 'settlementMilitary':
-      return siteMaps.some(s => ["ioke", "bellona", "enyo", "polemos", "minerva"].some(n => s.buildType?.startsWith(n)));
-
-    default:
-      console.error(`Unexpected preReq: ${type.preReq}`)
-      return false;
-  }
+  const neededBuildTypes = getPreReqNeeded(type);
+  return siteMaps.some(s => neededBuildTypes.some(n => s.buildType?.startsWith(n)));
 }
 
 export const getSnapshot = (newSys: Sys, isFav: boolean | undefined) => {

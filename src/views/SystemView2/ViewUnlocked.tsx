@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { SysMap2, SysUnlocks, mapSysUnlocks } from "../../system-model2";
 
-export const ViewUnlockedFeatures: FunctionComponent<{ sysMap: SysMap2, useIncomplete: boolean }> = (props) => {
+export const ViewUnlockedFeatures: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
   const [showMore, setShowMore] = useState(false);
 
   return <>

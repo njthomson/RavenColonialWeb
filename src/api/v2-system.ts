@@ -117,6 +117,7 @@ export interface SitesPut {
   nickname?: string;
   notes?: string;
   saveName?: string;
+  idxCalcLimit?: number;
   // editors?: string[];
 }
 

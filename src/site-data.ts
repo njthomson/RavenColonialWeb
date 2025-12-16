@@ -31,7 +31,7 @@ export type PadSize =
   | 'large'
   ;
 
-export type PreReq = 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourism' | 'settlementMilitary';
+export type PreReq = 'satellite' | 'comms' | 'settlementAgr' | 'installationAgr' | 'installationMil' | 'outpostMining' | 'relay' | 'settlementBio' | 'settlementTourist' | 'settlementMilitary';
 
 export interface SiteType {
   /** Display name for group */
@@ -133,7 +133,7 @@ export const mapName: Record<string, string> = {
   outpostMining: 'a mining outpost installation',
   relay: 'a relay installation',
   settlementBio: 'a bio research settlement',
-  settlementTourism: 'a tourism settlement',
+  settlementTourist: 'a tourism settlement',
   settlementMilitary: 'a military settlement',
 
   // body and system feature names
@@ -701,7 +701,7 @@ export const siteTypes: SiteType[] = [
     "inf": "tourism",
     "score": +3, // TODO: confirm
     "effects": { pop: 0, mpop: 0, sec: -3, wealth: 6, tech: 0, sol: 0, dev: 3 },
-    "preReq": 'settlementTourism',
+    "preReq": 'settlementTourist',
     "unlocks": ['System unlock: Commodities at Pirate, Scientific or Military Outposts']
   },
   {

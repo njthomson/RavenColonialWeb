@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { BuildStatus, mapStatus } from "../../types2";
 
-export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onChange: (status: BuildStatus) => void }> = (props) => {
+export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, dim?: boolean, onChange: (status: BuildStatus) => void }> = (props) => {
   const [dropDown, setDropDown] = useState(false);
   const id = `view-edit-status-${Date.now()}`;
 
@@ -11,7 +11,7 @@ export const ViewEditBuildStatus: FunctionComponent<{ status: BuildStatus, onCha
     <ActionButton
       id={id}
       className={`${cn.abm} ${cn.bBox}`}
-      style={{ justifyContent: 'left' }}
+      style={{ justifyContent: 'left', color: props.dim ? 'grey' : undefined }}
       onClick={(ev) => {
         ev.preventDefault();
         setDropDown(!dropDown);

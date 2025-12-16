@@ -224,6 +224,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   useLoadedData = (newSys: Sys, updateSnapshot: boolean) => {
+    if (newSys.idxCalcLimit === undefined) {
+      // default to ALL sites if no value is set
+      newSys.idxCalcLimit = newSys.sites.length;
+    }
     const newSysMap = buildSystemModel2(newSys, this.state.useIncomplete, this.state.buffNerf);
     const orderIDs = newSysMap.sites.map(s => s.id);
 
@@ -386,6 +390,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       update: Object.values(this.state.dirtySites),
       delete: this.state.deletedIDs,
       orderIDs: this.state.orderIDs,
+      idxCalcLimit: this.state.sysMap.idxCalcLimit,
       snapshot: this.state.sysMap.architect ? getSnapshot(this.state.sysMap, undefined) : undefined,
       slots: this.state.bodySlots,
       notes: this.state.sysMap.notes,
@@ -640,6 +645,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || sysMap.notes !== sysOriginal.notes
       || sysMap.open !== sysOriginal.open
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
+      || sysMap.idxCalcLimit !== sysOriginal.idxCalcLimit
       // consider any other revision to be dirty (if not named)
       || (!sysMap.saveName && sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0))
       || JSON.stringify(bodySlots) !== originalBodySlots
@@ -699,11 +705,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         <BuildOrder
           sysMap={sysMap}
           orderIDs={this.state.orderIDs}
-          useIncomplete={this.state.useIncomplete}
-          onClose={(orderIDs) => {
+          onClose={(orderIDs, idxCalcLimit) => {
             if (orderIDs) {
               sysMap.primaryPortId = orderIDs[0];
               sysMap.sites = orderIDs.map(id => sysMap.sites.find(s => s.id === id)!);
+              sysMap.idxCalcLimit = idxCalcLimit;
               const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete, this.state.buffNerf);
               this.setState({ sysMap: newSysMap, orderIDs, showBuildOrder: false });
             } else {
@@ -974,8 +980,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           surfaceSlotsAllKnown = false;
       }
     }
-    const countOrbital = sysMap?.sites.filter(s => (s.status === 'complete' || useIncomplete) && getSiteType(s?.buildType)?.orbital).length ?? 0;
-    const countSurface = sysMap?.sites.filter(s => (s.status === 'complete' || useIncomplete) && !getSiteType(s?.buildType)?.orbital).length ?? 0;
+    const countOrbital = sysMap?.sites.filter(s => (sysMap.calcIds?.includes(s.id)) && getSiteType(s?.buildType)?.orbital).length ?? 0;
+    const countSurface = sysMap?.sites.filter(s => (sysMap.calcIds?.includes(s.id)) && !getSiteType(s?.buildType)?.orbital).length ?? 0;
     const orbitalSlotsTitle = `Total orbital slots: ${orbitalSlots}` + (orbitalSlotsAllKnown ? `, remaining: ${orbitalSlots - countOrbital}` : '+?');
     const surfaceSlotsTitle = `Total surface slots: ${surfaceSlots}` + (surfaceSlotsAllKnown ? `, remaining: ${surfaceSlots - countSurface}` : '+?');
 
@@ -1461,6 +1467,22 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (!architect && sites.some(s => s.status !== 'plan')) {
       validations.push(<div key={`valNoArchitect`}>
         » System architect unknown - <Link onClick={() => this.setState({ showEditSys: true })}>Fix it</Link>
+      </div>);
+    }
+
+    let foundIncomplete = false;
+    let invalidOrdering = false;
+    for (const s of sites) {
+      if (s.status !== 'complete') {
+        foundIncomplete = true;
+      } else if (foundIncomplete) {
+        invalidOrdering = true;
+        break;
+      }
+    }
+    if (invalidOrdering) {
+      validations.push(<div key={`valInvalidOrdering`}>
+        » Site order is invalid - <Link onClick={() => this.setState({ showBuildOrder: true })}>Fix it</Link>
       </div>);
     }
 

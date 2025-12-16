@@ -14,6 +14,7 @@ interface ViewEditBodyProps {
   bodyMap: Record<string, BodyMap2>;
   pinnedSiteId: string | undefined;
   shortName?: boolean;
+  dim?: boolean;
 }
 
 interface ViewEditBodyState {
@@ -120,7 +121,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
     return <div>
       <ActionButton
         id={`body-${id}`}
-        style={{ paddingRight: 10 }}
+        style={{ paddingRight: 10, color: this.props.dim ? 'grey' : undefined }}
         className={cn.bBox}
         onClick={(ev) => {
           ev.preventDefault();
