@@ -448,7 +448,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
           })}
         </div>
 
-        {['complete', 'build', 'plan'].map(status => !moreStats.sumStatus[status] ? null : <div>
+        {['complete', 'build', 'plan'].map(status => !moreStats.sumStatus[status] ? null : <div key={`as-${status}`}>
           <h2 style={{ fontWeight: 'normal' }}>{mapStatusLabels[status]}: {moreStats.sumStatus[status]}</h2>
 
           <Stack
