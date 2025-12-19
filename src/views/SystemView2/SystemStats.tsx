@@ -101,33 +101,31 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
             <div>However Raven Colonial calculates system scores in real-time.</div>
 
             <div style={{ marginTop: 8 }}>
-              Incorrect score? <Link
-                // style={{ marginLeft: 4, color: appTheme.palette.themeTertiary, fontSize: 11 }}
-                onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+              Incorrect score? Double check what you have built and <Link
+                onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n`)}
               >
                 Share feedback
               </Link>
             </div>
 
-            <div style={{ margin: '8px 0' }}>Scores for the following buildings are not yet known or need confirmation:</div>
-            <ul>
-              <li>Pirate Base Installation</li>
-              <li>Mining/Industrial Installation</li>
-              <li>Military Installation</li>
-              <li>Medical Installation</li>
-              <li>Tourist Installation</li>
-              <li>Space Bar Installation</li>
-              <li>All surface Hubs, exception Refinery</li>
-            </ul>
+            <div style={{ margin: '8px 0', color: appTheme.palette.themeDarker }}>Whilst there is now a score for each type of building, it is not uncommon for scores to be off<br />by one, implying some of these known scores are incorrect. If you have a relatively simple system<br />and observe a difference between Raven Colonial and the game - <Link
+              onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n`)}
+            >
+              please send us feedback
+            </Link>.</div>
 
-            <div style={{ margin: '8px 0' }}>If you are building any of these and would like to help:</div>
+            <div style={{ margin: '8px 0' }}>If you are working on new buildings and would like to help:</div>
             <ul>
               <li>When completing construction, take note of your system score in the game.</li>
               <li><Link
                 style={{ color: appTheme.palette.themePrimary }}
-                onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `New building(s): ?\nScore last week: ?\nScore this week: ?\nCalculated system score: ${sysMap.systemScore}\n\nSystem address: ${sysMap.id64}\n`)}
+                onClick={() => App.showFeedback(`Building score information: ${sysMap.name}`, `New building(s): ?\nScore last week: ?\nScore this week: ?\nCalculated system score: ${sysMap.systemScore}\n`)}
               >
-                After the weekly tick - please share new and old scores
+                After the weekly tick - <Link
+                  onClick={() => App.showFeedback(`Incorrect score for: ${sysMap.name}`, `Actual score: ?\nCalculated score: ${sysMap.systemScore}\n`)}
+                >
+                  Share feedback
+                </Link>
               </Link></li>
             </ul>
           </div>
