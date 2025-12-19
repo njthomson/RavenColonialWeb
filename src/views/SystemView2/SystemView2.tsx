@@ -584,7 +584,12 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       delete this.state.dirtySites[targetId];
     }
 
-    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
+    const orderIdx = this.state.orderIDs.indexOf(targetId);
+    if (sysMap.idxCalcLimit != null && orderIdx < sysMap.idxCalcLimit) {
+      sysMap.idxCalcLimit--;
+    }
+
+    const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       deletedIDs,
       sysMap: newSysMap,
