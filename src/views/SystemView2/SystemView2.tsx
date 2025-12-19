@@ -509,11 +509,21 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     sysMap.sites.push(newSite);
     dirtySites[newSite.id] = newSite;
 
-    const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
+    const newOrderIDs = [...this.state.orderIDs];
+    if (sysMap.idxCalcLimit === sysMap.sites.length || sysMap.idxCalcLimit === null || sysMap.idxCalcLimit === undefined) {
+      newOrderIDs.push(newSite.id);
+    } else {
+      newOrderIDs.splice(sysMap.idxCalcLimit, 0, newSite.id);
+    }
+    if (sysMap.idxCalcLimit !== null && sysMap.idxCalcLimit !== undefined) {
+      sysMap.idxCalcLimit++;
+    }
+
+    const newSysMap = buildSystemModel2(sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       dirtySites,
       sysMap: newSysMap,
-      orderIDs: [...this.state.orderIDs, newSite.id],
+      orderIDs: newOrderIDs,
     });
 
     const id = `id-sbv-${newSite.id}-div`;
