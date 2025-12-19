@@ -240,6 +240,14 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       break;
   }
 
+  // If a star has an asteroid belt - it gains Extraction
+  if (site.body?.name && [BT.st, ...stellarRemnants].includes(site.body?.type)) {
+    const hasAsteroids = site.sys.bodies.some(b => b.type === BT.ac && b.name.startsWith(site.body!.name));
+    if (hasAsteroids) {
+      adjust('extraction', +1, 'Star has: ASTEROIDs', map, site); intrinsic.add('extraction');
+    }
+  }
+
   // If the Body has Rings or is an Asteroid Belt (+1.00) for Extraction - Asteroid Belt only counted if the Port is orbiting it
   if (site.body.features.includes(BodyFeature.rings)) {
     if (![BT.hmc, BT.mrb].includes(site.body?.type)) { adjust('extraction', +1, 'Body has: RINGS', map, site, 'body'); intrinsic.add('extraction'); }
@@ -259,66 +267,6 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
 
   site.intrinsic = Array.from(intrinsic);
 };
-
-/*
-export const applyStrongLinks0 = (map: EconomyMap, site: SiteMap2, useIncomplete: boolean) => {
-  // OLD - remove next time
-  if (!site.links?.strongSites) { return; }
-
-  const strongInf = new Set<keyof EconomyMap>(); // Apply strong links once per inf
-  for (let s of site.links.strongSites) {
-    // skip incomplete sites ?
-    if (s.status !== 'complete' && !useIncomplete) { continue; }
-
-    let inf = s.type.inf;
-    if (inf === 'none') { continue; }
-    if (inf === 'colony') {
-      if (!s.primaryEconomy) {
-        console.warn(`Why no primaryEconomy yet for '${s.name}' generating for: ${site.name} ?`);
-        continue;
-      } else {
-        inf = s.primaryEconomy;
-      }
-    }
-
-    // Track which economy types are providing a strong link (unless we have a fixed/specialized economy and it matches)
-    if (!site.type.fixed || inf === site.type.fixed) {
-      strongInf.add(inf as keyof EconomyMap);
-    }
-
-    // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
-    if (s.type.tier === 2) {
-      if (s.type.inf in map) {
-        adjust(s.type.inf, +0.8, `Apply strong link from: ${s.name} (Tier 2)`, map, site);
-      } else {
-        console.warn(`Unknown economy '${s.type.inf}' for site ${s.name}`);
-      }
-    }
-
-    // For Every Tier1 facility that effects a given Economy on/orbiting the same Body as the Port (+0.40 to that Economy) - These are Tier1 Strong Links​
-    if (s.type.tier === 1) {
-      let inf = s.type.inf;
-      // use generated primary economy if "colony"
-      if (s.type.inf === 'colony' && s.primaryEconomy) {
-        console.warn(`TODO: Is this right? Using generated economy '${s.primaryEconomy}' for for site '${s.name}', generating for: ${site.name}`);
-        inf = s.primaryEconomy;
-      }
-
-      if (inf in map) {
-        adjust(inf, +0.4, `Apply strong link from: ${s.name} (Tier 1)`, map, site);
-      } else {
-        console.warn(`Unknown economy '${inf}' for site '${s.name}', generating for: ${site.name}`);
-      }
-    }
-  }
-
-  console.log(`${site.name}:`, Array.from(strongInf));
-  // Strong Links are subject to modifiers which affect them depending on specific characteristics of the local body
-  for (const inf of Array.from(strongInf)) {
-    applyStrongLinkBoost(inf, map, site, 'Strong link0');
-  }
-};
-*/
 
 export const applyStrongLinks2 = (map: EconomyMap, strongSites: SiteMap2[], site: SiteMap2, calcIds: string[], subLink?: Economy | '*') => {
   // For Every Tier2 facility that effects a given Economy on/orbiting the same Body as the Port (+0.80 to that Economy) - These are Tier2 Strong Links​
@@ -602,8 +550,6 @@ const applyWeakLinks = (map: EconomyMap, site: SiteMap2, calcIds: string[]) => {
   for (let s of site.links.weakSites) {
     // skip incomplete sites ?
     if (!calcIds.includes(s.id)) { continue; }
-    // skip primary port from the other body
-    if (s === s.body?.orbitalPrimary) { continue; }
 
     let inf = s.type.inf;
     if (inf === 'none') { continue; }
