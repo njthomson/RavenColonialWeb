@@ -441,9 +441,11 @@ export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[]) => {
 export const applyTax = (tier: number, cost: number, taxCount: number) => {
   if (taxCount > 0) {
     if (tier === 3) {
-      cost *= taxCount + 1;
+      const delta = cost * taxCount; // cost * 100%
+      cost += delta;
     } else {
-      cost += 2 * taxCount;
+      const delta = Math.trunc((cost * 0.75) * taxCount); // cost * 75%, but removing any fractional amount
+      cost += delta;
     }
   }
   return cost;
