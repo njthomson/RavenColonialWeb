@@ -227,9 +227,12 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
       </>}
     </div>;
 
-    let taxCount = this.props.sysMap?.taxCount ?? 0;
-    if (!this.state.alreadyTaxed && type.needs.tier > 1) { taxCount++; }
-    const needCount = applyTax(type.needs.tier, type.needs.count, taxCount);
+    let needCount = type.needs.count;
+    if (type.buildClass === 'starport' && type.tier > 1) {
+      let taxCount = this.props.sysMap?.taxCount ?? 0;
+      if (!this.state.alreadyTaxed && type.needs.tier > 1) { taxCount++; }
+      needCount = applyTax(type.needs.tier, type.needs.count, taxCount);
+    }
 
     return <div
       key={id}
