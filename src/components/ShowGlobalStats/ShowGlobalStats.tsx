@@ -2,7 +2,7 @@ import './ShowGlobalStats.css';
 import * as api from '../../api';
 import { Component, FunctionComponent } from "react";
 import { store } from '../../local-storage';
-import { DefaultButton, DirectionalHint, Link, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, DirectionalHint, Link, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { GlobalStats } from '../../types';
 import { cn } from '../../theme';
 import { CalloutMsg } from '../CalloutMsg';
@@ -60,7 +60,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
       </div>;
     }
 
-    const topSystemRatios = Object.keys(stats.topSystemRatios).map(t => parseFloat(t)).reduce((m, k) => {
+    const topSystemRatios = Object.keys(stats.topSystemRatios ?? {}).map(t => parseFloat(t)).reduce((m, k) => {
       const v = k * 1000;
       m[v] = stats.topSystemRatios[k];
       return m;
@@ -78,101 +78,111 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
         <CalloutMsg msg={disclaimer} iconStyle={{ fontSize: 12 }} />
       </h3>
 
-      <Stack horizontal>
-        <Stack>
-          <StatsBox
-            label='Projects'
-            data={{ Active: stats.activeProjects, Complete: stats.completeProjects }}
-          />
-          <StatsBox
-            label='Linked'
-            data={{ Commanders: Math.max(stats.totalArchitects, stats.commanders), 'Fleet Carriers': stats.fleetCarriers, Systems: stats.totalPlannedSystems }}
-          />
-          {/* <StatsBox
+      {!stats.topSystemScores && <div>
+        <PrimaryButton onClick={() => {
+          store.globalStats = undefined;
+          window.location.reload();
+        }}>Reload stats?</PrimaryButton>
+      </div>}
+
+      {stats.topSystemScores && <>
+
+        <Stack horizontal>
+          <Stack>
+            <StatsBox
+              label='Projects'
+              data={{ Active: stats.activeProjects, Complete: stats.completeProjects }}
+            />
+            <StatsBox
+              label='Linked'
+              data={{ Commanders: Math.max(stats.totalArchitects, stats.commanders), 'Fleet Carriers': stats.fleetCarriers, Systems: stats.totalPlannedSystems }}
+            />
+            {/* <StatsBox
             label='Deliveries'
             data={{ Count: stats.countDeliveriesEver, Volume: stats.totalDeliveredEver }}
           /> */}
+            <StatsBox
+              small='Last 7 days'
+              label='Deliveries'
+              data={{ Count: stats.countDeliveries7d, Volume: stats.totalDelivered7d }}
+            />
+          </Stack>
+
           <StatsBox
             small='Last 7 days'
-            label='Deliveries'
-            data={{ Count: stats.countDeliveries7d, Volume: stats.totalDelivered7d }}
+            label='Top Contributors'
+            title='Top Commanders by volume of cargo delivered.'
+            data={stats.topContributors7d}
+          />
+
+          <StatsBox
+            small='Last 7 days'
+            label='Top Helpers'
+            title='Top Commanders by count of projects they have contributed to.'
+            data={stats.topHelpers7d}
+          />
+
+          <StatsBox
+            small='&nbsp;'
+            label='Most Systems'
+            data={stats.topArchitects}
           />
         </Stack>
 
-        <StatsBox
-          small='Last 7 days'
-          label='Top Contributors'
-          title='Top Commanders by volume of cargo delivered.'
-          data={stats.topContributors7d}
-        />
-
-        <StatsBox
-          small='Last 7 days'
-          label='Top Helpers'
-          title='Top Commanders by count of projects they have contributed to.'
-          data={stats.topHelpers7d}
-        />
-
-        <StatsBox
-          small='&nbsp;'
-          label='Most Systems'
-          data={stats.topArchitects}
-        />
-      </Stack>
-
-      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
-        <span>Systems by:</span>
-        {(Object.keys(mapGroups) as ShowGroup[]).map(k => <DefaultButton
-          key={k}
-          className={cn.bBox2}
-          style={{ height: 28 }}
-          text={mapGroups[k]}
-          checked={showGroup.has(k)}
-          iconProps={{ iconName: showGroup.has(k) ? 'CheckMark' : undefined }}
-          onClick={ev => {
-            if (ev.ctrlKey) {
-              // add/remove groups if CTRL is being held
-              if (showGroup.has(k)) {
-                showGroup.delete(k);
+        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+          <span>Systems by:</span>
+          {(Object.keys(mapGroups) as ShowGroup[]).map(k => <DefaultButton
+            key={k}
+            className={cn.bBox2}
+            style={{ height: 28 }}
+            text={mapGroups[k]}
+            checked={showGroup.has(k)}
+            iconProps={{ iconName: showGroup.has(k) ? 'CheckMark' : undefined }}
+            onClick={ev => {
+              if (ev.ctrlKey) {
+                // add/remove groups if CTRL is being held
+                if (showGroup.has(k)) {
+                  showGroup.delete(k);
+                } else {
+                  showGroup.add(k);
+                }
+                this.setState({ showGroup });
               } else {
-                showGroup.add(k);
+                // otherwise replace current groups
+                this.setState({ showGroup: new Set([k]) });
               }
-              this.setState({ showGroup });
-            } else {
-              // otherwise replace current groups
-              this.setState({ showGroup: new Set([k]) });
-            }
-          }}
-        />)}
-      </Stack>
+            }}
+          />)}
+        </Stack>
 
 
-      {showGroup.has('tops') && <Stack horizontal>
-        <StatsBox2 keyPrefix='topSysRatio' label='Top systems' data={topSystemRatios} title='Calculated from: <system score> / <system population> * 1000' />
-        <StatsBox2 keyPrefix='topSysScore' label='Top systems by score' data={stats.topSystemScores} />
-        <StatsBox2 keyPrefix='topSysPop' label='Top systems by population' data={stats.topSystemPops} />
-      </Stack>}
+        {showGroup.has('tops') && <Stack horizontal>
+          <StatsBox2 keyPrefix='topSysRatio' label='Top systems' data={topSystemRatios} title='Calculated from: <system score> / <system population> * 1000' />
+          <StatsBox2 keyPrefix='topSysScore' label='Top systems by score' data={stats.topSystemScores} />
+          <StatsBox2 keyPrefix='topSysPop' label='Top systems by population' data={stats.topSystemPops} />
+        </Stack>}
 
-      {showGroup.has('pops') && <Stack horizontal>
-        <StatsBox2 keyPrefix='pop' label='Top systems by Pop' data={stats.topSystemEffects['+pop']} />
-        <StatsBox2 keyPrefix='mpop' label='Top systems by MPop' data={stats.topSystemEffects['+mpop']} />
-      </Stack>}
+        {showGroup.has('pops') && <Stack horizontal>
+          <StatsBox2 keyPrefix='pop' label='Top systems by Pop' data={stats.topSystemEffects['+pop']} />
+          <StatsBox2 keyPrefix='mpop' label='Top systems by MPop' data={stats.topSystemEffects['+mpop']} />
+        </Stack>}
 
-      {showGroup.has('others') && <Stack horizontal>
-        <StatsBox2 keyPrefix='wealth' label='Top systems by Wealth' data={stats.topSystemEffects['+wealth']} />
-        <StatsBox2 keyPrefix='tech' label='Top systems by Tech' data={stats.topSystemEffects['+tech']} />
-        <StatsBox2 keyPrefix='dev' label='Top systems by Dev' data={stats.topSystemEffects['+dev']} />
-      </Stack>}
+        {showGroup.has('others') && <Stack horizontal>
+          <StatsBox2 keyPrefix='wealth' label='Top systems by Wealth' data={stats.topSystemEffects['+wealth']} />
+          <StatsBox2 keyPrefix='tech' label='Top systems by Tech' data={stats.topSystemEffects['+tech']} />
+          <StatsBox2 keyPrefix='dev' label='Top systems by Dev' data={stats.topSystemEffects['+dev']} />
+        </Stack>}
 
-      {showGroup.has('sec') && <Stack horizontal>
-        <StatsBox2 keyPrefix='sec+' label='Top systems by Sec' data={stats.topSystemEffects['+sec']} />
-        <StatsBox2 keyPrefix='sec-' label='Bottom systems by Sec' data={stats.topSystemEffects['-sec']} negative />
-      </Stack>}
+        {showGroup.has('sec') && <Stack horizontal>
+          <StatsBox2 keyPrefix='sec+' label='Top systems by Sec' data={stats.topSystemEffects['+sec']} />
+          <StatsBox2 keyPrefix='sec-' label='Bottom systems by Sec' data={stats.topSystemEffects['-sec']} negative />
+        </Stack>}
 
-      {showGroup.has('sol') && <Stack horizontal>
-        <StatsBox2 keyPrefix='sol+' label='Top systems by SoL' data={stats.topSystemEffects['+sol']} />
-        <StatsBox2 keyPrefix='sol-' label='Bottom systems by SoL' data={stats.topSystemEffects['-sol']} negative />
-      </Stack>}
+        {showGroup.has('sol') && <Stack horizontal>
+          <StatsBox2 keyPrefix='sol+' label='Top systems by SoL' data={stats.topSystemEffects['+sol']} />
+          <StatsBox2 keyPrefix='sol-' label='Bottom systems by SoL' data={stats.topSystemEffects['-sol']} negative />
+        </Stack>}
+      </>}
 
     </div>;
   };
