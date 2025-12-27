@@ -24,7 +24,7 @@ export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOn
     },
     {
       legend: 'Remaining',
-      data: props.maxNeed - props.progress - props.readyOnFC,
+      data: props.maxNeed - props.progress - props.readyOnFC - (props.onShips ?? 0),
       placeHolder: true,
       color: 'grey',
     },
