@@ -351,7 +351,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       {!hideFCColumns && <>
         {/* The FC Diff cell */}
         {!zeroNeed && <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
-          <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: appTheme.palette.teal }} >
+          <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: 'black' }} >
             {fcSumElement}
           </div>
         </td>}

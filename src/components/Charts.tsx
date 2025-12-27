@@ -4,13 +4,18 @@ import { getColorTable } from "../util";
 import { SupplyStats, SupplyStatsSummary } from "../types";
 import { appTheme } from "../theme";
 
-export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOnFC: number, maxNeed: number, minimal?: boolean, width?: number, height?: number }> = (props) => {
+export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOnFC: number, onShips?: number, maxNeed: number, minimal?: boolean, width?: number, height?: number }> = (props) => {
 
   const points: IChartDataPoint[] = [
     {
-      legend: 'Progress',
+      legend: 'Delivered',
       data: props.progress,
       color: appTheme.palette.tealLight,
+    },
+    {
+      legend: 'On ships',
+      data: props.onShips,
+      color: appTheme.palette.teal,
     },
     {
       legend: 'Ready on FCs',
@@ -25,7 +30,11 @@ export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOn
     },
   ];
 
-  if (props.readyOnFC === 0) {
+  if (!props.readyOnFC) {
+    points.splice(2, 1);
+  }
+
+  if (!props.onShips) {
     points.splice(1, 1);
   }
 

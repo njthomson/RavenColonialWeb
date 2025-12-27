@@ -11,7 +11,6 @@ const readTheme = (): Theme => {
       return createTheme({
         palette: {
           greenLight: 'lime',
-          teal: 'black', // abused for foreground colour in bubbles
 
           purple: 'rgba(0, 0, 0, .05)',
           purpleLight: 'rgb(238, 238, 238)',
@@ -48,7 +47,6 @@ const readTheme = (): Theme => {
 
         // hand edited
         greenLight: '#00CC00', // abused for background colour in bubbles
-        teal: '#000000', // abused for foreground colour in bubbles (white)
         purple: 'rgb(0, 96, 150, 0.5)', // fade
         purpleLight: '#00324d', // greyer
         purpleDark: '#195494', // grey + lines
@@ -87,7 +85,6 @@ const readTheme = (): Theme => {
 
         // hand edited
         greenLight: '#00CC00', // abused for background colour in bubbles
-        teal: '#211203', // abused for foreground colour in bubbles (white)
         purple: 'rgb(224, 146, 0, 0.5)', // fade
         purpleLight: '#4d3200', // greyer
         purpleDark: '#824500', // grey + lines
@@ -125,7 +122,6 @@ const readTheme = (): Theme => {
 
         // hand edited
         greenLight: '#00CC00', // abused for background colour in bubbles
-        teal: '#143607', // abused for foreground colour in bubbles (white)
         purple: 'rgb(60, 130, 35, 0.5)', // fade
         purpleLight: '#e6f2e1', // greyer
         purpleDark: '#b7daaa', // grey + lines
@@ -161,7 +157,6 @@ const readTheme = (): Theme => {
 
         // hand edited
         greenLight: '#00CC00', // abused for background colour in bubbles
-        teal: '#143607', // abused for foreground colour in bubbles (white)
         purple: 'rgb(60, 130, 35, 0.5)', // fade
         purpleLight: 'rgb(50, 87, 82)', // greyer
         purpleDark: 'rgb(131, 163, 119)', // grey + lines

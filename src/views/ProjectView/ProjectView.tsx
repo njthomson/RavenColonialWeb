@@ -559,7 +559,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             text='Yes'
             disabled={submitting}
             iconProps={{ iconName: 'Warning' }}
-            style={{ backgroundColor: appTheme.palette.yellowLight, color: appTheme.palette.teal }}
+            style={{ backgroundColor: appTheme.palette.yellowLight, color: 'black' }}
             onClick={this.onProjectDelete}
           />
           &nbsp;
@@ -1030,7 +1030,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {fcMarketIds.length > 0 && !this.state.hideFCColumns && <>
         {/* The FC Diff cell, then a cell for each FC */}
         <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
-          <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: appTheme.palette.teal }} >
+          <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: 'black' }} >
             {fcSumElement}
           </div>
         </td>
@@ -1592,7 +1592,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   };
 
   renderStats() {
-    const { summary, proj, sumTotal } = this.state;
+    const { summary, proj, sumTotal, ships } = this.state;
     if (!summary || !proj) return;
 
     // roughly calculate progress by the curremt sum from the highest value known
@@ -1600,6 +1600,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const percent = 100 / proj.maxNeed * approxProgress;
 
     // TODO: unify "amount delivered" across deliveries and amount remaining
+const shipsTotal = ships?.reduce((t, s) => {
+      t += Object.values(s.cargo).reduce((st, c) => st += c, 0);
+      return t;
+    }, 0);
 
     const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
     return <div className='half'>
@@ -1610,7 +1614,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           <span>&nbsp;Deliveries tracked:&nbsp;</span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span>
         </div>}
 
-        {(approxProgress > 0 || this.countReadyOnFCs > 0) && <ChartGeneralProgress progress={approxProgress} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
+        {(approxProgress > 0 || this.countReadyOnFCs > 0) && <ChartGeneralProgress progress={approxProgress} onShips={shipsTotal} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
 
         <ChartByCmdrs summary={summary} cmdrColors={cmdrColors} />
 
