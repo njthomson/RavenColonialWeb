@@ -93,6 +93,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
               Active projects and assignments:
               &nbsp;
               {hasActiveProjects && <ActionButton
+                className={cn.bBox}
                 iconProps={{ iconName: 'Manufacturing' }}
                 text='View combined ...'
                 title='View merged data for all your active projects'
@@ -132,10 +133,17 @@ export class Commander extends Component<CmdrProps, CmdrState> {
         let flip = false;
         for (const commodity in assignments[p.buildId]) {
           flip = !flip;
-          const rowC = <tr className='assignment' key={`cp${p.buildId}-${commodity}`} style={{ backgroundColor: flip ? undefined : appTheme.palette.themeLighter }}>
-            <td className='commodity d'>{mapCommodityNames[commodity]}:</td>
-            <td className='icon d'><CommodityIcon name={commodity} /></td>
-            <td className='need d'>{assignments[p.buildId][commodity].toLocaleString()}</td>
+          const need = assignments[p.buildId][commodity];
+          if (need < 1) { continue; }
+          const rowC = <tr className='assignment' key={`cp${p.buildId}-${commodity}`} style={{ position: 'relative', backgroundColor: flip ? undefined : appTheme.palette.themeLighter }}>
+            <td />
+            <td className='commodity d' >
+              <Stack horizontal verticalAlign='center' horizontalAlign='end' tokens={{ childrenGap: 2 }} style={{ position: 'relative', fontSize: 14 }}>
+                <CommodityIcon name={commodity} />
+                <div>&nbsp;{mapCommodityNames[commodity]}:</div>
+              </Stack>
+            </td>
+            <td className='need d'>{need.toLocaleString()}</td>
             <td className='filler'></td>
           </tr>;
           rows.push(rowC);
