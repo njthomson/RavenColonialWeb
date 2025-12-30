@@ -266,7 +266,10 @@ const findSiblingSites = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: 
   const parent = body.type !== BT.ac
     ? body
     : bods.find(b => b.num === body.parents[0]);
-  if (!parent) throw new Error(`Why no parent for: ${body.name}`);
+  if (!parent) {
+    console.error(`Why no parent for: ${body.name}`);
+    return [];
+  }
 
   const bodies = [parent, ...bods.filter(b => b.type === BT.ac && parent.num === b.parents[0])];
   const siblingSites = bodies.flatMap(x => x.name in bodyMap ? onlyOrbitals ? bodyMap[x.name].orbital : bodyMap[x.name].sites : []);
