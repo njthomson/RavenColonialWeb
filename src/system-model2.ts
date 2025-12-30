@@ -228,7 +228,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
   }
 
   // calc sum effects from all sites
-  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, sysMap.calcIds);
+  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, sysMap.calcIds, !useIncomplete);
   const sumEffects = sumSystemEffects(sysMap.siteMaps, sysMap.calcIds, buffNerf);
 
   // calc system unlocks
@@ -404,7 +404,7 @@ export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
   return scoreTxt;
 };
 
-export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[]) => {
+export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[], incBuildStarted?: boolean) => {
 
   const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
   const primaryPortId = siteMaps && siteMaps[0]?.id;
@@ -412,7 +412,10 @@ export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[]) => {
   let taxCount = -2;
   for (const site of siteMaps) {
     // skip mock sites, unless ...
-    if (!calcIds.includes(site.id)) continue;
+    if (incBuildStarted) {
+      // allow status:build or complete even though they may not be in calcIds
+      if (site.status === 'plan') { continue; }
+    } else if (!calcIds.includes(site.id)) { continue; }
 
     // sum system tier points needed - these are already spent for projects in-progress
     if (site.id !== primaryPortId && site.type.needs.count > 0 && site.type.needs.tier > 1) {
@@ -429,7 +432,7 @@ export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[]) => {
     }
 
     // skip incomplete sites, unless ...
-    if (!calcIds.includes(site.id)) continue;
+    if (!calcIds.includes(site.id)) { continue; }
 
     // sum system tier points given
     if (site.type.gives.count > 0 && site.type.gives.tier > 1) {
