@@ -1,4 +1,4 @@
-import { ActionButton, Icon, IconButton, Link, Stack } from '@fluentui/react';
+import { ActionButton, Callout, DirectionalHint, Icon, IconButton, Link, mergeStyleSets, Stack } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
@@ -10,6 +10,33 @@ import { EconomyBlock } from './EconomyBlock';
 import { mapName } from '../site-data';
 import { WhereToBuy } from './WhereToBuy/WhereToBuy';
 
+const { ng, nhl, nsn, nsc, npl1, npl2 } = mergeStyleSets({
+  ng: {
+    display: 'grid',
+    gridTemplateColumns: 'auto auto',
+    gap: '2px 10px',
+  },
+  nhl: {
+    borderBottom: '1px solid',
+  },
+  nsn: {
+    color: appTheme.palette.themePrimary,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  nsc: {
+    color: appTheme.palette.themePrimary,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  npl1: {
+    marginLeft: 20,
+  },
+  npl2: {
+    textAlign: 'right'
+  }
+});
+
 interface CargoGridProps {
   cargo: Cargo,
   linkedFC: KnownFC[],
@@ -17,7 +44,7 @@ interface CargoGridProps {
   onRefresh?: () => void;
   whereToBuy?: { refSystem: string; buildIds: string[] }
   minWidthNeed?: number;
-  commodityTitles?: Record<string, string>
+  commodityNeeds?: Record<string, Record<string, Record<string, number>>>;
 }
 
 interface CargoGridState {
@@ -32,6 +59,7 @@ interface CargoGridState {
   fcEditMarketId?: string;
   refreshing?: boolean;
   showWhereToBuy?: boolean;
+  showNeededKey?: string;
 }
 
 export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
@@ -96,7 +124,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   render() {
-    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy, fcCargo } = this.state;
+    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy, fcCargo, showNeededKey } = this.state;
 
     const hideGrid = hideDoneRows && zeroNeed;
     return <>
@@ -171,6 +199,39 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         <tbody>{this.getTableRows()}</tbody>
       </table>}
 
+      {showNeededKey && this.props.commodityNeeds && <>
+        <Callout
+          directionalHint={DirectionalHint.rightCenter}
+          target={`#need-${showNeededKey}`}
+          onDismiss={() => setTimeout(() => this.setState({ showNeededKey: undefined }))}
+          styles={{
+            beak: { backgroundColor: appTheme.palette.themeLight, },
+            calloutMain: {
+              backgroundColor: appTheme.palette.themeLight,
+              color: appTheme.palette.neutralDark,
+              cursor: 'default',
+            }
+          }}
+        >
+          <h3 className={nhl}>{mapCommodityNames[showNeededKey]}</h3>
+          <div className={ng}>
+            {Object.entries(this.props.commodityNeeds[showNeededKey]).map(([sysName, projNeeds], i) => {
+              const counts = Object.values(projNeeds);
+              const sum = counts.reduce((sum, count) => sum += count, 0);
+              return <>
+                <div key={`needed-sys-${i}a`} className={nsn}>{sysName}</div>
+                <div key={`needed-sys-${i}b`} className={nsc}>{counts.length > 1 ? sum.toLocaleString() : ''}</div>
+                {Object.entries(projNeeds).map(([proj, count], j) => {
+                  return <>
+                    <div key={`needed-sys-${i}-a${j}`} className={npl1}>{proj}</div>
+                    <div key={`needed-sys-${i}-b${j}`} className={npl2}>{count.toLocaleString()}</div>
+                  </>
+                })}
+              </>
+            })}
+          </div>
+        </Callout>
+      </>}
       {hideGrid && <>
         <div style={{ textAlign: 'center', color: appTheme.palette.themeTertiary, margin: 20 }}>
           No commodities to show
@@ -301,7 +362,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   getCommodityRow(key: string, flip: boolean): JSX.Element {
-    const { cargo, linkedFC, fcCargo, hideFCColumns, zeroNeed } = this.state;
+    const { cargo, linkedFC, fcCargo, hideFCColumns, zeroNeed, showNeededKey } = this.state;
 
     const displayName = mapCommodityNames[key] ?? key;
 
@@ -335,17 +396,28 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
 
     const className = need !== 0 || zeroNeed ? '' : 'done ';
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
+    const useButtonForNeeds = this.props.commodityNeeds && this.props.commodityNeeds[key];
+    const needValue = need === -1 ? '?' : need.toLocaleString();
 
     return <tr key={`cc-${key}`} className={className} style={style}>
 
-      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`} title={this.props.commodityTitles && this.props.commodityTitles[key]}>
+      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
           <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
         </Stack>
       </td>
 
-      {!zeroNeed && <td className={`commodity-need ${cn.br}`} title={this.props.commodityTitles && this.props.commodityTitles[key]}>
-        <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
+      {!zeroNeed && <td className={`commodity-need ${cn.br}`}>
+        <span className='t'>
+          {!useButtonForNeeds && needValue}
+          {useButtonForNeeds && <ActionButton
+            id={`need-${key}`}
+            className={cn.bBox}
+            style={{ height: 18, padding: 0, fontSize: 16, margin: 0 }}
+            text={needValue}
+            onClick={() => this.setState({ showNeededKey: showNeededKey ? undefined : key })}
+          />}
+        </span>
       </td>}
 
       {!hideFCColumns && <>

@@ -5,7 +5,7 @@ import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
 import { appTheme, cn } from '../../theme';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, mapCommodityNames, Project } from '../../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../../types';
 import { store } from '../../local-storage';
 import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
@@ -32,8 +32,7 @@ interface ViewAllState {
   sumCargo: Cargo,
   /** Merged cargo from all Fleet Carriers */
   fcCargo: Cargo,
-  /** Hover text for what projects need which commodities */
-  commodityTitles?: Record<string, string>,
+  commodityNeeds?: Record<string, Record<string, Record<string, number>>>,
 
   autoUpdateUntil: number;
   fcEditMarketId?: string;
@@ -90,12 +89,12 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
 
       const projects = allProjects.filter(p => !hiddenIDs.includes(p.buildId));
       const newSumCargo = mergeCargo(projects.map(p => p.commodities));
-      const newCommodityTitles = this.generateCommodityTitles(newSumCargo, projects);
+      const newCommodityNeeds = this.generateCommodityNeeds(newSumCargo, projects);
       const visibleFC = linkedFC.filter(fc => !this.state.hiddenFC.has(fc.marketId));
       this.setState({
         loading: false,
         allProjects, projects, sumCargo: newSumCargo,
-        commodityTitles: newCommodityTitles,
+        commodityNeeds: newCommodityNeeds,
         linkedFC: linkedFC,
         fcCargo: mergeCargo(visibleFC.map(fc => fc.cargo)),
         hiddenIDs: new Set(hiddenIDs),
@@ -111,18 +110,20 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     }
   }
 
-  generateCommodityTitles(newSumCargo: Cargo, projects: Project[]) {
-    const newCommodityTitles = Object.keys(newSumCargo)
+  generateCommodityNeeds(newSumCargo: Cargo, projects: Project[]) {
+    const newCommodityNeeds = Object.keys(newSumCargo)
       .reduce((m, key) => {
-        m[key] = `${mapCommodityNames[key] ?? key}:`;
+        const sysSet: Record<string, Record<string, number>> = {};
         for (const p of projects) {
           if (key in p.commodities && p.commodities[key] > 0) {
-            m[key] += `\n  ${[p.buildName]} : ${p.commodities[key]}`
+            if (!sysSet[p.systemName]) { sysSet[p.systemName] = {}; }
+            sysSet[p.systemName][p.buildName] = p.commodities[key];
           }
         }
+        m[key] = sysSet;
         return m;
-      }, {} as Record<string, string>);
-    return newCommodityTitles;
+      }, {} as Record<string, Record<string, Record<string, number>>>);
+    return newCommodityNeeds;
   }
 
   async fetchProject(buildId: string) {
@@ -133,12 +134,12 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       const newProject = await api.project.get(buildId);
       const newProjects = this.state.projects.map(p => p.buildId === buildId ? newProject : p);
       const newSumCargo = mergeCargo(newProjects.map(p => p.commodities));
-      const newCommodityTitles = this.generateCommodityTitles(newSumCargo, newProjects);
+      const newCommodityNeeds = this.generateCommodityNeeds(newSumCargo, newProjects);
 
       this.setState({
         projects: newProjects,
         sumCargo: newSumCargo,
-        commodityTitles: newCommodityTitles,
+        commodityNeeds: newCommodityNeeds,
       });
 
       // add artificial delay to avoid flicker on the spinner
@@ -219,7 +220,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityTitles, linkedFC, hiddenFC } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityNeeds, linkedFC, hiddenFC } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -315,7 +316,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             linkedFC={visibleFC}
             whereToBuy={whereToBuy}
             minWidthNeed={55}
-            commodityTitles={commodityTitles}
+            commodityNeeds={commodityNeeds}
           />
           <br />
           <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo' />
@@ -405,8 +406,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               }
               const projects = allProjects.filter(p => !hiddenIDs.has(p.buildId));
               const sumCargo = mergeCargo(projects.map(p => p.commodities));
-              const commodityTitles = this.generateCommodityTitles(sumCargo, projects);
-              this.setState({ hiddenIDs, projects, sumCargo, commodityTitles });
+              const commodityNeeds = this.generateCommodityNeeds(sumCargo, projects);
+              this.setState({ hiddenIDs, projects, sumCargo, commodityNeeds });
             }} />
 
             <ProjectLink proj={p} noSys greyIncomplete={!checkProj} incompleteLinkColor={appTheme.palette.themeTertiary} />
@@ -445,8 +446,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             }
             const projects = allProjects.filter(p => !hiddenIDs.has(p.buildId));
             const sumCargo = mergeCargo(projects.map(p => p.commodities));
-            const commodityTitles = this.generateCommodityTitles(sumCargo, projects);
-            this.setState({ hiddenIDs, projects, sumCargo, commodityTitles });
+            const commodityNeeds = this.generateCommodityNeeds(sumCargo, projects);
+            this.setState({ hiddenIDs, projects, sumCargo, commodityNeeds });
           }} />
 
           <Link href={`#sys=${encodeURIComponent(systemName)}`} style={{ color: checkSys ? undefined : appTheme.palette.themeTertiary }}>{systemName}</Link>
