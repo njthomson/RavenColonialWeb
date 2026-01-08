@@ -207,6 +207,7 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
     : undefined;
 
   sys = { ...sys };
+  sys.sites = sys.sites.map(s => { return { ...s }; });
 
   // Read:
   // https://forums.frontier.co.uk/threads/constructing-a-specific-economy.637363/

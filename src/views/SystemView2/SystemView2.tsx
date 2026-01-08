@@ -205,7 +205,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     return api.systemV2.getSys(nameOrNum, true, revOrSaveName)
       .then(newSys => {
 
-        if (newSys.v < api.systemV2.currentSchemaVersion) {
+        if (newSys.v < api.systemV2.currentSchemaVersion && !newSys.saveName) {
           console.warn(`System schema: ${newSys.v} ... re-import is needed`);
           return this.doImport('bodies');
         }
@@ -213,12 +213,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         return this.useLoadedData(newSys, true);
       })
       .catch(err => {
-        if (err.statusCode === 404) {
+        if (err.statusCode === 404 && !revOrSaveName) {
           console.error(`No data for: ${this.props.systemName} ... trying import ...`);
           this.doImport();
+        } else if (err.statusCode === 404) {
+          console.error(err.stack);
+          this.setState({ errorMsg: 'Please try again', processingMsg: undefined });
         } else {
           console.error(err.stack);
-          this.setState({ errorMsg: err?.message ?? 'Something failed' });
+          this.setState({ errorMsg: err?.message ?? 'Something failed', processingMsg: undefined });
         }
       });
   };
@@ -277,7 +280,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           genSnapshot = true;
         } else {
           console.error(err.stack);
-          this.setState({ errorMsg: err?.message ?? 'Something failed checking the system snapshot' });
+          this.setState({ errorMsg: err?.message ?? 'Something failed checking the system snapshot', processingMsg: undefined });
         }
       })
       .finally(() => {
@@ -318,7 +321,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           console.error(`No data for: ${this.props.systemName} / ${saveName}...`);
         } else {
           console.error(err.stack);
-          this.setState({ errorMsg: err?.message ?? 'Something failed' });
+          this.setState({ errorMsg: err?.message ?? 'Something failed', processingMsg: undefined });
         }
       });
   };
@@ -333,7 +336,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   doImport = (type?: string) => {
     if (!store.cmdrName && this.state.sysOriginal !== undefined) {
       console.warn('You need to sign in in for this');
-      this.setState({ errorMsg: 'You need to sign in in for this' });
+      this.setState({ errorMsg: 'You need to sign in in for this', processingMsg: undefined });
       return;
     }
 
@@ -345,7 +348,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       })
       .catch(err => {
         console.error(err.stack);
-        this.setState({ errorMsg: err?.message ?? 'Something failed importing the system' });
+        this.setState({ errorMsg: err?.message ?? 'Something failed importing the system', processingMsg: undefined });
       });
   };
 
@@ -427,9 +430,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       .catch(err => {
         console.error(`saveData failed:`, err.stack);
         if (err.statusCode === 401) {
-          this.setState({ errorMsg: 'Edit permission is denied.' });
+          this.setState({ errorMsg: 'Edit permission is denied.', processingMsg: undefined });
         } else {
-          this.setState({ errorMsg: err.message });
+          this.setState({ errorMsg: err.message, processingMsg: undefined });
         }
       });
   };
@@ -665,6 +668,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || (!sysMap.saveName && sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0))
       || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
+      || JSON.stringify(Object.values(dirtySites)) !== JSON.stringify(sysOriginal.updateIDs.map(id => sysOriginal.sites.find(s => s.id === id)))
       // || JSON.stringify(sysMap.editors) !== JSON.stringify(sysOriginal.editors)
       ;
     return dirty;
@@ -1211,7 +1215,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-edit-notes',
             title: 'Edit system notes',
             className: cn.bBox,
-            iconProps: { iconName: showEditNotes ? 'QuickNoteSolid' : 'QuickNote' },
+            iconProps: { iconName: !!sysMap?.notes ? 'QuickNoteSolid' : 'QuickNote' },
             disabled: !!processingMsg,
             onClick: () => {
               this.setState({ showEditNotes: !showEditNotes });
@@ -1312,8 +1316,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {sysMap && showSaveAs && <SystemSaveAs
         saveName={sysMap?.saveName ?? `Copy of #${sysMap.rev}`}
         priorSaves={sysMap.savedNames}
+        architect={sysMap.architect}
         onDismiss={(saveName) => {
-          if (!saveName) {
+          if (saveName === undefined) {
             this.setState({ showSaveAs: false });
             return;
           }
@@ -1341,11 +1346,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     return <div className='system-view2' style={{}}>
       {showEditNotes && <EditSystemNotes systemNotes={sysMap.notes ?? ''} onChange={(newNotes) => {
-        if (newNotes) {
+        if (newNotes === undefined) {
+          this.setState({ showEditNotes: false });
+        } else {
           sysMap.notes = newNotes;
           this.setState({ sysMap, showEditNotes: false });
-        } else {
-          this.setState({ showEditNotes: false });
         }
       }} />}
 
@@ -1816,12 +1821,13 @@ const EditSystemNotes: FunctionComponent<{ systemNotes: string, onChange: (notes
 }
 
 
-const SystemSaveAs: FunctionComponent<{ saveName: string, priorSaves?: NamedSave[], onDismiss: (saveName?: string) => void }> = (props) => {
+const SystemSaveAs: FunctionComponent<{ saveName: string, priorSaves?: NamedSave[], architect: string, onDismiss: (saveName?: string) => void }> = (props) => {
   const [saveName, setSaveName] = useState(props.saveName);
 
   const match = props.priorSaves?.find(s => s.name.toLowerCase() === saveName.toLowerCase());
   const nameClobber = !!match;
-  const wrongCmdr = match && match?.cmdr !== store.cmdrName;
+  const wrongCmdr = match && !isMatchingCmdr(match?.cmdr, store.cmdrName);
+  const emptyButNotArchitect = !saveName && !isMatchingCmdr(props.architect, store.cmdrName);
 
   return <>
     <Dialog
@@ -1842,7 +1848,7 @@ const SystemSaveAs: FunctionComponent<{ saveName: string, priorSaves?: NamedSave
         {wrongCmdr && <div style={{ color: appTheme.palette.yellowDark }}><Icon className='icon-inline' iconName='Warning' /> Cannot overwrite saves by other Commanders.</div>}
       </div>
       <DialogFooter>
-        <PrimaryButton text="Save as" iconProps={{ iconName: 'Save' }} onClick={() => props.onDismiss(saveName)} disabled={!saveName || wrongCmdr} />
+        <PrimaryButton text="Save as" iconProps={{ iconName: 'Save' }} onClick={() => props.onDismiss(saveName)} disabled={emptyButNotArchitect || wrongCmdr} />
         <DefaultButton text="Cancel" iconProps={{ iconName: 'Cancel' }} onClick={() => props.onDismiss()} />
       </DialogFooter>
     </Dialog>
