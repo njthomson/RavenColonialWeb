@@ -31,6 +31,7 @@ enum Stored {
   archFav = 'archFav',
   viewAllHiddenFC = 'viewAllHiddenFC',
   applyBuffNerf = 'applyBuffNerf',
+  recentID64 = 'recentID64',
 }
 
 interface CmdrData {
@@ -218,6 +219,13 @@ class LocalStorage {
 
   get applyBuffNerf(): boolean { return readBoolean(Stored.applyBuffNerf, true); }
   set applyBuffNerf(newValue: boolean) { writeValue(Stored.applyBuffNerf, newValue); }
+
+  get recentID64(): NameID64[] { return readValue(Stored.recentID64, [])!; }
+  set recentID64(newValue: NameID64[]) { writeValue(Stored.recentID64, newValue); }
 }
 
+interface NameID64 {
+  name: string;
+  id64: number;
+}
 export const store = new LocalStorage();

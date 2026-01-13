@@ -412,7 +412,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         </div>}
       >
         <div style={{ marginBottom: 8, color: appTheme.palette.themeDark }}>
-          Calculations are performed on sites in the following order up to the cut line.
+          Calculations are performed using the following order until the cut line. The primary port should be the first row.
           <br />
           {onMobile && <>Tap any row to adjust it up and down.</>}
           {!onMobile && <>Drag rows up and down to adjust the order.</>}
@@ -601,8 +601,8 @@ const autoReOrderSites = (map: Record<string, SiteMap2>) => {
       const bs = getStatusNum(b.status);
       if (as !== bs) { return as - bs; }
 
-      // then to market IDs
-      if (!!a.marketId && !!b.marketId) {
+      // then to market IDs (but do not attempt to compare recycled marketIDs)
+      if (!!a.marketId && !!b.marketId && a.marketId > 4_200_000_000 && b.marketId > 4_200_000_000) {
         return a.marketId - b.marketId;
       }
 

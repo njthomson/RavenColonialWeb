@@ -21,6 +21,17 @@ export const systemV2 = {
       if (match) { return match; }
     }
 
+    // if using a string name, do we have it's id64 cached?
+    const recentID64 = store.recentID64;
+    if (typeof nameOrNum === 'string') {
+      const idx = recentID64.findIndex(x => x.name === nameOrNum);
+      if (idx !== -1) {
+        // we do, remove from the cache and below it'll be added back at the top
+        nameOrNum = recentID64[idx].id64.toString();
+        recentID64.splice(idx, 1);
+      }
+    }
+
     // do not cache older revisions
     if (revOrSaveName) {
       const rev = parseInt(revOrSaveName, 10);
@@ -35,6 +46,11 @@ export const systemV2 = {
 
     const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}`);
     systemV2.cache.sys[result.id64] = result;
+
+    // add to this cache, keeping the last 20 entries
+    recentID64.unshift({ name: result.name, id64: result.id64 });
+    store.recentID64 = recentID64.slice(0, 20);
+
     return result;
   },
 

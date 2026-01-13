@@ -27,6 +27,7 @@ import { AuditTestWholeSystem } from './AuditTestWholeSystem';
 import { ArchitectSummary } from './ArchitectSummary';
 import { getSiteType, mapName } from '../../site-data';
 import { BodyPill, SitePill } from './SitePill';
+import { apiSvcUrl } from '../../api/api-util';
 
 interface SystemView2Props {
   systemName: string;
@@ -213,7 +214,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         return this.useLoadedData(newSys, true);
       })
       .catch(err => {
-        if (err.statusCode === 404 && !revOrSaveName) {
+        if (err.statusCode === 404 && !revOrSaveName && !apiSvcUrl.includes('localhost')) {
           console.error(`No data for: ${this.props.systemName} ... trying import ...`);
           this.doImport();
         } else if (err.statusCode === 404) {
@@ -1484,12 +1485,31 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const validations = [];
 
+    // archiect is unknown and there are some non-planning sites
     if (!architect && sites.some(s => s.status !== 'plan')) {
       validations.push(<div key={`valNoArchitect`}>
         » System architect unknown - <Link onClick={() => this.setState({ showEditSys: true })}>Fix it</Link>
       </div>);
     }
 
+    // reserve level is unknown
+    if (!reserveLevel) {
+      validations.push(<div key={`valNoReserve`}>
+        » System reserve level unknown - <Link onClick={() => this.setState({ showEditSys: true })}>Fix it</Link>
+      </div>);
+    }
+
+    const primaryPort = siteMaps[0];
+    if (primaryPort) {
+      // the primary port must be an orbital Outpost or Starport
+      if (!primaryPort.type.orbital || !['outpost', 'starport'].includes(primaryPort.type.buildClass)) {
+        validations.push(<div key={`valInvalidPrimary`}>
+          » Primary port <SitePill site={primaryPort} fieldHighlight='buildType' keyPrefix='noBuildType' sysView={this} /> is invalid - <Link onClick={() => this.setState({ showBuildOrder: true })}>Fix it</Link>
+        </div>);
+      }
+    }
+
+    // there are incomplete sites ahead of completed ones
     let foundIncomplete = false;
     let invalidOrdering = false;
     for (const s of sites) {
@@ -1502,16 +1522,11 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
     if (invalidOrdering) {
       validations.push(<div key={`valInvalidOrdering`}>
-        » Site order is invalid - <Link onClick={() => this.setState({ showBuildOrder: true })}>Fix it</Link>
+        » Site ordering is invalid - <Link onClick={() => this.setState({ showBuildOrder: true })}>Fix it</Link>
       </div>);
     }
 
-    if (!reserveLevel) {
-      validations.push(<div key={`valNoReserve`}>
-        » System reserve level unknown - <Link onClick={() => this.setState({ showEditSys: true })}>Fix it</Link>
-      </div>);
-    }
-
+    // not enough tier points
     if (tierPoints.tier2 < 0) {
       validations.push(<div key={`valTier2`}>» System needs <TierPoint tier={2} count={-tierPoints.tier2} /></div>);
     }
@@ -1593,7 +1608,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       </div>);
     }
 
-
     // do we have any sites with no build type?
     const missingType = this.state.sysMap.siteMaps.filter(s => !s.buildType);
     const showFixMissingTypes = this.state.sysMap.id64 > 0 && missingType.length > 0;
@@ -1622,8 +1636,29 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       </div>);
     }
 
+    // check for asteroid starports in invalid locations
+    const badAsteroids = sysMap.siteMaps.filter(sm => sm.buildType === 'asteroid' && sm.body?.type !== 'ac' && !sm.body?.features.includes(BodyFeature.rings));
+    if (badAsteroids.length > 0) {
+      validations.push(<div key={`valBadAsteroids}`}>
+        » There are Asteroid Starports in invalid locations:
+        <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {badAsteroids.map(s => <SitePill key={`badAstroid-${s.id.slice(1)}`} site={s} keyPrefix='badAstroid' sysView={this} />)}
+        </Stack>
+      </div>);
+    }
+
+    // confirm only asteroid starports are in asteroid clusters, but allow completed sites, as the game allowed this for a while and people still have them
+    const badInAsteroids = sysMap.siteMaps.filter(sm => sm.body?.type === 'ac' && sm.buildType !== 'asteroid' && sm.status !== 'complete');
+    if (badInAsteroids.length > 0) {
+      validations.push(<div key={`valBadAsteroids}`}>
+        » Asteroid clusters may only contains Asteroid Starports:
+        <Stack horizontal wrap tokens={{ childrenGap: 2 }} style={{ marginLeft: 10, marginTop: 2 }}>
+          {badInAsteroids.map(s => <SitePill key={`badInAstroid-${s.id.slice(1)}`} site={s} keyPrefix='badInAstroid' sysView={this} />)}
+        </Stack>
+      </div>);
+    }
+
     return <>
-      {/* {showFixMissingTypes && <FixFromCanonn sites={this.state.sysMap.siteMaps} />} */}
       {validations.length > 0 && <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { margin: '8px 0', maxWidth: 600, backgroundColor: appTheme.palette.themeLight } }}>
         <Stack tokens={{ childrenGap: 4 }} style={{ marginLeft: 10 }}>
           {validations}
