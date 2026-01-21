@@ -12,6 +12,7 @@ import { ViewEditBody } from "./ViewEditBody";
 import { ViewEditBuildType } from "./ViewEditBuildType";
 import { ViewEditName } from "./ViewEditName";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
+import { App } from "../../App";
 
 export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sysView: SystemView2, onClose: () => void }> = (props) => {
   const [confirmBuildIt, setConfirmBuildIt] = useState(false);
@@ -209,6 +210,12 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
                 window.alert(`✋ Frontier/Epic account link expired?\n\nPlease start playing the game with your Epic account and try again.`);
               } else if (err.statusCode === 418) {
                 window.alert(`Frontier servers appear to be offline. Please try again later.`);
+              } else if (err.statusCode === 401) {
+                // Show re-login prompt?
+                console.error(err.stack)
+                setConfirmBuildIt(false);
+                props.onClose();
+                App.showReLogin();
               } else {
                 console.error(err.stack)
                 setErrMsg(err.message ?? 'Something failed, see browser console');

@@ -9,6 +9,7 @@ import { FleetCarrier } from '../views';
 import { CalloutMsg } from './CalloutMsg';
 import { redirectToFrontierAuth, resetApiKey } from '../api/auth';
 import { CopyButton } from './CopyButton';
+import { App } from '../App';
 
 interface ModalCommanderProps {
   onComplete: () => void;
@@ -404,6 +405,11 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         // show special message for when squad FC is found but cannot be created due to a missing marketId
         window.alert(`🔎 Cannot find the market ID for your Squadron Fleet Carrier.\n\nThis is a one time problem, please dock at it and try again.`);
         this.setState({ fetchingFCs: false });
+      } else if (err.statusCode === 401) {
+        // Show re-login prompt?
+        console.error(`Failed to fetch FCs: `, err.message);
+        this.setState({ fetchingFCs: false });
+        App.showReLogin();
       } else {
         // Otherwise, log raw error and show a generic error to users
         console.error(`Failed to fetch FCs: `, err.message);

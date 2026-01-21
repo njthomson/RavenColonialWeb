@@ -349,7 +349,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         }}
       />}
 
-      {cmdrEdit && <Modal isOpen>
+      {cmdrEdit && <Modal isOpen styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}>
         <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} preAddFC />
       </Modal>}
 

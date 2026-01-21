@@ -132,7 +132,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, 
             Track a Commander Linked Fleet Carrier?
           </Link>
 
-          {showCmdr && <Modal isOpen>
+          {showCmdr && <Modal isOpen styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}>
             <ModalCommander onComplete={() => setShowCmdr(false)} preAddFC />
           </Modal>}
         </div>

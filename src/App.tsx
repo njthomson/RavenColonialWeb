@@ -1,6 +1,6 @@
 import './App.css';
 import * as api from './api';
-import { CommandBar, ContextualMenu, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, PrimaryButton, Spinner, SpinnerSize, ThemeProvider } from '@fluentui/react';
+import { CommandBar, ContextualMenu, DefaultButton, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, PrimaryButton, Spinner, SpinnerSize, ThemeProvider } from '@fluentui/react';
 import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
@@ -12,7 +12,7 @@ import { ViewAll } from './views/ViewAll/ViewAll';
 import { VisualIdentify } from './components/VisualIdentify';
 import { SystemView2 } from './views/SystemView2/SystemView2';
 import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
-import { processLoginCodes } from './api/auth';
+import { processLoginCodes, redirectToFrontierAuth } from './api/auth';
 import { ShareFeedback } from './components/ShareFeedback';
 import { GalMap } from './map/GalMap';
 
@@ -31,6 +31,7 @@ interface AppState {
   showDonate?: boolean;
   showThemes?: boolean;
   showFeedback?: [string, string?];
+  showReLogin?: boolean;
 }
 
 export class App extends Component<AppProps, AppState> {
@@ -40,6 +41,10 @@ export class App extends Component<AppProps, AppState> {
 
   public static showFeedback(topic?: string, body?: string) {
     App.instance?.setState({ showFeedback: [topic ?? 'Raven Colonial', body] });
+  }
+
+  public static showReLogin() {
+    App.instance?.setState({ showReLogin: true });
   }
 
   public static suspendPageScroll() {
@@ -216,7 +221,7 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback } = this.state;
+    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback, showReLogin } = this.state;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -316,7 +321,7 @@ export class App extends Component<AppProps, AppState> {
 
         {this.renderBody()}
 
-        {cmdrEdit && <Modal isOpen onDismiss={() => this.setState({ cmdrEdit: false })}>
+        {cmdrEdit && <Modal isOpen onDismiss={() => this.setState({ cmdrEdit: false })} styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}>
           <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} />
         </Modal>}
         <br />
@@ -356,6 +361,24 @@ export class App extends Component<AppProps, AppState> {
         </Dialog>}
 
         {!!showFeedback && <ShareFeedback topic={showFeedback[0]} body={showFeedback[1]} onDismiss={() => this.setState({ showFeedback: undefined })} />}
+
+        {!!showReLogin && <Dialog
+          hidden={false}
+          dialogContentProps={{ title: 'Unauthorised?' }}
+          styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
+          minWidth={420}
+        >
+          <Icon iconName='Info' style={{ fontSize: 40, float: 'left', marginRight: 10 }} />
+          <div>
+            Frontier requires a re-login every 30 days.
+            <br />
+            Would you like to login again now?
+          </div>
+          <DialogFooter>
+            <PrimaryButton text='Yes' iconProps={{ iconName: 'CheckMark' }} onClick={() => redirectToFrontierAuth()} />
+            <DefaultButton text='No' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showReLogin: false })} />
+          </DialogFooter>
+        </Dialog>}
       </ThemeProvider>
     );
   }
