@@ -298,7 +298,7 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number) =>
   let systemScore = 0;
 
   const calcIds = useIncomplete
-    ? sys.sites.filter((s, i) => i < idxLimit).map(s => s.id) // include up to idxLimit
+    ? sys.sites.filter((s, i) => i < idxLimit && s.status !== 'demolish').map(s => s.id) // include up to idxLimit
     : sys.sites.filter(s => s.status === 'complete').map(s => s.id); // include only completed sites
 
   // first: group sites by their bodies
@@ -412,6 +412,7 @@ export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[], incBuildS
 
   let taxCount = -2;
   for (const site of siteMaps) {
+    if (site.status === 'demolish') { continue; }
     // skip mock sites, unless ...
     if (incBuildStarted) {
       // allow status:build or complete even though they may not be in calcIds
@@ -465,6 +466,7 @@ const sumSystemEffects = (siteMaps: SiteMap2[], calcIds: string[], buffNerf?: bo
 
   let first = true;
   for (const site of siteMaps) {
+    if (site.status === 'demolish') { continue; }
 
     // skip incomplete sites, unless ...
     if (!calcIds.includes(site.id)) continue;

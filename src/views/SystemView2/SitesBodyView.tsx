@@ -666,8 +666,8 @@ export const BBody: FunctionComponent<BodyBlockProps> = (props) => {
   const [showCard, setShowCard] = useState(false);
 
   const bodyNum = node.body.num;
-  const orbitals = node.map?.orbital;
-  const surfaces = node.map?.surface;
+  const orbitals = node.map?.orbital.filter(s => s.status !== 'demolish');
+  const surfaces = node.map?.surface.filter(s => s.status !== 'demolish');;
   const hasSites = !!orbitals?.length || !!surfaces?.length;
   const innerBorders = hasSites ? `2px dashed ${appTheme.palette.themeTertiary}` : undefined;
   const bottomGap = 10;

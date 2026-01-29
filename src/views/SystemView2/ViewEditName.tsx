@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { delayFocus } from "../../util";
 
-export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; editing?: boolean, dim?: boolean; onEditing?: (editing: boolean) => void }> = (props) => {
+export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; editing?: boolean; dim?: boolean; onEditing?: (editing: boolean) => void }> = (props) => {
   const [editing, setEditing] = useState(props.editing);
   const [name, setName] = useState(props.name);
   const [editName, setEditName] = useState('');
@@ -26,7 +26,7 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
         style={{
           fontSize: props.noBold ? undefined : '1.0em',
           fontWeight: props.noBold ? undefined : 'bold',
-          color: props.disabled || props.dim ? appTheme.palette.themeSecondary : undefined,
+          color: props.disabled ? 'grey' : props.dim ? appTheme.palette.themeSecondary : undefined,
         }}
         className={props.disabled ? undefined : cn.bBox}
         onClick={(ev) => {

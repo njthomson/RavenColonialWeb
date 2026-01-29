@@ -130,21 +130,13 @@ export interface Site {
   status: BuildStatus
 }
 
-export type BuildStatus = 'plan' | 'build' | 'complete';
-
-export const getBuildStatusNum = (status: BuildStatus): number => {
-  switch (status) {
-    case 'plan': return 0;
-    case 'build': return 1;
-    case 'complete': return 2;
-    default: throw new Error(`Unexpected: ${status}`);
-  }
-}
+export type BuildStatus = 'plan' | 'build' | 'complete' | 'demolish';
 
 export const mapStatus = {
   plan: 'Planning',
   build: 'Building',
   complete: 'Complete',
+  demolish: 'Demolish',
 }
 
 export type SiteGraphType = 'links' | 'major' | 'all' | 'none';

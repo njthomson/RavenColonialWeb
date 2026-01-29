@@ -8,7 +8,7 @@ import { mapSiteGraphTypeIcon, SitesViewProps } from "./SystemView2";
 import { SiteMap2 } from "../../system-model2";
 import { EconomyBlocks, MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
-import { getBuildStatusNum } from "../../types2";
+import { BuildStatus } from "../../types2";
 
 export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const { sysMap, pinnedId } = props;
@@ -95,6 +95,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
         <Stack horizontal verticalAlign='center'>
           <ViewEditName
             noBold
+            disabled={site.status === 'demolish'}
             name={site.name}
             dim={!inCalcIds}
             onChange={newName => {
@@ -102,9 +103,10 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
               props.onChange(site.original);
             }}
           />
-          {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} />}
-          {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
-          {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+          {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} title='Primary port' />}
+          {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Planned site' />}
+          {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Build in-progress' />}
+          {site.status === 'demolish' && <Icon iconName='Broom' style={{ marginLeft: 4 }} title='Demolished' />}
         </Stack>
 
 
@@ -175,12 +177,12 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   return <div className='basic-table'>
     <table cellPadding={0} cellSpacing={0}>
       <colgroup>
-        <col width='5%' />
-        <col width='5%' />
-        <col width='40%' />
-        <col width='50%' />
-        <col width='10%' />
-        <col width='5%' />
+        <col width='auto' />
+        <col width='auto' />
+        <col width='260px' />
+        <col width='320px' />
+        <col width='auto' />
+        <col width='auto' />
       </colgroup>
 
       <thead>
@@ -223,4 +225,14 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
     </div>}
 
   </div >;
+}
+
+const getBuildStatusNum = (status: BuildStatus): number => {
+  switch (status) {
+    case 'plan': return 0;
+    case 'build': return 1;
+    case 'complete': return 2;
+    case 'demolish': return 3;
+    default: throw new Error(`Unexpected: ${status}`);
+  }
 }

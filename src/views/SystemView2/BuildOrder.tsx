@@ -157,8 +157,9 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       priorSiteMaps.push(s);
 
       const key = `bol${id.substring(1)}${i}`;
-      const isCutOff = !calcIds.includes(id);
-      if (s.status !== 'complete') { foundIncomplete = true; }
+      const demolished = s.status === 'demolish';
+      const isCutOff = !calcIds.includes(id) || demolished;
+      if (s.status !== 'complete' && !demolished) { foundIncomplete = true; }
 
       return <tr
         key={key}
@@ -209,10 +210,11 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           </span>
 
           <span style={{ fontSize: 12 }}>{getSiteType(s.buildType, true)?.displayName2} ({s.buildType})</span>
-          {i === 0 && <Icon iconName='CrownSolid' style={{ marginLeft: 8 }} />}
+          {i === 0 && <Icon iconName='CrownSolid' style={{ marginLeft: 8 }} title='Primary port' />}
           {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
           {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
-          {showValidityHint && <IconButton
+          {demolished && <Icon iconName='Broom' style={{ marginLeft: 4, textDecorationLine: 'unset' }} className='icon-inline' title='Demolished' />}
+          {showValidityHint && !demolished && <IconButton
             id={key}
             className={cn.bBox}
             iconProps={{ iconName: validity.isValid ? 'Info' : 'Warning', style: { fontSize: 14 } }}
@@ -236,7 +238,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         </td>
 
         <td className={`cc dc ${cn.br}`}>
-          {(!onMobile || dragId !== id) && getTierPointsDelta(s, 2, tp, i === 0, isCutOff)}
+          {(!onMobile || dragId !== id) && !demolished && getTierPointsDelta(s, 2, tp, i === 0, isCutOff)}
           {onMobile && dragId === id && i > 0 && <IconButton
             className={`${icb} ${cn.bBox2}`}
             iconProps={{ iconName: 'ChevronUpSmall' }}
@@ -586,6 +588,7 @@ const getStatusNum = (status: string) => {
     case 'complete': return 1;
     case 'build': return 2;
     case 'plan': return 3;
+    case 'demolish': return 1;
     default: throw new Error(`Unexpected status: ${status}`);
   }
 }

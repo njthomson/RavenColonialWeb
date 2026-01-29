@@ -28,6 +28,7 @@ import { ArchitectSummary } from './ArchitectSummary';
 import { getSiteType, mapName } from '../../site-data';
 import { BodyPill, SitePill } from './SitePill';
 import { apiSvcUrl } from '../../api/api-util';
+import { App } from '../../App';
 
 interface SystemView2Props {
   systemName: string;
@@ -562,6 +563,17 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const { dirtySites } = this.state;
     dirtySites[site.id] = site;
 
+    // unless it changed back to original?
+    const originalSite = this.state.sysOriginal.sites.find(s => s.id === site.id);
+    if (originalSite) {
+      const json1 = JSON.stringify(originalSite);
+      const json2 = JSON.stringify(site);
+      // mark as no longer dirty
+      if (json1 === json2) {
+        delete dirtySites[site.id];
+      }
+    }
+
     const newSysMap = buildSystemModel2(this.state.sysMap, this.state.useIncomplete, this.state.buffNerf);
     this.setState({
       dirtySites,
@@ -672,6 +684,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || JSON.stringify(Object.values(dirtySites)) !== JSON.stringify(sysOriginal.updateIDs.map(id => sysOriginal.sites.find(s => s.id === id)))
       // || JSON.stringify(sysMap.editors) !== JSON.stringify(sysOriginal.editors)
       ;
+
+    App.preNav = dirty
+      ? (url) => {
+        this.setState({ showConfirmAction: () => window.location.assign(url) });
+        return true;
+      }
+      : undefined;
     return dirty;
   };
 
@@ -1111,9 +1130,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             id: 'sysView2_MapType',
             key: 'sys-change-view',
             title: 'Toggle view between a table or a map',
-            text: this.state.viewType === 'body' ? 'Map' : 'Table',
+            text: this.state.viewType === 'body' ? 'Table' : 'Map',
             className: cn.bBox,
-            iconProps: { iconName: this.state.viewType === 'body' ? 'Nav2DMapView' : 'GridViewSmall' },
+            iconProps: { iconName: this.state.viewType === 'body' ? 'GridViewSmall' : 'Nav2DMapView' },
             disabled: !!processingMsg,
             onClick: () => {
               const nextView = viewTypes[viewTypes.indexOf(this.state.viewType) + 1] ?? viewTypes[0];

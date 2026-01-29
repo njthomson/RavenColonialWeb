@@ -38,6 +38,7 @@ export class App extends Component<AppProps, AppState> {
   private static scrollBarWidth = 0;
   private static fakeScroll: HTMLDivElement;
   private static instance: App | undefined;
+  public static preNav?: (url: string) => void;
 
   public static showFeedback(topic?: string, body?: string) {
     App.instance?.setState({ showFeedback: [topic ?? 'Raven Colonial', body] });
@@ -235,6 +236,10 @@ export class App extends Component<AppProps, AppState> {
               title: 'Home',
               checked: pivot === 'home',
               href: '/#home',
+              onClick: (ev) => {
+                const blockNavigate = App.preNav && App.preNav('/#home');
+                if (blockNavigate) { ev?.preventDefault(); }
+              }
             },
             {
               className: cn.bBox,
@@ -243,7 +248,8 @@ export class App extends Component<AppProps, AppState> {
               checked: pivot === 'sys',
               href: '/#sys',
               onClick: (ev, i) => {
-                if (window.location.hash.startsWith('#find')) {
+                const blockNavigate = App.preNav && App.preNav('/#sys');
+                if (blockNavigate || window.location.hash.startsWith('#find')) {
                   ev?.preventDefault();
                 }
               }
@@ -254,6 +260,10 @@ export class App extends Component<AppProps, AppState> {
               iconProps: { iconName: 'Manufacturing' },
               checked: pivot === 'build',
               href: '/#build',
+              onClick: (ev) => {
+                const blockNavigate = App.preNav && App.preNav('/#build');
+                if (blockNavigate) { ev?.preventDefault(); }
+              }
             },
             {
               className: cn.bBox,
@@ -261,6 +271,10 @@ export class App extends Component<AppProps, AppState> {
               iconProps: { iconName: 'Help' },
               checked: pivot === 'about',
               href: '/#about',
+              onClick: (ev) => {
+                const blockNavigate = App.preNav && App.preNav('/#about');
+                if (blockNavigate) { ev?.preventDefault(); }
+              }
             },
 
           ]}

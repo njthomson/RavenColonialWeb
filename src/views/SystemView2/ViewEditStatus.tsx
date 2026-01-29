@@ -50,4 +50,5 @@ export const mapStatusIcon: Record<string, string> = {
   plan: 'WebAppBuilderFragment',
   build: 'ConstructionCone',
   complete: 'CityNext2',
+  demolish: 'Broom',
 }
