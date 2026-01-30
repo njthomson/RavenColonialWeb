@@ -255,7 +255,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           />}
         </td>
         <td className={`cc dc ${cn.br}`}>
-          {(!onMobile || dragId !== id) && getTierPointsDelta(s, 3, tp, i === 0, isCutOff)}
+          {(!onMobile || dragId !== id) && !demolished && getTierPointsDelta(s, 3, tp, i === 0, isCutOff)}
           {onMobile && dragId === id && i < sortedIDs.length - 1 && <IconButton
             className={`${icb} ${cn.bBox2}`}
             iconProps={{ iconName: 'ChevronDownSmall' }}

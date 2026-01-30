@@ -327,10 +327,12 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number) =>
     siteMaps.push(site);
     body.sites.push(site);
 
-    if (site.type.orbital) {
-      body.orbital.push(site);
-    } else {
-      body.surface.push(site);
+    if (site.status !== 'demolish') {
+      if (site.type.orbital) {
+        body.orbital.push(site);
+      } else {
+        body.surface.push(site);
+      }
     }
 
     if (calcIds.includes(site.id)) {
