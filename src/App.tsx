@@ -341,7 +341,7 @@ export class App extends Component<AppProps, AppState> {
         <br />
         <footer className={cn.footer}>
           <div>
-            <span>©2025 Raven Colonial Corporation</span>
+            <span>©2026 Raven Colonial Corporation</span>
             <span style={{ color: 'grey' }}> | </span>
             <Link id='send-support' onClick={() => this.setState({ showDonate: true })}>Support<Icon className='icon-inline' iconName='Savings' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>
             <span style={{ color: 'grey' }}> | </span>

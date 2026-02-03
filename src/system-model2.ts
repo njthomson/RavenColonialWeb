@@ -1,7 +1,6 @@
 import { SysSnapshot } from './api/v2-system';
 import { calculateColonyEconomies2, stellarRemnants } from './economy-model2';
 import { canReceiveLinks, ConcreteEconomy, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
-import { SiteMap, SysMap } from './system-model';
 import { BodyFeature } from './types';
 import { Bod, BT, Site, Sys } from './types2';
 
@@ -727,7 +726,7 @@ export interface SiteTypeValidity {
   unlocks?: string[];
 }
 
-export const isTypeValid2 = (sysMap: SysMap2 | SysMap | undefined, type: SiteType | undefined, priorType: SiteType | undefined): SiteTypeValidity => {
+export const isTypeValid2 = (sysMap: SysMap2 | undefined, type: SiteType | undefined, priorType: SiteType | undefined): SiteTypeValidity => {
   if (!type) { return { isValid: true }; }
 
   if (sysMap) {
@@ -794,11 +793,11 @@ export const getPreReqNeeded = (type: SiteType): string[] => {
   }
 }
 
-export const hasPreReq2 = (siteMaps: SiteMap2[] | SiteMap[] | undefined, type: SiteType) => {
+export const hasPreReq2 = (siteMaps: SiteMap2[] | undefined, type: SiteType) => {
   if (!siteMaps) { return true; }
 
   const neededBuildTypes = getPreReqNeeded(type);
-  return siteMaps.some(s => neededBuildTypes.some(n => s.buildType?.startsWith(n)));
+  return siteMaps.some(s => s.status !== 'demolish' && neededBuildTypes.some(n => s.buildType?.startsWith(n)));
 }
 
 export const getSnapshot = (newSys: Sys, isFav: boolean | undefined) => {

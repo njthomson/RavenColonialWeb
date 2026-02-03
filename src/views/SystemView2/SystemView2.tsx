@@ -1532,7 +1532,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     let foundIncomplete = false;
     let invalidOrdering = false;
     for (const s of sites) {
-      if (s.status !== 'complete') {
+      if (s.status === 'demolish') {
+        continue;
+      } else if (s.status !== 'complete') {
         foundIncomplete = true;
       } else if (foundIncomplete) {
         invalidOrdering = true;
@@ -1587,7 +1589,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       // warn if there are more sites than slots
       if (bodySlots) {
         let diff = bm.orbital.length - bodySlots[0];
-        if (diff === 1 && bm.sites.some(s => s.id === orderIDs[0])) { diff -= 1; } // allow off by one, if we have the primary port
+        if (diff === 1 && bm.sites.some(s => s.status !== 'demolish' && s.id === orderIDs[0])) { diff -= 1; } // allow off by one, if we have the primary port
         if (bodySlots[0] >= 0 && diff > 0) {
           slotTooMany.add(b);
         }
@@ -1628,7 +1630,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     // do we have any sites with no build type?
-    const missingType = this.state.sysMap.siteMaps.filter(s => !s.buildType);
+    const missingType = this.state.sysMap.siteMaps.filter(s => !s.buildType && s.status !== 'demolish');
     const showFixMissingTypes = this.state.sysMap.id64 > 0 && missingType.length > 0;
     if (showFixMissingTypes) {
       validations.push(<div key={`valNoBuildType}`}>
@@ -1642,7 +1644,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     // check for missing preReq's - grouping them by what they are missing
     const mapMissingPreReq: Record<string, SiteMap2[]> = {};
     for (const s of siteMaps) {
-      if (s.type.preReq && !hasPreReq2(sysMap.siteMaps, s.type)) {
+      if (s.status !== 'demolish' && s.type.preReq && !hasPreReq2(sysMap.siteMaps, s.type)) {
         mapMissingPreReq[s.type.preReq] = [...(mapMissingPreReq[s.type.preReq] ?? []), s];
       }
     }
@@ -1656,7 +1658,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     // check for asteroid starports in invalid locations
-    const badAsteroids = sysMap.siteMaps.filter(sm => sm.buildType === 'asteroid' && sm.body?.type !== 'ac' && !sm.body?.features.includes(BodyFeature.rings));
+    const badAsteroids = sysMap.siteMaps.filter(sm => sm.status !== 'demolish' && sm.buildType === 'asteroid' && sm.body?.type !== 'ac' && !sm.body?.features.includes(BodyFeature.rings));
     if (badAsteroids.length > 0) {
       validations.push(<div key={`valBadAsteroids}`}>
         » There are Asteroid Starports in invalid locations:
@@ -1667,7 +1669,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     // confirm only asteroid starports are in asteroid clusters, but allow completed sites, as the game allowed this for a while and people still have them
-    const badInAsteroids = sysMap.siteMaps.filter(sm => sm.body?.type === 'ac' && sm.buildType !== 'asteroid' && sm.status !== 'complete');
+    const badInAsteroids = sysMap.siteMaps.filter(sm => sm.status !== 'demolish' && sm.body?.type === 'ac' && sm.buildType !== 'asteroid' && sm.status !== 'complete');
     if (badInAsteroids.length > 0) {
       validations.push(<div key={`valBadAsteroids}`}>
         » Asteroid clusters may only contains Asteroid Starports:
