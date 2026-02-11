@@ -1235,7 +1235,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             key: 'sys-edit-notes',
             title: 'Edit system notes',
             className: cn.bBox,
-            iconProps: { iconName: !!sysMap?.notes ? 'QuickNoteSolid' : 'QuickNote' },
+            iconProps: {
+iconName: !!sysMap?.notes ? 'QuickNoteSolid' : 'QuickNote',
+              style: { color: !!sysMap?.notes ? appTheme.palette.yellowDark : undefined, }
+},
             disabled: !!processingMsg,
             onClick: () => {
               this.setState({ showEditNotes: !showEditNotes });
