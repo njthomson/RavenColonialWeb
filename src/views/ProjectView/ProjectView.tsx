@@ -971,7 +971,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const { ships, showShips } = this.state;
     const onShips = ships && ships.map(s => s.cargo[key] ?? 0);
     const countOnShips = onShips?.reduce((t, c) => t + c, 0) ?? 0;
-    const enoughOnShips = countOnShips >= need && need > 0;
     const onShipsElement = !countOnShips
       ? <span style={{ color: 'grey' }}>-</span>
       : <ActionButton
@@ -980,9 +979,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         style={{ height: 20, padding: 0, minWidth: 28, }}
         text={countOnShips.toLocaleString()}
         onClick={() => this.setState({ showShipsTargetCargo: key, showShipsTargetId: `show-ships-${key}` })}
-      />
+      />;
 
-    const enoughOnShipsOrFC = need > 0 && (enoughOnShips || sumCargoDiff >= 0);
+    const enoughOnShipsOrFC = need > 0 && (countOnShips + sumCargoDiff >= 0);
 
     const fcMarketIds = Object.keys(this.state.fcCargo);
 
@@ -1600,7 +1599,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const percent = 100 / proj.maxNeed * approxProgress;
 
     // TODO: unify "amount delivered" across deliveries and amount remaining
-const shipsTotal = ships?.reduce((t, s) => {
+    const shipsTotal = ships?.reduce((t, s) => {
       t += Object.values(s.cargo).reduce((st, c) => st += c, 0);
       return t;
     }, 0);
@@ -1874,7 +1873,7 @@ const shipsTotal = ships?.reduce((t, s) => {
         }}>
           {rows.slice(0, -1)}
         </div>
-      </Callout>;
+      </Callout>
     </>
   }
 }

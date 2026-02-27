@@ -120,6 +120,7 @@ const supportedTypes: Record<string, ImageData> = {
   'quint_truss': { cmdr: 'Aydenane', location: `The Ayden's - Synuefai DO-J c25-4, A 9` },
   'silenus': { cmdr: 'Grinning2001', location: `Hornby Vista - IC 2391 Sector LH-V b2-5, A 3` },
   'soter': { cmdr: 'Abe Andet', location: `Zhukovsky Point - Pegasi Sector MS-T b3-5` },
+  'tartarus': { cmdr: 'DziwnyCwiek', location: `Randel Prospect - HIP 105872, AB 1 a`, more: [{ n: 'tartarus-two.jpg', c: 'Cmdr DziwnyCwiek', l: 'Randel Prospect - HIP 105872, AB 1 a' }] },
   'tellus_e': { cmdr: 'SheepyGrins', location: 'Vancouver Landing - HIP 69445, B 2 a' },
   'tethys': { cmdr: 'The Blu Fox', location: 'Alasa Productions - HIP 108127, ABC 1 G' },
   'vacuna': { cmdr: 'Disnaematter', location: `Paton Beacon - Synuefe EM-M c23-8` },

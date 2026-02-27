@@ -2,8 +2,8 @@ import { ActionButton, Callout, DirectionalHint, Icon, IconButton, Link, mergeSt
 import { Component, CSSProperties } from 'react';
 import { appTheme, cn } from '../theme';
 import { store } from '../local-storage';
-import { Cargo, KnownFC, mapCommodityNames, SortMode } from '../types';
-import { flattenObj, getGroupedCommodities, mergeCargo, nextSort, sumCargo } from '../util';
+import { Cargo, CmdrShip, KnownFC, mapCommodityNames, mapShipNames, SortMode } from '../types';
+import { flattenObj, getGroupedCommodities, getRelativeDuration, mergeCargo, nextSort, sumCargo } from '../util';
 import { CommodityIcon } from './CommodityIcon/CommodityIcon';
 import { FleetCarrier } from '../views';
 import { EconomyBlock } from './EconomyBlock';
@@ -45,6 +45,7 @@ interface CargoGridProps {
   whereToBuy?: { refSystem: string; buildIds: string[] }
   minWidthNeed?: number;
   commodityNeeds?: Record<string, Record<string, Record<string, number>>>;
+  ships?: CmdrShip[];
 }
 
 interface CargoGridState {
@@ -60,6 +61,11 @@ interface CargoGridState {
   refreshing?: boolean;
   showWhereToBuy?: boolean;
   showNeededKey?: string;
+
+  ships?: CmdrShip[];
+  showShips?: boolean;
+  showShipsTargetId?: string;
+  showShipsTargetCargo?: string;
 }
 
 export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
@@ -79,6 +85,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       hideDoneRows: store.commodityHideCompleted,
       hideFCColumns: defaultHideFCColumns,
       showWhereToBuy: undefined,
+      ships: props.ships,
+      showShips: props.ships?.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && props.cargo[c] > 0)),
     };
   }
 
@@ -87,7 +95,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     if (prevProps.cargo !== this.props.cargo) {
       this.setState({
         cargo: this.getDefaultCargo(this.props.linkedFC, this.state.hideFCColumns),
-        zeroNeed: Object.keys(this.props.cargo).length === 0
+        zeroNeed: Object.keys(this.props.cargo).length === 0,
+        showShips: this.props.ships?.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && this.state.cargo[c] > 0)),
       });
     }
 
@@ -98,8 +107,17 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         linkedFC: this.props.linkedFC,
         cargo: this.getDefaultCargo(this.props.linkedFC, this.state.hideFCColumns),
         zeroNeed: Object.keys(this.props.cargo).length === 0,
+        showShips: this.props.ships?.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && this.state.cargo[c] > 0)),
         fcCargo: mergeCargo(linkedFC.map(fc => fc.cargo)),
         refreshing: false,
+      });
+    }
+
+    if (prevProps.ships !== this.props.ships) {
+
+      this.setState({
+        ships: this.props.ships,
+        showShips: this.props.ships?.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && this.props.cargo[c] > 0)),
       });
     }
   }
@@ -124,7 +142,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   render() {
-    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy, fcCargo, showNeededKey } = this.state;
+    const { sort, hideDoneRows, hideFCColumns, linkedFC, fcEditMarketId, zeroNeed, refreshing, showWhereToBuy, fcCargo, showNeededKey, showShips, showShipsTargetId, showShipsTargetCargo } = this.state;
 
     const hideGrid = hideDoneRows && zeroNeed;
     return <>
@@ -193,6 +211,15 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           <tr>
             <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
             {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} style={{ minWidth: this.props.minWidthNeed }} title='Total needed for this commodity'>Need</th>}
+            {showShips && <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Cargo on tracked ships'>
+              <IconButton
+                id='show-all-ships'
+                iconProps={{ iconName: showShipsTargetId && !showShipsTargetCargo ? 'AirplaneSolid' : 'Airplane' }}
+                className={`bubble ${cn.bBox}`}
+                style={{ height: 20, padding: 0, }}
+                onClick={() => this.setState({ showShipsTargetId: !!showShipsTargetId ? undefined : 'show-all-ships' })}
+              />
+            </th>}
             {!hideFCColumns && this.getCargoFCHeaders()}
           </tr>
         </thead>
@@ -268,6 +295,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
           onClose={() => this.setState({ showWhereToBuy: false })}
         />
       </>}
+
+      {!!showShipsTargetId && this.renderShipsCallout()}
     </>;
   }
 
@@ -294,7 +323,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   getTableRows() {
-    const { sort, linkedFC, hideFCColumns, cargo, hideDoneRows, zeroNeed } = this.state;
+    const { sort, linkedFC, hideFCColumns, cargo, hideDoneRows, zeroNeed, showShips } = this.state;
 
     const validCargoNames = Object.keys(cargo).filter(k => !hideDoneRows || cargo[k] !== 0)
     const groupedCommodities = getGroupedCommodities(validCargoNames, sort);
@@ -321,6 +350,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     // generate a totals row at the bottom
     const totals: string[] = [];
     if (!zeroNeed) { totals.push(sumCargo(cargo).toLocaleString()); }
+    if (showShips) { totals.push(''); }
     if (!hideFCColumns) {
       if (!zeroNeed) { totals.push(''); }
       for (const fc of linkedFC) {
@@ -362,7 +392,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
   }
 
   getCommodityRow(key: string, flip: boolean): JSX.Element {
-    const { cargo, linkedFC, fcCargo, hideFCColumns, zeroNeed, showNeededKey } = this.state;
+    const { cargo, linkedFC, fcCargo, hideFCColumns, zeroNeed, showNeededKey, ships, showShips } = this.state;
 
     const displayName = mapCommodityNames[key] ?? key;
 
@@ -399,12 +429,30 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     const useButtonForNeeds = this.props.commodityNeeds && this.props.commodityNeeds[key];
     const needValue = need === -1 ? '?' : need.toLocaleString();
 
+    const onShips = ships && ships.map(s => s.cargo[key] ?? 0);
+    const countOnShips = onShips?.reduce((t, c) => t + c, 0) ?? 0;
+    const onShipsElement = !countOnShips
+      ? <span style={{ color: 'grey' }}>-</span>
+      : <ActionButton
+        id={`show-ships-${key}`}
+        className={`bubble ${cn.bBox}`}
+        style={{ height: 20, padding: 0, minWidth: 28, }}
+        text={countOnShips.toLocaleString()}
+        onClick={() => this.setState({ showShipsTargetCargo: key, showShipsTargetId: `show-ships-${key}` })}
+      />;
+    const enoughOnShipsOrFC = need > 0 && (countOnShips + delta >= 0);
+
     return <tr key={`cc-${key}`} className={className} style={style}>
 
-      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`}>
+      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`} style={{ position: 'relative' }}>
         <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
-          <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
+          <CommodityIcon name={key} />
+          <span id={`cn-${key}`} className='t'>{displayName}</span>
         </Stack>
+
+        {(enoughOnShipsOrFC) && <span style={{ position: 'absolute', right: 0, top: 2 }} title='Enough cargo is available on linked Fleet Carriers or tracked ships'>
+          <Icon iconName={'TaskSolid'} style={{ fontSize: 14, height: 16, width: 16, color: 'lime' }} />
+        </span>}
       </td>
 
       {!zeroNeed && <td className={`commodity-need ${cn.br}`}>
@@ -420,6 +468,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         </span>
       </td>}
 
+      {showShips && <td className={`${cn.br}`} style={{ textAlign: 'center' }}>{onShipsElement}</td>}
+
       {!hideFCColumns && <>
         {/* The FC Diff cell */}
         {!zeroNeed && <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
@@ -434,6 +484,81 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         </td>)}
       </>}
     </tr>;
+  }
+
+  renderShipsCallout() {
+    const { ships, showShipsTargetId, showShipsTargetCargo } = this.state;
+    if (!ships) return null;
+    const bw = 50;
+
+    const rows = [];
+    for (const s of ships) {
+      const matchingCargo = Object.keys(s.cargo)
+        .filter(c => !showShipsTargetCargo || showShipsTargetCargo === c)
+        .sort();
+      const sum = matchingCargo.reduce((t, c) => t + s.cargo[c], 0);
+      if (sum === 0) { continue; }
+      const sumAll = Object.values(s.cargo).reduce((t, c) => t + c, 0);
+
+      const w = 100.0 / s.maxCargo * sumAll;
+      // elements for the cmdr
+      rows.push(
+        <div key={`ship-${s.cmdr}-1`} style={{ marginBottom: 2 }}>{s.cmdr}</div>,
+        <div key={`ship-${s.cmdr}-2`} style={{ marginBottom: 2, color: appTheme.palette.themePrimary }}>{mapShipNames[s.type] ?? s.type}</div>,
+        <div key={`ship-${s.cmdr}-3`} style={{ marginBottom: 2, gridColumn: 'span 2', fontSize: 10, position: 'relative', minWidth: bw, height: 19 }}>
+          <div style={{ textAlign: 'center' }}>{sum} of {s.maxCargo.toLocaleString()}</div>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: `${w}%`, height: 4, backgroundColor: appTheme.palette.themePrimary }}></div>
+          <div style={{ position: 'absolute', bottom: 0, left: `${w}%`, width: `${100 - w}%`, height: 4, backgroundColor: appTheme.palette.neutralQuaternaryAlt }}></div>
+          {!!showShipsTargetCargo && <div style={{ position: 'absolute', bottom: 0, left: 0, width: `${100.0 / s.maxCargo * sum}%`, height: 4, backgroundColor: appTheme.palette.orangeLight }}></div>}
+        </div>,
+        <div key={`ship-${s.cmdr}-cargo-${s.cmdr}-4`} style={{ gridRow: `span ${matchingCargo.length}`, fontSize: 10, color: appTheme.palette.themePrimary }}>{getRelativeDuration(new Date(s.time))}</div>,
+      );
+
+      // elements for the cargo
+      let flip = true;
+      const fontSize = 11;
+      for (const key of matchingCargo) {
+        flip = !flip;
+        const backgroundColor = flip ? appTheme.palette.neutralQuaternaryAlt : undefined
+        rows.push(
+          <div key={`ship-${s.cmdr}-cargo-${key}-5`} style={{ backgroundColor, gridColumn: 'span 1', textAlign: 'right', fontSize, paddingLeft: 10, marginRight: -10 }}>{mapCommodityNames[key] ?? key}</div>,
+          <div key={`ship-${s.cmdr}-cargo-${key}-6`} style={{ backgroundColor, gridColumn: 'span 1', textAlign: 'right', fontSize, marginRight: 0, paddingRight: 10 }}>{s.cargo[key].toLocaleString()}</div>,
+          <div key={`ship-${s.cmdr}-cargo-${key}-7`} />
+        );
+      }
+      rows.push(<div key={`ship-${s.cmdr}-cargo-${s.cmdr}-8`} style={{ gridColumn: 'span 4', height: 1, margin: '4px 0', backgroundColor: appTheme.palette.themeTertiary }} />);
+    }
+
+    return <>
+      <Callout
+        target={`#${showShipsTargetId}`}
+        setInitialFocus
+        alignTargetEdge
+        directionalHint={DirectionalHint.rightTopEdge}
+        styles={{
+          beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+          calloutMain: {
+            backgroundColor: appTheme.palette.neutralTertiaryAlt,
+            color: appTheme.palette.neutralDark,
+            cursor: 'default',
+          }
+        }}
+        onDismiss={() => this.setState({ showShipsTargetCargo: undefined, showShipsTargetId: undefined })}
+      >
+        <div style={{ marginBottom: 10, color: appTheme.palette.themePrimary }}>Commanders:</div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'auto auto auto auto',
+          gap: '2px 10px',
+          fontSize: '14px',
+          marginLeft: 10,
+          marginBottom: 10,
+          alignItems: 'left',
+        }}>
+          {rows.slice(0, -1)}
+        </div>
+      </Callout>
+    </>
   }
 
 }

@@ -5,7 +5,7 @@ import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
 import { appTheme, cn } from '../../theme';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, Project } from '../../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, KnownFC, Project } from '../../types';
 import { store } from '../../local-storage';
 import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
@@ -33,6 +33,7 @@ interface ViewAllState {
   /** Merged cargo from all Fleet Carriers */
   fcCargo: Cargo,
   commodityNeeds?: Record<string, Record<string, Record<string, number>>>,
+  ships?: CmdrShip[];
 
   autoUpdateUntil: number;
   fcEditMarketId?: string;
@@ -80,30 +81,40 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     this.setState({ loading: true });
 
     try {
-      const [allProjects, linkedFC, hiddenIDs] = await Promise.all([
+      const buildIds = this.state.projects.map(p => p.buildId).join(',');
+      const [allProjects, linkedFC, hiddenIDs, ships] = await Promise.all([
         // get the projects, FCs and hiddenIDs
         api.cmdr.getActiveProjects(store.cmdrName),
         api.cmdr.getAllLinkedFCs(store.cmdrName),
-        api.cmdr.getHiddenIDs(store.cmdrName)
+        api.cmdr.getHiddenIDs(store.cmdrName),
+        buildIds === '' ? [] as CmdrShip[] : api.project.getShips(buildIds),
       ]);
 
       const projects = allProjects.filter(p => !hiddenIDs.includes(p.buildId));
       const newSumCargo = mergeCargo(projects.map(p => p.commodities));
       const newCommodityNeeds = this.generateCommodityNeeds(newSumCargo, projects);
       const visibleFC = linkedFC.filter(fc => !this.state.hiddenFC.has(fc.marketId));
+      const newBuildIds = projects.map(p => p.buildId).join(',');
+
       this.setState({
-        loading: false,
+        loading: buildIds !== newBuildIds || !(buildIds === '' && newBuildIds === ''),
         allProjects, projects, sumCargo: newSumCargo,
         commodityNeeds: newCommodityNeeds,
         linkedFC: linkedFC,
         fcCargo: mergeCargo(visibleFC.map(fc => fc.cargo)),
         hiddenIDs: new Set(hiddenIDs),
         originalHiddenIDs: hiddenIDs.sort().join(),
+        ships,
       });
       // remove any stray FC marketIDs
       const marketIDlinkedFC = linkedFC.map(fc => fc.marketId);
       store.viewAllHiddenFC = store.viewAllHiddenFC.filter(mid => marketIDlinkedFC.includes(mid));
 
+
+      if (buildIds === "" && newBuildIds) {
+        const moreShips = await api.project.getShips(newBuildIds);
+        this.setState({ loading: false, ships: moreShips });
+      }
     } catch (err: any) {
       console.error(`Error loading data: ${err.message}`);
       this.setState({ loading: false, errorMsg: err.message });
@@ -192,9 +203,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       const changedBuildIds = buildIds.filter((buildId, i) => lasts[buildId] !== newLasts[i]);
       console.debug(`pollTimestamp: changedBuildIds: [${changedBuildIds}], force: ${force}`);
 
-      if (changedBuildIds.length === 1) {
-        await this.fetchProject(changedBuildIds[0]);
-      } else if (changedBuildIds.length > 1) {
+      if (changedBuildIds.length > 1 || force) {
         // something changed
         await this.fetchAll();
       }
@@ -220,7 +229,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityNeeds, linkedFC, hiddenFC } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityNeeds, linkedFC, hiddenFC, ships } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -317,6 +326,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             whereToBuy={whereToBuy}
             minWidthNeed={55}
             commodityNeeds={commodityNeeds}
+            ships={ships}
           />
           <br />
           <CargoRemaining sumTotal={cargoRemaining} label='Remaining cargo' />
@@ -568,6 +578,4 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       </div>
     </>;
   }
-
-
 }
