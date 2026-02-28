@@ -329,7 +329,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
     const groupedCommodities = getGroupedCommodities(validCargoNames, sort);
     const groupsAndCommodityKeys = flattenObj(groupedCommodities);
 
-    const colSpan = 2 + (hideFCColumns ? 0 : linkedFC.length + 1);
+    const colSpan = 2 + (hideFCColumns ? 0 : linkedFC.length + 1) + (showShips ? 1 : 0);
 
     let flip = true;
     const rows = [];
