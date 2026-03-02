@@ -1,4 +1,4 @@
-import { ActionButton, Icon, Modal, ResponsiveMode, Stack } from "@fluentui/react";
+import { ActionButton, Callout, DirectionalHint, Icon, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
 import { SysMap2, SysUnlocks, mapSysUnlocks } from "../../system-model2";
@@ -19,13 +19,17 @@ export const ViewUnlockedFeatures: FunctionComponent<{ sysMap: SysMap2 }> = (pro
       </Stack>
 
     </ActionButton>
-    {showMore && <Modal
-      isOpen
-      responsiveMode={ResponsiveMode.large}
+    {showMore && <Callout
+      target='#btn-view-unlocked'
+      isBeakVisible={false}
+      directionalHint={DirectionalHint.leftCenter}
+      preventDismissOnScroll
       onDismiss={() => setShowMore(false)}
       styles={{
-        main: { border: '1px solid ' + appTheme.palette.themePrimary },
-        scrollableContent: { overflow: 'hidden' },
+        calloutMain: {
+          border: '1px solid ' + appTheme.palette.themePrimary,
+          boxShadow: `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px`,
+        },
       }}
     >
       <h3>System wide unlocks:</h3>
@@ -54,6 +58,6 @@ export const ViewUnlockedFeatures: FunctionComponent<{ sysMap: SysMap2 }> = (pro
         })}
       </Stack>
 
-    </Modal>}
+    </Callout>}
   </>;
 }

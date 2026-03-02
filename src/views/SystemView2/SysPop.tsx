@@ -1,7 +1,7 @@
 import * as api from '../../api';
 import { FunctionComponent, useMemo, useState } from "react";
 import { Pop } from "../../types2";
-import { ActionButton, Icon, IconButton, Link, Modal, ResponsiveMode, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import { ActionButton, Callout, DirectionalHint, Icon, IconButton, Link, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { appTheme, cn } from "../../theme";
 import { ILineChartDataPoint, ILineChartPoints, LineChart } from '@fluentui/react-charting';
 import { HistoryEvent } from '../../api/v2-system';
@@ -40,11 +40,15 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
     try {
       setLoading(true);
 
-      const popData: ILineChartDataPoint[] = [];
+      let popData: ILineChartDataPoint[] = [];
       const events: IEventAnnotation[] = [];
 
       const history = await api.systemV2.popHistory(props.id64);
       let latest = 0;
+      let lastPop = 0;
+      let lastTime = new Date(0);
+      const finalEntry = history[history.length - 1];
+
       for (const entry of history) {
         const dd = new Date(entry.time);
         latest = Math.max(latest, dd.getTime());
@@ -54,11 +58,34 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
           default: throw new Error(`Unexpected event: ${entry.event}`);
 
           case HistoryEvent.pop:
-            popData.push({
-              xAxisCalloutData: dd.toLocaleString(),
-              x: dd,
-              y: entry.json[0] === '{' ? JSON.parse(entry.json).pop : JSON.parse(entry.json),
-            });
+            if (entry.json[0] === '{') {
+              // newer data: only use entries where Spansh pop and time differ from before (but always include the last)
+              const pop = parsed as Pop;
+              const time = new Date(pop.timeSpansh);
+
+              // remove any old data points if this new one has an older timestamp
+              const lastPopEntry = popData[popData.length - 1];
+              if (lastPopEntry?.x > time) {
+                popData = popData.filter(pd => pd.x < time);
+              }
+
+              if (entry === finalEntry || pop.pop !== lastPop || time.getTime() !== lastTime.getTime()) {
+                popData.push({
+                  xAxisCalloutData: time.toLocaleString(),
+                  x: entry === finalEntry ? new Date() : time,
+                  y: pop.pop,
+                });
+                lastPop = pop.pop;
+                lastTime = time;
+              }
+            } else {
+              // old data: storing only a number
+              popData.push({
+                xAxisCalloutData: dd.toLocaleString(),
+                x: dd,
+                y: parsed,
+              });
+            }
             break;
 
           case HistoryEvent.build:
@@ -108,12 +135,13 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
 
   const popVal = pop?.pop.toLocaleString() ?? '?';
   const color = disableUpdate ? appTheme.palette.neutralTertiaryAlt : undefined;
-
+  const buttonId = `pop${props.id64}`;
   return <div>
     <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }}>
       <div>{popVal}</div>
 
       <IconButton
+        id={buttonId}
         className={cn.ibBri} style={{ width: 22, height: 22 }}
         iconProps={{ iconName: 'LineChart' }}
         onClick={() => {
@@ -130,12 +158,17 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
     </Stack>
 
     {showCharts && <>
-      <Modal
-        isOpen
-        responsiveMode={ResponsiveMode.large}
+      <Callout
+        target={`#${buttonId}`}
+        coverTarget
+        directionalHint={DirectionalHint.topCenter}
+        isBeakVisible={false}
         onDismiss={() => setShowCharts(false)}
         styles={{
-          main: { border: '1px solid ' + appTheme.palette.themePrimary }
+          calloutMain: {
+            border: '1px solid ' + appTheme.palette.themePrimary,
+            boxShadow: `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px`,
+          },
         }}
       >
         <div style={{ width: 800, minHeight: 400 }}>
@@ -184,7 +217,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
           />
           <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary }}>Last updated: <span key={`spu-${data.lastDate}`} style={{ color: appTheme.palette.themeSecondary }}>{getRelativeDuration(new Date(data.lastDate))}</span></div>
         </div>
-      </Modal>
+      </Callout>
     </>}
   </div>;
 }

@@ -242,7 +242,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           {onMobile && dragId === id && i > 0 && <IconButton
             className={`${icb} ${cn.bBox2}`}
             iconProps={{ iconName: 'ChevronUpSmall' }}
-            style={{ backgroundColor: appTheme.palette.white, height: 16 }}
+            style={{ backgroundColor: appTheme.palette.white, height: 24 }}
             onMouseDown={ev => {
               ev.preventDefault();
               const priorIdx = sortedIDs.indexOf(id);
@@ -259,7 +259,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           {onMobile && dragId === id && i < sortedIDs.length - 1 && <IconButton
             className={`${icb} ${cn.bBox2}`}
             iconProps={{ iconName: 'ChevronDownSmall' }}
-            style={{ backgroundColor: appTheme.palette.white, height: 16 }}
+            style={{ backgroundColor: appTheme.palette.white, height: 24 }}
             onMouseDown={ev => {
               ev.preventDefault();
               const nextIdx = sortedIDs.indexOf(id);
@@ -351,7 +351,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           {onMobile && dragId === 'cut' && cutoffIdx > 1 && <IconButton
             className={`${icb} ${cn.bBox2}`}
             iconProps={{ iconName: 'ChevronUpSmall' }}
-            style={{ backgroundColor: appTheme.palette.white }}
+            style={{ backgroundColor: appTheme.palette.white, height: 24 }}
             onMouseDown={ev => {
               ev.preventDefault();
               this.setNewCalcIDs(sortedIDs, cutoffIdx - 1);
@@ -366,7 +366,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
           {onMobile && dragId === 'cut' && cutoffIdx < sortedIDs.length && <IconButton
             className={`${icb} ${cn.bBox2}`}
             iconProps={{ iconName: 'ChevronDownSmall' }}
-            style={{ backgroundColor: appTheme.palette.white }}
+            style={{ backgroundColor: appTheme.palette.white, height: 24 }}
             onMouseDown={ev => {
               ev.preventDefault();
               this.setNewCalcIDs(sortedIDs, cutoffIdx + 1);

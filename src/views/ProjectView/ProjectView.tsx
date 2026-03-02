@@ -549,7 +549,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       <ShowCoachingMarks id='whereToShop' target='#btnWhereToBuy' />
 
-      <Modal isOpen={confirmDelete} onDismiss={() => this.setState({ confirmDelete: false })}>
+      <Modal
+        isOpen={confirmDelete}
+        onDismiss={() => this.setState({ confirmDelete: false })}
+      >
         <div className='center'>
           <p>
             <h3 className={cn.h3}>Are you sure you want to delete?</h3>

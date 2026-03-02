@@ -23,6 +23,7 @@ const css = mergeStyleSets({
   },
   componentStack: {
     margin: '20px 0',
+    '.ms-Stack-inner': { maxWidth: '100%' }
   },
   siteCard: {
     position: 'relative',

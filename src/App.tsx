@@ -335,7 +335,10 @@ export class App extends Component<AppProps, AppState> {
 
         {this.renderBody()}
 
-        {cmdrEdit && <Modal isOpen onDismiss={() => this.setState({ cmdrEdit: false })} styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}>
+        {cmdrEdit && <Modal
+          isOpen
+          onDismiss={() => this.setState({ cmdrEdit: false })}
+        >
           <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} />
         </Modal>}
         <br />
