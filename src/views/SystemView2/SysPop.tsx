@@ -166,6 +166,7 @@ export const SysPop: FunctionComponent<{ id64: number, name: string, pop: Pop | 
         onDismiss={() => setShowCharts(false)}
         styles={{
           calloutMain: {
+            marginRight: 12,
             border: '1px solid ' + appTheme.palette.themePrimary,
             boxShadow: `${appTheme.palette.blackTranslucent40} -1px 0px 20px 10px`,
           },
