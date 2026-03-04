@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+  <title>Map Architect:</title>
+
+  <link href="http://fonts.googleapis.com/css?family=Orbitron:400" rel="stylesheet" type="text/css" />
+
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r75/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/menu.css" />
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+
+  <!-- Custom CSS -->
+  <style type="text/css">
+    .bl,
+    .bl:visited {
+      color: cyan;
+    }
+
+    #systemDetails,
+    #hud {
+      max-width: 350px;
+      user-select: none;
+    }
+
+    #hud> :first-child {
+      display: none;
+    }
+
+    .coords {
+      display: none;
+    }
+
+    #edmap {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 90%;
+      z-index: -1;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="edmap"></div>
+
+  <!-- Launch ED3Dmap -->
+  <link href="css/styles.css" rel="stylesheet" type="text/css" />
+  <script src="js/ed3dmap.min.js?v=6"></script>
+
+  <script src="map_architect.js"></script>
+
+  <script type="text/javascript">
+    map.init();
+  </script>
+
+</body>
+
+</html>

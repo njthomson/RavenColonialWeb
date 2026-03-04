@@ -376,6 +376,15 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
             onClick={() => setShowMoreStats(v => !v)}
           />
 
+          <ActionButton
+            className={cn.bBox2}
+            style={{ height: 24, fontSize: 12 }}
+            iconProps={{ iconName: 'Globe', style: { fontSize: 12 } }}
+            text='Show on map'
+            href='/#map'
+            target='rcc-map'
+          />
+
           <div style={{ marginLeft: 20, height: 24, paddingTop: 4 }}>
             <Toggle
               onText='Favourites'

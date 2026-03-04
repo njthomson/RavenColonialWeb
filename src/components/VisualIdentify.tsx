@@ -25,6 +25,7 @@ interface ImageRef {
 const supportedTypes: Record<string, ImageData> = {
   'aerecura': { cmdr: 'Kekosummer', location: `Correa Prospecting Platform - LTT 1873, B 1` },
   'aergia': { cmdr: 'Kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
+  'alala': { cmdr: 'DziwnyCwiek', location: `Hirase Vision - HIP 105872, AB 1 e` },
   'alastor': { cmdr: 'Abe Andet', location: `Bierce Platform - Arietis Sector PJ-Q B5-5` },
   'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
   'ananke': { cmdr: 'Kai Thoreau', location: `Nakayama Landing - HIP 87968, 4 A` },
@@ -77,7 +78,7 @@ const supportedTypes: Record<string, ImageData> = {
   'gelos': { cmdr: 'Kekosummer', location: `Burn Tourist Resort - Col 285 Sector GL-X c1-11, A 1` },
   'harmonia': { cmdr: 'Disnaematter', location: `Huberath Reach - Synuefe EM-M c23-8` },
   'hedone': { cmdr: 'AeroMech91', location: `Rosenberg Prospect - Col 285 Sector VZ-P c5-10, CD 2` },
-  'hephaestus': { cmdr: 'Disnaematter', location: `Chaly Foundry - Synuefe XK-O c22-4` },
+  'hephaestus': { cmdr: 'Disnaematter', location: `Chaly Foundry - Synuefe XK-O c22-4`, more: [{ n: 'hephaestus-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'hera': { cmdr: 'Jayzet', location: `Manuwa Berth - HIP 7860` }, // more: [{ n: 'hera-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'hermes': { cmdr: 'Grinning2001' },
   'hestia': { cmdr: 'Abe Andet', location: `Farias Berth - Pegasi Sector MS-T b3-5`, more: [{ n: 'hestia-plan.jpg', c: 'Cmdr Grinning2001' }] },
