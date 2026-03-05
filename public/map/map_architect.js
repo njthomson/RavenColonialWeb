@@ -4,7 +4,7 @@ var map = {
     const params = new URLSearchParams(window.location.search.substring(1));
     const cmdr = params.get('cmdr');
 
-    const response = await fetch(`https://localhost:7007/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
+    const response = await fetch(`https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
 
     // exit early if not success
     if (response.status !== 200) {
