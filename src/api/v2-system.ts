@@ -34,8 +34,8 @@ export const systemV2 = {
 
     // do not cache older revisions
     if (revOrSaveName) {
-      const rev = parseInt(revOrSaveName, 10);
-      if (rev) {
+      if (!isNaN(revOrSaveName as any)) {
+        const rev = parseInt(revOrSaveName, 10);
         const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/.${rev}`);
         return result;
       } else {
