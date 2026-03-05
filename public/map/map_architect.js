@@ -5,6 +5,7 @@ var map = {
       const cmdr = params.get('cmdr');
 
       const response = await fetch(`https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
+      // const response = await fetch(`https://localhost:7007/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
 
       // exit early if not success
       if (response.status !== 200) {
@@ -16,13 +17,16 @@ var map = {
       // process infos json into html
       let pPos = [0, 0, 0];
       for (const sys of mapData.systems) {
+        if (sys.cat[0] === 4) {
+          sys.infos = `<a class='bl' href='/#sys=${sys.name}' target='_blank' style="font-size: 12px">View: ${sys.name}</a><br/>`
+          continue;
+        }
+
         var blob = JSON.parse(sys.infos);
 
         pPos[0] += blob.pos[0];
         pPos[1] += blob.pos[1];
         pPos[2] += blob.pos[2];
-
-        console.log(blob);
 
         sys.infos = `<a class='bl' href='/#sys=${blob.id64}' target='_blank' style="font-size: 12px">View: ${blob.name}</a><br/>`
         if (blob.fav) { sys.infos += `(favourite)<br/>`; }
@@ -55,13 +59,14 @@ var map = {
       pPos[1] = pPos[1] / mapData.systems.length;
       pPos[2] = pPos[2] / mapData.systems.length;
 
+      document.getElementById('loading').style.display = 'none';
       Ed3d.init({
         container: 'edmap',
         json: mapData,
         withFullscreenToggle: false,
         withHudPanel: true,
         hudMultipleSelect: true,
-        effectScaleSystem: [150, 10000],
+        effectScaleSystem: [100, 10000],
         startAnim: true,
         playerPos: pPos,
         cameraPos: [0, 4000, -4000],
@@ -69,13 +74,10 @@ var map = {
         popupDetail: true,
       });
     } catch (err) {
-      console.log(err);
-
-      const errMsg = document.createElement('div');
-      errMsg.style.color = 'grey';
-      errMsg.innerText = `Oops: \t${err.stack}`;
-
-      document.body.appendChild(errMsg);
+      console.log(err.stack);
+      document.getElementById('bad-error').innerText = err.stack;
+      document.getElementById('oops').style.display = 'block';
+      document.getElementById('loading').style.display = 'none';
     }
   },
 }

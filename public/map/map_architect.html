@@ -18,6 +18,11 @@
 
   <!-- Custom CSS -->
   <style type="text/css">
+    html {
+      color: grey;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
     .bl,
     .bl:visited {
       color: cyan;
@@ -45,11 +50,25 @@
       height: 90%;
       z-index: -1;
     }
+
+    .msg {
+      margin-top: 40px;
+      text-align: center;
+      color: orange;
+    }
   </style>
 
 </head>
 
 <body>
+  <div id='loading' class='msg' style="display: display;">Fetching your systems...</div>
+
+  <div id='oops' class='msg' style="display: none;">
+    <h1>Oops...</h1>
+    <a href='https://github.com/njthomson/SrvSurvey/issues' target="_blank">Please report this error on GitHub</a>
+    <pre id='bad-error'>?</pre>
+  </div>
+
   <div id="edmap"></div>
 
   <!-- Launch ED3Dmap -->
