@@ -222,7 +222,12 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
 
                 if (newPrev) { flip = !flip; }
                 return <tr key={`audit${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralLight : '' }}>
-                  <td style={{ textTransform: 'capitalize' }}>{newPrev ? x.inf : ''}</td>
+                  <td style={{ textTransform: 'capitalize' }}>
+                    <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+                      {newPrev && <EconomyBlock economy={x.inf} size='10px' />}
+                      {newPrev && <span>{x.inf}</span>}
+                    </Stack>
+                  </td>
                   <td>{asPosNegTxt2(x.delta)}</td>
                   <td className='cl'>
                     {newNext && <>

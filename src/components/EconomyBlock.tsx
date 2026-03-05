@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import { economyColors, mapName } from "../site-data";
 import { Icon } from "@fluentui/react";
 
-export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | '10px', ratio?: Record<string, number> }> = (props) => {
+export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | '10px', ratio?: Record<string, number>, dim?: boolean }> = (props) => {
 
   let sz = props.size === '10px' ? 10 : 18;
 
@@ -36,7 +36,7 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
 
   let innerBlock = <></>;
   if (economies.length > 1) {
-    const bgColor1 = economyColors[economies[1].split('/', 1)[0]] ?? '#FFF';
+    const bgColor1 = getEconomyColor(economies[1].split('/', 1)[0], props.dim);
     innerBlock = <div style={{
       backgroundColor: bgColor1,
       position: 'relative',
@@ -54,7 +54,7 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
     innerBlock.props.style.left = props.size === '10px' ? 3 : 8;
     innerBlock.props.style.rotate = '0deg';
     const bgColor2 = innerBlock.props.style.backgroundColor;
-    innerBlock.props.style.backgroundColor = economyColors[economies[2].split('/', 1)[0]] ?? '#FFF';
+    innerBlock.props.style.backgroundColor = getEconomyColor(economies[2].split('/', 1)[0], props.dim);
 
     innerBlock = <div style={{
       backgroundColor: bgColor2,
@@ -85,7 +85,7 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
 
   const isSurface = economies[0].endsWith('/surface');
   const isOrbital = economies[0].endsWith('/orbital');
-  const bgColor0 = economyColors[economies[0].split('/', 1)[0]] ?? '#FFF';
+  const bgColor0 = getEconomyColor(economies[0].split('/', 1)[0], props.dim);
   const titleTxt = (titleRatios ?? economies.map(t => mapName[t]).join(', ')) || 'Unknown';
 
   return <div
@@ -105,3 +105,12 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
     {isOrbital && <Icon iconName='ProgressRingDots' style={{ position: 'absolute', left: 3, top: 3, color: 'black' }} />}
   </div>;
 };
+
+const getEconomyColor = (economy: string, dim?: boolean) => {
+  const color = economyColors[economy] ?? 'rgb(255,255,255)';
+  if (dim) {
+    return `rgba(${color.slice(4, -1)}, 0.5)`;
+  } else {
+    return color;
+  }
+}

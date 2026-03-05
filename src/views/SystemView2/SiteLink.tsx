@@ -44,7 +44,7 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
           style={{ color: site.status === 'build' ? appTheme.palette.yellowDark : isNotUsed ? nameColor : undefined }}
         />
 
-        {economy && <EconomyBlock economy={economy} size='10px' />}
+        {economy && <EconomyBlock economy={economy} size='10px' dim={isNotUsed} />}
 
         <span id={id} style={{ position: 'absolute', left: 80 }} />
 

@@ -13,6 +13,7 @@ import { asPosNegTxt2 } from "../../util";
 import { mapBodyFeatureColor, mapBodyFeatureIcon } from "./SitesBodyView";
 import { SystemView2 } from "./SystemView2";
 import { ViewEditSlotCount } from "./ViewEditSlotCount";
+import { EconomyBlock } from "../../components/EconomyBlock";
 
 const cbt = mergeStyles({
   color: appTheme.semanticColors.bodyText
@@ -25,7 +26,7 @@ const thd = mergeStyles({
 });
 const col1 = mergeStyles({
   padding: '4px 8px',
-  textAlign: 'center',
+  textAlign: 'left',
   verticalAlign: 'top',
 });
 const col2 = mergeStyles({
@@ -95,7 +96,12 @@ const getEconomyTable = (map: EconomyMap, audit: AuditEconomy[], sumValues: bool
       const d = subAudit[i];
       const isLast = i === subAudit.length - 1;
       colonyRows.push(<tr key={`cr-er-${++nn}`}>
-        <td className={`${col1} ${isLast ? col4b : ''}`} >{i === 0 ? mapName[econ] : ''}</td>
+        <td className={`${col1} ${isLast ? col4b : ''}`}>
+          <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+            {i === 0 && <EconomyBlock economy={econ} size='10px' />}
+            {i === 0 && <span>{mapName[econ]}</span>}
+          </Stack>
+        </td>
         <td className={`${col2}`}>{asPosNegTxt2(d.delta)}</td>
         <td className={`${col3}`}>{sumValues && isLast && ` = ${val.toFixed(2)}`}</td>
         <td className={`${col4} ${isLast ? col4b : ''}`}>{d.reason}</td>

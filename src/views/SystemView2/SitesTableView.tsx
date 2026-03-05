@@ -9,6 +9,7 @@ import { SiteMap2 } from "../../system-model2";
 import { EconomyBlocks, MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
 import { ViewEditBuildStatus } from "./ViewEditStatus";
 import { BuildStatus } from "../../types2";
+import { EconomyBlock } from "../../components/EconomyBlock";
 
 export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
   const { sysMap, pinnedId } = props;
@@ -59,6 +60,8 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       rows.push(<tr key={`p${props.sysMap.id64}${site.id}`}><td colSpan={6} style={{ borderTop }} /></tr>);
     }
     const isPrimary = !!site.links || site.body?.surfacePrimary === site || site.body?.orbitalPrimary === site;
+    const primaryEconomy = site.primaryEconomy ?? site.type.inf ?? '';
+    const isNotUsed = !props.sysMap.calcIds?.includes(site.id);
 
     rows.push(<tr
       key={`r${props.sysMap.id64}${site.id}`}
@@ -136,7 +139,8 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
 
       <td style={{ alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Icon iconName={site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} />
+          <Icon iconName={site.type.orbital ? 'ProgressRingDots' : 'GlobeFavorite'} style={{ marginRight: 5 }} />
+          <EconomyBlock economy={primaryEconomy} size='10px' dim={isNotUsed} />
           <ViewEditBuildType
             buildType={site.buildType}
             sysMap={sysMap}
@@ -180,7 +184,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
         <col width='auto' />
         <col width='auto' />
         <col width='260px' />
-        <col width='320px' />
+        <col width='330px' />
         <col width='auto' />
         <col width='auto' />
       </colgroup>
