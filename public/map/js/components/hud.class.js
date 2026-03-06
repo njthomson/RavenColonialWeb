@@ -86,9 +86,9 @@ var HUD = {
       .addClass("sub-opt active")
       .html('Toggle Milky Way')
       .click(function () {
-        var state = Galaxy.milkyway[0].visible;
-        Galaxy.milkyway[0].visible = !state;
-        Galaxy.milkyway[1].visible = !state;
+        var state = Galaxy.milkyway2D.visible;
+        Galaxy.milkyway[0].visible = !state && Ed3d.showStarField;
+        Galaxy.milkyway[1].visible = !state && Ed3d.showStarField;
         Galaxy.milkyway2D.visible = !state;
         $(this).toggleClass('active');
       })

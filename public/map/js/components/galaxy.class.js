@@ -179,8 +179,8 @@ var Galaxy = {
     var texloader = new THREE.TextureLoader();
 
     //-- Load textures
-    var back2D = texloader.load(Ed3d.basePath + "textures/heightmap7.jpg");
-
+    var back2D = texloader.load(Ed3d.basePath + "textures/" + (Ed3d.useRegionsImage ? "RegionMap.svg" : "heightmap7.jpg"));
+    
 
     var floorMaterial = new THREE.MeshBasicMaterial( {
       map: back2D,
@@ -191,9 +191,13 @@ var Galaxy = {
       side: THREE.DoubleSide
     } );
 
-    var floorGeometry = new THREE.PlaneGeometry(104000, 104000, 1, 1);
+    var floorGeometry = Ed3d.useRegionsImage ? new THREE.PlaneGeometry(101000, 101000, 1, 1) : new THREE.PlaneGeometry(104000, 104000, 1, 1);
     this.milkyway2D = new THREE.Mesh(floorGeometry, floorMaterial);
-    this.milkyway2D.position.set(this.x, this.y, -this.z);
+    if (Ed3d.useRegionsImage) {
+      this.milkyway2D.position.set(this.x + 500, this.y, -this.z - 500);
+    } else {
+      this.milkyway2D.position.set(this.x, this.y, -this.z);
+    }
     this.milkyway2D.rotation.x = -Math.PI / 2;
     this.milkyway2D.showCoord = true;
 
@@ -384,6 +388,10 @@ var Galaxy = {
     obj.milkyway[1].scale.set(20,20,20);
 
     obj.obj.add(pointsBig);
+
+    //-- set visibility based on initial option
+    points.visible = Ed3d.showStarField;
+    pointsBig.visible = Ed3d.showStarField;
   }
 
 }

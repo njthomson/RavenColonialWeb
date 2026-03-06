@@ -123,6 +123,12 @@ var Ed3d = {
   //-- Show names near camera
   'showNameNear'     : false,
 
+  //-- Show star field
+  'showStarField'     : true,
+
+  //-- Use galactic regions image
+  'useRegionsImage'     : false,
+
   //-- Popup mode for click on detal
   'popupDetail'      : false,
 
@@ -685,7 +691,7 @@ function enableFarView (scale, withAnim) {
 
   isFarView = true;
 
-  //-- Scale change animation
+    //-- Scale change animation
   var scaleFrom = {zoom:25};
   var scaleTo = {zoom:500};
   if(withAnim) {
@@ -706,6 +712,8 @@ function enableFarView (scale, withAnim) {
   }
 
   //-- Enable 2D galaxy
+  this.Galaxy.milkyway[0].visible = Ed3d.showStarField;
+  this.Galaxy.milkyway[1].visible = Ed3d.showStarField;
   this.Galaxy.milkyway2D.visible = true;
   this.Galaxy.infosShow();
 
@@ -758,6 +766,8 @@ function disableFarView(scale, withAnim) {
 
   //-- Show element
   this.Galaxy.milkyway[0].material.size = 16;
+  this.Galaxy.milkyway[0].visible = true;
+  this.Galaxy.milkyway[1].visible = true;
 
   //--
   camera.scale.set(1,1,1);

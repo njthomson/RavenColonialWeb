@@ -26,6 +26,7 @@ body {
 
 #hud {
   transition: width 2s;
+  user-select: none;
 }
 #hud,
 #systemDetails {
@@ -242,6 +243,7 @@ body {
 }
 #controls a {
   cursor: pointer;
+  user-select: none;
 }
 #controls > a {
   display: inline-block;

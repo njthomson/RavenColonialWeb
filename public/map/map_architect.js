@@ -1,6 +1,8 @@
 var map = {
   init: async function () {
     try {
+      let pPos = [0, 0, 0];
+
       const params = new URLSearchParams(window.location.search.substring(1));
       const cmdr = params.get('cmdr');
 
@@ -15,7 +17,6 @@ var map = {
       const mapData = await response.json();
 
       // process infos json into html
-      let pPos = [0, 0, 0];
       for (const sys of mapData.systems) {
         if (sys.cat[0] === 4) {
           sys.infos = `<a class='bl' href='/#sys=${sys.name}' target='_blank' style="font-size: 12px">View: ${sys.name}</a><br/>`
@@ -72,6 +73,8 @@ var map = {
         cameraPos: [0, 4000, -4000],
         systemColor: '#00aaaa',
         popupDetail: true,
+        showStarField: false,
+        useRegionsImage: true,
       });
     } catch (err) {
       console.log(err.stack);
