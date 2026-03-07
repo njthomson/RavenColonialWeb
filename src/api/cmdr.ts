@@ -28,6 +28,10 @@ export const cmdr = {
     return await callAPI<string>(`/api/cmdr/${encodeURIComponent(cmdr)}/primary`);
   },
 
+  getViewAll: async (): Promise<ViewAll> => {
+    return await callAPI<ViewAll>(`/api/cmdr/viewAll`);
+  },
+
   getHiddenIDs: async (cmdr: string): Promise<string[]> => {
     return await callAPI<string[]>(`/api/cmdr/${encodeURIComponent(cmdr)}/hiddenIDs`);
   },
@@ -64,3 +68,9 @@ export const cmdr = {
     return await callAPI<KnownFC[]>(`/api/cmdr/fleetCarriers`, 'POST');
   },
 };
+
+export interface ViewAll {
+  projects: Project[];
+  linkedFC: KnownFC[];
+  hiddenIDs: string[];
+}

@@ -180,7 +180,6 @@ var Galaxy = {
 
     //-- Load textures
     var back2D = texloader.load(Ed3d.basePath + "textures/" + (Ed3d.useRegionsImage ? "RegionMap.svg" : "heightmap7.jpg"));
-    
 
     var floorMaterial = new THREE.MeshBasicMaterial( {
       map: back2D,

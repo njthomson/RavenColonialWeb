@@ -39,6 +39,8 @@ interface ViewAllState {
   fcEditMarketId?: string;
   cmdrEdit?: boolean;
   hideLoginPrompt?: boolean;
+
+  lastPoll?: string;
 }
 
 export class ViewAll extends Component<ViewAllProps, ViewAllState> {
@@ -57,14 +59,14 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       sumCargo: {},
       fcCargo: {},
       autoUpdateUntil: 0,
+      lastPoll: 'x',
     };
   }
 
   componentDidMount(): void {
     window.document.title = `Build: ${store.cmdrName}`;
 
-    this.fetchAll().then(() => this.toggleAutoRefresh())
-      .catch(err => console.error(err));
+    this.toggleAutoRefresh();
   }
 
   componentWillUnmount(): void {
@@ -81,37 +83,32 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     this.setState({ loading: true });
 
     try {
-      const buildIds = this.state.projects.map(p => p.buildId).join(',');
-      const [allProjects, linkedFC, hiddenIDs, ships] = await Promise.all([
-        // get the projects, FCs and hiddenIDs
-        api.cmdr.getActiveProjects(store.cmdrName),
-        api.cmdr.getAllLinkedFCs(store.cmdrName),
-        api.cmdr.getHiddenIDs(store.cmdrName),
-        buildIds === '' ? [] as CmdrShip[] : api.project.getShips(buildIds),
-      ]);
+      // get data from combined API
+      const viewAll = await api.cmdr.getViewAll();
+      const { projects: allProjects, linkedFC, hiddenIDs } = viewAll;
 
+      // process received data
       const projects = allProjects.filter(p => !hiddenIDs.includes(p.buildId));
       const newSumCargo = mergeCargo(projects.map(p => p.commodities));
       const newCommodityNeeds = this.generateCommodityNeeds(newSumCargo, projects);
       const visibleFC = linkedFC.filter(fc => !this.state.hiddenFC.has(fc.marketId));
-      const newBuildIds = projects.map(p => p.buildId).join(',');
+      const newBuildIds = projects.map(p => p.buildId);
 
       this.setState({
-        loading: buildIds !== newBuildIds || !(buildIds === '' && newBuildIds === ''),
+        loading: newBuildIds.length !== 0,
         allProjects, projects, sumCargo: newSumCargo,
         commodityNeeds: newCommodityNeeds,
         linkedFC: linkedFC,
         fcCargo: mergeCargo(visibleFC.map(fc => fc.cargo)),
         hiddenIDs: new Set(hiddenIDs),
         originalHiddenIDs: hiddenIDs.sort().join(),
-        ships,
       });
       // remove any stray FC marketIDs
       const marketIDlinkedFC = linkedFC.map(fc => fc.marketId);
       store.viewAllHiddenFC = store.viewAllHiddenFC.filter(mid => marketIDlinkedFC.includes(mid));
 
-
-      if (buildIds === "" && newBuildIds) {
+      // now start loading ships
+      if (newBuildIds) {
         const moreShips = await api.project.getShips(newBuildIds);
         this.setState({ loading: false, ships: moreShips });
       }
@@ -191,19 +188,24 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     try {
       this.setState({ loading: true });
 
-      const lasts = this.state.projects.reduce((map, p) => {
-        map[p.buildId] = p.timestamp;
-        return map;
-      }, {} as Record<string, string>);
-
       // call server to see if anything changed
-      const buildIds = this.state.projects.map(p => p.buildId);
-      const newLasts = await Promise.all(buildIds.map(buildId => api.project.last(buildId)));
+      const { linkedFC, hiddenFC, lastPoll } = this.state;
 
-      const changedBuildIds = buildIds.filter((buildId, i) => lasts[buildId] !== newLasts[i]);
-      console.debug(`pollTimestamp: changedBuildIds: [${changedBuildIds}], force: ${force}`);
+      let currentPoll = 'x';
+      if (!force) {
+        var fcIDs = linkedFC
+          .filter(fc => !hiddenFC.has(fc.marketId))
+          .map(fc => fc.marketId.toString());
 
-      if (changedBuildIds.length > 1 || force) {
+        const buildIds = this.state.projects.map(p => p.buildId);
+        const pollData = await api.project.poll([...buildIds, ...fcIDs]);
+        currentPoll = pollData.max;
+      }
+
+      console.log(`pollTimestamp: ${currentPoll} vs ${lastPoll} (match: ${currentPoll === lastPoll}), forced: ${force}`);
+
+      if (currentPoll !== lastPoll || force) {
+        this.setState({ lastPoll: currentPoll });
         // something changed
         await this.fetchAll();
       }

@@ -45,6 +45,10 @@ export const project = {
     return await callAPI<string>(`/api/project/${encodeURIComponent(buildId)}/last`);
   },
 
+  poll: async (ids: string[]): Promise<Record<string, string>> => {
+    return await callAPI<Record<string, string>>(`/api/project/poll`, 'POST', JSON.stringify(ids));
+  },
+
   complete: async (buildId: string): Promise<void> => {
     return await callAPI<void>(`/api/project/${encodeURIComponent(buildId)}/complete`, 'POST');
   },
@@ -108,7 +112,7 @@ export const project = {
     return await callAPI<FoundMarkets>(`/api/project/markets`, 'POST', JSON.stringify(options));
   },
 
-  getShips: async (buildId: string): Promise<CmdrShip[]> => {
-    return await callAPI<CmdrShip[]>(`/api/project/${encodeURIComponent(buildId)}/ships/`);
+  getShips: async (buildIds: string[]): Promise<CmdrShip[]> => {
+    return await callAPI<CmdrShip[]>(`/api/project/ships/`, 'POST', JSON.stringify(buildIds));
   },
 };

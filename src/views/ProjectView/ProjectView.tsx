@@ -213,7 +213,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         newAutoUpdateUntil = 0;
       }
 
-      const ships = await api.project.getShips(buildId);
+      const ships = await api.project.getShips([buildId]);
       const showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
 
       let sysMap = getSysMap(newProj.systemName);
