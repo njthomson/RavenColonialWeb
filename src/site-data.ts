@@ -900,7 +900,7 @@ export const siteTypes: SiteType[] = [
     "buildClass": "settlement",
     "tier": 1,
     "padSize": "large",
-    "padMap": { meteope: 'large', palici: 'medium', minthe: 'large' },
+    "padMap": { meteope: 'large', palici: 'large', minthe: 'medium' },
     "orbital": false,
     "needs": { tier: 0, count: 0 },
     "gives": { tier: 2, count: 1 },
