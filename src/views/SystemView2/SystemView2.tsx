@@ -67,6 +67,7 @@ interface SystemView2State {
   buffNerf: boolean;
   showEditNotes?: boolean;
   showSaveAs?: boolean;
+  importSitesComplete?: boolean;
 }
 
 const viewTypes = [
@@ -174,6 +175,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       canEditAsArchitect: false,
       showEditNotes: false,
       showSaveAs: false,
+      importSitesComplete: false,
     } as Omit<SystemView2State, 'useIncomplete' | 'viewType' | 'systemName' | 'buffNerf'>;
   }
 
@@ -264,7 +266,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     window.document.title = 'Sys: ' + newSys.name;
 
     // Should we create or update the snapshot for this system?
-    if (!newSys.architect || !updateSnapshot) { return; }
+    if (!newSys.architect || !updateSnapshot || this.isDirty()) { return; }
 
     let genSnapshot = false;
     let newSnapshot = getSnapshot(newSys, undefined);
@@ -289,7 +291,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         if (genSnapshot && !!store.apiKey) {
           // clear this cache any time we add a snapshot
           api.systemV2.cache.snapshots = {};
-          // save a new snapshot
+          // save a new snapshot 
           return api.systemV2.saveSnapshot(newSys.id64, newSnapshot);
         }
       });
@@ -335,18 +337,26 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       });
   };
 
-  doImport = (type?: string) => {
+  doImport = (type?: string, force?: boolean) => {
     if (!store.cmdrName && this.state.sysOriginal !== undefined) {
       console.warn('You need to sign in in for this');
-      this.setState({ errorMsg: 'You need to sign in in for this', processingMsg: undefined });
+      this.setState({ errorMsg: 'You need to sign in in for this', processingMsg: undefined, showConfirmAction: undefined });
       return;
     }
 
-    this.setState({ processingMsg: 'Importing ...', errorMsg: '', fssNeeded: false });
+    if (this.isDirty() && !force) {
+      this.setState({ showConfirmAction: () => this.doImport(type, true) });
+      return;
+    }
+
+    this.setState({ processingMsg: 'Importing ...', errorMsg: '', fssNeeded: false, showConfirmAction: undefined });
 
     api.systemV2.import(this.props.systemName, type)
       .then(newSys => {
-        return this.useLoadedData(newSys, true);
+        if (type === 'sites') {
+          this.setState({ importSitesComplete: true });
+        }
+        return this.useLoadedData(newSys, false);
       })
       .catch(err => {
         console.error(err.stack);
@@ -496,15 +506,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   }
 
   createNewSite = (bodyNum?: number) => {
+    const { sysMap, dirtySites } = this.state;
+
     const newSite = {
       id: `x${Date.now()}`,
       status: 'plan',
       bodyNum: bodyNum ?? -1, // SystemView2.lastBodyNum
-      name: createRandomPhoneticName(),
+      name: sysMap.sites.length === 0 ? 'Primary port' : createRandomPhoneticName(),
       buildType: '', // SystemView2.lastBuildType ?? '',
     } as Site;
 
-    const { sysMap, dirtySites } = this.state;
 
     // make sure we don't reuse a name
     while (sysMap.sites.some(s => s.name === newSite.name)) {
@@ -729,7 +740,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return this.renderFindSystem();
     }
 
-    const { errorMsg, sysMap, processingMsg, showBuildOrder, showCreateBuildProject } = this.state;
+    const { errorMsg, sysMap, processingMsg, showBuildOrder, showCreateBuildProject, importSitesComplete } = this.state;
 
     return <div className='sys' style={{ position: 'relative' }}>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
@@ -761,6 +772,28 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       {!anonymous && this.renderCoachmarks()}
       {anonymous && this.renderLoginPrompt()}
       {showCreateBuildProject && this.renderCreateBuildProject()}
+      {importSitesComplete && <Dialog
+        hidden={false}
+        minWidth={500}
+        styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
+        dialogContentProps={{
+          title: 'Import complete',
+          subText: this.state.sysOriginal?.updateIDs?.length ? `${this.state.sysOriginal?.updateIDs?.length} stations changed:` : 'No stations changed',
+          showCloseButton: true,
+        }}
+        onDismiss={() => this.setState({ importSitesComplete: false })}
+      >
+        {!!this.state.sysOriginal?.updateIDs?.length && <>
+          {this.state.sysOriginal?.updateIDs.map(id => {
+            var site = this.state.sysMap.siteMaps.find(s => s.id === id);
+            return <div key={`siteChanged-${id}`}>
+              {site?.name ?? id} ({site?.buildType ?? '?'})
+              on: {site?.body?.name.replace(this.state.sysOriginal.name, '') ?? site?.bodyNum ?? '?'}
+            </div>;
+          })}
+          <div style={{ marginTop: 20, color: appTheme.semanticColors.bodySubtext }}>Don't forget to save.</div>
+        </>}
+      </Dialog>}
     </div>;
   }
 
@@ -843,9 +876,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     const splitItemsAddNewSite = [
       {
         key: 'sys-do-import',
-        text: 'Import bodies and stations',
+        text: 'Import stations (without saving)',
         className: anonymous ? undefined : cn.bBox,
-        iconProps: { iconName: 'Build' },
+        iconProps: { iconName: 'CityNext' },
         disabled: !!processingMsg || anonymous,
         style: { height: 72 },
         onRenderContent: ((p, d) => {
@@ -854,16 +887,16 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               {d.renderItemIcon(p)}
               {d.renderItemName(p)}
             </span>
-            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Update bodies and stations from external sources</div>
+            <div style={{ color: anonymous ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary }}>Match stations from external sources</div>
           </div>;
         }),
-        onClick: () => this.doImport(),
+        onClick: () => this.doImport('sites'),
       },
       {
         key: 'sys-do-import-bodies',
-        text: 'Import bodies only',
+        text: 'Import bodies',
         className: anonymous ? undefined : cn.bBox,
-        iconProps: { iconName: 'Build' },
+        iconProps: { iconName: 'HomeGroup' },
         disabled: !!processingMsg || anonymous,
         style: { height: 72 },
         onRenderContent: ((p, d) => {
