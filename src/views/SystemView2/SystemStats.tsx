@@ -12,6 +12,7 @@ import { SysPop } from "./SysPop";
 import { Callout, Icon, IconButton, Link, mergeStyles, Panel, PanelType, Stack } from "@fluentui/react";
 import { App } from "../../App";
 import { ViewUnlockedFeatures } from "./ViewUnlocked";
+import { TotalHauled } from "./TotalHauled";
 
 const uls = mergeStyles({
   ul: {
@@ -34,6 +35,8 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
     .map(s => (<div key={`ssab-${s.buildId.slice(1)}`}>
       <ProjectLink2 site={s} sysView={props.sysView} bigLink />
     </div>));
+
+  const hasCompletedSites = props.sysMap.sites.some(s => s.status === 'complete' || s.status === 'demolish');
 
   const maxEffectCount = Math.max(...Object.values(sysMap.sumEffects));
   let cw = 5;
@@ -193,6 +196,13 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
       <div style={{ gridColumn: '2 / span 4', alignContent: 'center' }}>
         <ViewUnlockedFeatures sysMap={props.sysMap} />
       </div>
+
+      {hasCompletedSites && <>
+        <div>Total hauled:</div>
+        <div style={{ gridColumn: '2 / span 4', alignContent: 'center' }}>
+          <TotalHauled sysMap={props.sysMap} />
+        </div>
+      </>}
 
       {!!buildTypes.length && <>
         <div style={{ alignContent: 'center' }}>Planned haul:</div>

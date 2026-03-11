@@ -24,6 +24,10 @@ export const project = {
     return await callAPI<SupplyStatsSummary>(`/api/project/${encodeURIComponent(buildId)}/stats`);
   },
 
+  getManyStats: async (buildIds: string[]): Promise<SupplyStatsSummary[]> => {
+    return await callAPI<SupplyStatsSummary[]>(`/api/project/stats`, 'POST', JSON.stringify(buildIds));
+  },
+
   update: async (buildId: string, deltaProj: Partial<Project>): Promise<Project> => {
     return await callAPI<Project>(
       `/api/project/${encodeURIComponent(buildId)}`,
