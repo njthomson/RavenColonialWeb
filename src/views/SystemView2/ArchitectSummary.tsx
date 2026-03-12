@@ -64,6 +64,13 @@ const css = mergeStyleSets({
     padding: 4,
     color: appTheme.palette.themeDark,
     backgroundColor: appTheme.palette.neutralLight,
+  },
+  rowHover: {
+    color: appTheme.palette.themePrimary,
+    ":hover": {
+      backgroundColor: appTheme.palette.themeTertiary + '!important',
+      color: appTheme.palette.black,
+    }
   }
 });
 
@@ -73,9 +80,9 @@ type ArchStats = {
   cw: number,
   sumStatus: Record<string, number>;
   sumEffects: Record<string, number>;
-  builds: Record<string, Record<string, number>>; // retire?
+  // builds: Record<string, Record<string, number>>; // retire?
   hauls: Record<string, number>; // retire?
-  // siteTypes: Record<string, Record<BuildStatus, number>>,
+  siteTypes: Record<string, Record<BuildStatus, number>>,
   excluded: Record<string, string[]>;
 }
 
@@ -165,9 +172,9 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
             sumStatus: { plan: 0, build: 0, complete: 0 },
             cw: 5,
             sumEffects: {},
-            builds: {},
+            // builds: {},
             hauls: {},
-            // siteTypes: {},
+            siteTypes: {},
             excluded: {}
           };
           if (snapshots.length) {
@@ -186,18 +193,18 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
                 if (!stats.sumStatus[s.status]) { stats.sumStatus[s.status] = 0; }
                 stats.sumStatus[s.status] += 1;
 
-                if (!stats.builds[s.status]) { stats.builds[s.status] = {}; }
+                // if (!stats.builds[s.status]) { stats.builds[s.status] = {}; }
 
                 const type = getSiteType(s.buildType);
                 if (!type) { continue; }
-                if (!stats.builds[s.status][type.displayName2]) { stats.builds[s.status][type.displayName2] = 0; }
-                stats.builds[s.status][type.displayName2] += 1;
+                // if (!stats.builds[s.status][type.displayName2]) { stats.builds[s.status][type.displayName2] = 0; }
+                // stats.builds[s.status][type.displayName2] += 1;
 
                 if (!stats.hauls[s.status]) { stats.hauls[s.status] = 0; }
                 stats.hauls[s.status] = stats.hauls[s.status] + (type?.haul ?? 0);
 
-                // if (!stats.siteTypes[type.displayName2]) { stats.siteTypes[type.displayName2] = { plan: 0, build: 0, complete: 0, demolish: 0 }; }
-                // stats.siteTypes[type.displayName2][s.status] += 1;
+                if (!stats.siteTypes[type.displayName2]) { stats.siteTypes[type.displayName2] = { plan: 0, build: 0, complete: 0, demolish: 0 }; }
+                stats.siteTypes[type.displayName2][s.status] += 1;
               }
 
               // is this system excluded from global stats?
@@ -347,6 +354,13 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
   const sumRatio = moreStats && moreStats.sumScore / moreStats.sumPop * 1000;
   const excludedSystemNames = moreStats?.excluded && Object.keys(moreStats?.excluded).sort();
 
+  // calc how much horizontal space to give each site in the bars far below
+  const max = Object.values(moreStats?.siteTypes ?? {}).reduce((mm, r) => {
+    var rm = Object.values(r).reduce((m, v) => v > m ? v : m, 0);
+    return rm > mm ? rm : mm;
+  }, 0);
+  const stRatio = 800 / (max * 3);
+
   return <>
     <div className={css.component}>
       <h3 className={cn.h3}>
@@ -434,7 +448,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
       }}
       onDismiss={(ev: any) => setShowMoreStats(false)}
     >
-      <div>
+      <div style={{ cursor: 'default' }}>
         <Stack
           horizontal
           verticalAlign='center'
@@ -469,7 +483,7 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
           })}
         </div>
 
-        {['complete', 'build', 'plan'].map(status => !moreStats.sumStatus[status] ? null : <div key={`as-${status}`}>
+        {/* {['complete', 'build', 'plan', 'demolish'].map(status => !moreStats.sumStatus[status] ? null : <div key={`as-${status}`}>
           <h2 style={{ fontWeight: 'normal' }}>
             <Stack horizontal verticalAlign='baseline'>
               <div>{mapStatusLabels[status]}: {moreStats.sumStatus[status]}</div>
@@ -488,7 +502,50 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
               {moreStats.builds[status][buildGroup]} {buildGroup}
             </div>)}
           </Stack>
-        </div>)}
+        </div>)} */}
+
+        <div>
+          <h2 style={{ fontWeight: 'normal' }}>Building site types:</h2>
+
+          <div style={{ marginBottom: 10 }}>
+            <table cellPadding={0} cellSpacing='0'>
+              {['complete', 'build', 'plan', 'demolish'].map(status => <tr key={`msstt${status}`}>
+                <td>{mapStatusLabels[status]}:</td>
+                <td style={{ paddingLeft: 20, textAlign: 'right' }}>{moreStats.sumStatus[status]}</td>
+                <td style={{ paddingLeft: 20, color: 'grey', fontSize: 12 }}>Haul:</td>
+                <td>
+                  <Stack horizontal verticalAlign='baseline' horizontalAlign='end'>
+                    <div style={{ marginLeft: 4, color: 'grey', fontSize: 12 }}>~{moreStats.hauls[status].toLocaleString()}</div>
+                    <HaulSize haul={moreStats.hauls[status]} size={1} />
+                  </Stack>
+                </td>
+              </tr>)}
+            </table>
+          </div>
+
+          <table cellPadding={0} cellSpacing='0'>
+            <tr style={{ textAlign: 'left', paddingBottom: 10 }}>
+              <th className={cn.bbr}>Type</th>
+              <th className={cn.bbr}>Completed</th>
+              <th className={cn.bbr}>Building</th>
+              <th className={cn.bbr}>Planning</th>
+              <th className={cn.bb}>Demolished</th>
+            </tr>
+
+            {Object.keys(moreStats.siteTypes).sort().map((displayName2, i) => {
+              const max = Object.values(moreStats.siteTypes[displayName2]).reduce((c, v) => c + v, 0);
+              if (max === 0) { return null; }
+
+              return <tr className={css.rowHover} key={`msst${displayName2}`} style={{ textAlign: 'center', backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : '' }}>
+                <td className={`${cn.br}`} style={{ paddingRight: 4, paddingBottom: 0, textAlign: 'left' }}>{displayName2}</td>
+                <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'complete', stRatio)}</td>
+                <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'build', stRatio)}</td>
+                <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'plan', stRatio)}</td>
+                <td>{getColorBlock(moreStats.siteTypes, displayName2, 'demolish', stRatio)}</td>
+              </tr>;
+            })}
+          </table>
+        </div>
 
         {excludedSystemNames && <div>
           <h2 style={{ fontWeight: 'normal' }}>Systems excluded from global statistics:</h2>
@@ -499,13 +556,15 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
             tokens={{ childrenGap: 8 }}
             style={{ fontSize: 12, color: appTheme.palette.themeSecondary }}
           >
-            {excludedSystemNames.map((name, i) => <div
+            {excludedSystemNames.map((name, i) => <Link
               key={`esn-${i}`}
               className={css.statBox}
               title={moreStats.excluded[name].map(t => `● ${t}`).join(`\n`)}
+              target='_blank'
+              href={`/#sys=${name}`}
             >
               {name}
-            </div>)}
+            </Link>)}
           </Stack>
         </div>}
       </div>
@@ -514,8 +573,31 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
   </>;
 }
 
+const getColorBlock = (map: Record<string, Record<BuildStatus, number>>, displayName2: string, status: BuildStatus, stRatio: number) => {
+  const v = map[displayName2][status];
+  if (v === 0) { return null; }
+
+  return <div style={{
+    backgroundColor: mapStatusColors[status],
+    color: 'wheat',
+    width: stRatio * v,
+    margin: 1,
+  }}
+  >
+    {v}
+  </div>;
+}
+
 const mapStatusLabels: Record<string, string> = {
   complete: 'Completed sites',
   build: 'Building in-progress',
-  plan: 'Planned sites'
+  plan: 'Planned sites',
+  demolish: 'Demolished sites',
+}
+
+const mapStatusColors: Record<string, string> = {
+  complete: 'rgb(0, 100, 0)',
+  build: 'rgb(100, 0, 0)',
+  plan: 'rgb(40, 40, 119)',
+  demolish: 'rgb(50, 50, 50)',
 }

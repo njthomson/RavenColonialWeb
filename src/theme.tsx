@@ -187,6 +187,11 @@ export const cn = mergeStyleSets({
   bl: {
     borderLeft: appTheme.palette.purpleDark + ' 1px solid',
   },
+  /** border-bottom-right */
+  bbr: {
+    borderBottom: appTheme.palette.purpleDark + ' 1px solid',
+    borderRight: appTheme.palette.purpleDark + ' 1px solid',
+  },
   footer: {
     zIndex: 10,
     borderTop: appTheme.palette.purpleDark + ' 1px solid',
