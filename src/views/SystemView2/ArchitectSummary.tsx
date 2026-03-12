@@ -15,6 +15,7 @@ import { getSnapshot } from '../../system-model2';
 import { mapStatusIcon } from './ViewEditStatus';
 import { CopyButton } from '../../components/CopyButton';
 import { CalloutMsg } from '../../components/CalloutMsg';
+import { HaulSize } from '../../components/BigSiteTable/BigSiteTable';
 
 const css = mergeStyleSets({
   component: {
@@ -72,7 +73,9 @@ type ArchStats = {
   cw: number,
   sumStatus: Record<string, number>;
   sumEffects: Record<string, number>;
-  builds: Record<string, Record<string, number>>;
+  builds: Record<string, Record<string, number>>; // retire?
+  hauls: Record<string, number>; // retire?
+  // siteTypes: Record<string, Record<BuildStatus, number>>,
   excluded: Record<string, string[]>;
 }
 
@@ -163,6 +166,8 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
             cw: 5,
             sumEffects: {},
             builds: {},
+            hauls: {},
+            // siteTypes: {},
             excluded: {}
           };
           if (snapshots.length) {
@@ -187,6 +192,12 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
                 if (!type) { continue; }
                 if (!stats.builds[s.status][type.displayName2]) { stats.builds[s.status][type.displayName2] = 0; }
                 stats.builds[s.status][type.displayName2] += 1;
+
+                if (!stats.hauls[s.status]) { stats.hauls[s.status] = 0; }
+                stats.hauls[s.status] = stats.hauls[s.status] + (type?.haul ?? 0);
+
+                // if (!stats.siteTypes[type.displayName2]) { stats.siteTypes[type.displayName2] = { plan: 0, build: 0, complete: 0, demolish: 0 }; }
+                // stats.siteTypes[type.displayName2][s.status] += 1;
               }
 
               // is this system excluded from global stats?
@@ -459,7 +470,13 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
         </div>
 
         {['complete', 'build', 'plan'].map(status => !moreStats.sumStatus[status] ? null : <div key={`as-${status}`}>
-          <h2 style={{ fontWeight: 'normal' }}>{mapStatusLabels[status]}: {moreStats.sumStatus[status]}</h2>
+          <h2 style={{ fontWeight: 'normal' }}>
+            <Stack horizontal verticalAlign='baseline'>
+              <div>{mapStatusLabels[status]}: {moreStats.sumStatus[status]}</div>
+              <div style={{ marginLeft: 20, color: 'grey', fontSize: 12 }}>Haul: ~{moreStats.hauls[status].toLocaleString()}</div>
+              <HaulSize haul={moreStats.hauls[status]} size={1} />
+            </Stack>
+          </h2>
 
           <Stack
             horizontal wrap
