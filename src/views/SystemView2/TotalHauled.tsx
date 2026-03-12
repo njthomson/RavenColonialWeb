@@ -38,6 +38,7 @@ export const TotalHauled: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
   let approxHauled = 0;
   // calc total hauled amount, mindful of free-dodecs and primary-port increases
   for (const s of completedSites) {
+    if (!s.buildType) { continue; }
     let total = 0;
     if (s.id !== freeDodec) {
       const haulCost = getAvgHaulCosts(s.id === props.sysMap.primaryPortId ? `${s.buildType} (primary)` : s.buildType);
@@ -53,7 +54,7 @@ export const TotalHauled: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
   if (showPanel) {
     let runningTotal = 0;
     rows = !showPanel ? [] : completedSites.map((s, i) => {
-      const siteHaul = haulMap[s.id];
+      const siteHaul = haulMap[s.id] ?? 0;
       runningTotal += siteHaul;
 
       const backgroundColor = i % 2 ? appTheme.palette.neutralLighter : undefined;
