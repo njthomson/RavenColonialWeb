@@ -509,41 +509,49 @@ export const ArchitectSummary: FunctionComponent<{ sysView: SystemView2 }> = (pr
 
           <div style={{ marginBottom: 10 }}>
             <table cellPadding={0} cellSpacing='0'>
-              {['complete', 'build', 'plan', 'demolish'].map(status => <tr key={`msstt${status}`}>
-                <td>{mapStatusLabels[status]}:</td>
-                <td style={{ paddingLeft: 20, textAlign: 'right' }}>{moreStats.sumStatus[status]}</td>
-                <td style={{ paddingLeft: 20, color: 'grey', fontSize: 12 }}>Haul:</td>
-                <td>
-                  <Stack horizontal verticalAlign='baseline' horizontalAlign='end'>
-                    <div style={{ marginLeft: 4, color: 'grey', fontSize: 12 }}>~{moreStats.hauls[status].toLocaleString()}</div>
-                    <HaulSize haul={moreStats.hauls[status]} size={1} />
-                  </Stack>
-                </td>
-              </tr>)}
+              <tbody>
+                {['complete', 'build', 'plan', 'demolish'].map(status => <tr key={`msstt${status}`}>
+                  <td>{mapStatusLabels[status]}:</td>
+                  <td style={{ paddingLeft: 20, textAlign: 'right' }}>{moreStats.sumStatus[status]?.toLocaleString() ?? 0}</td>
+                  {moreStats.hauls[status] && <>
+                    <td style={{ paddingLeft: 20, color: 'grey', fontSize: 12 }}>Haul:</td>
+                    <td>
+                      <Stack horizontal verticalAlign='baseline' horizontalAlign='end'>
+                        <div style={{ marginLeft: 4, color: 'grey', fontSize: 12 }}>~{moreStats.hauls[status]?.toLocaleString()}</div>
+                        <HaulSize haul={moreStats.hauls[status] ?? 0} size={1} />
+                      </Stack>
+                    </td>
+                  </>}
+                </tr>)}
+              </tbody>
             </table>
           </div>
 
           <table cellPadding={0} cellSpacing='0'>
-            <tr style={{ textAlign: 'left', paddingBottom: 10 }}>
-              <th className={cn.bbr}>Type</th>
-              <th className={cn.bbr}>Completed</th>
-              <th className={cn.bbr}>Building</th>
-              <th className={cn.bbr}>Planning</th>
-              <th className={cn.bb}>Demolished</th>
-            </tr>
+            <thead>
+              <tr style={{ textAlign: 'left', paddingBottom: 10 }}>
+                <th className={cn.bbr}>Type</th>
+                <th className={cn.bbr}>Completed</th>
+                <th className={cn.bbr}>Building</th>
+                <th className={cn.bbr}>Planning</th>
+                <th className={cn.bb}>Demolished</th>
+              </tr>
+            </thead>
 
-            {Object.keys(moreStats.siteTypes).sort().map((displayName2, i) => {
-              const max = Object.values(moreStats.siteTypes[displayName2]).reduce((c, v) => c + v, 0);
-              if (max === 0) { return null; }
+            <tbody>
+              {Object.keys(moreStats.siteTypes).sort().map((displayName2, i) => {
+                const max = Object.values(moreStats.siteTypes[displayName2]).reduce((c, v) => c + v, 0);
+                if (max === 0) { return null; }
 
-              return <tr className={css.rowHover} key={`msst${displayName2}`} style={{ textAlign: 'center', backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : '' }}>
-                <td className={`${cn.br}`} style={{ paddingRight: 4, paddingBottom: 0, textAlign: 'left' }}>{displayName2}</td>
-                <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'complete', stRatio)}</td>
-                <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'build', stRatio)}</td>
-                <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'plan', stRatio)}</td>
-                <td>{getColorBlock(moreStats.siteTypes, displayName2, 'demolish', stRatio)}</td>
-              </tr>;
-            })}
+                return <tr className={css.rowHover} key={`msst${displayName2}`} style={{ textAlign: 'center', backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : '' }}>
+                  <td className={`${cn.br}`} style={{ paddingRight: 4, paddingBottom: 0, textAlign: 'left' }}>{displayName2}</td>
+                  <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'complete', stRatio)}</td>
+                  <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'build', stRatio)}</td>
+                  <td className={cn.br}>{getColorBlock(moreStats.siteTypes, displayName2, 'plan', stRatio)}</td>
+                  <td>{getColorBlock(moreStats.siteTypes, displayName2, 'demolish', stRatio)}</td>
+                </tr>;
+              })}
+            </tbody>
           </table>
         </div>
 
