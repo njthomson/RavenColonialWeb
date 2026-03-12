@@ -217,7 +217,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         return this.useLoadedData(newSys, true);
       })
       .catch(err => {
-        if (err.statusCode === 404 && !revOrSaveName && !apiSvcUrl.includes('localhost')) {
+        if (err.statusCode === 404 && !revOrSaveName) {
           console.error(`No data for: ${this.props.systemName} ... trying import ...`);
           this.doImport();
         } else if (err.statusCode === 404) {
@@ -359,8 +359,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         return this.useLoadedData(newSys, false);
       })
       .catch(err => {
-        console.error(err.stack);
-        this.setState({ errorMsg: err?.message ?? 'Something failed importing the system', processingMsg: undefined });
+        if (err.statusCode === 404) {
+          console.error(err.stack);
+          this.setState({ errorMsg: 'System is not known to Spansh. Please FSS the system with an EDDN uploading client.', processingMsg: undefined });
+        } else {
+          console.error(err.stack);
+          this.setState({ errorMsg: err?.message ?? 'Something failed importing the system', processingMsg: undefined });
+        }
       });
   };
 
@@ -869,7 +874,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       className: anonymous ? undefined : cn.bBox,
       iconProps: { iconName: 'Add' },
       split: !noSplitAddButton,
-      disabled: !!processingMsg || anonymous,
+      disabled: !!processingMsg || anonymous || !sysMap,
       onClick: () => this.createNewSite(),
     } as IContextualMenuItem;
 
@@ -1138,7 +1143,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: canEditAsArchitect ? undefined : 'Save as',
             title: `Save a named copy of this system`,
             className: anonymous ? undefined : cn.bBox,
-            disabled: !!processingMsg || anonymous,
+            disabled: !!processingMsg || anonymous || !sysMap,
             style: {
               border: !isDirty || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
             },
@@ -1151,7 +1156,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: canEditAsArchitect ? 'Save' : undefined,
             className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'Save', style: { color: saveIconColor } },
-            disabled: !enableSave || anonymous,
+            disabled: !enableSave || anonymous || !sysMap,
             style: {
               color: saveTextColor,
               border: !enableSave || anonymous ? '2px solid transparent' : `2px solid ${appTheme.palette.yellowDark}`,
@@ -1166,7 +1171,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: this.state.viewType === 'body' ? 'Table' : 'Map',
             className: cn.bBox,
             iconProps: { iconName: this.state.viewType === 'body' ? 'GridViewSmall' : 'Nav2DMapView' },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             onClick: () => {
               const nextView = viewTypes[viewTypes.indexOf(this.state.viewType) + 1] ?? viewTypes[0];
               this.setState({ viewType: nextView });
@@ -1179,7 +1184,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: `Toggle showing charts between ratios of:\n- Market links\n- Primary site economies\n- All site economies\n- No charts`,
             className: cn.bBox,
             iconProps: { iconName: mapSiteGraphTypeIcon[siteGraphType] },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             subMenuProps: {
               calloutProps: { style: { border: '1px solid ' + appTheme.palette.themePrimary } },
               items: [
@@ -1226,7 +1231,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             text: 'Order',
             className: cn.bBox,
             iconProps: { iconName: 'SortLines' },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             onClick: () => this.setState({ showBuildOrder: true }),
           },
 
@@ -1236,7 +1241,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Include incomplete sites in calculations?',
             className: cn.bBox,
             iconProps: { iconName: useIncomplete ? 'TestBeakerSolid' : 'TestBeaker' },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             onClick: () => this.toggleUseIncomplete(),
           },
 
@@ -1245,7 +1250,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Compare audit of whole system',
             className: cn.bBox,
             iconProps: { iconName: 'FabricFolderSearch' },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             onClick: () => {
               this.doGetRealEconomies();
               this.setState({ auditWholeSystem: true });
@@ -1258,7 +1263,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             title: 'Edit system data',
             className: cn.bBox,
             iconProps: { iconName: 'Edit' },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             onClick: () => {
               this.setState({ showEditSys: !showEditSys });
             }
@@ -1272,7 +1277,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
               iconName: !!sysMap?.notes ? 'QuickNoteSolid' : 'QuickNote',
               style: { color: !!sysMap?.notes ? appTheme.palette.yellowDark : undefined, }
             },
-            disabled: !!processingMsg,
+            disabled: !!processingMsg || !sysMap,
             onClick: () => {
               this.setState({ showEditNotes: !showEditNotes });
               delayFocus('edit-system-notes');
@@ -1302,6 +1307,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                   text: 'View on Spansh',
                   iconProps: { imageProps: { src: spansh16 } },
                   className: cn.bBox,
+                  disabled: !sysMap,
                   onClick: () => {
                     window.open(`https://spansh.co.uk/system/${this.state.sysMap.id64}`, 'Spansh');
                   },
