@@ -72,7 +72,7 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
       <div>• Systems stats are calculated using only completed sites and with buff/nerf applied.</div>
     </div>;
 
-    return <div className='global-stats half'>
+    return <div className='global-stats half' style={{ cursor: 'default' }}>
       <h3 className={cn.h3}>
         <span>Raven Colonial Statistics: </span>
         <CalloutMsg msg={disclaimer} iconStyle={{ fontSize: 12 }} />
@@ -229,7 +229,8 @@ const StatsBox2: FunctionComponent<{ keyPrefix: string, label: string, title?: s
     }
 
     const hits = Object.entries(props.data[k as any] ?? []);
-    rows.push(<div key={`${props.keyPrefix}-${k}-${i}a`} style={{ gridRow: `span ${hits.length}` }}>{score}</div>);
+    const title = `${i}) Value: ${score}`;
+    rows.push(<div key={`${props.keyPrefix}-${k}-${i}a`} style={{ gridRow: `span ${hits.length}` }} title={title}>{score}</div>);
     // 
     hits.forEach(([n, a], i) => {
       const url = `/#sys=${encodeURIComponent(mapSpecialNames[n] ?? n)}`;

@@ -721,6 +721,14 @@ export const HaulSize: FunctionComponent<{ haul: number, size?: number, dim?: bo
     g = 4;
   }
 
+  const colors = [dark, dark, dark, dark, dark, dark,];
+  if (haul > 0) { colors[0] = props.dim ? '#00AA00' : 'lime'; }
+  if (haul > 4_000) { colors[1] = props.dim ? '#009900' : 'lightgreen'; }
+  if (haul > 8_000) { colors[2] = props.dim ? '#999900' : '#DDDD00'; }
+  if (haul > 20_000) { colors[3] = props.dim ? '#997700' : 'orange'; }
+  if (haul > 50_000) { colors[4] = props.dim ? '#990000' : 'red'; }
+  if (haul > 200_000) { colors[5] = props.dim ? '#550000' : 'darkred'; }
+
   return <div
     title={`~${haul.toLocaleString()} units`}
     style={{
@@ -733,11 +741,11 @@ export const HaulSize: FunctionComponent<{ haul: number, size?: number, dim?: bo
       marginBottom: 2,
     }}
   >
-    <div style={{ position: 'absolute', left: g * 0, bottom: 0, width: w, height: h * 1, backgroundColor: props.dim ? '#00AA00' : 'lime', }} />
-    <div style={{ position: 'absolute', left: g * 1, bottom: 0, width: w, height: h * 2, backgroundColor: haul >= 4_000 ? (props.dim ? '#009900' : 'lightgreen') : dark, }} />
-    <div style={{ position: 'absolute', left: g * 2, bottom: 0, width: w, height: h * 3, backgroundColor: haul >= 8_000 ? (props.dim ? '#999900' : '#DDDD00') : dark }} />
-    <div style={{ position: 'absolute', left: g * 3, bottom: 0, width: w, height: h * 4, backgroundColor: haul >= 20_000 ? (props.dim ? '#997700' : 'orange') : dark }} />
-    <div style={{ position: 'absolute', left: g * 4, bottom: 0, width: w, height: h * 5, backgroundColor: haul >= 50_000 ? (props.dim ? '#990000' : 'red') : dark }} />
-    <div style={{ position: 'absolute', left: g * 5, bottom: 0, width: w, height: h * 6, backgroundColor: haul >= 200_000 ? (props.dim ? '#550000' : 'darkred') : dark }} />
+    <div style={{ position: 'absolute', left: g * 0, bottom: 0, width: w, height: h * 1, backgroundColor: colors[0], }} />
+    <div style={{ position: 'absolute', left: g * 1, bottom: 0, width: w, height: h * 2, backgroundColor: colors[1], }} />
+    <div style={{ position: 'absolute', left: g * 2, bottom: 0, width: w, height: h * 3, backgroundColor: colors[2], }} />
+    <div style={{ position: 'absolute', left: g * 3, bottom: 0, width: w, height: h * 4, backgroundColor: colors[3], }} />
+    <div style={{ position: 'absolute', left: g * 4, bottom: 0, width: w, height: h * 5, backgroundColor: colors[4], }} />
+    <div style={{ position: 'absolute', left: g * 5, bottom: 0, width: w, height: h * 6, backgroundColor: colors[5], }} />
   </div>;
 }
