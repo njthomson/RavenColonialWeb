@@ -269,10 +269,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   doNextPoll = async (buildId: string) => {
     try {
       // call server to see if anything changed
-      let timestamp = await api.project.last(buildId);
-
-      // use current state if no .last added yet
-      if (timestamp === '0001-01-01T00:00:00+00:00' && this.state.lastTimestamp) { timestamp = this.state.lastTimestamp; }
+      const pollData = await api.project.poll([buildId, ...Object.keys(this.state.fcCargo)]);
+      const timestamp = pollData.max;
 
       console.debug(`pollTimestamp at ${new Date().toISOString()}: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp}) Will stop after: ${new Date(this.state.autoUpdateUntil).toISOString()}`);
       if (timestamp !== this.state.lastTimestamp) {
