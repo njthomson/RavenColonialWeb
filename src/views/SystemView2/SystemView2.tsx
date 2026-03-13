@@ -27,7 +27,6 @@ import { AuditTestWholeSystem } from './AuditTestWholeSystem';
 import { ArchitectSummary } from './ArchitectSummary';
 import { getSiteType, mapName } from '../../site-data';
 import { BodyPill, SitePill } from './SitePill';
-import { apiSvcUrl } from '../../api/api-util';
 import { App } from '../../App';
 
 interface SystemView2Props {
