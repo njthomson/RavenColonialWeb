@@ -121,7 +121,6 @@ export const mapName: Record<string, string> = {
   'refinery/surface': 'Refinery (Surface)',
   'refinery/orbital': 'Refinery (Orbital)',
   terraforming: 'Terraforming',
-  'near/akhenaten': 'High Tech + Industrial within 30ly of Akhenaten',
   colony: 'Colony',
 
   // pre-req explanations

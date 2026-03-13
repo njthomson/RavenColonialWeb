@@ -30,10 +30,6 @@ export const EconomyBlock: FunctionComponent<{ economy: string, size?: '18px' | 
       .join('\n');
   }
 
-  if (economies[0] === 'near/akhenaten') {
-    economies = ['industrial', 'hightech']
-  }
-
   let innerBlock = <></>;
   if (economies.length > 1) {
     const bgColor1 = getEconomyColor(economies[1].split('/', 1)[0], props.dim);

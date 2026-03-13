@@ -495,7 +495,7 @@ export const mapSourceEconomy: Record<string, string> = {
   "computercomponents": "industrial",
   "copper": "refinery",
   "cropharvesters": "industrial",
-  "emergencypowercells": "near/akhenaten",
+  "emergencypowercells": "industrial/surface",
   "evacuationshelter": "hightech",
   "fish": "agriculture",
   "foodcartridges": "industrial",
