@@ -84,7 +84,7 @@ export const nextSort = (sort: SortMode) => {
 export const getGroupedCommodities = (cargoNames: string[], sort: SortMode): Record<string, string[]> => {
 
   const sorted = cargoNames
-  sorted.sort();
+  sorted.sort((a, b) => mapCommodityNames[a].localeCompare(mapCommodityNames[b]));
 
   // just alpha sort
   if (sort === SortMode.alpha) {
