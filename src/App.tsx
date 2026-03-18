@@ -406,7 +406,14 @@ export class App extends Component<AppProps, AppState> {
     switch (pivot) {
       case TopPivot.home: return <Home />;
       case TopPivot.find: //return <ProjectSearch systemName={pivotArg} />;
-      case TopPivot.sys: return <SystemView2 systemName={pivotArg!} />;
+      case TopPivot.sys: {
+        if (pivotArg?.includes('/')) {
+          const [systemName, savedName] = pivotArg.split('/');
+          return <SystemView2 systemName={systemName} savedName={savedName} />;
+        } else {
+          return <SystemView2 systemName={pivotArg!} />;
+        }
+      }
       case TopPivot.build: return <ProjectView buildId={pivotArg} />;
       case TopPivot.buildAll: return <ViewAll />;
       case TopPivot.about: return <About />;

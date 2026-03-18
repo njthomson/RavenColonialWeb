@@ -1593,7 +1593,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   renderStats() {
     const { summary, proj, sumTotal, ships } = this.state;
-    if (!summary || !proj) return;
+    if (!summary || !proj) { return; }
 
     // roughly calculate progress by the curremt sum from the highest value known
     const approxProgress = proj.maxNeed - sumTotal;

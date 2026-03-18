@@ -123,7 +123,9 @@ export const getAvgHaulCosts = (type: string): Cargo => {
   let costs = avgHaulCosts[type];
   if (!costs) {
     const groupType = getSiteType(type)!;
-    costs = avgHaulCosts[groupType.displayName2];
+    if (groupType) {
+      costs = avgHaulCosts[groupType.displayName2];
+    }
   }
 
   if (!costs && type.endsWith(' (primary)')) {

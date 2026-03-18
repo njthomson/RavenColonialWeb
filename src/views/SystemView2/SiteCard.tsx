@@ -139,7 +139,9 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
             className={cn.bBox}
             iconProps={{ iconName: 'ConstructionCone' }}
             text='Docked? Build it'
-            style={{ height: 24 }}
+            disabled={!!site.sys.saveName}
+            title={site.sys.saveName ? 'Cannot be used with named-saves.' : undefined}
+            style={{ height: 24, color: site.sys.saveName ? 'grey' : 'unset' }}
             onClick={() => {
               setErrMsg('');
               setConfirmBuildIt(true);

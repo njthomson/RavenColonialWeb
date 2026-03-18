@@ -7,14 +7,15 @@ export const ardent = {
     return await callSvcAPI<any>(new URL('https://api.ardent-insight.com/v2/search/station/name/' + encodeURIComponent(stationName)));
   },
 
-  findSystem: async (systemName: string): Promise<ArdentSystem[]> => {
+  findSystem: async (systemName: string | undefined): Promise<ArdentSystem[]> => {
+    if (!systemName) { return []; }
     return await callSvcAPI<ArdentSystem[]>(new URL('https://api.ardent-insight.com/v2/search/system/name/' + encodeURIComponent(systemName)));
   },
 
 };
 
 export interface ArdentSystem {
-  sytemAddress: number;
+  systemAddress: number;
   systemName: string;
   systemX: number;
   systemY: number;

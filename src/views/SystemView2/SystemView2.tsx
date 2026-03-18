@@ -31,6 +31,7 @@ import { App } from '../../App';
 
 interface SystemView2Props {
   systemName: string;
+  savedName?: string;
 }
 
 interface SystemView2State {
@@ -41,6 +42,7 @@ interface SystemView2State {
   useIncomplete: boolean;
   sysOriginal: Sys;
   sysMap: SysMap2;
+  lastRev: number;
   showBuildOrder?: boolean;
   pinnedSite?: Site;
   pinnedSnapshot?: string;
@@ -102,7 +104,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (!!this.props.systemName) {
       // reload a new system
       window.document.title = 'Sys: ' + this.props.systemName;
-      const promise = this.loadData(this.props.systemName);
+      const promise = this.loadData(this.props.systemName, true, this.props.savedName);
       if (store.autoCheckSpanshEconomies) {
         promise.then(() => {
           this.doGetRealEconomies();
@@ -129,16 +131,24 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   componentDidUpdate(prevProps: Readonly<SystemView2Props>, prevState: Readonly<SystemView2State>, snapshot?: any): void {
-    if (prevProps.systemName !== this.props.systemName) {
+    const changedSaveName = prevProps.savedName !== this.props.savedName;
+    let changedSystem = prevProps.systemName !== this.props.systemName;
+    if (prevProps.systemName === this.state.sysMap?.name || prevProps.systemName === this.state.sysMap?.id64.toString()) {
+      changedSystem = false;
+    }
+
+    if (changedSystem || changedSaveName) {
       if (!!this.props.systemName) {
         // use the nextID64? Clear it regardless
         const nameOrNum = !!SystemView2.nextID64
           ? SystemView2.nextID64.toString()
           : this.props.systemName
         SystemView2.nextID64 = 0;
+
         // reload a new system
         window.document.title = 'Sys: ' + this.props.systemName;
-        this.loadData(nameOrNum, true, undefined, this.props.systemName);
+        if (!!this.props.savedName) { window.document.title += ' - ' + this.props.savedName; }
+        this.loadData(nameOrNum, true, this.props.savedName, this.props.systemName);
       } else {
         this.doSystemSearch();
       }
@@ -152,6 +162,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       // skip: useIncomplete
       sysOriginal: undefined!,
       sysMap: undefined!,
+      lastRev: 0,
       showBuildOrder: false,
       pinnedSite: undefined,
       pinnedSnapshot: undefined,
@@ -182,6 +193,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     // reset/clear everything, ready to search for a new system
     window.document.title = 'Sys: ?';
     this.setState({
+      systemName: '',
       ...this.getResetState()
     });
     delayFocus('find-system-input');
@@ -247,12 +259,14 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
     const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect; // || !!newSys.editors?.includes(store.cmdrName);
+    const lastRev = newSys.revs.reduce((m, r) => Math.max(r.rev, m), 0);
 
     this.setState({
       systemName: newSys.name,
       processingMsg: undefined,
       sysOriginal: newSys,
       sysMap: newSysMap,
+      lastRev: lastRev,
       dirtySites: dirties,
       deletedIDs: [...newSys.deleteIDs ?? []],
       orderIDs: orderIDs,
@@ -262,7 +276,18 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       canEditAsArchitect: canEditAsArchitect,
       showEditNotes: false,
     });
+
     window.document.title = 'Sys: ' + newSys.name;
+    if (!newSys.saveName) {
+      window.document.title = `Sys: ${newSys.name}`;
+      window.location.replace(`/#sys=${encodeURIComponent(newSys.name.trim())}`);
+    } else {
+      window.document.title = `Sys: ${newSys.name} - ${newSys.saveName}`;
+      const nextHash = `#sys=${encodeURIComponent(newSys.name.trim())}/${encodeURIComponent(newSys.saveName)}`;
+      if (window.location.hash !== nextHash) {
+        window.location.replace('/' + nextHash);
+      }
+    }
 
     // Should we create or update the snapshot for this system?
     if (!newSys.architect || !updateSnapshot || this.isDirty()) { return; }
@@ -330,10 +355,12 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   doGetRealEconomies = () => {
-    api.systemV2.getRealEconomies(this.state.sysMap.id64.toString())
-      .then(realEconomies => {
-        this.setState({ realEconomies });
-      });
+    if (this.state.sysMap?.id64) {
+      api.systemV2.getRealEconomies(this.state.sysMap.id64.toString())
+        .then(realEconomies => {
+          this.setState({ realEconomies });
+        });
+    }
   };
 
   doImport = (type?: string, force?: boolean) => {
@@ -678,7 +705,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   isDirty() {
-    const { sysMap, dirtySites, deletedIDs, sysOriginal, orderIDs, bodySlots, originalBodySlots } = this.state;
+    const { sysMap, dirtySites, deletedIDs, sysOriginal, orderIDs, bodySlots, originalBodySlots, lastRev } = this.state;
 
     // we cannot be dirty if either of these are missing
     if (!sysMap || !sysOriginal) return false;
@@ -693,7 +720,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || sysMap.reserveLevel !== sysOriginal.reserveLevel
       || sysMap.idxCalcLimit !== sysOriginal.idxCalcLimit
       // consider any other revision to be dirty (if not named)
-      || (!sysMap.saveName && sysMap.rev !== sysMap.revs.reduce((m, r) => Math.max(r.rev, m), 0))
+      || (!sysMap.saveName && sysMap.rev !== lastRev)
       || JSON.stringify(bodySlots) !== originalBodySlots
       || JSON.stringify(orderIDs) !== JSON.stringify(sysOriginal.sites.map(s => s.id))
       || JSON.stringify(Object.values(dirtySites)) !== JSON.stringify(sysOriginal.updateIDs.map(id => sysOriginal.sites.find(s => s.id === id)))
@@ -1003,13 +1030,26 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
           className={cn.bBox}
           iconName='Delete'
           title={`Delete named save "${ns.name}"`}
-          style={{ width: 24, textAlign: 'center', borderWidth: 2 }}
+          style={{ width: 24, textAlign: 'center', borderWidth: 2, color: appTheme.palette.accent }}
           onClick={ev => {
             ev.preventDefault();
             this.doDeleteNamedSave(ns.name);
-          }
-          }
+          }}
         /> : undefined;
+        const btnShare = <Icon
+          className={cn.bBox}
+          iconName='Share'
+          title='Copy link to this named save'
+          style={{ width: 24, textAlign: 'center', borderWidth: 2, color: appTheme.palette.accent/*, position: 'absolute', left: 0 */ }}
+          onClick={ev => {
+            ev.preventDefault();
+            const linkTxt = new ClipboardItem({
+              'text/plain': `https://ravencolonial.com/#sys=${sysMap?.id64}/${ns.name}`,
+              'text/html': new Blob([`<a href='${`https://ravencolonial.com/#sys=${sysMap?.name}/${ns.name}`}'>${systemName}</a>`], { type: 'text/html' }),
+            });
+            navigator.clipboard.write([linkTxt]);
+          }}
+        />;
 
         loadRevisionItems.push({
           key: `load-named-${ns.name}`,
@@ -1029,6 +1069,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
             return <>
               {defaultRenders.renderCheckMarkIcon(props)}
               {defaultRenders.renderItemName(props)}
+              {btnShare}
               {btnDelete}
             </>;
           },
@@ -1073,13 +1114,21 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       : undefined;
 
     const nicknameDiffers = !!sysMap?.nickname && sysMap.nickname !== systemName;
+
+    // prepare rich copy link
+    var copyLink = new ClipboardItem({
+      'text/plain': window.location.toString(),
+      'text/html': new Blob([`<a href='${window.location.toString()}'>${systemName}</a>`], { type: 'text/html' }),
+    });
+
     return <>
       {!onMobile && <span style={{ marginRight: 20, fontSize: 10, color: 'grey', float: 'right' }}>id64: {sysMap?.id64} <CopyButton text={`${sysMap?.id64}`} /></span>}
       <h2 style={{ margin: 10, height: 32, fontSize: onMobile ? 18 : undefined }}>
         <Stack horizontal verticalAlign='baseline'>
           {nicknameDiffers && <Link href={pageLink} style={{ marginRight: 4 }}>{sysMap.nickname}</Link>}
           <CopyButton text={systemName} fontSize={nicknameDiffers ? 12 : 16} />
-          <Link href={pageLink} style={{ marginLeft: 4, fontSize: nicknameDiffers ? 12 : undefined, color: nicknameDiffers ? appTheme.palette.themeTertiary : undefined }}>{systemName}</Link>
+          <Link href={pageLink} style={{ marginLeft: 4, marginRight: 4, fontSize: nicknameDiffers ? 12 : undefined, color: nicknameDiffers ? appTheme.palette.themeTertiary : undefined }}>{systemName}</Link>
+          <span style={{ color: appTheme.palette.themeTertiary }}><CopyButton text={copyLink} title='Copy link to this system' fontSize={nicknameDiffers ? 12 : 16} /></span>
 
           <BothTierPoints disable={!this.state.sysMap} tier2={this.state.sysMap?.tierPoints.tier2 ?? 0} tier3={this.state.sysMap?.tierPoints.tier3 ?? 0} fontSize={onMobile ? 18 : 24} />
 

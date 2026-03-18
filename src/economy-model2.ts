@@ -368,7 +368,7 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
 
     case 'extraction':
       if (matches(["major", "pristine"], reserveLevel)) {
-        adjust(inf, +0.4, `+ ${reason} boost: System reserveLevel is MAJOR OR PRISTINE`, map, site, 'sys');
+        adjust(inf, +0.4, `+ ${reason} boost: System reserveLevel is MAJOR or PRISTINE`, map, site, 'sys');
       }
       else if (matches(["depleted", "low"], reserveLevel)) {
         adjust(inf, -0.4, `- ${reason} boost: System reserveLevel is LOW or DEPLETED`, map, site, 'sys');

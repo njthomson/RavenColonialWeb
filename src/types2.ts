@@ -109,7 +109,7 @@ export const mapBodyTypeNames: Record<BT, string> = {
   [BT.hmc]: 'High Metal Content Body',
   [BT.ib]: 'Icy Body',
   [BT.mrb]: 'Metal Rich Body',
-  [BT.rb]: 'Rock Body',
+  [BT.rb]: 'Rocky Body',
   [BT.ri]: 'Rocky Ice Body',
   [BT.wg]: 'Water Giant',
   [BT.ww]: 'Water World',
