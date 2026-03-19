@@ -133,9 +133,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   componentDidUpdate(prevProps: Readonly<SystemView2Props>, prevState: Readonly<SystemView2State>, snapshot?: any): void {
     const changedSaveName = prevProps.savedName !== this.props.savedName;
     let changedSystem = prevProps.systemName !== this.props.systemName;
-    if (prevProps.systemName === this.state.sysMap?.name || prevProps.systemName === this.state.sysMap?.id64.toString()) {
-      changedSystem = false;
-    }
+    // if (prevProps.systemName === this.state.sysMap?.name || prevProps.systemName === this.state.sysMap?.id64.toString()) {
+    //   changedSystem = false;
+    // }
 
     if (changedSystem || changedSaveName) {
       if (!!this.props.systemName) {
