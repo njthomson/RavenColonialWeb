@@ -15,6 +15,8 @@ interface ViewEditBuildTypeProps {
   buildType: string;
   sysMap?: SysMap2;
   dim?: boolean;
+  asAddBtn?: boolean;
+  highlightAdd?: boolean;
   onChange: (buildType: string) => void;
 }
 
@@ -61,7 +63,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
   render() {
     const { dropDown, location, showTable } = this.state;
 
-    const id = Date.now().toString();
+    const id = this.props.asAddBtn ? 'add-build-btn' : Date.now().toString();
 
     const validTypes = siteTypes
       .filter(t => t.tier > 0) // remove unknown types
@@ -69,7 +71,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
     const displayName2 = getSiteType(this.props.buildType, true)?.displayName2 ?? '?';
 
-    return <div style={{ minWidth: 290 }}>
+    return <div style={{ minWidth: this.props.asAddBtn ? undefined : 290 }}>
 
       <ActionButton
         id={`bt-${id}`}
@@ -78,10 +80,20 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
           ev.preventDefault();
           this.setState({ dropDown: !dropDown, showTable: false, });
         }}
-        style={{ color: this.props.dim ? 'grey' : undefined }}
+        style={{
+          color: this.props.dim ? 'grey' : this.props.highlightAdd ? appTheme.palette.yellowDark : undefined,
+          border: this.props.highlightAdd ? '1px solid ' + appTheme.palette.yellowDark : undefined
+        }}
+        iconProps={{
+          iconName: this.props.asAddBtn ? 'Add' : undefined,
+          style: { color: this.props.highlightAdd ? appTheme.palette.yellowDark : undefined }
+        }}
       >
-        {displayName2} ({this.props.buildType || '?'})
-        <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
+        {!this.props.asAddBtn && <>
+          {displayName2} ({this.props.buildType || '?'})
+          <Icon className='icon-inline' iconName={dropDown ? 'CaretSolidRight' : 'CaretSolidDown'} style={{ marginLeft: 4, fontSize: 10, color: 'grey' }} />
+        </>}
+        {this.props.asAddBtn && <>Add</>}
       </ActionButton>
 
       {dropDown && <Callout

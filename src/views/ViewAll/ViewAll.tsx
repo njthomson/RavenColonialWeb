@@ -1,13 +1,13 @@
 import './ViewAll.css';
 import '../ProjectView/ProjectView.css';
-import { ActionButton, Checkbox, CommandBar, DefaultButton, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, Spinner, SpinnerSize, Stack, TeachingBubble } from '@fluentui/react';
+import { ActionButton, Checkbox, CommandBar, DefaultButton, Dialog, DialogFooter, DirectionalHint, Icon, Label, Link, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../../api';
 import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '../../components';
 import { appTheme, cn } from '../../theme';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, KnownFC, Project } from '../../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, fc_loading, KnownFC, Project } from '../../types';
 import { store } from '../../local-storage';
-import { fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
+import { delayFocus, fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
 import { CopyButton } from '../../components/CopyButton';
 import { ModalCommander } from '../../components/ModalCommander';
@@ -41,6 +41,9 @@ interface ViewAllState {
   hideLoginPrompt?: boolean;
 
   lastPoll?: string;
+
+  showPreNewFcLoading?: boolean;
+  newFcLoadingName?: string;
 }
 
 export class ViewAll extends Component<ViewAllProps, ViewAllState> {
@@ -231,7 +234,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
   }
 
   render() {
-    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityNeeds, linkedFC, hiddenFC, ships } = this.state;
+    const { errorMsg, autoUpdateUntil, loading, fcEditMarketId, sumCargo, fcCargo, cmdrEdit, hideLoginPrompt, projects, allProjects, commodityNeeds, linkedFC, hiddenFC, ships, showPreNewFcLoading } = this.state;
 
     const cargoRemaining = sumCargos(sumCargo);
     const cargoOnHand = getCargoCountOnHand(sumCargo, fcCargo)
@@ -297,6 +300,20 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               style: { color: (loading) ? 'grey' : undefined },
               onClick: () => {
                 this.toggleAutoRefresh();
+              }
+            },
+
+            {
+              key: 'btn-add',
+              text: 'New FC Loading',
+              title: 'Create a new FC loading project',
+              iconProps: { iconName: 'AddToShoppingList' },
+              disabled: loading || !store.apiKey,
+              className: cn.bBox,
+              style: { color: (loading) ? 'grey' : undefined },
+              onClick: () => {
+                this.setState({ showPreNewFcLoading: true, newFcLoadingName: '' });
+                delayFocus('#new-loading-name');
               }
             },
 
@@ -368,6 +385,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         <ModalCommander onComplete={() => this.setState({ cmdrEdit: false })} preAddFC />
       </Modal>}
 
+      {showPreNewFcLoading && this.renderPreNewFcLoading()}
     </div>;
   }
 
@@ -384,6 +402,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
     let first = true;
     const sortedSystems = Object.keys(mapBySystem).sort();
     for (const systemName of sortedSystems) {
+      const isFcLoading = systemName === '';
       if (!first) {
         systemRows.push(<div key={`${systemName}-d`} style={{ marginTop: 8, marginBottom: 12, borderTop: `1px dashed ${appTheme.palette.themeTertiary}` }} />);
       }
@@ -393,13 +412,14 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       const projCount = mapBySystem[systemName].length;
 
       const systemProjectRows = mapBySystem[systemName].map(p => {
+        const isPrep = p.buildType === fc_loading;
         const sumNeed = sumCargos(p.commodities);
         const approxProgress = p.maxNeed - sumNeed;
-        const percent = 100 / p.maxNeed * approxProgress;
+        const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
+        const percent = p.maxNeed === 0 ? 0 : 100 / p.maxNeed * (isPrep ? countReadyOnFCs : approxProgress);
 
         const checkProj = !hiddenIDs.has(p.buildId);
         if (checkProj) { checkCount++; }
-        const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
 
         const projSum = sumCargo(p.commodities);
         return <div key={p.buildId} style={{ marginLeft: 32, marginTop: 4, color: checkProj ? undefined : 'grey' }}>
@@ -425,7 +445,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               this.setState({ hiddenIDs, projects, sumCargo, commodityNeeds });
             }} />
 
-            <ProjectLink proj={p} noSys greyIncomplete={!checkProj} incompleteLinkColor={appTheme.palette.themeTertiary} />
+            <ProjectLink proj={p} noSys greyIncomplete={!checkProj} incompleteLinkColor={appTheme.palette.themeTertiary} noType={p.buildType === fc_loading} />
 
             {p.discordLink && <Icon
               className='icon-btn'
@@ -465,8 +485,11 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             this.setState({ hiddenIDs, projects, sumCargo, commodityNeeds });
           }} />
 
-          <Link href={`#sys=${encodeURIComponent(systemName)}`} style={{ color: checkSys ? undefined : appTheme.palette.themeTertiary }}>{systemName}</Link>
-          <CopyButton text={systemName} />
+          {isFcLoading && <span>FC Loading :</span>}
+          {!isFcLoading && <>
+            <Link href={`#sys=${encodeURIComponent(systemName)}`} style={{ color: checkSys ? undefined : appTheme.palette.themeTertiary }}>{systemName}</Link>
+            <CopyButton text={systemName} />
+          </>}
           <span>{mapBySystem[systemName].length} projects</span>
         </Stack>
 
@@ -518,8 +541,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         </h3>
         <div style={{ color: appTheme.palette.themeTertiary, marginTop: -4, marginBottom: 4 }}>Note: FCs must be linked to a project to update automatically</div>
 
-        {!linkedFC.length && <span className='hint' style={{ color: appTheme.palette.neutralTertiaryAlt }} >None</span>}
-        {linkedFC.length && linkedFC.map(fc => <Stack key={`@${fc.marketId}`} horizontal tokens={{ childrenGap: 4 }} style={{ marginBottom: 4 }}>
+        {!loading && !linkedFC.length && <span className='hint' style={{ color: appTheme.palette.neutralTertiaryAlt }}>None</span>}
+        {!loading && linkedFC.length && linkedFC.map(fc => <Stack key={`@${fc.marketId}`} horizontal tokens={{ childrenGap: 4 }} style={{ marginBottom: 4 }}>
           <Checkbox checked={!hiddenFC.has(fc.marketId)} onChange={(e, c) => {
             setTimeout(() => {
               const { hiddenFC } = this.state;
@@ -583,4 +606,49 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       </div>
     </>;
   }
+
+  renderPreNewFcLoading() {
+    const { newFcLoadingName } = this.state;
+
+    return <Dialog
+      hidden={false}
+      dialogContentProps={{ title: 'New FC Loading Project?' }}
+      styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
+      minWidth={650}
+    >
+      <div style={{ marginTop: -10 }}>
+        <div style={{ color: appTheme.palette.themeSecondary }}>
+          Loading projects are lighter weight, for collecting supplies on Fleet Carriers and tracking cargo needs for multiple builds.
+        </div>
+
+        <div style={{ color: appTheme.palette.yellowDark, fontSize: 10, margin: '10px 0' }}>
+          <Icon className='icon-inline' iconName='Warning' />
+          &nbsp;Experimental feature - these may be hidden or unsupported in older versions of client apps
+        </div>
+
+        <TextField
+          label='Project Name:'
+          value={newFcLoadingName}
+          styles={{ fieldGroup: { width: 400 } }}
+          onChange={(_, v) => this.setState({ newFcLoadingName: v })}
+          onKeyDown={(ev) => {
+            if (ev.key === 'Enter') { this.createLoadingFC(newFcLoadingName?.trim()!); }
+            if (ev.key === 'Escape') { this.setState({ showPreNewFcLoading: false }); }
+          }}
+        />
+      </div>
+      <DialogFooter>
+        <DefaultButton text='Create' iconProps={{ iconName: 'CheckMark' }} disabled={!newFcLoadingName?.trim()} onClick={() => { this.createLoadingFC(newFcLoadingName?.trim()!); }} />
+        <PrimaryButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showPreNewFcLoading: false })} />
+      </DialogFooter>
+    </Dialog>;
+  }
+
+  createLoadingFC = async (buildName: string) => {
+    api.project.createFCLoading(buildName).then(newProject => {
+      window.location.assign(`/#build=${newProject.buildId}`);
+    });
+  };
+
 }
+

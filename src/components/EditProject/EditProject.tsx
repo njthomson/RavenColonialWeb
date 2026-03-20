@@ -1,8 +1,8 @@
 import './EditProject.css';
 import * as api from '../../api';
-import { ActionButton, DatePicker, DefaultButton, DirectionalHint, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker, Toggle } from "@fluentui/react";
+import { ActionButton, DatePicker, DefaultButton, DirectionalHint, Icon, IconButton, Label, MessageBar, MessageBarType, Modal, PrimaryButton, Spinner, Stack, TimePicker } from "@fluentui/react";
 import { Component } from "react";
-import { CreateProject, Project, ProjectRef } from "../../types";
+import { CreateProject, fc_loading, Project, ProjectRef } from "../../types";
 import { cn, appTheme } from "../../theme";
 import { BuildType } from "../BuildType/BuildType";
 import { ChooseBody } from "../ChooseBody";
@@ -129,8 +129,10 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
       </td>
     </tr>;
 
+    const isPrep = editProject.buildType === fc_loading;
     return <Modal
       className='project-edit'
+      styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
       isOpen
       allowTouchBodyScroll={isMobile()}
       onDismiss={() => this.setState({})}
@@ -154,71 +156,73 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
                 }}
                 onKeyDown={(ev) => this.onKeyPress(ev)}
               />
-              <Toggle
+              {/* <Toggle
                 onText='Primary port' offText='Primary port'
                 defaultChecked={editProject.isPrimaryPort}
                 styles={{ root: { height: 25, margin: 0, marginTop: 6 } }}
                 onChange={(_, checked) => this.updateProjData('isPrimaryPort', checked)}
-              />
+              /> */}
             </td>
           </tr>
 
-          <tr>
-            <td><Label required>Build type:</Label></td>
-            <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }} onKeyDown={(ev) => this.onKeyPress(ev)}>
-              <BuildType sysMap={this.props.sysMap} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
-            </div>
-            </td>
-          </tr>
+          {!isPrep && <>
+            <tr>
+              <td><Label required>Build type:</Label></td>
+              <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }} onKeyDown={(ev) => this.onKeyPress(ev)}>
+                <BuildType sysMap={this.props.sysMap} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
+              </div>
+              </td>
+            </tr>
 
-          <tr>
-            <td><Label>System name:</Label></td>
-            <td><div className='grey hint' style={{ backgroundColor: appTheme.palette.purpleLight }}>{editProject.systemName}</div></td>
-          </tr>
+            <tr>
+              <td><Label>System name:</Label></td>
+              <td><div className='grey hint' style={{ backgroundColor: appTheme.palette.purpleLight }}>{editProject.systemName}</div></td>
+            </tr>
 
-          <tr>
-            <td>
-              <Label style={{ color: this.props.fieldHighlight === 'bodyName' ? appTheme.palette.yellowDark : undefined }}>
-                Body name:
-                {this.props.fieldHighlight === 'bodyName' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
-              </Label>
-            </td>
-            <td>
-              {editProject && <div style={{ backgroundColor: appTheme.palette.purpleLight }}>
-                <ChooseBody systemName={editProject.systemName} bodyName={editProject.bodyName} bodyNum={editProject.bodyNum} onChange={(newName, newId) => {
-                  const editProject = { ...this.state.editProject };
-                  if (editProject) {
-                    editProject.bodyName = newName;
-                    editProject.bodyNum = newId;
-                    this.setState({ editProject });
-                  }
-                }} />
-              </div>}
-            </td>
-          </tr>
+            <tr>
+              <td>
+                <Label style={{ color: this.props.fieldHighlight === 'bodyName' ? appTheme.palette.yellowDark : undefined }}>
+                  Body name:
+                  {this.props.fieldHighlight === 'bodyName' && <Icon className='icon-inline' iconName='AlertSolid' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} />}
+                </Label>
+              </td>
+              <td>
+                {editProject && <div style={{ backgroundColor: appTheme.palette.purpleLight }}>
+                  <ChooseBody systemName={editProject.systemName} bodyName={editProject.bodyName} bodyNum={editProject.bodyNum} onChange={(newName, newId) => {
+                    const editProject = { ...this.state.editProject };
+                    if (editProject) {
+                      editProject.bodyName = newName;
+                      editProject.bodyNum = newId;
+                      this.setState({ editProject });
+                    }
+                  }} />
+                </div>}
+              </td>
+            </tr>
 
-          <tr>
-            <td><Label>Architect:</Label></td>
-            <td>
-              <input className='tinput' type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.black }} />
-            </td>
-          </tr>
+            <tr>
+              <td><Label>Architect:</Label></td>
+              <td>
+                <input className='tinput' type='text' value={editProject.architectName} onChange={(ev) => this.updateProjData('architectName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.black }} />
+              </td>
+            </tr>
 
-          {/* <tr>
+            {/* <tr>
             <td><Label>Faction:</Label></td>
             <td>
               <input className='tinput' type='text' value={editProject.factionName} onChange={(ev) => this.updateProjData('factionName', ev.target.value)} style={{ backgroundColor: appTheme.palette.white, color: appTheme.palette.black, border: '1px solid ' + appTheme.palette.accent }} />
             </td>
           </tr> */}
 
-          {editProject.buildId && !editProject.complete && <tr>
-            <td><Label>Time remaining:</Label></td>
-            <td>
-              <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight, height: 22 }}>
-                {this.renderEditTimeRemaining(editProject)}
-              </div>
-            </td>
-          </tr>}
+            {editProject.buildId && !editProject.complete && <tr>
+              <td><Label>Time remaining:</Label></td>
+              <td>
+                <div id='due-time' className='grey' style={{ backgroundColor: appTheme.palette.purpleLight, height: 22 }}>
+                  {this.renderEditTimeRemaining(editProject)}
+                </div>
+              </td>
+            </tr>}
+          </>}
 
           <tr>
             <td style={{ alignContent: 'start' }}><Label>Notes:</Label></td>
@@ -259,7 +263,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
 
           {editProject.complete && rowTimeCompleted}
 
-          <tr>
+          {!isPrep && <tr>
             <td></td>
             <td>
               <ActionButton
@@ -270,9 +274,9 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
                 onClick={() => this.setState({ showAdvanced: !showAdvanced })}
               />
             </td>
-          </tr>
+          </tr>}
 
-          {showAdvanced && <>
+          {!isPrep && showAdvanced && <>
             {!editProject.complete && rowTimeCompleted}
 
             <tr>

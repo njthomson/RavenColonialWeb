@@ -158,32 +158,37 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
       return;
     }
 
-
     // query system names
     this.setState({ matches: [], searching: true });
-    const matches = await api.edsm.findSystems(txt)
-      .then(hits => {
-        return hits.map(m => ({
-          key: m.value,
-          text: m.value,
-        }));
-      })
-      .catch((err: any) => {
-        console.warn(`findSystems failed: ${err.stack}`);
-        if (!!txt) {
-          return api.ardent.findSystem(txt)
-            .then(hits => {
-              return hits.slice(0, 15).map(m => ({
-                key: m.systemName,
-                text: m.systemName,
-              }));
-            })
-            .catch((err2: any) => {
-              console.error(`findSystems failed: ${err2.stack}`);
-              return undefined;
-            });
-        }
-      });
+
+    const useArdent = () => {
+      return api.ardent.findSystem(txt)
+        .then(hits => {
+          console.log(hits);
+          return hits.slice(0, 15).map(m => ({
+            key: m.systemAddress.toString(),
+            text: m.systemName,
+          }));
+        })
+        .catch((err: any) => {
+          console.error(`findSystems failed: ${err.stack}`);
+          return undefined;
+        });
+    };
+
+    const matches = txt?.toLowerCase().includes('2mass')
+      ? await useArdent()
+      : await api.edsm.findSystems(txt)
+        .then(hits => {
+          return hits.map(m => ({
+            key: m.value,
+            text: m.value,
+          }));
+        })
+        .catch((err: any) => {
+          console.warn(`findSystems failed: ${err.stack}`);
+          return useArdent();
+        });
 
     const errMsg = matches === undefined
       ? 'Search failed'

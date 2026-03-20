@@ -136,9 +136,12 @@ export const mapReserveLevel: Record<string, string> = {
   'pristine': 'Pristine',
 };
 
+export const fc_loading = 'fc_loading';
+
 export interface CreateProject extends ProjectRef {
   commodities: Record<string, number>;
   commanders?: Record<string, string[]>;
+  prepBuilds?: Record<string, number>;
 }
 
 export interface Project extends ProjectRef {
@@ -148,6 +151,7 @@ export interface Project extends ProjectRef {
   commodities: Record<string, number>;
   ready: string[];
   linkedFC: ProjectFC[];
+  prepBuilds?: Record<string, number>;
 }
 
 export interface ProjectFC {

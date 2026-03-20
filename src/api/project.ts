@@ -1,4 +1,4 @@
-import { Cargo, CmdrShip, CreateProject, FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectFC, SupplyStatsSummary } from "../types";
+import { Cargo, CmdrShip, CreateProject, fc_loading, FindMarketsOptions, FoundMarkets, GlobalStats, Project, ProjectFC, SupplyStatsSummary } from "../types";
 import { callAPI } from "./api-util";
 
 /** Project APIs */
@@ -11,6 +11,23 @@ export const project = {
       JSON.stringify(project)
     );
   },
+
+  createFCLoading: async (buildName: string): Promise<Project> => {
+    const newProject = {
+      buildName: buildName,
+      buildType: fc_loading,
+      marketId: 1,
+      systemAddress: 1,
+      prepBuilds: {},
+    } as CreateProject;
+
+    return await callAPI<Project>(
+      `/api/project/`,
+      'PUT',
+      JSON.stringify(newProject)
+    );
+  },
+
 
   createFrom: async (id64: number, systemSiteId: string, buildType?: string): Promise<Project> => {
     return await callAPI<Project>(`/api/project/from/${encodeURIComponent(id64.toString())}/${encodeURIComponent(systemSiteId)}/${encodeURIComponent(buildType ?? '')}`, 'POST');

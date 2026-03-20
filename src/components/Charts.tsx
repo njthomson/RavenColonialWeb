@@ -4,7 +4,7 @@ import { getColorTable } from "../util";
 import { SupplyStats, SupplyStatsSummary } from "../types";
 import { appTheme } from "../theme";
 
-export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOnFC: number, onShips?: number, maxNeed: number, minimal?: boolean, width?: number, height?: number }> = (props) => {
+export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOnFC: number, onShips?: number, maxNeed: number, minimal?: boolean, width?: number, height?: number, noProgress?: boolean }> = (props) => {
 
   const points: IChartDataPoint[] = [
     {
@@ -30,13 +30,9 @@ export const ChartGeneralProgress: FunctionComponent<{ progress: number, readyOn
     },
   ];
 
-  if (!props.readyOnFC) {
-    points.splice(2, 1);
-  }
-
-  if (!props.onShips) {
-    points.splice(1, 1);
-  }
+  if (!props.readyOnFC) { points.splice(2, 1); }
+  if (!props.onShips) { points.splice(1, 1); }
+  if (props.noProgress) { points.splice(0, 1); }
 
   return <div className={props.width ? undefined : 'chart'} >
     <StackedBarChart

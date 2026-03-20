@@ -1,3 +1,4 @@
+import { fc_loading } from "./types";
 
 export type Economy =
   | 'agriculture'
@@ -205,6 +206,7 @@ export const getSiteType = (buildType: string, noThrow?: boolean): SiteType | un
 
 export const getBuildTypeDisplayName = (buildType: string | undefined) => {
   if (!buildType) return '?';
+  if (buildType === fc_loading) return fc_loading;
   buildType = buildType?.replace(' (primary)', '');
 
   const type = getSiteType(buildType)!;

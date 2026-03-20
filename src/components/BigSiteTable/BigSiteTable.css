@@ -7,10 +7,6 @@
   width: auto;
 }
 
-.bst table td, table, th{
-  padding: 0 4px;
-}
-
 .bst .not-filter {
   display: inline-block;
   width: 14px;

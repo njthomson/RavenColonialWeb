@@ -6,8 +6,8 @@ import { Component, CSSProperties } from 'react';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, mapCommodityNames, mapShipNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, getRelativeDuration, iconForSort, isMobile, mergeCargo, nextSort, openDiscordLink, sumCargo } from '../../util';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, fc_loading, mapCommodityNames, mapShipNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
+import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, getRelativeDuration, iconForSort, isMatchingCmdr, isMobile, mergeCargo, nextSort, openDiscordLink, sumCargo } from '../../util';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
@@ -17,10 +17,12 @@ import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
 import { fetchSysMap, getSysMap, SysMap } from '../../system-model';
 import { BuildEffects } from '../../components/BuildEffects';
 import { WhereToBuy } from '../../components/WhereToBuy/WhereToBuy';
-import { mapName } from '../../site-data';
+import { getSiteType, mapName } from '../../site-data';
 import { EconomyBlock } from '../../components/EconomyBlock';
 import { ShowCoachingMarks } from '../../components/ShowCoachingMarks';
 import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
+import { ViewEditBuildType } from '../SystemView2/ViewEditBuildType';
+import { getAvgHaulCosts } from '../../avg-haul-costs';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -77,6 +79,11 @@ interface ProjectViewState {
 
   notAgain: string[];
   notAgainPending?: string;
+
+  // specific for prepation projects
+  isPrep?: boolean;
+  prepBuilds?: Record<string, number>;
+  savingPrepBuilds?: boolean;
 }
 
 enum Mode {
@@ -122,7 +129,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   componentDidMount() {
     // fetch initial data, which starts auto-updating as necessary
-    this.fetchProject(this.props.buildId);
+    if (this.props.buildId) {
+      this.doNextPoll(this.props.buildId);
+    }
   }
 
   componentWillUnmount(): void {
@@ -192,7 +201,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
 
       // (not awaiting)
-      this.fetchProjectStats(buildId);
       this.fetchCargoFC(buildId);
 
       const newProj = await api.project.get(buildId);
@@ -206,15 +214,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
 
       // shift end of auto-updating to be +1 hour from now
+      const isPrep = newProj.buildType === fc_loading;
       let newAutoUpdateUntil = Date.now() + autoUpdateStopDuration;
-      window.document.title = `Build: ${newProj.buildName} in ${newProj.systemName}`;
+      window.document.title = isPrep ? `Build: ${newProj.buildName}` : `Build: ${newProj.buildName} in ${newProj.systemName}`;
       if (newProj.complete) {
         window.document.title += ' (completed)';
         newAutoUpdateUntil = 0;
       }
 
-      const ships = await api.project.getShips([buildId]);
-      const showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
+      let ships: CmdrShip[] = [];
+      let showShips = false;
+      if (newProj.buildType !== fc_loading) {
+        // (not awaiting)
+        this.fetchProjectStats(buildId);
+      }
+
+      ships = await api.project.getShips([buildId]);
+      showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
 
       let sysMap = getSysMap(newProj.systemName);
       this.setState({
@@ -222,7 +238,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         proj: newProj,
         sysMap: sysMap,
         editProject: window.location.hash.startsWith('#edit'),
-        lastTimestamp: newProj.timestamp,
         editReady: new Set(newProj.ready),
         sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
         hasAssignments: Object.keys(newProj.commanders).reduce((s, c) => s += newProj.commanders[c].length, 0) > 0,
@@ -233,6 +248,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         autoUpdateUntil: newAutoUpdateUntil,
         ships,
         showShips,
+        isPrep,
+        prepBuilds: newProj.prepBuilds ?? {},
       });
 
       if (!sysMap && newProj.complete) {
@@ -272,9 +289,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       const pollData = await api.project.poll([buildId, ...Object.keys(this.state.fcCargo)]);
       const timestamp = pollData.max;
 
-      console.debug(`pollTimestamp at ${new Date().toISOString()}: changed? ${timestamp !== this.state.lastTimestamp}  (${timestamp} vs ${this.state.lastTimestamp}) Will stop after: ${new Date(this.state.autoUpdateUntil).toISOString()}`);
+      console.debug(`pollTimestamp at ${new Date().toISOString()}: changed? ${timestamp !== this.state.lastTimestamp} (${timestamp} vs ${this.state.lastTimestamp}) Will stop after: ${new Date(this.state.autoUpdateUntil).toISOString()}`);
       if (timestamp !== this.state.lastTimestamp) {
         // something has changed
+        this.setState({ lastTimestamp: timestamp });
         await this.fetchProject(buildId, true, true);
       } else if (Date.now() < this.state.autoUpdateUntil) {
         // nothing changed, schedule next poll
@@ -290,6 +308,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   };
 
   fetchProjectStats(buildId: string) {
+    if (this.state.isPrep) { return; }
+
     api.project.getStats(buildId)
       .then(stats => this.setState({ summary: stats }))
       .catch(err => this.setState({ errorMsg: err.message }));
@@ -331,7 +351,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy, fcCargo } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy, fcCargo, isPrep } = this.state;
 
     if (loading) {
       return <div className='project-view'>
@@ -470,11 +490,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       },
     ];
 
-    // remove buttons from completed projects: Deliver and Edit Commodities
     if (proj.complete) {
+      // remove buttons from completed projects: Deliver and Edit Commodities
       commands.splice(0, 1); // Deliver
       commands.splice(1, 1); // Edit commodities
       commands.splice(3, 1); // Set primary
+    } else if (isPrep) {
+      // remove buttons for isPrep projects
+      commands.splice(2, 1); // Edit commodities
     }
 
     // prepare rich copy link
@@ -488,9 +511,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
-          <CopyButton text={proj.systemName} fontSize={16} />
-          <Link href={`#sys=${encodeURIComponent(proj.systemName)}`} style={{ marginLeft: 4 }}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
-          <span style={{ fontSize: 16 }}><CopyButton text={copyLink} title='Copy a link to this page' /></span>
+          {isPrep && <>
+            <Icon className='icon-inline' iconName='AddToShoppingList' style={{ color: appTheme.palette.themeTertiary, fontSize: 20, marginRight: 10 }} />
+            {proj.buildName}
+          </>}
+          {!isPrep && <>
+            <CopyButton text={proj.systemName} fontSize={16} />
+            <Link href={`#sys=${encodeURIComponent(proj.systemName)}`} style={{ marginLeft: 4 }}>{proj.systemName}</Link>: {proj.buildName} {proj.complete && <span> (completed)</span>}
+            <span style={{ fontSize: 16 }}><CopyButton text={copyLink} title='Copy a link to this page' /></span>
+          </>}
         </h2>
         {proj.marketId <= 0 && this.renderMissingMarketId()}
         {mode === Mode.view && <CommandBar className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`} items={commands} />}
@@ -501,7 +530,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           {this.renderCommodities(fcMergedCargo)}
         </div>}
 
-        {mode === Mode.view && proj.complete && this.renderSystemEffects(proj)}
+        {!isPrep && mode === Mode.view && proj.complete && this.renderSystemEffects(proj)}
 
         <WhereToBuy
           visible={!!showWhereToBuy}
@@ -512,7 +541,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           onClose={() => this.setState({ showWhereToBuy: false })}
         />
 
-        {!!editCommodities && !proj.complete && this.renderEditCommodities()}
+        {!isPrep && !!editCommodities && !proj.complete && this.renderEditCommodities()}
 
         {mode === Mode.view && this.renderProjectDetails(proj)}
 
@@ -550,6 +579,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <Modal
         isOpen={confirmDelete}
         onDismiss={() => this.setState({ confirmDelete: false })}
+        styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
       >
         <div className='center'>
           <p>
@@ -560,7 +590,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             text='Yes'
             disabled={submitting}
             iconProps={{ iconName: 'Warning' }}
-            style={{ backgroundColor: appTheme.palette.yellowLight, color: 'black' }}
+            style={{ backgroundColor: appTheme.palette.yellowDark, color: 'black' }}
             onClick={this.onProjectDelete}
           />
           &nbsp;
@@ -574,7 +604,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </div>
       </Modal>
 
-      <Modal isOpen={confirmComplete}>
+      <Modal isOpen={confirmComplete} styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}>
         <div className='center'>
           <p>
             <h3 className={cn.h3}>Confirm completion?</h3>
@@ -654,7 +684,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities(fcMergedCargo: Cargo) {
-    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy, showShips, showShipsTargetId, showShipsTargetCargo } = this.state;
+    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy, showShips, showShipsTargetId, showShipsTargetCargo, isPrep } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     // start with commodities from project, adding things on FCs (if they are visible)
@@ -674,11 +704,39 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // do not render list if nothing left to deliver
     if (sumTotal === 0) {
-      return <>
-        <div>Congratulations!</div>
-        <br />
-        <PrimaryButton iconProps={{ iconName: 'Completed' }} onClick={() => this.setState({ confirmComplete: true })}>Mark project complete</PrimaryButton>
-      </>;
+      if (isPrep) {
+        return <>
+          <div style={{ textAlign: 'center', minWidth: 500, marginTop: 40, fontSize: 14 }}>
+            <ActionButton
+              className={cn.bBox2}
+              text='Add a building to track required cargo'
+              onClick={() => {
+                document.getElementById('bt-add-build-btn')?.click();
+              }}
+            />
+
+            <div style={{ margin: 40, textAlign: 'center', color: appTheme.palette.themeSecondary }}>
+              Loading projects are lighter weight, intended for collecting supplies on Fleet Carriers before placing construction sites.
+              <br />
+              <br />
+              They can track cargo needed for multiple builds.
+              <br />
+              <br />
+              <br />
+              <div style={{ color: appTheme.palette.yellowDark, fontSize: 12, margin: '10px 0' }}>
+                <Icon className='icon-inline' iconName='Warning' />
+                &nbsp;This is an experimental feature - these projects may be hidden or unsupported in older versions of client apps
+              </div>
+            </div>
+          </div>
+        </>;
+      } else {
+        return <>
+          <div>Congratulations!</div>
+          <br />
+          <PrimaryButton iconProps={{ iconName: 'Completed' }} onClick={() => this.setState({ confirmComplete: true })}>Mark project complete</PrimaryButton>
+        </>;
+      }
     }
 
     const rows = [];
@@ -711,6 +769,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       .filter(v => v < 0)
       .reduce((sum, v) => sum += -v, 0);
 
+    let countEnoughOnAnything = 0;
     for (const key of groupsAndCommodityKeys) {
       if (key in groupedCommodities) {
         if (sort === SortMode.alpha) { continue; }
@@ -733,8 +792,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // TODO: Entirely split view rendering
       flip = !flip;
-      var row = this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff);
+      var { row, enoughOnShipsOrFC } = this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff);
       rows.push(row)
+      if (enoughOnShipsOrFC) { countEnoughOnAnything++; }
 
       // show extra row to assign a commodity to a cmdr?
       if (assignCommodity === key && proj.commanders) {
@@ -752,14 +812,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     }
     let nn = 0;
+    const totalIsEnough = validCargoNames.length && countEnoughOnAnything === validCargoNames.length;
     const totalsRow = <tr key='tr-sum'>
-      <td className={`commodity-name ${cn.br} ${cn.bt}`} style={{ textAlign: 'right' }}>Sum total:&nbsp;</td>
-      {totals.map(t => (<td key={`tr-${++nn}`} className={`commodity-need ${cn.br} ${cn.bt}`}>{t}</td>))}
+      <td className={`commodity-name ${cn.br} ${cn.bt}`} style={{ textAlign: 'right' }}>
+        <span>Sum total:&nbsp;</span>
+        {totalIsEnough && <Icon iconName={'TaskSolid'} style={{ fontSize: 14, height: 16, width: 16, marginRight: 2, marginTop: 4, color: 'lime' }} />}
+      </td>
+      {totals.map((t, i) => (<td key={`tr-${++nn}`} className={`commodity-need ${i + 1 < totals.length || hasAssignments ? cn.br : ''} ${cn.bt}`}>{t}</td>))}
       {hasAssignments && <td className={cn.bt} style={{ textAlign: 'right' }}>&nbsp;</td>}
     </tr>;
 
-    return <>
-      {mode === Mode.view && <h3 className={cn.h3}>
+    return <div style={{ cursor: 'default' }}>
+      {mode === Mode.view && <h3 className={cn.h3} style={{ marginBottom: 16 }}>
         Commodities:&nbsp;
         <ActionButton
           className={cn.bBox}
@@ -828,20 +892,21 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </table>
 
       {sumTotal > 0 && <div className='cargo-remaining'>
-        <CargoRemaining sumTotal={sumTotal} label='Remaining cargo' />
+        {!isPrep && <CargoRemaining sumTotal={sumTotal} label='Remaining cargo' />}
         {!hideFCColumns && fcSumCargoDeficit > 0 && <CargoRemaining sumTotal={fcSumCargoDeficit} label='Fleet Carrier deficit' />}
       </div>}
 
       {!!showShipsTargetId && this.renderShipsCallout()}
-    </>
+    </div>
   }
 
   getCargoFCHeaders() {
+    const keys = Object.keys(this.state.fcCargo);
     return [
       <th key={`fcc-have`} className={`commodity-need ${cn.bb} ${cn.br}`} title='Difference between amount needed and sum total across linked Fleet Carriers'>FC Diff</th>,
-      ...Object.keys(this.state.fcCargo).map(k => {
+      ...keys.map((k, i) => {
         const fc = this.state.proj!.linkedFC.find(fc => fc.marketId.toString() === k);
-        return fc && <th key={`fcc${k}`} className={`commodity-need ${cn.bb} ${cn.br}`} title={`${fc.displayName} (${fc.name})`} >
+        return fc && <th key={`fcc${k}`} className={`commodity-need ${cn.bb} ${i + 1 < keys.length || this.state.hasAssignments ? cn.br : ''}`} title={`${fc.displayName} (${fc.name})`} >
           <ActionButton
             className={cn.bBox}
             style={{ height: 20, padding: 0, fontWeight: 'bold', color: appTheme.palette.themePrimary }}
@@ -889,7 +954,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo): JSX.Element {
+  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo): { enoughOnShipsOrFC: boolean, row: JSX.Element } {
     const displayName = mapCommodityNames[key] ?? key;
     const currentCmdr = store.cmdrName;
 
@@ -937,7 +1002,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
     }
 
-    if (need > 0) {
+    if (need > 0 && !this.state.isPrep) {
       menuItems.push({
         key: 'set-to-zero',
         text: 'Set to zero',
@@ -988,90 +1053,95 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const className = need !== 0 ? '' : 'done ';
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
-    return <tr key={`cc-${key}`} className={className} style={style}>
-      <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`} style={{ position: 'relative' }}>
-        <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
-          <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
-          &nbsp;
-          {isReady && <Icon iconName='CompletedSolid' className='icon-inline' style={{ fontSize: 14 }} title={`${displayName} is ready`} />}
+    return {
+      enoughOnShipsOrFC: enoughOnShipsOrFC,
+      row: <tr key={`cc-${key}`} className={className} style={style}>
+        <td className={`commodity-name ${cn.br}`} id={`cargo-${key}`} style={{ position: 'relative' }}>
+          <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 2 }}>
+            <CommodityIcon name={key} /> <span id={`cn-${key}`} className='t'>{displayName}</span>
+            &nbsp;
+            {isReady && <Icon iconName='CompletedSolid' className='icon-inline' style={{ fontSize: 14 }} title={`${displayName} is ready`} />}
 
-          {isContextTarget && <ContextualMenu
-            target={`#cn-${key}`}
-            onDismiss={() => this.setState({ cargoContext: undefined })}
-            items={menuItems}
-            styles={{
-              container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
-            }}
-          />}
+            {isContextTarget && <ContextualMenu
+              target={`#cn-${key}`}
+              onDismiss={() => this.setState({ cargoContext: undefined })}
+              items={menuItems}
+              styles={{
+                container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, }
+              }}
+            />}
 
-          <IconButton
-            className={`btn ${cn.bBox}`}
-            iconProps={{ iconName: 'ContextMenu' }}
-            title={`Commands for: ${key}`}
-            style={{ position: 'absolute', right: 20, top: 1, color: appTheme.palette.themePrimary, width: 22, height: 20 }}
-            onClick={() => {
-              this.setState({ cargoContext: key });
-            }}
-          />
-        </Stack>
+            <IconButton
+              className={`btn ${cn.bBox}`}
+              iconProps={{ iconName: 'ContextMenu' }}
+              title={`Commands for: ${key}`}
+              style={{ position: 'absolute', right: 20, top: 1, color: appTheme.palette.themePrimary, width: 22, height: 20 }}
+              onClick={() => {
+                this.setState({ cargoContext: key });
+              }}
+            />
+          </Stack>
 
-        {(enoughOnShipsOrFC) && <span style={{ position: 'absolute', right: 0, top: 2 }} title='Enough cargo is available on linked Fleet Carriers or tracked ships'>
-          <Icon iconName={'TaskSolid'} style={{ fontSize: 14, height: 16, width: 16, color: 'lime' }} />
-        </span>}
+          {(enoughOnShipsOrFC) && <span style={{ position: 'absolute', right: 0, top: 2 }} title='Enough cargo is available on linked Fleet Carriers or tracked ships'>
+            <Icon iconName={'TaskSolid'} style={{ fontSize: 14, height: 16, width: 16, color: 'lime' }} />
+          </span>}
 
-      </td>
-
-      <td className={`commodity-need ${cn.br}`}  >
-        <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
-      </td>
-
-      {showShips && <td className={`${cn.br}`} style={{ textAlign: 'center' }}>{onShipsElement}</td>}
-
-      {fcMarketIds.length > 0 && !this.state.hideFCColumns && <>
-        {/* The FC Diff cell, then a cell for each FC */}
-        <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
-          <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: 'black' }} >
-            {fcSumElement}
-          </div>
         </td>
-        {fcMarketIds.map(marketId => <td key={`fcc${marketId}`} className={`commodity-need ${cn.br}`} >
-          {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
-        </td>)}
-      </>
-      }
 
-      {this.state.hasAssignments && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
-    </tr>;
+        <td className={`commodity-need ${cn.br}`}>
+          <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
+        </td>
+
+        {showShips && <td className={`${cn.br}`} style={{ textAlign: 'center' }}>{onShipsElement}</td>}
+
+        {fcMarketIds.length > 0 && !this.state.hideFCColumns && <>
+          {/* The FC Diff cell, then a cell for each FC */}
+          <td key='fcc-have' className={`commodity-diff ${cn.br}`}  >
+            <div className='bubble' style={{ backgroundColor: fcDiffCellColor, color: 'black' }} >
+              {fcSumElement}
+            </div>
+          </td>
+          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} >
+            {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
+          </td>)}
+        </>
+        }
+
+        {this.state.hasAssignments && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
+      </tr>
+    };
   }
 
   renderProjectDetails(proj: Project) {
+    const { isPrep } = this.state;
+
     return <div className='half'>
       <div className='project'>
-        <h3 className={cn.h3}>Build:</h3>
+        <h3 className={cn.h3}>Project:</h3>
         <table style={{ fontSize: 14 }}>
           <tbody>
             <tr>
               <td>Build name:</td>
               <td>
-                <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>
+                <div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight, minWidth: 280 }}>
                   {proj.buildName}
                   {proj.isPrimaryPort && <Icon iconName='CrownSolid' style={{ marginLeft: 8, fontWeight: 'bold' }} title='System primary port' />}
                 </div>
               </td>
             </tr>
 
-            <tr>
+            {!isPrep && <tr>
               <td>Build type:</td>
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}><BuildTypeDisplay buildType={proj.buildType} /></div>
               </td>
-            </tr>
+            </tr>}
 
-            <tr>
+            {!isPrep && <tr>
               <td>System name:</td>
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.systemName}</div></td>
-            </tr>
+            </tr>}
 
-            {!!proj.bodyName && <tr>
+            {!isPrep && !!proj.bodyName && <tr>
               <td>Body name:</td>
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{proj.bodyName}&nbsp;</div></td>
             </tr>}
@@ -1102,40 +1172,191 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
           </tbody>
         </table>
+
+        {isPrep && this.renderPrepBuilds()}
         {this.renderCommanders()}
         {this.renderLinkedFC()}
-        {!proj.complete && <BuildEffects buildType={proj.buildType} />}
+        {!this.state.isPrep && !proj.complete && <BuildEffects buildType={proj.buildType} />}
       </div>
     </div>;
   };
 
+  renderPrepBuilds() {
+    const { prepBuilds, proj, savingPrepBuilds } = this.state;
+    if (!prepBuilds || !proj) { return; }
+
+    const rows = Object.entries(prepBuilds).map(([buildType, count]) => {
+      const type = getSiteType(buildType)!;
+      return <div key={`pbb-${buildType}`} style={{ width: 'max-content' }}>
+        <Stack horizontal verticalAlign='center'>
+          <div>{count} x {type.displayName2} ({buildType})</div>
+          <IconButton
+            className={`${cn.bBox}`}
+            iconProps={{ iconName: 'BoxAdditionSolid' }}
+            title={`Add another ${buildType}`}
+            style={{ marginLeft: 8, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
+            onClick={() => { this.adjustPrepBuilds(buildType); }}
+          />
+          <IconButton
+            className={`${cn.bBox}`}
+            iconProps={{ iconName: count > 1 ? 'BoxSubtractSolid' : 'BoxMultiplySolid' }}
+            title={`Remove a ${buildType}`}
+            style={{ marginLeft: 4, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
+            onClick={() => { this.adjustPrepBuilds(buildType, true); }}
+          />
+        </Stack>
+      </div>;
+    });
+
+    const noBuilds = Object.keys(prepBuilds).length === 0;
+    const isDirty = JSON.stringify(prepBuilds) !== JSON.stringify(proj.prepBuilds ?? {});
+
+    if (!rows.length) {
+      rows.push(<div key='pbb-none' style={{ color: appTheme.palette.themeTertiary }}>None</div>);
+    }
+
+    return <div style={{ userSelect: 'none' }}>
+      <h3 className={cn.h3} style={{ marginTop: 20 }}>
+        {isDirty && <ActionButton
+          className={cn.bBox}
+          iconProps={{ iconName: 'Save' }}
+          text='Save'
+          title='Save changes to buildings'
+          style={{
+            float: 'right',
+            height: 22,
+            color: savingPrepBuilds ? 'grey' : undefined,
+          }}
+          disabled={savingPrepBuilds}
+          onClick={this.onSavePrepBuilds}
+        />}
+
+        <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign='center'>
+          <span>Building:</span>
+
+          <span>
+            <ViewEditBuildType
+              asAddBtn
+              highlightAdd={noBuilds}
+              buildType=''
+              onChange={bt => this.adjustPrepBuilds(bt)}
+            />
+          </span>
+
+          {savingPrepBuilds && isDirty && <Spinner
+            style={{ marginTop: -2 }}
+            size={SpinnerSize.small}
+            labelPosition='right'
+            label='Saving...'
+          />}
+        </Stack>
+      </h3>
+
+      <div style={{ fontSize: 14, marginLeft: 20 }}>
+        {rows}
+      </div >
+    </div>;
+  }
+
+  adjustPrepBuilds(newBuild?: string, remove?: boolean) {
+
+    const newPrepBuilds = { ...this.state.prepBuilds };
+
+    if (newBuild) {
+      newPrepBuilds[newBuild] = (newPrepBuilds[newBuild] ?? 0) + (remove ? -1 : +1);
+      if (newPrepBuilds[newBuild] === 0) { delete newPrepBuilds[newBuild]; }
+    }
+
+    // alpha sort + collect total cargo needs
+    const cargos: Cargo[] = [];
+    const sorted = Object.keys(newPrepBuilds)
+      .sort((a, b) => a.localeCompare(b))
+      .reduce((m, bt) => {
+        m[bt] = newPrepBuilds[bt];
+        // sum cargo needs
+        const haul = getAvgHaulCosts(bt);
+        for (let n = 0; n < m[bt]; n++) {
+          cargos.push(haul);
+        }
+
+        return m;
+      }, {} as Record<string, number>)
+
+    // determine new cargo needs
+    const cargoNeeded = mergeCargo(cargos);
+
+    const newProj: Project = {
+      ...this.state.proj!,
+      commodities: cargoNeeded,
+      maxNeed: sumCargo(cargoNeeded),
+    };
+
+    this.setState({
+      prepBuilds: sorted,
+      proj: newProj,
+      sumTotal: sumCargo(cargoNeeded),
+    });
+  }
+
+  onSavePrepBuilds = async () => {
+    const { proj, prepBuilds } = this.state;
+    if (!proj?.buildId || !prepBuilds) return;
+
+    this.setState({ savingPrepBuilds: true });
+    await delay(500);
+
+    try {
+      const deltaProj = {
+        buildId: proj.buildId,
+        prepBuilds: prepBuilds,
+      };
+      const savedProj = await api.project.update(proj.buildId, deltaProj);
+
+      // success
+      console.log('onSavePrepBuilds: savedProj:', savedProj);
+      this.setState({
+        savingPrepBuilds: false,
+        proj: savedProj,
+        lastTimestamp: savedProj.timestamp,
+        editReady: new Set(savedProj.ready),
+        sumTotal: sumCargo(savedProj.commodities),
+        hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
+        prepBuilds: savedProj.prepBuilds,
+      });
+
+    } catch (err: any) {
+      this.setState({ errorMsg: err.message });
+    }
+  }
+
   renderCommanders() {
-    const { proj, showAddCmdr, newCmdr } = this.state;
+    const { proj, showAddCmdr, newCmdr, isPrep } = this.state;
     if (!proj?.commanders) { return <div />; }
 
     const rows = [];
     for (const key in proj.commanders) {
+      const hideCmdrRemove = isPrep && isMatchingCmdr(key, proj.architectName);
       var row = <li key={`@${key}`}>
         <span className={`removable ${cn.removable}`}>
           {key}
-          <Icon
+          {!hideCmdrRemove && <Icon
             className={`btn ${cn.btn}`}
             iconName='Delete'
             title={`Remove commander: ${key}`}
             style={{ color: appTheme.palette.themePrimary, }}
             onClick={() => { this.onClickCmdrRemove(key); }}
-          />
+          />}
         </span>
       </li>;
       rows.push(row)
     }
 
     return <>
-      <br />
-      <h3 className={cn.h3}>
+      <h3 className={cn.h3} style={{ marginTop: 20 }}>
         {Object.keys(proj.commanders).length ?? 0} Commanders:
         &nbsp;
         {!showAddCmdr && <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: 'Add' }}
           text='Add'
           title='Add a new Commander to this project'
@@ -1212,6 +1433,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {proj.linkedFC.length ?? 0} Linked Fleet Carriers:
         &nbsp;
         {!showAddFC && <ActionButton
+          className={cn.bBox}
           iconProps={{ iconName: 'Add' }}
           text='Add'
           title='Link a new Fleet Carrier to this project'
@@ -1426,7 +1648,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       store.removeRecentProject(buildId);
       const nextUrl = this.state.proj?.systemName
         ? `#sys=${encodeURIComponent(this.state.proj?.systemName)}`
-        : `#`;
+        : `#build`;
       window.location.assign(nextUrl);
       window.location.reload();
 
@@ -1537,7 +1759,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       >
         Unfortunately this build project was created without a key piece of information. You can continue to use it as is but the SrvSurvey app cannot auto update commodities needed until this is corrected.
       </MessageBar>
-      <Modal isOpen={fixMarketId !== undefined}>
+      <Modal isOpen={fixMarketId !== undefined} styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}>
         <div style={{ textAlign: 'left' }}>
           <h3 className={cn.h3}>Set corrected Market ID</h3>
           <div>The <code className={cn.navy}>MarketID</code> value can be found in your journal files once docked at the construction ship or site for this project:</div>
@@ -1593,17 +1815,30 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   renderStats() {
     const { summary, proj, sumTotal, ships } = this.state;
-    if (!summary || !proj) { return; }
-
+    if (!proj) { return; }
     // roughly calculate progress by the curremt sum from the highest value known
     const approxProgress = proj.maxNeed - sumTotal;
-    const percent = 100 / proj.maxNeed * approxProgress;
+    let percent = 100 / proj.maxNeed * approxProgress;
+
+    const shipsCargo = mergeCargo((ships ?? []).map(s => s.cargo).flat());
+    const shipsTotal = getCargoCountOnHand(proj.commodities, shipsCargo);
 
     // TODO: unify "amount delivered" across deliveries and amount remaining
-    const shipsTotal = ships?.reduce((t, s) => {
-      t += Object.values(s.cargo).reduce((st, c) => st += c, 0);
-      return t;
-    }, 0);
+
+    if (!summary) {
+      // for fc_loading projects...
+      percent = 100 / proj.maxNeed * this.countReadyOnFCs;
+      return <div className='half'>
+        <h3 className={cn.h3}>Progress: {Math.floor(percent)}%</h3>
+        <div className='stats-header'>
+          <>
+            Ready on Fleet Carriers: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{this.countReadyOnFCs.toLocaleString()}</span>
+            {!!shipsTotal && <> and on ships: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{shipsTotal.toLocaleString()}</span></>}
+          </>
+        </div>
+        {(approxProgress > 0 || this.countReadyOnFCs > 0) && <ChartGeneralProgress noProgress progress={approxProgress} onShips={shipsTotal} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
+      </div>;
+    }
 
     const cmdrColors = getColorTable(Object.keys(summary.cmdrs));
     return <div className='half'>
@@ -1612,6 +1847,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {!!summary.totalDeliveries && <div className='stats-header'>
           <span>Total cargo delivered: </span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{approxProgress.toLocaleString()}</span>
           <span>&nbsp;Deliveries tracked:&nbsp;</span><span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{summary.totalDeliveries.toLocaleString()}</span>
+          <div>
+            Ready on Fleet Carriers: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{this.countReadyOnFCs.toLocaleString()}</span>
+            {!!shipsTotal && <> and on ships: <span className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }}>{shipsTotal.toLocaleString()}</span></>}
+          </div>
         </div>}
 
         {(approxProgress > 0 || this.countReadyOnFCs > 0) && <ChartGeneralProgress progress={approxProgress} onShips={shipsTotal} readyOnFC={this.countReadyOnFCs} maxNeed={proj.maxNeed} />}
@@ -1634,7 +1873,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderDeliver() {
-    const { proj, sort, nextDelivery, showBubble, submitting, fcCargo, deliverMarketId } = this.state;
+    const { proj, sort, nextDelivery, showBubble, submitting, fcCargo, deliverMarketId, isPrep } = this.state;
     if (!proj) return;
 
     // build up delivery options if there are FCs we can deliver to
@@ -1644,6 +1883,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       { key: 'divider_1', text: '-', itemType: DropdownMenuItemType.Divider },
       ...fcCargoKeys.map(marketId => ({ key: marketId, text: this.getFullFCName(marketId) }))
     ];
+    if (isPrep) {
+      // remove construction site if isPrep
+      destinationOptions.splice(0, 1);
+    }
 
     const destinationPicker = <Dropdown
       id='deliver-destination'
