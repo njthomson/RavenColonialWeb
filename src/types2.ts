@@ -203,4 +203,7 @@ export const mapBodyType = {
   ac: 'Asteroid cluster',
 };
 
-
+export type HaulCostsJson = {
+  typeMap: Record<string, string[]>;
+  buildCosts: Record<string, Record<string, number>>;
+}

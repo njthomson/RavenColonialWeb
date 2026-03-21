@@ -414,7 +414,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
       const systemProjectRows = mapBySystem[systemName].map(p => {
         const isPrep = p.buildType === fc_loading;
         const sumNeed = sumCargos(p.commodities);
-        const approxProgress = p.maxNeed - sumNeed;
+        const approxProgress = isPrep ? 0 : p.maxNeed - sumNeed;
         const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
         const percent = p.maxNeed === 0 ? 0 : 100 / p.maxNeed * (isPrep ? countReadyOnFCs : approxProgress);
 

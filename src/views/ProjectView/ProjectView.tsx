@@ -1189,7 +1189,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       const type = getSiteType(buildType)!;
       return <div key={`pbb-${buildType}`} style={{ width: 'max-content' }}>
         <Stack horizontal verticalAlign='center'>
-          <div>{count} x {type.displayName2} ({buildType})</div>
+          <div>{count} x {type.displayName2} : {buildType}</div>
           <IconButton
             className={`${cn.bBox}`}
             iconProps={{ iconName: 'BoxAdditionSolid' }}
@@ -1204,6 +1204,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             style={{ marginLeft: 4, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
             onClick={() => { this.adjustPrepBuilds(buildType, true); }}
           />
+          {buildType.endsWith(' (primary)') && <IconButton
+            className={`${cn.bBox}`}
+            iconProps={{ iconName: 'Crown' }}
+            title={`Use non-primary port costs`}
+            style={{ marginLeft: 4, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
+            onClick={() => {
+              this.adjustPrepBuilds(buildType, true);
+              setTimeout(() => this.adjustPrepBuilds(buildType.replace(' (primary)', '')), 10);
+            }}
+          />}
         </Stack>
       </div>;
     });
@@ -1239,7 +1249,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               asAddBtn
               highlightAdd={noBuilds}
               buildType=''
-              onChange={bt => this.adjustPrepBuilds(bt)}
+              onChange={bt => {
+                if (usePrimaryCosts.includes(bt)) { bt = `${bt} (primary)`; }
+                this.adjustPrepBuilds(bt);
+              }}
             />
           </span>
 
@@ -2121,4 +2134,23 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </>
   }
 }
+
+const usePrimaryCosts = [
+  'plutus',
+  'vulcan',
+  'dysnomia',
+  'vesta',
+  'prometheus',
+  'nemesis',
+  'no_truss',
+  'dual_truss',
+  'quad_truss',
+  'asteroid',
+  'ocellus',
+  'apollo',
+  'artemis',
+  'dodec',
+  'quint_truss',
+  'dec_truss',
+];
 
