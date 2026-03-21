@@ -12,6 +12,7 @@ export const getAverageHauls = (type: string): number => {
 
 export const getAvgHaulCosts = (type: string): Cargo => {
   type = type?.replace('?', '');
+  if (!type) return {};
 
   const matchKey = Object.keys(haulCosts.typeMap).find(k => Object.values(haulCosts.typeMap[k]).includes(type));
   if (matchKey) {
