@@ -455,6 +455,9 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (this.state.sysOriginal.nickname !== this.state.sysMap.nickname) {
       payload.nickname = this.state.sysMap.nickname;
     }
+    if (this.state.sysOriginal.publish !== this.state.sysMap.publish) {
+      payload.publish = this.state.sysMap.publish;
+    }
     if (this.state.sysOriginal.notes !== this.state.sysMap.notes) {
       payload.notes = this.state.sysMap.notes;
     }
@@ -715,6 +718,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       || orderIDs.length !== sysOriginal.sites?.length
       || sysMap.architect !== sysOriginal.architect
       || sysMap.nickname !== sysOriginal.nickname
+      || sysMap.publish !== sysOriginal.publish
       || sysMap.notes !== sysOriginal.notes
       || sysMap.open !== sysOriginal.open
       || sysMap.reserveLevel !== sysOriginal.reserveLevel

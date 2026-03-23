@@ -6,6 +6,7 @@ export interface Sys {
   rev: number;
   name: string;
   nickname?: string;
+  publish?: boolean;
   saveName?: string;
   notes?: string;
   id64: number;

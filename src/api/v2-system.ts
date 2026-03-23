@@ -131,6 +131,7 @@ export interface SitesPut {
   slots?: Record<number, number[]>,
   open?: boolean;
   nickname?: string;
+  publish?: boolean;
   notes?: string;
   saveName?: string;
   idxCalcLimit?: number;

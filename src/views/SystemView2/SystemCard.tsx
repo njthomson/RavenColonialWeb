@@ -7,6 +7,7 @@ import { ReserveLevel } from "../../types";
 import { isMatchingCmdr, isMobile } from "../../util";
 import { Sys } from "../../types2";
 import { store } from "../../local-storage";
+import { CalloutMsg } from "../../components/CalloutMsg";
 
 export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemView2, onClose: () => void }> = (props) => {
   const { sysMap, sysOriginal, canEditAsArchitect } = props.sysView.state;
@@ -68,6 +69,22 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
                 }}
               />
             </Stack>
+
+            <div />
+            <div>
+              {sysMap.nickname && sysMap.name !== sysMap.nickname && <Stack horizontal verticalAlign='baseline' tokens={{ childrenGap: 4 }} style={{ marginLeft: 8, fontSize: 12 }}>
+                <input
+                  type='checkbox'
+                  checked={!!sysMap.publish}
+                  onChange={() => {
+                    sysMap.publish = !sysMap.publish;
+                    props.sysView.setState({ sysMap: sysMap });
+                  }}
+                />
+                <span>Publish</span>
+                <CalloutMsg height={14} iconStyle={{ fontSize: 12 }} msg='Published nicknames will be made available to other apps and services' />
+              </Stack>}
+            </div>
           </>}
 
           <div>Architect:</div>
