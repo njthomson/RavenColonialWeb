@@ -68,12 +68,6 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
           autoComplete='off'
           options={matches ?? []}
           onInputValueChange={this.onType}
-          onMenuOpen={() => {
-            // console.log(`onMenuOpen `, this.state);
-            if (!this.state.matches) {
-              this.onFind(this.state.searchText);
-            }
-          }}
           onRenderUpperContent={() => {
             // console.log(`upper: (${this.comboFindPendingTypeCount}) / ${this.state.searchText} / ${matches?.length}`);
             if (this.state.searching) {
