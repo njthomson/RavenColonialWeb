@@ -2,24 +2,24 @@ import './MarketLinks.css';
 import { FunctionComponent } from "react";
 import { appTheme, cn } from "../../theme";
 import { economyColors, mapName } from "../../site-data";
-import { SiteMap } from "../../system-model";
 import { ProjectLink } from "../ProjectLink/ProjectLink";
 import { SiteMap2 } from '../../system-model2';
 import { SystemView2 } from '../../views/SystemView2/SystemView2';
 import { SiteLink } from '../../views/SystemView2/SiteLink';
 import { Icon, Stack } from '@fluentui/react';
+import { siteAsProjRef } from '../../util';
 
-export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean, sysView?: SystemView2 }> = (props) => {
+export const MarketLinks: FunctionComponent<{ site: SiteMap2, showName?: boolean, sysView?: SystemView2 }> = (props) => {
   if (!props.site) return null;
 
   // exit early if this port does not have links
   if (!props.site.links) {
     return <div>
       <h3 className={cn.h3}>Market links:</h3>
-      {props.site.parentLink && <span>Contributes to: <ProjectLink proj={props.site.parentLink} noSys /></span>}
-      {!props.site.parentLink && <span style={{ fontSize: 12 }}>{props.site.buildName} does not receive market links</span>}
-      <br />
-      <br />
+      <div style={{ marginBottom: 16 }}>
+        {props.site.parentLink && <span>Contributes to: <ProjectLink proj={siteAsProjRef(props.site.parentLink)} noSys /></span>}
+        {!props.site.parentLink && <span style={{ fontSize: 12 }}>{props.site.name} does not receive market links</span>}
+      </div>
     </div>;
   }
 
@@ -57,8 +57,8 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
   // list of strong linked sites
   const siteRows = props.site.links.strongSites.map(s => {
     return <div key={`link${props.site.buildId}-${s.buildId ?? (s as any).id}`} style={{ marginLeft: 8 }}>
-      {!props.sysView && <ProjectLink proj={s} noSys noBold />}
-      {props.sysView && <SiteLink prefix='ml' site={s as any as SiteMap2} sysView={props.sysView} siteGraphType='none' noPin />}
+      {!props.sysView && <ProjectLink proj={siteAsProjRef(s)} noSys noBold />}
+      {props.sysView && <SiteLink prefix='ml' site={s} sysView={props.sysView} siteGraphType='none' noPin />}
     </div>;
   });
 
@@ -66,7 +66,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
 
     <h3 id='market-links' className={cn.h3} style={{ cursor: props.showName ? 'move' : undefined }}>
       {!props.showName && <>Market links:</>}
-      {props.showName && <>Market links for: {props.site.buildName}</>}
+      {props.showName && <>Market links for: {props.site.name}</>}
     </h3>
 
     <Stack horizontal verticalAlign='center' style={{ position: 'relative' }}>
@@ -98,7 +98,7 @@ export const MarketLinks: FunctionComponent<{ site: SiteMap, showName?: boolean,
   </div>;
 };
 
-const generateColorBlocks = (site: SiteMap, width: number, height: number): JSX.Element[] => {
+const generateColorBlocks = (site: SiteMap2, width: number, height: number): JSX.Element[] => {
   if (!site.links) return [];
 
   let maxLinks = 0
@@ -135,7 +135,7 @@ const generateColorBlocks = (site: SiteMap, width: number, height: number): JSX.
   return colorBlocks;
 };
 
-export const MarketLinkBlocks: FunctionComponent<{ site: SiteMap, width: number, height: number; }> = (props) => {
+export const MarketLinkBlocks: FunctionComponent<{ site: SiteMap2, width: number, height: number; }> = (props) => {
   if (!props.site.links) return null;
 
   const colorBlocks = generateColorBlocks(props.site, props.width, props.height);

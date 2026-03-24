@@ -1,6 +1,7 @@
 import cargoTypes from './assets/cargo-types.json';
 import { store } from './local-storage';
-import { Cargo, mapCommodityNames, mapSourceEconomy, SortMode } from "./types";
+import { SiteMap2 } from './system-model2';
+import { Cargo, mapCommodityNames, mapSourceEconomy, ProjectRefLite, SortMode } from "./types";
 
 let numSeparator: string | undefined = undefined;
 export const parseIntLocale = (txt: string | null | undefined, force: boolean = false) => {
@@ -265,4 +266,17 @@ export const isMatchingCmdr = (cmdrA?: string, cmdrB?: string) => {
 
   // console.log(`isMatchingCmdr: ${cmdrA} vs ${cmdrB}`);
   return cmdrA === cmdrB;
+}
+
+export const siteAsProjRef = (site: SiteMap2): ProjectRefLite => {
+  const ref: ProjectRefLite = {
+    buildName: site.name,
+    buildId: site.buildId,
+    buildType: site.buildType,
+    complete: site.status === 'complete' || site.status === 'demolish',
+    isMock: site.status === 'plan',
+    isPrimaryPort: site.id === site.sys.primaryPortId,
+    systemName: site.sys.name,
+  };
+  return ref;
 }

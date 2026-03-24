@@ -14,15 +14,15 @@ import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
 import { TimeRemaining } from '../../components/TimeRemaining';
 import { EditProject } from '../../components/EditProject/EditProject';
 import { MarketLinks } from '../../components/MarketLinks/MarketLinks';
-import { fetchSysMap, getSysMap, SysMap } from '../../system-model';
 import { BuildEffects } from '../../components/BuildEffects';
 import { WhereToBuy } from '../../components/WhereToBuy/WhereToBuy';
 import { getSiteType, mapName } from '../../site-data';
 import { EconomyBlock } from '../../components/EconomyBlock';
 import { ShowCoachingMarks } from '../../components/ShowCoachingMarks';
-import { EconomyTable } from '../../components/MarketLinks/EconomyTable';
 import { ViewEditBuildType } from '../SystemView2/ViewEditBuildType';
 import { getAvgHaulCosts } from '../../avg-haul-costs';
+import { EconomyTable2 } from '../SystemView2/EconomyTable2';
+import { buildSystemModel2, SysMap2 } from '../../system-model2';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -31,7 +31,7 @@ interface ProjectViewProps {
 interface ProjectViewState {
   buildId?: string;
   proj?: Project;
-  sysMap?: SysMap;
+  sysMap?: SysMap2;
   lastTimestamp?: string;
   autoUpdateUntil: number;
   mode: Mode;
@@ -200,9 +200,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         refreshing: refreshing,
       });
 
-      // (not awaiting)
-      this.fetchCargoFC(buildId);
-
       const newProj = await api.project.get(buildId);
       // console.log('Project.fetch: end buildId:', newProj);
       store.addRecentProject(newProj);
@@ -229,14 +226,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         this.fetchProjectStats(buildId);
       }
 
-      ships = await api.project.getShips([buildId]);
-      showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
+      if (!newProj.complete) {
+        if (Object.keys(newProj.linkedFC).length > 0) {
+          this.fetchCargoFC(buildId); // (not awaiting)
+        }
 
-      let sysMap = getSysMap(newProj.systemName);
+        ships = await api.project.getShips([buildId]);
+        showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
+      }
+
       this.setState({
         buildId: newProj.buildId,
         proj: newProj,
-        sysMap: sysMap,
         editProject: window.location.hash.startsWith('#edit'),
         editReady: new Set(newProj.ready),
         sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
@@ -252,8 +253,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         prepBuilds: newProj.prepBuilds ?? {},
       });
 
-      if (!sysMap && newProj.complete) {
-        const sysMap = await fetchSysMap(newProj.systemName);
+      if (newProj.complete) {
+        const sys = await api.systemV2.getSys(newProj.systemAddress.toString());
+        const sysMap = buildSystemModel2(sys, false, store.applyBuffNerf);
         this.setState({ sysMap });
       } else {
         // if ALL commodities have a count of -1 ... it means the project is brand new and we want people to edit them to real numbers
@@ -316,8 +318,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   fetchCargoFC(buildId: string) {
-    // don't bother calling when we know there are zero FCs
+    // don't bother calling when we know there are zero FCs or the project is complete
     if (this.state.proj && Object.keys(this.state.proj.linkedFC).length === 0) return;
+    if (this.state.proj && this.state.proj.complete) return;
 
     api.project.getCargoFC(buildId)
       .then(fcCargo => this.setState({ fcCargo: fcCargo }))
@@ -2051,11 +2054,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <div className='half'>
       {site && sysMap && <>
+        {site.status === 'complete' && <EconomyTable2 site={site} sysView={undefined!} />}
         <MarketLinks site={site} />
-        {site.complete && <EconomyTable site={site} />}
       </>}
 
-      {<BuildEffects buildType={proj.buildType} />}
+      <BuildEffects buildType={proj.buildType} siteMap={site} />
     </div>;
   }
 

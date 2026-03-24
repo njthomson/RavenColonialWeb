@@ -4,7 +4,6 @@ import { Component, FunctionComponent, useState } from "react";
 import { getSiteType, mapName, SiteType, siteTypes, sysEffects, SysEffects } from "../../site-data";
 import { appTheme, cn } from "../../theme";
 import { asPosNegTxt, isMobile } from "../../util";
-import { SysMap } from "../../system-model";
 import { CalloutMsg } from "../CalloutMsg";
 import { Chevrons } from "../Chevrons";
 import { EconomyBlock } from "../EconomyBlock";
@@ -72,7 +71,6 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
 
 interface BigSiteTableProps {
   buildType: string | undefined,
-  sysMap?: SysMap;
   sysMap2?: SysMap2;
   onChange: (value: string) => void
   tableOnly?: boolean;
@@ -111,7 +109,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
             return false;
           }
         }
-        const showValid = this.props.sysMap || this.props.sysMap2;
+        const showValid = this.props.sysMap2;
         const { isValid } = isTypeValid2(this.props.sysMap2, t, getSiteType(this.props.buildType!, true));
         if (filterColumns.has('valid') && showValid && !filterColumns.has(`valid:${isValid}`)) { return false; }
         if (filterColumns.has('tier') && !filterColumns.has(`tier${t.tier}`)) { return false; }
@@ -203,7 +201,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       }
     ];
 
-    const showValid = this.props.sysMap || this.props.sysMap2;
+    const showValid = this.props.sysMap2;
     return <div className='build-type'>
       {headerContextKey && <>
         <ContextualMenu
@@ -455,7 +453,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     const { selection, filterColumns } = this.state;
 
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
-    const showValid = this.props.sysMap || this.props.sysMap2;
+    const showValid = this.props.sysMap2;
     const { isValid, msg, unlocks } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
     console.log(`${type.displayName2} => ${isValid} / ${msg}`);
 

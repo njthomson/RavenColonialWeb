@@ -1,8 +1,7 @@
 import { Icon, Stack, Link, Panel, PanelType } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { EconomyBlock } from "../../components/EconomyBlock";
-import { mapName } from "../../site-data";
-import { EconomyMap } from "../../system-model";
+import { EconomyMap, mapName } from "../../site-data";
 import { SiteMap2 } from "../../system-model2";
 import { appTheme, cn } from "../../theme";
 import { BodyFeature, mapBodyFeature } from "../../types";
@@ -14,9 +13,10 @@ import { EconomyBlocks } from "../../components/MarketLinks/MarketLinks";
 import { stellarRemnants } from "../../economy-model2";
 import { App } from "../../App";
 
-export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
-  const realMatch = props.sysView.state.realEconomies?.find(r => typeof r.id === 'number' ? r.id === props.site?.marketId : r.id.substring(1) === props.site?.marketId.toString());
+export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
+  const realMatch = props.sysView?.state.realEconomies?.find(r => typeof r.id === 'number' ? r.id === props.site?.marketId : r.id.substring(1) === props.site?.marketId.toString());
   const realEconomy = realMatch?.economies;
+  const systemName = props.site.sys.name;
 
   const [showAudit, setShowAudit] = useState(false);
   const [bodyOverride, setBodyOverride] = useState(false);
@@ -98,7 +98,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
         </tr>;
       });
 
-    if (props.site.marketId) {
+    if (props.site.marketId && !!props.sysView) {
       if (realMatch) {
         spanshHeader = <>
           {!!props.sysView.state.useIncomplete && <Icon iconName='Warning' style={{ color: colorYellow }} />}
@@ -136,7 +136,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
         spanshHeader = <Link
           title={`Compare estimated values with real values from Spansh.\n\nNOTE: Comparisons are only valid when everything in the system is known to Raven Colonial.`}
           onClick={() => {
-            props.sysView.doGetRealEconomies();
+            props.sysView?.doGetRealEconomies();
             setLoadingCompare(true);
           }}
         >
@@ -196,7 +196,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
               {props.site.type.displayName2} (Tier: {props.site.type.tier} - {props.site.type.buildClass})
             </div>
             <div>Body type:&nbsp;{(props.site.body?.type && mapBodyTypeNames[props.site.body?.type]?.toUpperCase()) ?? <span style={{ color: 'grey' }}>unknown</span>} - {props.site.body?.name ?? <span style={{ color: 'grey' }}>unknown</span>}</div>
-            {props.site.body && <Link style={{ float: 'right', fontSize: 10 }} onClick={() => setBodyOverride(true)}>Override?</Link>}
+            {props.site.body && props.sysView && <Link style={{ float: 'right', fontSize: 10 }} onClick={() => setBodyOverride(true)}>Override?</Link>}
             <div>Body features:&nbsp;{bodyFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>System features:&nbsp;{systemFeatures || <span style={{ color: 'grey' }}>none</span>}</div>
             <div>Reserve level:&nbsp;
@@ -252,10 +252,10 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
           </table>
 
           <div className='small' style={{ marginTop: 16, marginBottom: 8 }}>
-            Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.name}" (${props.site.marketId}) in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
+            Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.name}" (${props.site.marketId}) in: ${systemName}`)}>report errors or issues</Link>
           </div>
 
-          {props.site.body && bodyOverride && <>
+          {props.site.body && bodyOverride && props.sysView && <>
             <BodyOverride
               body={props.site.body}
               sysView={props.sysView}
@@ -288,14 +288,14 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView: SystemV
     {!props.noDisclaimer && <>
       <div className='small' style={{ marginTop: 8, marginBottom: 8 }}>
         {!!realEconomy && <>
-          {!!props.sysView.state.useIncomplete && <div style={{ color: colorYellow }}>
+          {!!props.sysView?.state.useIncomplete && <div style={{ color: colorYellow }}>
             <Icon iconName='Warning' /> Spansh comparison may not match if calculating with incomplete sites <Icon iconName='TestBeakerSolid' />
           </div>}
           <div>
             <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
           </div>
         </>}
-        Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.name}" (${props.site.marketId}) in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
+        Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issue for "${props.site.name}" (${props.site.marketId}) in: ${systemName}`)}>report errors or issues</Link>
       </div>
     </>}
   </div>;

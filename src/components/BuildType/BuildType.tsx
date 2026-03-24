@@ -4,7 +4,6 @@ import { Component } from "react";
 import { getBuildTypeDisplayName, getSiteType, isOrbital, mapName, SiteType, siteTypes } from "../../site-data";
 import { appTheme } from "../../theme";
 import { delayFocus, isMobile } from "../../util";
-import { SysMap } from '../../system-model';
 import { store } from '../../local-storage';
 import { ShowCoachingMarks } from '../ShowCoachingMarks';
 import { BigSiteTable } from '../BigSiteTable/BigSiteTable';
@@ -13,7 +12,6 @@ import { SysMap2 } from '../../system-model2';
 interface ChooseBuildTypeProps {
   buildType: string | undefined,
   onChange: (value: string) => void
-  sysMap?: SysMap;
   sysMap2?: SysMap2;
   tableOnly?: boolean;
 }
@@ -221,7 +219,6 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
         {isLarge && <>
           <BigSiteTable
             buildType={this.props.buildType}
-            sysMap={this.props.sysMap}
             sysMap2={this.props.sysMap2}
             onChange={newValue => {
               this.props.onChange(newValue);

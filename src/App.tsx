@@ -405,7 +405,7 @@ export class App extends Component<AppProps, AppState> {
 
     switch (pivot) {
       case TopPivot.home: return <Home />;
-      case TopPivot.find: //return <ProjectSearch systemName={pivotArg} />;
+      case TopPivot.find:
       case TopPivot.sys: {
         if (pivotArg?.includes('/')) {
           const [systemName, savedName] = pivotArg.split('/');

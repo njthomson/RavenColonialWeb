@@ -75,7 +75,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
 
     </div>
     <EconomyTable2 site={siteMap} sysView={sysView} />
-    {siteMap?.links && <MarketLinks site={siteMap as any} sysView={props.sysView} />}
+    {siteMap?.links && <MarketLinks site={siteMap} sysView={props.sysView} />}
     {site.buildType && <BuildEffects buildType={site.buildType} siteMap={siteMap} />}
 
   </div>;

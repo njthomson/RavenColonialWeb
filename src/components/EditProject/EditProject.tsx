@@ -9,7 +9,7 @@ import { ChooseBody } from "../ChooseBody";
 import { TimeRemaining } from "../TimeRemaining";
 import { delay, isMobile } from '../../util';
 import { CalloutMsg } from '../CalloutMsg';
-import { SysMap } from '../../system-model';
+import { SysMap2 } from '../../system-model2';
 
 
 interface ChooseEditProjectProps {
@@ -17,7 +17,7 @@ interface ChooseEditProjectProps {
   onChange: (updatedProj?: Project) => void;
   showAdvanced?: boolean;
   fieldHighlight?: string;
-  sysMap?: SysMap;
+  sysMap?: SysMap2;
 }
 
 interface ChooseEditProjectState {
@@ -169,7 +169,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             <tr>
               <td><Label required>Build type:</Label></td>
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }} onKeyDown={(ev) => this.onKeyPress(ev)}>
-                <BuildType sysMap={this.props.sysMap} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
+                <BuildType sysMap2={this.props.sysMap} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
               </div>
               </td>
             </tr>

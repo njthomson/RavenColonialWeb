@@ -1,5 +1,4 @@
-import { Economy } from "./site-data";
-import { EconomyMap } from "./system-model";
+import { Economy, EconomyMap } from "./site-data";
 import { SiteMap2, SysMap2 } from "./system-model2";
 import { BodyFeature } from "./types";
 import { Bod, BT } from "./types2";

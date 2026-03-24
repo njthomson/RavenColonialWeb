@@ -45,7 +45,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, 
   });
 
   useMemo(async () => {
-    if (!store.cmdrName) { return []; }
+    if (!store.cmdrName || !showList) { return []; }
 
     try {
       console.debug(`Fetch FCs #${refetch + 1}`);
@@ -58,7 +58,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, 
       }
     }
     return [];
-  }, [refetch]);
+  }, [refetch, showList]);
 
   const width = 480 + knownFC.length * 80;
   let msg = undefined;

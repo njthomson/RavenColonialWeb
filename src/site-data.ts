@@ -16,6 +16,8 @@ export type Economy =
 
 export type ConcreteEconomy = Exclude<Economy, 'none' | 'colony'>;
 
+export type EconomyMap = Record<Exclude<Economy, 'colony' | 'none'>, number>;
+
 export type BuildClass =
   | 'starport'
   | 'installation'
