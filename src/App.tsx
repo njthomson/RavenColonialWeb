@@ -15,6 +15,7 @@ import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
 import { processLoginCodes, redirectToFrontierAuth } from './api/auth';
 import { ShareFeedback } from './components/ShareFeedback';
 import { GalMap } from './map/GalMap';
+import { ChainView } from './views/ChainView';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -178,6 +179,8 @@ export class App extends Component<AppProps, AppState> {
       nextState.cmdrEdit = true;
     } else if (params.has('map')) {
       nextState.pivot = TopPivot.map;
+    } else if (params.has('chain')) {
+      nextState.pivot = TopPivot.chain;
     } else {
       nextState.pivot = TopPivot.home;
     }
@@ -216,6 +219,8 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.table, pivotArg];
     } else if (params.has('map')) {
       return [TopPivot.map, pivotArg];
+    } else if (params.has('chain')) {
+      return [TopPivot.chain, pivotArg];
     } else {
       return [TopPivot.home, pivotArg];
     }
@@ -421,6 +426,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.table: return <BigSiteTablePage />;
       case TopPivot.login: return <div><Spinner style={{ marginTop: 100 }} size={SpinnerSize.large} label='Logging in ...' /></div>;
       case TopPivot.map: return <GalMap />;
+      case TopPivot.chain: return <ChainView id={pivotArg} />;
     }
   }
 

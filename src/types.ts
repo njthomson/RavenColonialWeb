@@ -14,6 +14,7 @@ export enum TopPivot {
   table = 'bst',
   login = 'login',
   map = 'map',
+  chain = 'chain',
 }
 
 export class RequestError extends Error {

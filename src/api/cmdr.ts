@@ -67,6 +67,10 @@ export const cmdr = {
   fetchMyFCs: async (): Promise<KnownFC[]> => {
     return await callAPI<KnownFC[]>(`/api/cmdr/fleetCarriers`, 'POST');
   },
+
+  getMyChains: async (): Promise<Record<string, string>> => {
+    return await callAPI<Record<string, string>>(`/api/cmdr/chains`);
+  },
 };
 
 export interface ViewAll {
