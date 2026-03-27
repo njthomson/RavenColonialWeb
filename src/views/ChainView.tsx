@@ -305,7 +305,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           <Icon iconName={iconName} style={{ color: iconColor }} />
         </div>,
 
-        <Link key={`cs-${s.id64}-b`} className='c1 sysName' target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ color: textColor }}>{s.name}</Link>,
+        <Link key={`cs-${s.id64}-b`} className='c1 sysName' target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ color: textColor }}>{s.nickname ?? s.name}</Link>,
 
         <div key={`cs-${s.id64}-c`} className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</div>,
 
@@ -426,7 +426,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         <div>Total haul: {sumTotal.toLocaleString()}</div>
         <div>Total progress: {sumProgress.toLocaleString()}</div>
         <div>Remaining: {sumRemaining.toLocaleString()}</div>
-        <div>Current system: {currentSystem?.name}</div>
+        {currentSystem && <div>Current system: <Link target='chainSys' href={`/#sys=${encodeURIComponent(currentSystem.id64)}`}>{currentSystem.nickname ?? currentSystem.name}</Link></div>}
       </div>
     </div>;
   }
