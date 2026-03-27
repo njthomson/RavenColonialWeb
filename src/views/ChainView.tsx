@@ -1,7 +1,7 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
 import { Chain, ChainSys, ChainType } from "../api/chain";
-import { ActionButton, CommandBar, DefaultButton, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, CommandBar, DefaultButton, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
 import { delayFocus, isMatchingCmdr, isMobile } from '../util';
@@ -136,6 +136,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
     if (!chain && !loading) {
       return <>
+        {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
         <div style={{ marginTop: 40, textAlign: 'center' }}>
           <p>Cannot view a chain by id: {this.props.id}</p>
           <p><Link href='/#chain'>View chains</Link></p>
@@ -150,7 +151,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       {loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} label='Loading ...' />}
 
       {!!chain && <>
-        {this.renderTitles()}
+        {this.renderTitles(chain)}
         <div className='contain-horiz'>
           {this.renderSystems()}
           <div className='half' style={{ marginTop: 10, cursor: 'default' }}>
@@ -165,49 +166,60 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderCreate() {
-    const { chain } = this.state;
+    const { chain, errorMsg } = this.state;
     if (!chain) return null;
 
-    return <div className='contain-horiz' style={{ margin: 20 }}>
-      <CmdrChains />
+    return <>
+      {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+      {!store.apiKey && <MessageBar
+        messageBarType={MessageBarType.severeWarning}
+        actions={<MessageBarButton onClick={() => document.getElementById('current-cmdr')?.click()}>Login</MessageBarButton>}
+        isMultiline={false}
+      >
+        You need to login to use this.
+      </MessageBar>}
 
-      <div className='half' style={{ marginTop: 10 }}>
-        <h2 className={cn.h3}>Start a new chain:</h2>
+      <div className='contain-horiz' style={{ margin: 20 }}>
+        <CmdrChains />
 
-        <Stack horizontal verticalAlign='end' tokens={{ childrenGap: 10 }}>
-          <TextField
-            label='Name:'
-            value={chain.name}
-            onChange={((_, txt) => {
-              const newChain = { ...chain, name: txt! };
-              this.setState({ chain: newChain })
-            })}
-          />
+        <div className='half' style={{ marginTop: 10 }}>
+          <h2 className={cn.h3}>Start a new chain:</h2>
 
-          <DefaultButton
-            id='chain-name'
-            text='Create'
-            disabled={!chain.name}
-            onClick={() => {
-              this.setState({ saving: false, errorMsg: '' });
+          <Stack horizontal verticalAlign='end' tokens={{ childrenGap: 10 }}>
+            <TextField
+              label='Name:'
+              value={chain.name}
+              disabled={!store.apiKey}
+              onChange={((_, txt) => {
+                const newChain = { ...chain, name: txt! };
+                this.setState({ chain: newChain })
+              })}
+            />
 
-              api.chain.create(chain.name)
-                .then(newChain => {
-                  console.log(newChain);
-                  window.location.assign(`/#chain=${encodeURIComponent(newChain.id)}`);
-                }).catch((err: any) => {
-                  console.error(`loadChain: ${err.stack}`);
-                  this.setState({ saving: false, errorMsg: err.message });
-                });
-            }} />
-        </Stack>
+            <DefaultButton
+              id='chain-name'
+              text='Create'
+              disabled={!chain.name || !store.apiKey}
+              onClick={() => {
+                this.setState({ saving: false, errorMsg: '' });
+
+                api.chain.create(chain.name)
+                  .then(newChain => {
+                    console.log(newChain);
+                    window.location.assign(`/#chain=${encodeURIComponent(newChain.id)}`);
+                  }).catch((err: any) => {
+                    console.error(`loadChain: ${err.stack}`);
+                    this.setState({ saving: false, errorMsg: err.message });
+                  });
+              }} />
+          </Stack>
+        </div>
       </div>
-    </div>;
+    </>;
   }
 
-  renderTitles() {
-    const { chain } = this.state;
-    if (!chain) return;
+  renderTitles(chain: Chain) {
+    const { errorMsg } = this.state;
 
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
@@ -232,6 +244,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           onClick: () => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false }),
         }
       ]} />
+      {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
     </div>;
   }
@@ -539,6 +552,7 @@ export const CmdrChains: FunctionComponent<{}> = (props) => {
         </div>;
       })}
 
+      {!chains && <div style={{ color: 'grey' }}>You are not linked to any chains</div>}
     </div>
   </div>
     ;
