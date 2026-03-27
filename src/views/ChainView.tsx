@@ -552,7 +552,7 @@ export const CmdrChains: FunctionComponent<{}> = (props) => {
         </div>;
       })}
 
-      {!chains && <div style={{ color: 'grey' }}>You are not linked to any chains</div>}
+      {!Object.keys(chains ?? {}).length && <div style={{ color: 'grey' }}>You are not linked to any chains</div>}
     </div>
   </div>
     ;
