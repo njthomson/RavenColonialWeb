@@ -246,7 +246,14 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
                 newSys.revs = [];
                 const updateIDs = new Set<string>(newSys.sites.map(s => s.id).concat(newSys.updateIDs ?? []));
                 newSys.updateIDs = Array.from(updateIDs);
+                // we do not want to honour these uploaded values
+                delete newSys.saveName;
+                newSys.architect = original.architect;
+                newSys.open = original.open;
+                newSys.reserveLevel = original.reserveLevel;
+
                 props.sysView.useLoadedData(newSys, false);
+
                 // restore these values for dirtyness to work properly
                 props.sysView.state.sysOriginal.architect = original.architect;
                 props.sysView.state.sysOriginal.open = original.open;

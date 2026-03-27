@@ -284,7 +284,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       const bb = (isComplete || isCurrent ? '2px solid ' : '2px dotted ') + appTheme.palette.themeTertiary;
 
       const iconName = isHub ? 'ShieldSolid' : isCurrent ? 'Location' : 'LocationDot';
-      const iconColor = isCurrent ? appTheme.palette.yellow : isComplete ? appTheme.semanticColors.bodyText : appTheme.palette.themeSecondary;
+      const iconColor = isCurrent ? (appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod') : isComplete ? appTheme.semanticColors.bodyText : appTheme.palette.themeSecondary;
       const textColor = isCurrent ? iconColor : isComplete ? undefined : appTheme.palette.themeSecondary;
 
       const completion = !progress ? '' : isComplete ? 'Completed' : progress.toFixed(0) + '%';
@@ -327,7 +327,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         />
       </h3>
       <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12, marginBottom: 8 }}>
-        Systems with 2 or more facilities planned or present will be considered a hub
+        Systems with 2 or more facilities will be considered a hub
       </div>
 
       {!rows.length && <div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
