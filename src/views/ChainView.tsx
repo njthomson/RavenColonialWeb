@@ -1,13 +1,12 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
-import { Chain, ChainSys, ChainType } from "../api/chain";
+import { Chain, ChainSys } from "../api/chain";
 import { ActionButton, CommandBar, DefaultButton, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
 import { delayFocus, isMatchingCmdr, isMobile } from '../util';
 import { store } from '../local-storage';
 import { FindFC } from '../components';
-import { HaulSize } from '../components/BigSiteTable/BigSiteTable';
 import { getAverageHauls } from '../avg-haul-costs';
 import { FleetCarrier } from './FleetCarrier';
 
@@ -37,7 +36,21 @@ const css = mergeStyles({
     '.ms-Button-icon': {
       fontSize: 10
     }
-  }
+  },
+  '.c0': {
+    position: 'relative',
+    'i': {
+      position: 'relative',
+      zIndex: 2,
+      left: -1,
+      top: 1,
+    }
+  },
+  '.c1': {
+  },
+  '.c2': {
+    textAlign: 'center'
+  },
 
 });
 
@@ -51,6 +64,7 @@ interface ChainViewState {
   errorMsg?: string;
 
   chain?: Chain;
+  currentSystem?: ChainSys;
 
   showAddCmdr?: boolean;
   showAddFC?: boolean;
@@ -81,6 +95,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           fcs: [],
           open: false,
           systems: [],
+          hubs: [],
         }
       });
     }
@@ -99,6 +114,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             fcs: [],
             open: false,
             systems: [],
+            hubs: [],
           }
         });
       }
@@ -110,10 +126,16 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
     try {
       const newChain = await api.chain.get(id);
+      // calculate the current system
+      const currentSystem = newChain.systems.reduceRight((l, s) => {
+        if (!s.progress || (s.total > 0 && s.progress < s.total)) { l = s; }
+        return l;
+      }, undefined as ChainSys | undefined);
 
       this.setState({
         loading: false,
         chain: newChain,
+        currentSystem: currentSystem,
       });
     } catch (err: any) {
       if (err.statusCode === 404) {
@@ -136,24 +158,21 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
     if (!chain && !loading) {
       return <>
-        {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+        {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
         <div style={{ marginTop: 40, textAlign: 'center' }}>
           <p>Cannot view a chain by id: {this.props.id}</p>
           <p><Link href='/#chain'>View chains</Link></p>
         </div>
-
       </>;
     }
 
-    return <div className={css}>
-      {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
-
-      {loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} label='Loading ...' />}
+    return <div className={css} style={{ cursor: 'default' }}>
+      {loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
 
       {!!chain && <>
         {this.renderTitles(chain)}
         <div className='contain-horiz'>
-          {this.renderSystems()}
+          {this.renderSystems(chain)}
           <div className='half' style={{ marginTop: 10, cursor: 'default' }}>
             {this.renderRouteStats(chain)}
             {this.renderCommanders(chain)}
@@ -170,7 +189,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     if (!chain) return null;
 
     return <>
-      {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+      {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
       {!store.apiKey && <MessageBar
         messageBarType={MessageBarType.severeWarning}
         actions={<MessageBarButton onClick={() => document.getElementById('current-cmdr')?.click()}>Login</MessageBarButton>}
@@ -244,47 +263,57 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           onClick: () => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false }),
         }
       ]} />
-      {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+      {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
 
     </div>;
   }
 
-  renderSystems() {
-    const { chain } = this.state;
-    if (!chain) return;
+  renderSystems(chain: Chain) {
+    const { currentSystem } = this.state;
 
-    const rows = chain.systems.map(s => {
+    const rows = [];
+    let flip = undefined;
+    for (const s of chain.systems) {
       let progress = 100 / s.total * s.progress;
       if (isNaN(progress)) { progress = 0; }
       const remaining = !s.total ? getAverageHauls('plutus') : s.total - (s.progress ?? 0);
+      const isHub = chain.hubs.includes(s.id64);
+      const isComplete = remaining === 0;
+      const isCurrent = s.id64 === currentSystem?.id64;
 
-      return <div key={`cs-${s.id64}`}>
-        <Stack horizontal verticalAlign='baseline'>
-          <Icon
-            iconName={s.type === ChainType.hub ? 'WebAppBuilderFragment' : 'Link'}
-            title={s.type === ChainType.hub ? 'Hub' : 'Bridge'}
-          />
-          <Link
-            className='sysName'
-            target='chainSys'
-            href={`/#sys=${encodeURIComponent(s.id64)}`}
-          >{s.name}</Link>
-          <div>{progress.toFixed(0)}%</div>
+      const bb = (isComplete || isCurrent ? '2px solid ' : '2px dotted ') + appTheme.palette.themeTertiary;
 
-          <HaulSize haul={remaining} />
-        </Stack>
-      </div>;
-    });
+      const iconName = isHub ? 'ShieldSolid' : isCurrent ? 'Location' : 'LocationDot';
+      const iconColor = isCurrent ? appTheme.palette.yellow : isComplete ? appTheme.semanticColors.bodyText : appTheme.palette.themeSecondary;
+      const textColor = isCurrent ? iconColor : isComplete ? undefined : appTheme.palette.themeSecondary;
 
-    if (!rows.length) {
-      rows.push(<div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
-        <ActionButton
-          className={cn.bBox}
-          text='Add systems...'
-          onClick={() => this.setState({ editSystems: '\n' })}
-        />
-      </div>);
-    }
+      const completion = !progress ? '' : isComplete ? 'Completed' : progress.toFixed(0) + '%';
+      const completionTitle = progress > 0 ? `Delivered ${s.progress.toLocaleString()} of ${s.total.toLocaleString()}` : undefined;
+
+      rows.push(
+        <div key={`cs-${s.id64}-a`} className='c0'>
+          {flip !== undefined && <>
+            <div style={{
+              position: 'absolute',
+              left: 4,
+              width: 1,
+              top: '-50%',
+              bottom: '+50%',
+              borderRight: bb,
+            }} />
+          </>}
+          <Icon iconName={iconName} style={{ color: iconColor }} />
+        </div>,
+
+        <Link key={`cs-${s.id64}-b`} className='c1 sysName' target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ color: textColor }}>{s.name}</Link>,
+
+        <div key={`cs-${s.id64}-c`} className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</div>,
+
+        <div key={`cs-${s.id64}-d`} className='c2' style={{ color: textColor }} title={completionTitle}>{completion}</div>,
+      );
+
+      flip = !flip;
+    };
 
     return <div className='half' style={{ marginTop: 10 }}>
       <h3 className={cn.h3}>
@@ -297,9 +326,29 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           onClick={() => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false })}
         />
       </h3>
-      <div>
-        {rows}
+      <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12, marginBottom: 8 }}>
+        Systems with 2 or more facilities planned or present will be considered a hub
       </div>
+
+      {!rows.length && <div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
+        <ActionButton
+          className={cn.bBox}
+          text='Add systems...'
+          onClick={() => this.setState({ editSystems: '\n' })}
+        />
+      </div>}
+
+      {!!rows.length && <div style={{
+        display: 'grid',
+        gridTemplateColumns: '10px max-content max-content max-content',
+        gap: '0 20px',
+        fontSize: '14px',
+        marginLeft: 10,
+        marginBottom: 10,
+        alignItems: 'left',
+      }}>
+        {rows}
+      </div>}
     </div>;
   }
 
@@ -365,14 +414,11 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderRouteStats(chain: Chain) {
+    const { currentSystem } = this.state;
     const sumTotal = chain.systems.map(s => s.total ?? 0).reduce((t, c) => t + c, 0);
     const sumProgress = chain.systems.map(s => s.progress ?? 0).reduce((t, c) => t + c, 0);
     const sumRemaining = sumTotal - sumProgress;
 
-    const currentSystem = chain.systems.reduce((l, s) => {
-      if (s.total !== s.progress && s.progress > 0) { l = s; }
-      return l;
-    }, undefined as any as ChainSys);
     return <div className='statBox'>
       <h3 className={cn.h3}>Route stats:</h3>
 

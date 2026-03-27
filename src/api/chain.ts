@@ -33,10 +33,11 @@ export type Chain = {
   cmdrs: string[];
   fcs: KnownFC[];
   systems: ChainSys[];
+  hubs: number[];
 }
 
 export type ChainSys = {
-  id64: string;
+  id64: number;
   name: string;
   nickname: string;
   pos: number[];
