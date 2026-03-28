@@ -290,7 +290,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     // Should we create or update the snapshot for this system?
-    if (!newSys.architect || !updateSnapshot || this.isDirty()) { return; }
+    if (!newSys.architect || !updateSnapshot || this.isDirty() || !store.cmdrName) { return; }
 
     let genSnapshot = false;
     let newSnapshot = getSnapshot(newSys, undefined);
