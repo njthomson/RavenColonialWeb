@@ -41,9 +41,7 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
           if (ev.type === 'click') {
             setTimeout(() => {
               let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
-              while (!!btn?.parentElement && btn.tagName !== 'BUTTON') {
-                btn = btn.parentElement;
-              }
+              while (!!btn?.parentElement && btn.tagName !== 'BUTTON') { btn = btn.parentElement; }
 
               if (btn?.id.startsWith('st-') && !btn.id.endsWith(targetBuildType)) {
                 btn.click();

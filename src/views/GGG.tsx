@@ -109,7 +109,6 @@ export const GGG: React.FunctionComponent = () => {
         type={PanelType.medium}
         customWidth={'380px'}
         headerText={`Journal Scan: ${showJournal.bodyName}`}
-        onDismiss={() => setShowJournal(undefined)}
         isLightDismiss
         styles={{
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
@@ -125,6 +124,22 @@ export const GGG: React.FunctionComponent = () => {
               onClick={() => navigator.clipboard.writeText(showJournal.journalJson)}
             />
           </>;
+        }}
+        onDismiss={(ev: any) => {
+          // if the mouse is over a button showing json for another body ... try clicking it
+          if (ev.type === 'click') {
+            setTimeout(() => {
+              let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
+              while (!!btn?.parentElement && btn.tagName !== 'BUTTON') { btn = btn.parentElement; }
+
+              if (btn?.id.startsWith('row-') && btn.id !== `row-${showJournal.id64}-${showJournal.bodyID}`) {
+                btn.click();
+              }
+            }, 10);
+          }
+
+          // but close the panel first
+          setShowJournal(undefined);
         }}
       >
         <div>
