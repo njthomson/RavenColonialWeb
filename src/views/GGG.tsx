@@ -1,8 +1,8 @@
 import * as api from '../api';
-import { ActionButton, Icon, IconButton, mergeStyles, Panel, PanelType, Stack } from '@fluentui/react';
+import { ActionButton, Icon, IconButton, mergeStyles, Panel, PanelType, Spinner, Stack } from '@fluentui/react';
 import { Link2 } from '../components/LinkSrvSurvey';
 import { appTheme, cn } from '../theme';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { GGGRow } from '../api/misc';
 import { isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
@@ -40,7 +40,7 @@ const css = mergeStyles({
 });
 
 export const GGG: React.FunctionComponent = () => {
-  const [gggData, setGGGData] = useState<GGGRow[]>([]);
+  const [gggData, setGGGData] = useState<GGGRow[] | undefined>(undefined);
   const [showJournal, setShowJournal] = useState<GGGRow | undefined>(undefined);
 
   window.document.title = `Green Gas Giants`;
@@ -55,12 +55,14 @@ export const GGG: React.FunctionComponent = () => {
       <div style={{ fontSize: 14 }}>
         <div>Green giants are incredibly rare and have been catalogged by Cmdr Arcanic at <Link2 href='https://ed-ggg.github.io/edggg/' text='https://ed-ggg.github.io/edggg/' /></div>
         <div>Learn more about them by watching <Link2 href='https://youtu.be/hVS-S6FEJj4' text="Arcanic's video: Strange Temperatures" /> or see <Link2 href='https://forums.frontier.co.uk/threads/marxs-guide-to-green-gas-giants.618994/' text="Marx's guide to Green Gas Giants" /></div>
-        <div style={{ marginTop: 20 }}>SrvSurvey has a feature to help detect green gas giants, to date logging {gggData.length} bodies with suspected characteristics:</div>
+        <div style={{ marginTop: 20 }}>SrvSurvey has a feature to help detect green gas giants, to date logging {gggData?.length ?? '?'} bodies with suspected characteristics:</div>
       </div>
     </div>
 
     <div>
-      <table className='tableBodies' cellSpacing={0} cellPadding={0}>
+      {!gggData && <Spinner labelPosition='right' label='Loading ...' style={{ marginTop: 20 }} />}
+
+      {!!gggData && <table className='tableBodies' cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
             <th>Body</th>
@@ -96,7 +98,7 @@ export const GGG: React.FunctionComponent = () => {
             </tr>;
           })}
         </tbody>
-      </table>
+      </table>}
     </div>
 
     {!!showJournal && <>
