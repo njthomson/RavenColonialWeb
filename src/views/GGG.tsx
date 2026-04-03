@@ -1,5 +1,5 @@
 import * as api from '../api';
-import { ActionButton, Icon, IconButton, mergeStyles, Panel, PanelType, Spinner, Stack } from '@fluentui/react';
+import { ActionButton, Callout, DirectionalHint, Icon, IconButton, mergeStyles, Panel, PanelType, Spinner, Stack } from '@fluentui/react';
 import { Link2 } from '../components/LinkSrvSurvey';
 import { appTheme, cn } from '../theme';
 import { useMemo, useState } from 'react';
@@ -8,11 +8,17 @@ import { isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
 
 const css = mergeStyles({
+  cursor: 'default',
   '.top h2': {
     color: appTheme.palette.accent,
   },
   '.ms-Button--action': {
     height: 24,
+  },
+  'tbody tr': {
+    ':hover': {
+      backgroundColor: appTheme.palette.themeLight,
+    }
   },
   '.tableBodies': {
     fontSize: 14,
@@ -25,6 +31,9 @@ const css = mergeStyles({
     },
     'td': {
       paddingRight: '16px',
+    },
+    '.temp': {
+      textAlign: 'right',
     },
     '.json': {
       textAlign: 'center',
@@ -42,6 +51,7 @@ const css = mergeStyles({
 export const GGG: React.FunctionComponent = () => {
   const [gggData, setGGGData] = useState<GGGRow[] | undefined>(undefined);
   const [showJournal, setShowJournal] = useState<GGGRow | undefined>(undefined);
+  const [showSrvHelp, setShowSrvHelp] = useState(false);
 
   window.document.title = `Green Gas Giants`;
 
@@ -52,20 +62,53 @@ export const GGG: React.FunctionComponent = () => {
   return <div className={css} style={{ width: 'fit-content', margin: 10, }}>
     <div className='top'>
       <h2 className={cn.h3}>Green Gas Giants</h2>
-      <div style={{ fontSize: 14 }}>
-        <div>Green giants are incredibly rare and have been catalogged by Cmdr Arcanic at <Link2 href='https://ed-ggg.github.io/edggg/' text='https://ed-ggg.github.io/edggg/' /></div>
-        <div>Learn more about them by watching <Link2 href='https://youtu.be/hVS-S6FEJj4' text="Arcanic's video: Strange Temperatures" /> or see <Link2 href='https://forums.frontier.co.uk/threads/marxs-guide-to-green-gas-giants.618994/' text="Marx's guide to Green Gas Giants" /></div>
-        <div style={{ marginTop: 20 }}>SrvSurvey has a feature to help detect green gas giants, to date logging {gggData?.length ?? '?'} bodies with suspected characteristics:</div>
+      <div style={{ fontSize: 14, position: 'relative' }}>
+        <div>Green gas giants are incredibly rare. Cmdr Arcanic has catalogged all known GGGs at <Link2 href='https://ed-ggg.github.io/edggg/' text='https://ed-ggg.github.io/edggg/' /></div>
+        <div style={{ marginBottom: 20 }}>Learn more about them by watching <Link2 href='https://youtu.be/hVS-S6FEJj4' text="Arcanic's video: Strange Temperatures" /> or see <Link2 href='https://forums.frontier.co.uk/threads/marxs-guide-to-green-gas-giants.618994/' text="Marx's guide to Green Gas Giants" /></div>
+
+        <Stack horizontal verticalAlign='center'>
+          <div>SrvSurvey has a feature</div>
+          <IconButton
+            id='help-enable'
+            className={cn.bBox}
+            iconProps={{ iconName: 'Unknown', style: { fontSize: 16 } }}
+            style={{ margin: 4, width: 22, height: 22 }}
+            // text='Enable feature?'
+            onClick={() => setShowSrvHelp(!showSrvHelp)}
+          />
+          <div>to help detect green gas giants, to date logging {gggData?.length ?? '?'} bodies with suitable characteristics:</div>
+        </Stack>
       </div>
+
+      {showSrvHelp && <Callout
+        target='#help-enable'
+        directionalHint={DirectionalHint.rightCenter}
+        styles={{
+          beak: { backgroundColor: appTheme.palette.themeTertiary, },
+          calloutMain: {
+            backgroundColor: appTheme.palette.themeTertiary,
+            color: appTheme.palette.neutralDark,
+          }
+        }}
+        onDismiss={() => setTimeout(() => setShowSrvHelp(false), 0)}
+      >
+        <div>To enable SrvSurvey's GGG detection feature:</div>
+        <ul style={{}}>
+          <li>Open SrvSurvey settings</li>
+          <li>Select tab: More</li>
+          <li>Check "Upload GGG candidates"</li>
+        </ul>
+      </Callout>}
     </div>
 
-    <div>
+    <div style={{ marginTop: 20 }}>
       {!gggData && <Spinner labelPosition='right' label='Loading ...' style={{ marginTop: 20 }} />}
 
       {!!gggData && <table className='tableBodies' cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
             <th>Body</th>
+            <th>Planet class</th>
             <th>Temperature</th>
             <th>Tagged</th>
             <th>Commander</th>
@@ -75,18 +118,20 @@ export const GGG: React.FunctionComponent = () => {
 
         <tbody>
           {gggData.map((row, index) => {
+            const planetClass = JSON.parse(row.journalJson)?.PlanetClass ?? 'Unknown';
             return <tr key={index}>
               <td className='name'>
                 <CopyButton text={row.bodyName} fontSize={12} color={appTheme.palette.themeSecondary} />&nbsp;{row.bodyName}
               </td>
-              <td>{row.surfaceTemp.toLocaleString()} K</td>
+              <td>{planetClass}</td>
+              <td className='temp'>{row.surfaceTemp.toLocaleString()} K</td>
               <td>
                 <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
                   <Icon iconName={mapTagIcon[row.tag]} />
                   <div>{row.tag}</div>
                 </Stack>
               </td>
-              <td className='cmdr'>{row.cmdr}</td>
+              <td>{row.cmdr}</td>
               <td className='json'>
                 <IconButton
                   id={`row-${row.id64}-${row.bodyID}`}
@@ -143,11 +188,11 @@ export const GGG: React.FunctionComponent = () => {
         }}
       >
         <div>
-          <table className='tableScan'>
+          <table className='tableScan' cellSpacing={0}>
             <tbody>
               {Object.entries(JSON.parse(showJournal.journalJson)).map(([key, value]) => {
                 const val = typeof value === 'object'
-                  ? (JSON.stringify(value, null, 2) + `\nhello\nworld`)//.split('\n').map(t => <div>{t}</div>) }
+                  ? JSON.stringify(value, null, 2)
                   : typeof value === 'number' ? value.toLocaleString() : value?.toString();
 
                 return <tr key={key}>
@@ -157,9 +202,6 @@ export const GGG: React.FunctionComponent = () => {
               })}
             </tbody>
           </table>
-
-
-
         </div>
       </Panel>
     </>}
