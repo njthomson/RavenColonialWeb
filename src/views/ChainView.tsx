@@ -51,7 +51,6 @@ const css = mergeStyles({
   '.c2': {
     textAlign: 'center'
   },
-
 });
 
 interface ChainViewProps {

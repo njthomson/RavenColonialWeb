@@ -3,13 +3,13 @@ import { Icon } from "@fluentui/react";
 import { FunctionComponent } from "react";
 import { cn } from "../theme";
 
-export const CopyButton: FunctionComponent<{ text: string | ClipboardItem, title?: string, fontSize?: number | undefined }> = (props) => {
+export const CopyButton: FunctionComponent<{ text: string | ClipboardItem, title?: string, fontSize?: number | undefined, color?: string }> = (props) => {
   return <Icon
     className={`icon-btn ${cn.btn}`}
     iconName='Copy'
     role='button'
     title={props.title ?? `Copy: "${props.text.toString()}"`}
-    style={{ fontSize: props.fontSize, userSelect: 'none' }}
+    style={{ fontSize: props.fontSize, userSelect: 'none', color: props.color }}
     onClick={(ev) => {
       ev.stopPropagation();
       if (typeof props.text === 'string') {

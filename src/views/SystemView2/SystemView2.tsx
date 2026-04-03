@@ -242,6 +242,13 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
   };
 
   useLoadedData = (newSys: Sys, updateSnapshot: boolean) => {
+
+    // ignore any slow loads if we've since changed systems
+    if (!!this.state.sysOriginal && this.state.sysOriginal.id64 !== newSys.id64) {
+      console.warn(`Ignoring: ${newSys.name}, for: ${this.state.sysOriginal.name}`);
+      return;
+    }
+
     if (newSys.idxCalcLimit === undefined) {
       // default to ALL sites if no value is set
       newSys.idxCalcLimit = newSys.sites.length;
@@ -1622,15 +1629,15 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       }
     }
 
-    // there are incomplete sites ahead of completed ones
-    let foundIncomplete = false;
+    // there are planning sites ahead of non-planning ones
+    let foundPlanning = false;
     let invalidOrdering = false;
     for (const s of sites) {
       if (s.status === 'demolish') {
         continue;
-      } else if (s.status !== 'complete') {
-        foundIncomplete = true;
-      } else if (foundIncomplete) {
+      } else if (s.status === 'plan') {
+        foundPlanning = true;
+      } else if (foundPlanning) {
         invalidOrdering = true;
         break;
       }

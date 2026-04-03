@@ -89,12 +89,12 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
   }
 
   isOrderingInvalid(map: Record<string, SiteMap2>, sortedIDs: string[]) {
-    let foundIncomplete = false;
+    let foundPlanning = false;
     for (const id of sortedIDs) {
       const site = map[id];
-      if (site.status !== 'complete') {
-        foundIncomplete = true;
-      } else if (foundIncomplete) {
+      if (site.status === 'plan') {
+        foundPlanning = true;
+      } else if (foundPlanning) {
         return true;
       }
     }
@@ -144,7 +144,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     const priorSiteMaps: SiteMap2[] = [];
     const tp: TierPoints = { tier2: 0, tier3: 0 };
 
-    let foundIncomplete = false;
+    let foundPlanning = false;
     const rows = sortedIDs.map((id, i) => {
       const s = map[id];
       let backgroundColor = i % 2 ? appTheme.palette.neutralLighter : undefined;
@@ -159,7 +159,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
       const key = `bol${id.substring(1)}${i}`;
       const demolished = s.status === 'demolish';
       const isCutOff = !calcIds.includes(id) || demolished;
-      if (s.status !== 'complete' && !demolished) { foundIncomplete = true; }
+      if (s.status === 'plan') { foundPlanning = true; }
 
       return <tr
         key={key}
@@ -198,7 +198,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
         }}
       >
         <td className={`cr ${cn.br}`} style={{}}>
-          {foundIncomplete && s.status === 'complete' && <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, float: 'left' }} iconName='WarningSolid' title='Completed sites should be ordered ahead of incomplete ones' />}
+          {foundPlanning && s.status !== 'plan' && <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, float: 'left' }} iconName='WarningSolid' title='Planning sites should be ordered last' />}
           <div>{i + 1}</div>
         </td>
 
@@ -381,8 +381,6 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
     return <>
       <Panel
         isOpen
-        isLightDismiss
-
         headerText='Order for calculations:'
         allowTouchBodyScroll={onMobile}
         type={PanelType.custom}
@@ -396,7 +394,7 @@ export class BuildOrder extends Component<BuildOrderProps, BuildOrderState> {
 
             {invalidOrdering && <div style={{ fontSize: 14, color: appTheme.semanticColors.disabledBodyText }}>
               <Icon className='icon-inline' style={{ color: appTheme.palette.yellowDark, marginRight: 4 }} iconName='WarningSolid' />
-              Completed sites should be ordered ahead of incomplete ones
+              Planning sites should be ordered last
             </div>}
 
             <DefaultButton
@@ -595,19 +593,19 @@ const getStatusNum = (status: string) => {
 
 const autoReOrderSites = (map: Record<string, SiteMap2>) => {
 
-  // FIRST: re-order sites based on status: complete < build < plan ... and by marketID if known
+  // FIRST: re-order sites by marketID if known, otherwise by status: complete < build < plan
   let sortedIDs = Object.values(map)
     .sort((a, b) => {
 
-      // give precedent to status
-      const as = getStatusNum(a.status);
-      const bs = getStatusNum(b.status);
-      if (as !== bs) { return as - bs; }
-
-      // then to market IDs (but do not attempt to compare recycled marketIDs)
+      // first compare market IDs (but do not attempt to compare recycled marketIDs)
       if (!!a.marketId && !!b.marketId && a.marketId > 4_200_000_000 && b.marketId > 4_200_000_000) {
         return a.marketId - b.marketId;
       }
+
+      // otherwise give precedent to status
+      const as = getStatusNum(a.status);
+      const bs = getStatusNum(b.status);
+      if (as !== bs) { return as - bs; }
 
       // do not order by the timestamp component of IDs - I think it is more harmful than helpful
       return 0;
