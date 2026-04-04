@@ -612,15 +612,25 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number
     return true;
   }
 
-  // if (parentBody.type === BT.bc) {
-  //   /* TODO: Implement this ...
-  //     - If **immediate** parent is a barycenter: apply penalty only if sibling is a star
-  //       - If sibling is not a star: do not walk parent chain, do not apply penalty
-  //     - If barycenter encountered in parent chain: apply no penalty
-  //   */
-  //   console.log(`TODO: fully implement barycenters: ${body.name}`);
-  //   return false;
-  // }
+  if (parentBody.type === BT.bc) {
+    const children = sys.bodies.filter(b => parentBody && b.parents[0] === parentBody.num);
+    if (children.length > 1) {
+      const idx = children.findIndex(b => b.name === body.name);
+      // if we are one of the first two children and the other is a star - apply the penalty
+      if (idx < 2) {
+        const other = idx === 0 ? children[1] : children[0];
+        if (matches([...stellarRemnants, BT.st], other.type)) {
+          return true;
+        }
+      }
+      // if we are not in the first two children, and they both stars - apply penalty
+      if (idx > 1 && matches([...stellarRemnants, BT.st], children[0].type) && matches([...stellarRemnants, BT.st], children[1].type)) {
+        return true;
+      }
+      // otherwise - recurse no further and apply no penalty
+      return false;
+    }
+  }
 
   return bodyIsTidalToStar(sys, parentBody, parents);
 }
