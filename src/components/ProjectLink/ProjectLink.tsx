@@ -13,6 +13,7 @@ interface ProjectLinkProps {
   iconName?: string;
   greyIncomplete?: boolean;
   incompleteLinkColor?: string;
+  target?: string;
 }
 
 export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
@@ -34,6 +35,7 @@ export const ProjectLink: FunctionComponent<ProjectLinkProps> = (props) => {
       disabled={props.proj.isMock}
       className="project-name"
       href={`#build=${props.proj.buildId}`}
+      target={props.target}
       style={{
         fontWeight: props.noBold ? 'normal' : 'bold',
         color: (props.greyIncomplete && props.incompleteLinkColor) ? props.incompleteLinkColor : color,

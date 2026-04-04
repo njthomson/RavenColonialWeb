@@ -1,4 +1,4 @@
-import { KnownFC } from "../types";
+import { Cargo, KnownFC, Project } from "../types";
 import { callAPI } from "./api-util";
 
 /** Chain APIs */
@@ -34,6 +34,7 @@ export type Chain = {
   fcs: KnownFC[];
   systems: ChainSys[];
   hubs: number[];
+  builds: Project[];
 }
 
 export type ChainSys = {
@@ -44,6 +45,7 @@ export type ChainSys = {
   type: ChainType
   total: number;
   progress: number;
+  needs?: Cargo;
 }
 
 export enum ChainType {

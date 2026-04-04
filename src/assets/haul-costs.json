@@ -12,7 +12,8 @@
       "Pirate Outpost",
       "Civilian Outpost",
       "Scientific Outpost",
-      "Military Outpost"
+      "Military Outpost",
+      "outpost"
     ],
     "orbital-outpost-primary": [
       "plutus (primary)",
@@ -26,7 +27,8 @@
       "Pirate Outpost (primary)",
       "Civilian Outpost (primary)",
       "Scientific Outpost (primary)",
-      "Military Outpost (primary)"
+      "Military Outpost (primary)",
+      "outpost (primary)"
     ],
     "coriolis": [
       "no_truss",

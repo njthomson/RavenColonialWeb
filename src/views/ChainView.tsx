@@ -4,11 +4,13 @@ import { Chain, ChainSys } from "../api/chain";
 import { ActionButton, CommandBar, DefaultButton, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
-import { delayFocus, isMatchingCmdr, isMobile } from '../util';
+import { delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, removeCargo } from '../util';
 import { store } from '../local-storage';
-import { FindFC } from '../components';
-import { getAverageHauls } from '../avg-haul-costs';
+import { FindFC, ProjectLink } from '../components';
+import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
 import { FleetCarrier } from './FleetCarrier';
+import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
+import { Cargo } from '../types';
 
 const css = mergeStyles({
   '.sysName': {
@@ -16,6 +18,13 @@ const css = mergeStyles({
   },
   '.statBox': {
     marginBottom: 20,
+    '.ms-Button--icon': {
+      width: 20,
+      height: 20,
+      '.ms-Button-icon': {
+        fontSize: 10
+      },
+    },
   },
   'h3 .ms-Button--action': {
     marginLeft: 10,
@@ -30,13 +39,6 @@ const css = mergeStyles({
   '.listItem': {
     marginRight: 8,
   },
-  '.statBox .ms-Button--icon': {
-    width: 20,
-    height: 20,
-    '.ms-Button-icon': {
-      fontSize: 10
-    }
-  },
   '.c0': {
     position: 'relative',
     'i': {
@@ -49,8 +51,21 @@ const css = mergeStyles({
   '.c1': {
   },
   '.c2': {
+    minWidth: 50,
     textAlign: 'center'
   },
+  '.c3': {
+    minWidth: 80,
+    textAlign: 'center'
+  },
+  '.routeStats': {
+    '.h': {
+      color: appTheme.palette.themePrimary,
+    },
+    '.boxes': {
+      textAlign: 'center',
+    },
+  }
 });
 
 interface ChainViewProps {
@@ -64,6 +79,7 @@ interface ChainViewState {
 
   chain?: Chain;
   currentSystem?: ChainSys;
+  cargoFC?: Cargo;
 
   showAddCmdr?: boolean;
   showAddFC?: boolean;
@@ -95,6 +111,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           open: false,
           systems: [],
           hubs: [],
+          builds: [],
         }
       });
     }
@@ -114,6 +131,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             open: false,
             systems: [],
             hubs: [],
+            builds: [],
           }
         });
       }
@@ -125,17 +143,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
     try {
       const newChain = await api.chain.get(id);
-      // calculate the current system
-      const currentSystem = newChain.systems.reduceRight((l, s) => {
-        if (!s.progress || (s.total > 0 && s.progress < s.total)) { l = s; }
-        return l;
-      }, undefined as ChainSys | undefined);
-
-      this.setState({
-        loading: false,
-        chain: newChain,
-        currentSystem: currentSystem,
-      });
+      this.useChain(newChain);
     } catch (err: any) {
       if (err.statusCode === 404) {
         // ignore cases when a chain is not found
@@ -148,8 +156,34 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
   }
 
+  useChain(newChain: Chain) {
+    // inject pending Outpost if nothing set
+    for (const s of newChain.systems) {
+      if (!s.needs && !s.total) {
+        s.needs = getAvgHaulCosts('outpost (primary)');
+        s.total = Object.values(s.needs).reduce((sum, val) => sum += val, 0);
+      }
+    }
+
+    // calculate the current system
+    const currentSystem = newChain.systems.reduceRight((l, s) => {
+      if (!s.progress || (s.total > 0 && s.progress < s.total)) { l = s; }
+      return l;
+    }, undefined as ChainSys | undefined);
+
+    this.setState({
+      loading: false,
+      chain: newChain,
+      currentSystem: currentSystem,
+      cargoFC: mergeCargo(newChain.fcs.map(fc => fc.cargo)),
+      editSystems: undefined,
+      saving: false,
+    });
+    window.document.title = `Chain: ${newChain.name}`;
+  }
+
   render() {
-    const { chain, errorMsg, loading, editSystems } = this.state;
+    const { chain, errorMsg, loading, editSystems, currentSystem } = this.state;
 
     if (!this.props.id) {
       return this.renderCreate();
@@ -168,11 +202,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     return <div className={css} style={{ cursor: 'default' }}>
       {loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
 
-      {!!chain && <>
+      {!!chain && !loading && <>
         {this.renderTitles(chain)}
         <div className='contain-horiz'>
           {this.renderSystems(chain)}
           <div className='half' style={{ marginTop: 10, cursor: 'default' }}>
+            {currentSystem && this.renderCurrentSystem(chain, currentSystem)}
             {this.renderRouteStats(chain)}
             {this.renderCommanders(chain)}
             {this.renderFleetCarriers(chain)}
@@ -187,6 +222,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     const { chain, errorMsg } = this.state;
     if (!chain) return null;
 
+    window.document.title = `Chains`;
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
       {!store.apiKey && <MessageBar
@@ -256,11 +292,11 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
       <CommandBar className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`} items={[
         {
-          key: 'btn-save',
-          text: 'Edit systems',
-          iconProps: { iconName: 'EditNote' },
-          onClick: () => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false }),
-        }
+          key: 'btn-refresh',
+          text: 'Refresh',
+          iconProps: { iconName: 'Refresh' },
+          onClick: () => { this.loadChain(this.props.id!) },
+        },
       ]} />
       {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
 
@@ -268,10 +304,14 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderSystems(chain: Chain) {
-    const { currentSystem } = this.state;
+    const { currentSystem, cargoFC } = this.state;
+
+    let remainingCargoFC = { ...cargoFC };
+    console.log(`AA:`, remainingCargoFC.steel);
 
     const rows = [];
     let flip = undefined;
+    let lastWasCurrent = false;
     for (const s of chain.systems) {
       let progress = 100 / s.total * s.progress;
       if (isNaN(progress)) { progress = 0; }
@@ -286,31 +326,91 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       const iconColor = isCurrent ? (appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod') : isComplete ? appTheme.semanticColors.bodyText : appTheme.palette.themeSecondary;
       const textColor = isCurrent ? iconColor : isComplete ? undefined : appTheme.palette.themeSecondary;
 
-      const completion = !progress ? '' : isComplete ? 'Completed' : progress.toFixed(0) + '%';
+      let completion = !progress ? '' : isComplete ? <>Completed</> : <>{progress.toFixed(0)} %</>;
       const completionTitle = progress > 0 ? `Delivered ${s.progress.toLocaleString()} of ${s.total.toLocaleString()}` : undefined;
 
-      rows.push(
-        <div key={`cs-${s.id64}-a`} className='c0'>
+      const readyOnFCs = getCargoCountOnHand(s.needs ?? {}, remainingCargoFC);
+      if (!progress && !isCurrent && readyOnFCs > 0) {
+        const remaining = s.total - readyOnFCs;
+        const chartData = [{
+          legend: 'Ready on FCs',
+          data: readyOnFCs,
+          color: appTheme.palette.tealDark,
+        }, {
+          legend: 'Remaining',
+          data: remaining,
+          color: 'grey',
+        }];
+        completion = <StackedBarChart
+          ignoreFixStyle
+          hideLegend
+          styles={{ root: { marginTop: 4, width: 100, height: 18 } }}
+          data={{ chartData }}
+        />
+      }
+
+      if (s.needs) {
+        // remove remaining FC cargo based on what this system needs
+        remainingCargoFC = removeCargo(remainingCargoFC, s.needs!);
+        console.log(`BB: ${s.name} (${s.total})`, remainingCargoFC.steel);
+      }
+
+      rows.push(<tr key={`cs-${s.id64}`} style={{ backgroundColor: flip ? appTheme.palette.themeLighter : undefined, fontWeight: isCurrent ? 'bold' : undefined }}>
+        <td className='c0'>
           {flip !== undefined && <>
             <div style={{
               position: 'absolute',
               left: 4,
               width: 1,
-              top: '-50%',
+              top: lastWasCurrent ? '-150%' : '-50%',
               bottom: '+50%',
               borderRight: bb,
             }} />
           </>}
           <Icon iconName={iconName} style={{ color: iconColor }} />
-        </div>,
+        </td>
 
-        <Link key={`cs-${s.id64}-b`} className='c1 sysName' target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ color: textColor }}>{s.nickname ?? s.name}</Link>,
+        <td>
+          <Link className='c1 sysName' target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ color: textColor }}>{s.nickname ?? s.name}</Link>
+        </td>
 
-        <div key={`cs-${s.id64}-c`} className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</div>,
+        <td className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</td>
 
-        <div key={`cs-${s.id64}-d`} className='c2' style={{ color: textColor }} title={completionTitle}>{completion}</div>,
-      );
+        <td className='c3' style={{ color: textColor }} title={completionTitle}>{completion}</td>
+      </tr>);
 
+      if (lastWasCurrent) { lastWasCurrent = false; }
+      if (isCurrent && currentSystem.total > 0) {
+        lastWasCurrent = true;
+        const delivered = currentSystem.progress;
+        const remaining = currentSystem.total - delivered - readyOnFCs;
+
+        rows.push(<tr key={`cs-${s.id64}-b`} style={{ backgroundColor: flip ? appTheme.palette.themeLighter : undefined }}>
+          <td />
+          <td colSpan={3} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
+            <StackedBarChart
+              ignoreFixStyle
+              hideLegend
+              styles={{ root: { marginTop: 4, height: 18 } }}
+              data={{
+                chartData: [{
+                  legend: 'Delivered',
+                  data: delivered,
+                  color: appTheme.palette.tealLight,
+                }, {
+                  legend: 'Ready on FCs',
+                  data: readyOnFCs,
+                  color: appTheme.palette.tealDark,
+                }, {
+                  legend: 'Remaining',
+                  data: remaining,
+                  color: 'grey',
+                }],
+              }}
+            />
+          </td>
+        </tr>);
+      }
       flip = !flip;
     };
 
@@ -337,17 +437,13 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         />
       </div>}
 
-      {!!rows.length && <div style={{
-        display: 'grid',
-        gridTemplateColumns: '10px max-content max-content max-content',
-        gap: '0 20px',
-        fontSize: '14px',
-        marginLeft: 10,
-        marginBottom: 10,
-        alignItems: 'left',
-      }}>
-        {rows}
-      </div>}
+      {!!rows.length && <>
+        <table cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
+          <tbody>
+            {rows}
+          </tbody>
+        </table>
+      </>}
     </div>;
   }
 
@@ -383,7 +479,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
                 const newNames = Array.from(new Set(editSystems?.split(`\n`)));
                 api.chain.setSystems(chain.id, newNames)
-                  .then(newChain => this.setState({ saving: false, chain: newChain, editSystems: undefined }))
+                  .then(newChain => this.useChain(newChain))
                   .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />
@@ -412,20 +508,110 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </Panel>;
   }
 
-  renderRouteStats(chain: Chain) {
-    const { currentSystem } = this.state;
-    const sumTotal = chain.systems.map(s => s.total ?? 0).reduce((t, c) => t + c, 0);
-    const sumProgress = chain.systems.map(s => s.progress ?? 0).reduce((t, c) => t + c, 0);
-    const sumRemaining = sumTotal - sumProgress;
+  renderCurrentSystem(chain: Chain, currentSystem: ChainSys) {
+    const { cargoFC } = this.state;
+    const activeProjects = chain.builds.filter(b => !b.complete);
+    const linkColor = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
 
-    return <div className='statBox'>
+    return <div className='routeStats statBox'>
+      <h3 className={cn.h3}>Current system:</h3>
+
+      <div style={{ fontSize: 14 }}>
+        <Link target='chainSys' href={`/#sys=${encodeURIComponent(currentSystem.id64)}`} style={{ fontWeight: 'bold', color: linkColor }}>{currentSystem.nickname ?? currentSystem.name}</Link>
+
+        <div style={{ marginTop: 4, marginBottom: 4 }}>
+          Active projects: {activeProjects.length ? activeProjects.length : <span style={{ color: 'grey' }}>None</span>}
+        </div>
+
+        <div style={{ position: 'relative', paddingLeft: 10 }}>
+          {activeProjects.map(p => {
+            const delivered = p.maxNeed - p.sumNeed;
+            const readyOnFCs = getCargoCountOnHand(p.commodities, cargoFC ?? {});
+            const remaining = p.sumNeed - readyOnFCs;
+
+            const chartData: IChartDataPoint[] = [{
+              legend: 'Delivered',
+              data: delivered,
+              color: appTheme.palette.tealLight,
+            }, {
+              legend: 'Remaining',
+              data: remaining,
+              color: 'grey',
+            }];
+
+            if (readyOnFCs > 0) {
+              chartData.splice(1, 0, {
+                legend: 'Ready on FCs',
+                data: readyOnFCs,
+                color: appTheme.palette.tealDark,
+              });
+            }
+
+            return <div key={p.buildId} style={{ marginBottom: 4 }}>
+              <Stack verticalAlign='center'>
+                <ProjectLink proj={p} noSys target='_blank' />
+                <StackedBarChart
+                  ignoreFixStyle
+                  hideLegend
+                  styles={{ root: { width: '100%', height: 18 } }}
+                  data={{ chartTitle: ' ', chartData }}
+                />
+              </Stack>
+            </div>;
+          })}
+        </div>
+      </div>
+    </div>;
+  }
+
+  renderRouteStats(chain: Chain) {
+    const { cargoFC } = this.state;
+
+    const sumTotal = chain.systems.map(s => s.total ?? 0).reduce((t, c) => t + c, 0);
+    const sumDelivered = chain.systems.map(s => s.progress ?? 0).reduce((t, c) => t + c, 0);
+    const sumCargo = mergeCargo(chain.systems.map(s => s.needs ?? {}));
+    const readyOnFCs = getCargoCountOnHand(sumCargo, cargoFC ?? {});
+    const sumRemaining = sumTotal - sumDelivered - readyOnFCs;
+
+    const completed = chain.systems.filter(s => s.total && s.progress && s.progress >= s.total);
+    const hubs = chain.systems.filter(s => chain.hubs.includes(s.id64));
+    const systemsProgress = 100 / chain.systems.length * completed.length;
+
+
+    const chartData: IChartDataPoint[] = [{
+      legend: 'Delivered',
+      data: sumDelivered,
+      color: appTheme.palette.tealLight,
+    }, {
+      legend: 'Remaining',
+      data: sumRemaining,
+      color: 'grey',
+    }];
+    if (readyOnFCs > 0) {
+      chartData.splice(1, 0, {
+        legend: 'Ready on FCs',
+        data: readyOnFCs,
+        color: appTheme.palette.tealDark,
+      });
+    }
+
+    return <div className='routeStats statBox'>
       <h3 className={cn.h3}>Route stats:</h3>
 
       <div style={{ fontSize: 14 }}>
-        <div>Total haul: {sumTotal.toLocaleString()}</div>
-        <div>Total progress: {sumProgress.toLocaleString()}</div>
-        <div>Remaining: {sumRemaining.toLocaleString()}</div>
-        {currentSystem && <div>Current system: <Link target='chainSys' href={`/#sys=${encodeURIComponent(currentSystem.id64)}`}>{currentSystem.nickname ?? currentSystem.name}</Link></div>}
+        <Stack className='boxes' horizontal tokens={{ childrenGap: 40 }}>
+          <div><div className='h'>Hubs:</div>{hubs.length}</div>
+          <div><div className='h'>Systems complete:</div>{completed.length} of {chain.systems.length}</div>
+          <div><div className='h'>Progress:</div>{systemsProgress.toFixed()} %</div>
+        </Stack>
+
+        <div style={{ marginTop: 16 }}><span className='h'>Total haul:</span> {sumTotal.toLocaleString()}</div>
+        <StackedBarChart
+          ignoreFixStyle
+          enabledLegendsWrapLines
+          styles={{ root: { marginTop: 4 } }}
+          data={{ chartData }}
+        />
       </div>
     </div>;
   }

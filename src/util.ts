@@ -143,14 +143,27 @@ export const sumCargo = (cargo: Record<string, number>): number => {
 
 export const mergeCargo = (cargos: Cargo[]): Cargo => {
 
-  let names = Array.from(new Set<string>(cargos.flatMap(c => Object.keys(c))));
+  const names = Array.from(new Set<string>(cargos.flatMap(c => Object.keys(c))));
 
   const merged = names.reduce((map, name) => {
     map[name] = cargos.reduce((sum, cargo) => sum += cargo[name] ?? 0, 0);
     return map;
-
   }, {} as Cargo);
   return merged;
+}
+
+
+export const removeCargo = (have: Cargo, take: Cargo, allowNeg?: boolean): Cargo => {
+
+  const names = Array.from(new Set<string>([have, take].flatMap(c => Object.keys(c))));
+
+  const removed = names.reduce((map, name) => {
+    map[name] = (have[name] ?? 0) - (take[name] ?? 0);
+    if (map[name] < 0 && !allowNeg) { map[name] = 0; }
+    return map;
+  }, {} as Cargo);
+
+  return removed;
 }
 
 export const getCargoCountOnHand = (cargoNeed: Cargo, cargoHave: Cargo) => {

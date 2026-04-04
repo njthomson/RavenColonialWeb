@@ -17,7 +17,6 @@ export const getAvgHaulCosts = (type: string): Cargo => {
   switch (type) {
     case '':
     case 'installation':
-    case 'outpost':
     case 'settlement':
     case ' (primary)':
       return {};

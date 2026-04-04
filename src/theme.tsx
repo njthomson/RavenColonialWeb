@@ -169,6 +169,7 @@ export const appTheme = readTheme();
 
 export const cn = mergeStyleSets({
   h3: {
+    width: '100%',
     borderBottom: appTheme.palette.purpleDark + ' 1px solid',
   },
   /** border-bottom */
