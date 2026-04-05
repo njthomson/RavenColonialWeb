@@ -160,7 +160,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
         .then(hits => {
           console.log(hits);
           return hits.slice(0, 15).map(m => ({
-            key: m.systemAddress.toString(),
+            key: m.systemName, //m.systemAddress.toString(),
             text: m.systemName,
           }));
         })
