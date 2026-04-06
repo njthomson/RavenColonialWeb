@@ -13,9 +13,6 @@ import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
 import { Cargo } from '../types';
 
 const css = mergeStyles({
-  '.sysName': {
-    margin: '0 8px',
-  },
   '.statBox': {
     marginBottom: 20,
     '.ms-Button--icon': {
@@ -49,6 +46,7 @@ const css = mergeStyles({
     }
   },
   '.c1': {
+    paddingLeft: 8,
   },
   '.c2': {
     minWidth: 50,
@@ -370,8 +368,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           <Icon iconName={iconName} style={{ color: iconColor }} />
         </td>
 
-        <td>
-          <Link className='c1 sysName' target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ color: textColor }}>{s.nickname ?? s.name}</Link>
+        <td className='c1'>
+          <CopyButton text={s.name} fontSize={10} color={appTheme.palette.themeTertiary} />
+          <Link target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ marginLeft: 4, color: textColor }}>{s.nickname ?? s.name}</Link>
         </td>
 
         <td className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</td>
