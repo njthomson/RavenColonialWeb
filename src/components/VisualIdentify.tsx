@@ -25,6 +25,7 @@ interface ImageRef {
 const supportedTypes: Record<string, ImageData> = {
   'aerecura': { cmdr: 'Kekosummer', location: `Correa Prospecting Platform - LTT 1873, B 1` },
   'aergia': { cmdr: 'Kekosummer', location: `Mahama's Club - Col 285 Sector GL-X c1-11` },
+  'aegle': { cmdr: 'Kekosummer', location: `Gludgoea LO-Z d13-12` },
   'alala': { cmdr: 'DziwnyCwiek', location: `Hirase Vision - HIP 105872, AB 1 e` },
   'alastor': { cmdr: 'Abe Andet', location: `Bierce Platform - Arietis Sector PJ-Q B5-5` },
   'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
@@ -93,6 +94,7 @@ const supportedTypes: Record<string, ImageData> = {
   'meteope': { cmdr: 'Kekosummer', location: `Nwadike synthetics facility - Col 285 Sector GL-X c1-11, A 6` },
   'minerva': { cmdr: 'Kekosummer', location: `Ponomarenko Hold - Col 285 Sector GL-X c1-11, A 1` },
   'minthe': { cmdr: 'Kekosummer', location: `Tolmie - Col 285 Sector GL-X c1-11, A 6`, more: [{ n: 'minthe-plan.jpg', c: 'Cmdr Grinning2001' }] },
+  'molae': { cmdr: 'Shadowtrooper65', location: `Montanari Depot - hip 3501, 5 A` },
   'necessitas': { cmdr: 'Abe Andet', location: `Lenthall Gateway - Arietis Sector PJ-Q B5-5` },
   'nemesis': { cmdr: 'Grinning2001', location: `Celebi Arsenal - Synuefe EN-H d11-108` },
   'no_truss': { cmdr: 'Abe Andet', location: `Joe T. Cline Memorial Starport - Pegasi Sector DL-y D60` },
