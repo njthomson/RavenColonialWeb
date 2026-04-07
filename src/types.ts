@@ -384,6 +384,9 @@ export interface KnownFC {
   displayName: string;
   owner?: string;
   cargo: Record<string, number>;
+  systemName?: string;
+  id64?: number;
+  starPos?: number[];
 }
 
 export const mapCommodityIcon: Record<string, string> = {

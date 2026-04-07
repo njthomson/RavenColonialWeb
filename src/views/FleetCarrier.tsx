@@ -1,12 +1,26 @@
-import { DefaultButton, IconButton, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { DefaultButton, IconButton, mergeStyles, MessageBar, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component } from 'react';
 import * as api from '../api';
-import { EditCargo } from '../components';
+import { EditCargo, FindSystemName } from '../components';
 import { appTheme, cn } from '../theme';
 import { KnownFC } from '../types';
 import { store } from '../local-storage';
 import { delay, fcFullName, isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
+
+
+const css = mergeStyles({
+  cursor: 'default',
+  '.fields': {
+    '.lbl': {
+      fontWeight: 600,
+    },
+    '.val': {
+      padding: '0 4px',
+      backgroundColor: appTheme.palette.purpleDark,
+    },
+  },
+});
 
 interface FleetCarrierProps {
   marketId: string;
@@ -23,6 +37,7 @@ interface FleetCarrierState {
   fc?: KnownFC;
   editCargo: Record<string, number>;
   editDisplayName?: string;
+  editSystemName?: string;
   cmdrLinked: boolean;
 }
 
@@ -52,6 +67,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
             fc: fc,
             editCargo: fc.cargo,
             editDisplayName: fc.displayName,
+            editSystemName: fc.systemName,
           });
         })
         .catch(err => this.setState({ loading: false, errorMsg: err.message }));
@@ -62,6 +78,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
     const { errorMsg, loading, saving } = this.state;
 
     return <Panel
+      className={css}
       isOpen
       allowTouchBodyScroll={isMobile()}
       type={PanelType.custom}
@@ -105,10 +122,12 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   renderFC() {
-    const { loading, fc, editCargo } = this.state;
+    const { loading, fc, editCargo, editSystemName } = this.state;
 
     return <>
       {this.renderFields()}
+      {fc && <div style={{ marginBottom: 4, paddingLeft: 3 }} ><FindSystemName text={editSystemName} onMatch={systemName => this.setState({ editSystemName: systemName })} /></div>}
+
       {loading && <Spinner size={SpinnerSize.large} labelPosition='right' label={'Loading  ...'} />}
       {!!fc && <EditCargo
         addButtonAbove
@@ -122,19 +141,20 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   renderFields() {
     const { fc, editDisplayName, cmdrLinked } = this.state;
 
-    return <table cellPadding={0} cellSpacing={2}>
+    return <table className='fields' cellPadding={0} cellSpacing={2}>
       <tbody>
         <tr>
-          <td>Raw name:</td>
-          <td className={cn.grey}>
-            {!!fc && <>
-              {fc.name}
-              &nbsp;<CopyButton text={fc.name} />
-            </>}
+          <td className='lbl'>Raw name:</td>
+          <td className='val'>
+            {!!fc && <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+              <span>{fc.name}</span>
+              <CopyButton text={fc.name} />
+            </Stack>}
           </td>
         </tr>
+
         <tr>
-          <td>Carrier name:</td>
+          <td className='lbl'>Carrier name:</td>
           <td>
             {!!fc && <Stack horizontal tokens={{ childrenGap: 4, padding: 0, }} verticalAlign='end'>
               <input
@@ -155,9 +175,10 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
             </Stack>}
           </td>
         </tr>
+
         <tr>
           <td>
-            <div style={{ width: 100, padding: 0, margin: 0 }}>
+            <div className='lbl' style={{ width: 100, padding: 0, margin: 0 }}>
               MarketId:
               {store.cmdrName && <IconButton
                 className='icon-btn'
@@ -188,10 +209,20 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
               />}
             </div>
           </td>
-          <td className={cn.grey}>
-            {!!fc && <>{fc.marketId}&nbsp;<CopyButton text={fc.marketId.toString()} /></>}
+          <td className='val'>
+            {!!fc && <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+              <span>{fc.marketId}</span>
+              <CopyButton text={fc.marketId.toString()} />
+            </Stack>}
           </td>
         </tr>
+
+        {!!fc?.owner && <tr>
+          <td className='lbl'>Owner:</td>
+          <td className='val'>
+            {fc?.owner}
+          </td>
+        </tr>}
 
       </tbody>
     </table>;
@@ -209,16 +240,41 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         fc: fcUpdated,
         editCargo: fcUpdated.cargo,
         editDisplayName: fcUpdated.displayName,
+        editSystemName: fcUpdated.systemName,
       });
     } catch (err: any) {
       this.setState({ loading: false, errorMsg: err.message });
     }
   }
 
+  onUpdateLocation = async (systemName: string) => {
+    this.setState({ saving: true });
+
+    try {
+      const fcUpdated = await api.fc.setLocation(this.state.fc!.marketId.toString(), systemName);
+      this.setState({
+        saving: false,
+        fc: fcUpdated,
+        editCargo: fcUpdated.cargo,
+        editDisplayName: fcUpdated.displayName,
+        editSystemName: fcUpdated.systemName,
+      });
+    } catch (err: any) {
+      this.setState({ saving: false, errorMsg: err.message });
+    }
+  }
+
   onUpdateCargo = async () => {
+    const { fc, editDisplayName, editSystemName } = this.state;
+    if (!fc) { return; }
+
     // also save the display name if it has changed
-    if (this.state.fc!.displayName !== this.state.editDisplayName) {
+    if (fc.displayName !== editDisplayName) {
       await this.onUpdateFields();
+    }
+    // also save the location if it has changed
+    if (editSystemName && fc.systemName !== editSystemName) {
+      await this.onUpdateLocation(editSystemName);
     }
 
     this.setState({ saving: true });
