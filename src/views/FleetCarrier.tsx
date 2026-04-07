@@ -2,7 +2,7 @@ import { DefaultButton, IconButton, mergeStyles, MessageBar, MessageBarType, Pan
 import { Component } from 'react';
 import * as api from '../api';
 import { EditCargo, FindSystemName } from '../components';
-import { appTheme, cn } from '../theme';
+import { appTheme } from '../theme';
 import { KnownFC } from '../types';
 import { store } from '../local-storage';
 import { delay, fcFullName, isMobile } from '../util';
