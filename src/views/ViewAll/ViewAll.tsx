@@ -36,11 +36,10 @@ interface ViewAllState {
   ships?: CmdrShip[];
 
   autoUpdateUntil: number;
+  lastPoll?: string;
   fcEditMarketId?: string;
   cmdrEdit?: boolean;
   hideLoginPrompt?: boolean;
-
-  lastPoll?: string;
 
   showPreNewFcLoading?: boolean;
   newFcLoadingName?: string;

@@ -10,7 +10,7 @@ import { CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
 import { FleetCarrier } from './FleetCarrier';
 import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
-import { Cargo, mapCommodityNames } from '../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames } from '../types';
 import { WhereToBuy } from '../components/WhereToBuy/WhereToBuy';
 
 const css = mergeStyles({
@@ -123,6 +123,8 @@ interface ChainViewState {
   listRows: SysRow[];
   currentSystem?: SysRow;
   cargoFC?: Cargo;
+  autoUpdateUntil: number;
+  lastPoll?: string;
 
   showAddCmdr?: boolean;
   showAddFC?: boolean;
@@ -151,12 +153,14 @@ interface SysRow extends ChainSys {
 }
 
 export class ChainView extends Component<ChainViewProps, ChainViewState> {
-  firstCargo: Record<string, number> = {};
+  private timer?: NodeJS.Timeout;
 
   constructor(props: ChainViewProps) {
     super(props);
 
     this.state = {
+      autoUpdateUntil: 0,
+      lastPoll: 'x',
       loading: true,
       listRows: [],
       expandFC: { id64: 20436125953969, marketId: 3714461184 },
@@ -164,26 +168,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   componentDidMount(): void {
-    if (this.props.id) {
-      const lastChain = JSON.parse(localStorage.getItem('tmpChain') ?? '{}') as Chain;
-      if (lastChain.id === this.props.id) {
-        this.useChain(lastChain);
-      } else {
-        this.loadChain(this.props.id);
-      }
-    } else {
-      this.setState({
-        chain: {
-          id: '',
-          name: '',
-          cmdrs: [],
-          fcs: [],
-          open: false,
-          systems: [],
-          hubs: [],
-        }
-      });
-    }
+    this.toggleAutoRefresh();
   }
 
   componentDidUpdate(prevProps: Readonly<ChainViewProps>, prevState: Readonly<ChainViewState>, snapshot?: any): void {
@@ -203,6 +188,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           }
         });
       }
+    }
+  }
+
+  componentWillUnmount(): void {
+    if (this.timer) {
+      clearTimeout(this.timer);
     }
   }
 
@@ -308,13 +299,76 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     localStorage.setItem('tmpChain', JSON.stringify(newChain));
   }
 
+  toggleAutoRefresh = () => {
+    if (this.state.autoUpdateUntil > 0) {
+      // stop auto-refresh poll and maybe right now? NO
+      console.log(`Stopping timer at: ${new Date().toISOString()}`);
+      clearTimeout(this.timer);
+      this.setState({ autoUpdateUntil: 0 });
+      // setTimeout(() => { if (this.props.id) { this.loadChain(this.props.id, true); } }, 10);
+    } else {
+      // start polling (which causes an immediate refresh)
+      console.log(`Starting timer at: ${new Date().toISOString()}`);
+      this.setState({ autoUpdateUntil: Date.now() + autoUpdateStopDuration });
+      this.pollLastTimestamp(true);
+    }
+  };
+
+  async pollLastTimestamp(force: boolean = false) {
+    if (!this.props.id) { return; }
+
+    try {
+      this.setState({ loading: true });
+
+      // call server to see if anything changed
+      const { chain, lastPoll } = this.state;
+
+      let currentPoll = 'x';
+      if (!force) {
+        var fcIDs = chain?.fcs.map(fc => fc.marketId.toString()) ?? [];
+
+        const buildIds = chain?.systems.flatMap(s => s.builds.map(b => b.buildId)) ?? [];
+        const pollData = await api.project.poll([...buildIds, ...fcIDs]);
+        currentPoll = pollData.max;
+      }
+
+      console.log(`pollTimestamp: ${currentPoll} vs ${lastPoll} (match: ${currentPoll === lastPoll}), forced: ${force}`);
+
+      if (currentPoll !== lastPoll || force) {
+        this.setState({ lastPoll: currentPoll });
+        // something changed
+        await this.loadChain(this.props.id, true);
+      }
+
+      // schedule next poll?
+      if (this.state.autoUpdateUntil > 0) {
+        if (Date.now() < this.state.autoUpdateUntil) {
+          this.timer = setTimeout(() => {
+            this.pollLastTimestamp();
+          }, autoUpdateFrequency);
+        } else {
+          console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
+          this.setState({ autoUpdateUntil: 0 });
+        }
+      }
+    } catch (err: any) {
+      console.error(`Stop auto-updating at: ${new Date()} due to:\n`, err?.message);
+      this.setState({ autoUpdateUntil: 0 });
+    } finally {
+      // add artificial delay to avoid flicker on the spinner
+      setTimeout(() => this.setState({ loading: false }), 500);
+    }
+  }
+
   render() {
     const { chain, errorMsg, loading, editSystems, currentSystem, shopFC } = this.state;
 
+    // show create/find UX
     if (!this.props.id) {
       return this.renderCreate();
     }
 
+    // failed to load chain by ID
     if (!chain && !loading) {
       return <>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
@@ -326,9 +380,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
 
     return <div className={css} style={{ cursor: 'default' }}>
-      {loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
+      {!chain && loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
 
-      {!!chain && !loading && <>
+      {!!chain && <>
         {this.renderTitles(chain)}
         <div className='contain-horiz'>
           {this.renderSystems(chain)}
@@ -400,7 +454,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderTitles(chain: Chain) {
-    const { errorMsg, saving } = this.state;
+    const { errorMsg, saving, loading, autoUpdateUntil } = this.state;
 
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
@@ -420,19 +474,20 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         {
           key: 'btn-refresh',
           text: 'Refresh',
-          iconProps: { iconName: 'Refresh' },
-          disabled: saving,
-          onClick: () => { this.loadChain(this.props.id!, true) },
+          title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
+          iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
+          disabled: saving || loading,
+          onClick: () => this.toggleAutoRefresh(),
         },
         {
           key: 'sys-loading',
           iconProps: { iconName: 'Nav2DMapView' },
           onRender: () => {
-            return !saving ? null : <div>
+            return !(loading || saving) ? null : <div>
               <Spinner
                 size={SpinnerSize.medium}
                 labelPosition='right'
-                label='Saving ...'
+                label={loading ? 'Loading ...' : 'Saving ...'}
                 style={{ marginTop: 12, cursor: 'default' }}
               />
             </div>
