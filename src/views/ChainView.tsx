@@ -197,17 +197,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
   }
 
-  async loadChain(id: string, force?: boolean) {
+  async loadChain(id: string) {
     this.setState({ loading: true, errorMsg: undefined });
 
     try {
-      const lastChain = JSON.parse(localStorage.getItem('tmpChain') ?? '{}') as Chain;
-      if (lastChain.id === id && !force) { // TMP ??
-        this.useChain(lastChain);
-      } else {
-        const newChain = await api.chain.get(id);
-        this.useChain(newChain);
-      }
+      const newChain = await api.chain.get(id);
+      this.useChain(newChain);
     } catch (err: any) {
       if (err.statusCode === 404) {
         // ignore cases when a chain is not found
@@ -296,7 +291,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       editSystems: undefined,
     });
     window.document.title = `Chain: ${newChain.name}`;
-    localStorage.setItem('tmpChain', JSON.stringify(newChain));
   }
 
   toggleAutoRefresh = () => {
@@ -337,7 +331,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       if (currentPoll !== lastPoll || force) {
         this.setState({ lastPoll: currentPoll });
         // something changed
-        await this.loadChain(this.props.id, true);
+        await this.loadChain(this.props.id);
       }
 
       // schedule next poll?
