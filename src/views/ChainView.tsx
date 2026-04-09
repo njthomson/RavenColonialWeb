@@ -118,6 +118,7 @@ interface ChainViewState {
   loading: boolean;
   saving?: boolean;
   errorMsg?: string;
+  createName?: string;
 
   chain?: Chain;
   listRows: SysRow[];
@@ -394,8 +395,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderCreate() {
-    const { chain, errorMsg } = this.state;
-    if (!chain) return null;
+    const { createName, errorMsg } = this.state;
 
     window.document.title = `Chains`;
     return <>
@@ -417,22 +417,21 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           <Stack horizontal verticalAlign='end' tokens={{ childrenGap: 10 }}>
             <TextField
               label='Name:'
-              value={chain.name}
+              value={createName}
               disabled={!store.apiKey}
               onChange={((_, txt) => {
-                const newChain = { ...chain, name: txt! };
-                this.setState({ chain: newChain })
+                this.setState({ createName: txt! });
               })}
             />
 
             <DefaultButton
               id='chain-name'
               text='Create'
-              disabled={!chain.name || !store.apiKey}
+              disabled={!createName || !store.apiKey}
               onClick={() => {
                 this.setState({ saving: false, errorMsg: '' });
 
-                api.chain.create(chain.name)
+                api.chain.create(createName!)
                   .then(newChain => {
                     console.log(newChain);
                     window.location.assign(`/#chain=${encodeURIComponent(newChain.id)}`);
@@ -453,14 +452,17 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
         <CopyButton text={chain.name} fontSize={16} />
-        {chain.name}
+        {chain.name || ' ...'}
 
         <IconButton
           id='sysView2_SearchNew'
           title='Search for a different chain'
           iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
           style={{ marginLeft: 10 }}
-          onClick={() => window.location.assign('/#chain')}
+          onClick={() => {
+            this.setState({ chain: undefined, listRows: [] });
+            window.location.assign('/#chain');
+          }}
         />
       </h2>
 
@@ -494,7 +496,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderSystems(chain: Chain) {
-    const { currentSystem, listRows, cargoFC, addingSysFC, saving, expandFC, showRemaining } = this.state;
+    const { currentSystem, listRows, cargoFC, addingSysFC, saving, loading, expandFC, showRemaining } = this.state;
 
     let remainingCargoFC = { ...cargoFC };
 
@@ -702,6 +704,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       {!rows.length && <div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
         <ActionButton
           text='Add systems...'
+          disabled={loading || saving}
+          style={{ color: loading || saving ? 'grey' : undefined }}
           onClick={() => this.setState({ editSystems: '\n' })}
         />
       </div>}
@@ -1204,7 +1208,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   renderIconFC(marketId: number, id64?: number) {
     const { chain, hoverFC, expandFC } = this.state;
     const fc = chain?.fcs.find(fc => fc.marketId === marketId);
-    if (!fc) { throw new Error(`No FC found by: ${marketId}`); }
+    if (!fc) { return null; }
     const idx = chain!.fcs.indexOf(fc);
 
     const iconName = fcIconList[idx % fcIconList.length];
