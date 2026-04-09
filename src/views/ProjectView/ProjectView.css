@@ -10,17 +10,6 @@ h3 .ms-Button--action {
   height: 25px;
 }
 
-.add-fc {
-  align-items: flex-start;
-}
-
-.add-fc .ms-ComboBox-container {
-  width: 230px;
-}
-
-.add-fc-upper {
-  padding: 8px;
-}
 
 .commodities th {
   text-align: left;

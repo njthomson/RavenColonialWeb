@@ -383,7 +383,7 @@ export interface KnownFC {
   name: string;
   displayName: string;
   owner?: string;
-  cargo: Record<string, number>;
+  cargo: Cargo;
   systemName?: string;
   id64?: number;
   starPos?: number[];

@@ -134,7 +134,8 @@ export const fcFullName = (name: string, displayName: string) => {
   }
 };
 
-export const sumCargo = (cargo: Record<string, number>): number => {
+export const sumCargo = (cargo: Record<string, number> | undefined): number => {
+  if (!cargo) { return 0; }
   const sum = Object.keys(cargo)
     .filter(k => k in mapCommodityNames)
     .reduce((s, k) => s += cargo[k], 0);

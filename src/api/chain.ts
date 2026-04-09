@@ -20,6 +20,10 @@ export const chain = {
     return await callAPI<Chain>(`/api/chain/${encodeURIComponent(id)}/setFCs`, 'POST', JSON.stringify(marketIDs));
   },
 
+  setSysFCs: async (id: string, id64: number, marketIDs: number[]): Promise<Chain> => {
+    return await callAPI<Chain>(`/api/chain/${encodeURIComponent(id)}/${encodeURIComponent(id64.toString())}/setFCs`, 'POST', JSON.stringify(marketIDs));
+  },
+
   setSystems: async (id: string, systemNames: string[]): Promise<Chain> => {
     return await callAPI<Chain>(`/api/chain/${encodeURIComponent(id)}/setSystems`, 'POST', JSON.stringify(systemNames));
   },
@@ -34,7 +38,6 @@ export type Chain = {
   fcs: KnownFC[];
   systems: ChainSys[];
   hubs: number[];
-  builds: Project[];
 }
 
 export type ChainSys = {
@@ -43,9 +46,14 @@ export type ChainSys = {
   nickname: string;
   pos: number[];
   type: ChainType
+  /** Grand total count of cargo needed for this system */
   total: number;
+  /** Grand total count of cargo already delivered for this system */
   progress: number;
+  /** Cargo needed for this system */
   needs?: Cargo;
+  fcs: number[];
+  builds: Project[];
 }
 
 export enum ChainType {

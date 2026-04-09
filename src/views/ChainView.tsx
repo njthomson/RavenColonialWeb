@@ -1,18 +1,29 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
 import { Chain, ChainSys } from "../api/chain";
-import { ActionButton, CommandBar, DefaultButton, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
-import { delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, removeCargo } from '../util';
+import { delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, removeCargo, sumCargo } from '../util';
 import { store } from '../local-storage';
-import { FindFC, ProjectLink } from '../components';
+import { CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
 import { FleetCarrier } from './FleetCarrier';
 import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
-import { Cargo } from '../types';
+import { Cargo, mapCommodityNames } from '../types';
+import { WhereToBuy } from '../components/WhereToBuy/WhereToBuy';
 
 const css = mergeStyles({
+  '.ms-Button--action, .ms-Button--icon': {
+    border: `1px solid transparent`,
+    ':hover': {
+      zIndex: 2,
+      border: `1px solid ${appTheme.palette.themeTertiary}`,
+    },
+    ':disabled': {
+      border: `1px solid transparent`,
+    },
+  },
   '.statBox': {
     marginBottom: 20,
     '.ms-Button--icon': {
@@ -36,25 +47,38 @@ const css = mergeStyles({
   '.listItem': {
     marginRight: 8,
   },
-  '.c0': {
-    position: 'relative',
-    'i': {
+  '.tableSystems': {
+    '.c0': {
+      paddingLeft: 4,
       position: 'relative',
-      zIndex: 2,
-      left: -1,
-      top: 1,
-    }
-  },
-  '.c1': {
-    paddingLeft: 8,
-  },
-  '.c2': {
-    minWidth: 50,
-    textAlign: 'center'
-  },
-  '.c3': {
-    minWidth: 80,
-    textAlign: 'center'
+      'i': {
+        position: 'relative',
+        zIndex: 2,
+        left: -1,
+        top: 1,
+      }
+    },
+    '.c1': {
+      paddingLeft: 8,
+      '.info': {
+        width: 18,
+        height: 18,
+        marginLeft: 4,
+        color: appTheme.palette.themeTertiary,
+        '.ms-Button-icon': { fontSize: 12 }
+      }
+    },
+    '.c2': {
+      minWidth: 50,
+      textAlign: 'center'
+    },
+    '.c3': {
+      textAlign: 'right',
+      paddingRight: 6,
+    },
+    '.c4': {
+      textAlign: 'right'
+    },
   },
   '.routeStats': {
     '.h': {
@@ -62,6 +86,26 @@ const css = mergeStyles({
     },
     '.boxes': {
       textAlign: 'center',
+    },
+  },
+  '.tableCargoFC': {
+    width: '100%',
+    '.c2': {
+      paddingLeft: 8,
+      minWidth: 50,
+      textAlign: 'right',
+    },
+    '.bar': {
+      position: 'relative',
+      display: 'inline-block',
+      margin: '0 4px',
+      width: 50,
+      height: 8,
+      backgroundColor: 'grey',
+      'div': {
+        height: '100%',
+        backgroundColor: appTheme.palette.greenLight,
+      }
     },
   }
 });
@@ -76,13 +120,34 @@ interface ChainViewState {
   errorMsg?: string;
 
   chain?: Chain;
-  currentSystem?: ChainSys;
+  listRows: SysRow[];
+  currentSystem?: SysRow;
   cargoFC?: Cargo;
 
   showAddCmdr?: boolean;
   showAddFC?: boolean;
   editSystems?: string;
   fcEditMarketId?: string;
+
+  addingSysFC?: number;
+  hoverFC?: number;
+  expandFC?: { id64: number, marketId: number };
+
+  shopFC?: number;
+  showRemaining?: number;
+}
+
+interface SysRow extends ChainSys {
+  /** Count of cargo needing to be supplied */
+  pending: number;
+  /** Count of cargo that could be supplied */
+  available: number;
+  /** Count of cargo not available, aka: pending - available */
+  missing: number;
+  /** Cargo not available */
+  missingCargo: Cargo;
+  /** Explicit cargo allocated from each FC */
+  fromFC: Record<number, Cargo>;
 }
 
 export class ChainView extends Component<ChainViewProps, ChainViewState> {
@@ -93,12 +158,19 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
     this.state = {
       loading: true,
+      listRows: [],
+      expandFC: { id64: 20436125953969, marketId: 3714461184 },
     };
   }
 
   componentDidMount(): void {
     if (this.props.id) {
-      this.loadChain(this.props.id);
+      const lastChain = JSON.parse(localStorage.getItem('tmpChain') ?? '{}') as Chain;
+      if (lastChain.id === this.props.id) {
+        this.useChain(lastChain);
+      } else {
+        this.loadChain(this.props.id);
+      }
     } else {
       this.setState({
         chain: {
@@ -109,7 +181,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           open: false,
           systems: [],
           hubs: [],
-          builds: [],
         }
       });
     }
@@ -129,19 +200,23 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             open: false,
             systems: [],
             hubs: [],
-            builds: [],
           }
         });
       }
     }
   }
 
-  async loadChain(id: string) {
+  async loadChain(id: string, force?: boolean) {
     this.setState({ loading: true, errorMsg: undefined });
 
     try {
-      const newChain = await api.chain.get(id);
-      this.useChain(newChain);
+      const lastChain = JSON.parse(localStorage.getItem('tmpChain') ?? '{}') as Chain;
+      if (lastChain.id === id && !force) { // TMP ??
+        this.useChain(lastChain);
+      } else {
+        const newChain = await api.chain.get(id);
+        this.useChain(newChain);
+      }
     } catch (err: any) {
       if (err.statusCode === 404) {
         // ignore cases when a chain is not found
@@ -155,33 +230,86 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   useChain(newChain: Chain) {
-    // inject pending Outpost if nothing set
+    // process systems and allocate cargo from FCs
+    const listRows: SysRow[] = [];
+    const fcCargos = newChain.fcs.reduce((m, fc) => {
+      m[fc.marketId] = { ...fc.cargo };
+      return m;
+    }, {} as Record<number, Cargo>)
+
     for (const s of newChain.systems) {
+      let needs = s.needs;
+      let total = s.total;
+      // substitute an outpost if blank
       if (!s.needs && !s.total) {
-        s.needs = getAvgHaulCosts('outpost (primary)');
-        s.total = Object.values(s.needs).reduce((sum, val) => sum += val, 0);
+        needs = getAvgHaulCosts('outpost (primary)');
+        total = Object.values(needs).reduce((sum, val) => sum += val, 0);
       }
+
+      // for each cargo needed ...
+      const fromFC: Record<number, Cargo> = {};
+      const remaining = { ...needs ?? {} };
+      let available = 0;
+      for (const name in remaining) {
+        // ... pull it from the FCs
+        for (const mid of s.fcs) {
+          const fcCargo = fcCargos[mid];
+          const need = remaining[name];
+          if (!need || !fcCargo[name]) { continue; }
+
+          const onFC = fcCargo[name] ?? 0;
+          fromFC[mid] = { ...fromFC[mid] ?? {} };
+          if (onFC > need) {
+            available += need;
+            remaining[name] = 0;
+            fcCargo[name] -= need;
+            fromFC[mid][name] = need;
+          } else {
+            available += onFC;
+            remaining[name] -= onFC;
+            fcCargo[name] = 0;
+            fromFC[mid][name] = onFC;
+          }
+        }
+      }
+
+      const pending = sumCargo(needs);
+      listRows.push({
+        ...s,
+        needs,
+        total,
+        pending,
+        available,
+        missing: pending - available,
+        missingCargo: remaining,
+        fromFC,
+      });
     }
 
     // calculate the current system
-    const currentSystem = newChain.systems.reduceRight((l, s) => {
+    const currentSystem = listRows.reduceRight((l, s) => {
       if (!s.progress || (s.total > 0 && s.progress < s.total)) { l = s; }
       return l;
-    }, undefined as ChainSys | undefined);
+    }, undefined as SysRow | undefined);
 
     this.setState({
       loading: false,
+      saving: false,
+      showAddFC: false,
+      addingSysFC: undefined,
+      expandFC: undefined,
       chain: newChain,
+      listRows: listRows,
       currentSystem: currentSystem,
       cargoFC: mergeCargo(newChain.fcs.map(fc => fc.cargo)),
       editSystems: undefined,
-      saving: false,
     });
     window.document.title = `Chain: ${newChain.name}`;
+    localStorage.setItem('tmpChain', JSON.stringify(newChain));
   }
 
   render() {
-    const { chain, errorMsg, loading, editSystems, currentSystem } = this.state;
+    const { chain, errorMsg, loading, editSystems, currentSystem, shopFC } = this.state;
 
     if (!this.props.id) {
       return this.renderCreate();
@@ -211,6 +339,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             {this.renderFleetCarriers(chain)}
           </div>
           {editSystems && this.renderEditSystems(chain)}
+          {shopFC && this.renderShopFC(chain, shopFC)}
         </div>
       </>}
     </div>;
@@ -271,7 +400,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderTitles(chain: Chain) {
-    const { errorMsg } = this.state;
+    const { errorMsg, saving } = this.state;
 
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
@@ -283,7 +412,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           title='Search for a different chain'
           iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
           style={{ marginLeft: 10 }}
-          className={cn.bBox}
           onClick={() => window.location.assign('/#chain')}
         />
       </h2>
@@ -293,7 +421,22 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           key: 'btn-refresh',
           text: 'Refresh',
           iconProps: { iconName: 'Refresh' },
-          onClick: () => { this.loadChain(this.props.id!) },
+          disabled: saving,
+          onClick: () => { this.loadChain(this.props.id!, true) },
+        },
+        {
+          key: 'sys-loading',
+          iconProps: { iconName: 'Nav2DMapView' },
+          onRender: () => {
+            return !saving ? null : <div>
+              <Spinner
+                size={SpinnerSize.medium}
+                labelPosition='right'
+                label='Saving ...'
+                style={{ marginTop: 12, cursor: 'default' }}
+              />
+            </div>
+          },
         },
       ]} />
       {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
@@ -302,15 +445,14 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderSystems(chain: Chain) {
-    const { currentSystem, cargoFC } = this.state;
+    const { currentSystem, listRows, cargoFC, addingSysFC, saving, expandFC, showRemaining } = this.state;
 
     let remainingCargoFC = { ...cargoFC };
-    console.log(`AA:`, remainingCargoFC.steel);
 
-    const rows = [];
+    let rows: JSX.Element[] = [];
     let flip = undefined;
     let lastWasCurrent = false;
-    for (const s of chain.systems) {
+    for (const s of listRows) {
       let progress = 100 / s.total * s.progress;
       if (isNaN(progress)) { progress = 0; }
       const remaining = !s.total ? getAverageHauls('plutus') : s.total - (s.progress ?? 0);
@@ -318,47 +460,51 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       const isComplete = remaining === 0;
       const isCurrent = s.id64 === currentSystem?.id64;
 
+      const bc = flip ? undefined : appTheme.palette.themeLighter;
       const bb = (isComplete || isCurrent ? '2px solid ' : '2px dotted ') + appTheme.palette.themeTertiary;
 
       const iconName = isHub ? 'ShieldSolid' : isCurrent ? 'Location' : 'LocationDot';
       const iconColor = isCurrent ? (appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod') : isComplete ? appTheme.semanticColors.bodyText : appTheme.palette.themeSecondary;
-      const textColor = isCurrent ? iconColor : isComplete ? undefined : appTheme.palette.themeSecondary;
+      const textColor = isCurrent ? iconColor : isComplete ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary;
 
-      let completion = !progress ? '' : isComplete ? <>Completed</> : <>{progress.toFixed(0)} %</>;
+      let completion = isComplete ? <>Completed</> : '';
       const completionTitle = progress > 0 ? `Delivered ${s.progress.toLocaleString()} of ${s.total.toLocaleString()}` : undefined;
 
-      const readyOnFCs = getCargoCountOnHand(s.needs ?? {}, remainingCargoFC);
-      if (!progress && !isCurrent && readyOnFCs > 0) {
-        const remaining = s.total - readyOnFCs;
-        const chartData = [{
+      if (s.fcs.length && !isCurrent) {
+        const chartData: IChartDataPoint[] = [{
           legend: 'Ready on FCs',
-          data: readyOnFCs,
+          data: s.available,
           color: appTheme.palette.tealDark,
         }, {
           legend: 'Remaining',
-          data: remaining,
+          data: s.missing,
           color: 'grey',
+
         }];
-        completion = <StackedBarChart
-          ignoreFixStyle
-          hideLegend
-          styles={{ root: { marginTop: 4, width: 100, height: 18 } }}
-          data={{ chartData }}
-        />
+        completion = <Stack
+          horizontal
+          verticalAlign='center'
+        >
+          <StackedBarChart
+            ignoreFixStyle
+            hideLegend
+            styles={{ root: { marginTop: 4, width: 100, height: 18 } }}
+            data={{ chartData }}
+          />
+        </Stack>
       }
 
       if (s.needs) {
         // remove remaining FC cargo based on what this system needs
         remainingCargoFC = removeCargo(remainingCargoFC, s.needs!);
-        console.log(`BB: ${s.name} (${s.total})`, remainingCargoFC.steel);
       }
 
-      rows.push(<tr key={`cs-${s.id64}`} style={{ backgroundColor: flip ? appTheme.palette.themeLighter : undefined, fontWeight: isCurrent ? 'bold' : undefined }}>
+      rows.push(<tr key={`cs-${s.id64}`} style={{ backgroundColor: bc, fontWeight: isCurrent ? 'bold' : undefined }}>
         <td className='c0'>
           {flip !== undefined && <>
             <div style={{
               position: 'absolute',
-              left: 4,
+              left: 8,
               width: 1,
               top: lastWasCurrent ? '-150%' : '-50%',
               bottom: '+50%',
@@ -371,53 +517,129 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         <td className='c1'>
           <CopyButton text={s.name} fontSize={10} color={appTheme.palette.themeTertiary} />
           <Link target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ marginLeft: 4, color: textColor }}>{s.nickname ?? s.name}</Link>
+          {!isComplete && <IconButton
+            className='info'
+            id={`rem-${s.id64}`}
+            iconProps={{ iconName: 'Info' }}
+            onClick={() => this.setState({ showRemaining: showRemaining === s.id64 ? undefined : s.id64 })}
+          />}
         </td>
 
         <td className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</td>
 
-        <td className='c3' style={{ color: textColor }} title={completionTitle}>{completion}</td>
+        <td className='c4' colSpan={!completion ? 2 : 1}>
+          {!isComplete && <Stack horizontal horizontalAlign='end'>
+            {s.fcs.map(mid => this.renderIconFC(mid, s.id64))}
+            <IconButton
+              title='Assign a Fleet Carrier to this system'
+              iconProps={{ iconName: 'AddTo', style: { color: saving ? 'grey' : appTheme.palette.themeTertiary } }}
+              disabled={saving}
+              onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64 })}
+            />
+          </Stack>}
+        </td>
+
+        {!!completion && <td className='c3' style={{ color: textColor }} title={completionTitle}>
+          {completion}
+        </td>}
       </tr>);
 
-      if (lastWasCurrent) { lastWasCurrent = false; }
-      if (isCurrent && currentSystem.total > 0) {
-        lastWasCurrent = true;
-        const delivered = currentSystem.progress;
-        const remaining = currentSystem.total - delivered - readyOnFCs;
+      if (addingSysFC === s.id64) {
+        // start with chain linked FCs
+        const preMatches: Record<string, string> = chain.fcs.reduce((m, fc) => {
+          if (!s.fcs.includes(fc.marketId)) {
+            m[fc.marketId.toString()] = `${fc.displayName} (${fc.name})`;
+          }
+          return m;
+        }, {} as Record<string, string>);
+        // add cmdr linked FCs
+        for (const [mid, name] of Object.entries(store.cmdrLinkedFCs)) {
+          if (!(mid in preMatches || s.fcs.includes(parseInt(mid)))) {
+            preMatches[mid] = name;
+          }
+        }
 
-        rows.push(<tr key={`cs-${s.id64}-b`} style={{ backgroundColor: flip ? appTheme.palette.themeLighter : undefined }}>
-          <td />
-          <td colSpan={3} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
-            <StackedBarChart
-              ignoreFixStyle
-              hideLegend
-              styles={{ root: { marginTop: 4, height: 18 } }}
-              data={{
-                chartData: [{
-                  legend: 'Delivered',
-                  data: delivered,
-                  color: appTheme.palette.tealLight,
-                }, {
-                  legend: 'Ready on FCs',
-                  data: readyOnFCs,
-                  color: appTheme.palette.tealDark,
-                }, {
-                  legend: 'Remaining',
-                  data: remaining,
-                  color: 'grey',
-                }],
+        const iconMap = chain.fcs.reduce((m, fc, i) => {
+          m[fc.marketId.toString()] = fcIconList[i % fcIconList.length];
+          return m;
+        }, {} as Record<string, string>);
+
+        rows.push(<tr key={`cs-${s.id64}-b`} style={{ backgroundColor: bc }}>
+          <td className='c0'>
+            <div style={{
+              position: 'absolute',
+              left: 8,
+              width: 1,
+              top: lastWasCurrent ? '-150%' : '-50%',
+              bottom: '+50%',
+              borderRight: '2px dotted ' + appTheme.palette.themeTertiary,
+            }} />
+          </td>
+          <td colSpan={4} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
+            <FindFC
+              preMatchText='Linked Fleet Carriers:'
+              preMatches={preMatches}
+              notThese={s.fcs.map(fc => fc.toString())}
+              disabled={saving}
+              processing={saving}
+              noSpanshCheck
+              iconMap={iconMap}
+              onChange={(marketId) => {
+                if (!marketId) { this.setState({ addingSysFC: undefined }); return; }
+
+                this.setState({ saving: true });
+                const newMarketIDs = Array.from(new Set([...s.fcs, parseInt(marketId)]));
+                api.chain.setSysFCs(chain.id, s.id64, newMarketIDs)
+                  .then(newChain => this.useChain(newChain))
+                  .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />
           </td>
         </tr>);
       }
+
+      if (lastWasCurrent) { lastWasCurrent = false; }
+      if (isCurrent) {
+        lastWasCurrent = true;
+        const chartData: IChartDataPoint[] = [{
+          legend: 'Delivered',
+          data: s.progress,
+          color: appTheme.palette.tealLight,
+        }, {
+          legend: 'Remaining',
+          data: s.missing,
+          color: 'grey',
+        }];
+        if (s.available > 0) {
+          chartData.splice(1, 0, {
+            legend: 'Ready on FCs',
+            data: s.available,
+            color: appTheme.palette.tealDark,
+          });
+        }
+
+        rows.push(<tr key={`cs-${s.id64}-c`} style={{ backgroundColor: bc }}>
+          <td />
+          <td colSpan={4} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 6 }}>
+            <Stack horizontal tokens={{ childrenGap: 8 }}>
+              <StackedBarChart
+                ignoreFixStyle
+                hideLegend
+                styles={{ root: { marginTop: 4, height: 18 } }}
+                data={{ chartData }}
+              />
+              <div style={{ color: textColor, fontWeight: 'bold' }}>{progress.toFixed(0)}&nbsp;%</div>
+            </Stack>
+          </td>
+        </tr>);
+      }
       flip = !flip;
-    };
+    }
 
     return <div className='half' style={{ marginTop: 10 }}>
       <h3 className={cn.h3}>
         <>Systems:</>
         <ActionButton
-          className={cn.bBox}
           iconProps={{ iconName: 'EditNote' }}
           text='Edit'
           title='Edit and re-order systems'
@@ -430,20 +652,158 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
       {!rows.length && <div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
         <ActionButton
-          className={cn.bBox}
           text='Add systems...'
           onClick={() => this.setState({ editSystems: '\n' })}
         />
       </div>}
 
       {!!rows.length && <>
-        <table cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
-          <tbody>
-            {rows}
-          </tbody>
+        <table className='tableSystems' cellPadding={0} cellSpacing={0} style={{ fontSize: 14 }}>
+          <tbody>{rows}</tbody>
         </table>
       </>}
+
+      {!!expandFC && this.renderFCCard(chain, expandFC.id64, expandFC.marketId)}
+      {!!showRemaining && this.renderRemaining(chain, showRemaining)}
     </div>;
+  }
+
+  renderRemaining(chain: Chain, id64: number) {
+    const { listRows } = this.state;
+    const sysRow = listRows.find(s => s.id64 === id64);
+    if (!sysRow) { return null; }
+
+    return <>
+      <Callout
+        className={css}
+        target={`#rem-${id64}`}
+        setInitialFocus
+        alignTargetEdge
+        directionalHint={DirectionalHint.rightTopEdge}
+        gapSpace={4}
+        styles={{
+          beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+          calloutMain: {
+            backgroundColor: appTheme.palette.neutralTertiaryAlt,
+            color: appTheme.palette.neutralDark,
+            cursor: 'default',
+          }
+        }}
+        onDismiss={() => this.setState({ showRemaining: undefined })}
+      >
+        <h3 className={cn.h3}>{sysRow.name}</h3>
+
+        <div style={{ fontSize: 12, color: appTheme.palette.themePrimary, marginBottom: 4 }}>
+          Cargo remaining: {sysRow.missing.toLocaleString()}
+        </div>
+
+        <table className='tableCargoFC' cellPadding={0} cellSpacing={0}>
+          <tbody>
+            {Object.entries(sysRow.missingCargo).filter(([n, v]) => v > 0).map(([n, v], i) => {
+              return <tr key={`mrc-${i}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : undefined }}>
+                <td className='c1'>
+                  <CommodityIcon name={n} />
+                  &nbsp;
+                  {mapCommodityNames[n] ?? n}:
+                </td>
+                <td className='c2'>
+                  {v.toLocaleString()}
+                </td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
+      </Callout>
+    </>;
+  }
+
+  renderFCCard(chain: Chain, id64: number, marketId: number) {
+    const { expandFC, listRows, saving, shopFC } = this.state;
+    const fc = chain.fcs.find(fc => fc.marketId === marketId);
+    const sysRow = listRows.find(s => s.id64 === id64);
+    if (!expandFC || !fc || !sysRow) { return null; }
+
+    return <>
+      <Callout
+        className={css}
+        target={`#fcc-${expandFC.id64}-${expandFC.marketId}`}
+        setInitialFocus
+        alignTargetEdge
+        directionalHint={DirectionalHint.rightTopEdge}
+        gapSpace={4}
+        styles={{
+          beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
+          calloutMain: {
+            backgroundColor: appTheme.palette.neutralTertiaryAlt,
+            color: appTheme.palette.neutralDark,
+            cursor: 'default',
+          }
+        }}
+        onDismiss={() => this.setState({ expandFC: undefined })}
+      >
+        <h3 className={cn.h3}>{fc.displayName} ({fc.name})</h3>
+
+        <Stack horizontal tokens={{ childrenGap: 4 }}>
+          <ActionButton
+            iconProps={{ iconName: 'Clear', style: { color: saving ? 'grey' : undefined } }}
+            title='Unlink FC from this system'
+            text={`Unlink FC`}
+            style={{ height: 28, color: saving ? 'grey' : undefined }}
+            disabled={saving}
+            onClick={() => {
+              this.setState({ saving: true });
+              const newMarketIDs = sysRow.fcs.filter(mid => mid !== marketId);
+              api.chain.setSysFCs(chain.id, sysRow.id64, newMarketIDs)
+                .then(newChain => this.useChain(newChain))
+                .catch(err => this.setState({ saving: false, errorMsg: err.message }));
+            }}
+          />
+
+          <ActionButton
+            iconProps={{ iconName: 'Edit', style: { color: saving ? 'grey' : undefined } }}
+            title='Edit cargo on this FC'
+            text={`Edit`}
+            style={{ height: 28, color: saving ? 'grey' : undefined }}
+            disabled={saving}
+            onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
+          />
+
+          <ActionButton
+            iconProps={{ iconName: 'ShoppingCart', style: { color: saving ? 'grey' : undefined } }}
+            title='Shop for supplies for this FC'
+            text={`Shop`}
+            style={{ height: 28, color: saving ? 'grey' : undefined }}
+            disabled={saving}
+            onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
+          />
+        </Stack>
+
+        <div style={{ fontSize: 12, color: appTheme.palette.themePrimary, marginBottom: 4 }}>
+          FC cargo to apply in this system:
+        </div>
+
+        <table className='tableCargoFC' cellPadding={0} cellSpacing={0}>
+          <tbody>
+            {Object.entries(sysRow.fromFC[marketId]).map(([n, v], i) => {
+              const w = 100 / fc.cargo[n] * v;
+              return <tr key={`fccc-${marketId}-${i}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : undefined }}>
+                <td className='c1'>
+                  <CommodityIcon name={n} />
+                  &nbsp;
+                  {mapCommodityNames[n] ?? n}:
+                </td>
+                <td className='c2'>
+                  {v.toLocaleString()}
+                  <div className='bar' title={`${mapCommodityNames[n] ?? n}: ${v} of ${fc.cargo[n]}`}>
+                    <div style={{ width: `${w}%` }} />
+                  </div>
+                </td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
+      </Callout>
+    </>;
   }
 
   renderEditSystems(chain: Chain) {
@@ -507,10 +867,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </Panel>;
   }
 
-  renderCurrentSystem(chain: Chain, currentSystem: ChainSys) {
-    const { cargoFC } = this.state;
-    const activeProjects = chain.builds.filter(b => !b.complete);
+  renderCurrentSystem(chain: Chain, currentSystem: SysRow) {
+    // const { cargoFC } = this.state;
+    const activeProjects = currentSystem.builds ?? [];
     const linkColor = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
+
+    const cargoFC = mergeCargo(Object.values(currentSystem.fromFC));
 
     return <div className='routeStats statBox'>
       <h3 className={cn.h3}>Current system:</h3>
@@ -525,7 +887,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         <div style={{ position: 'relative', paddingLeft: 10 }}>
           {activeProjects.map(p => {
             const delivered = p.maxNeed - p.sumNeed;
-            const readyOnFCs = getCargoCountOnHand(p.commodities, cargoFC ?? {});
+            const readyOnFCs = getCargoCountOnHand(p.commodities, cargoFC);
             const remaining = p.sumNeed - readyOnFCs;
 
             const chartData: IChartDataPoint[] = [{
@@ -564,17 +926,17 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderRouteStats(chain: Chain) {
-    const { cargoFC } = this.state;
+    const { cargoFC, listRows } = this.state;
 
-    const sumTotal = chain.systems.map(s => s.total ?? 0).reduce((t, c) => t + c, 0);
-    const sumDelivered = chain.systems.map(s => s.progress ?? 0).reduce((t, c) => t + c, 0);
-    const sumCargo = mergeCargo(chain.systems.map(s => s.needs ?? {}));
+    const sumTotal = listRows.map(s => s.total ?? 0).reduce((t, c) => t + c, 0);
+    const sumDelivered = listRows.map(s => s.progress ?? 0).reduce((t, c) => t + c, 0);
+    const sumCargo = mergeCargo(listRows.map(s => s.needs ?? {}));
     const readyOnFCs = getCargoCountOnHand(sumCargo, cargoFC ?? {});
     const sumRemaining = sumTotal - sumDelivered - readyOnFCs;
 
-    const completed = chain.systems.filter(s => s.total && s.progress && s.progress >= s.total);
-    const hubs = chain.systems.filter(s => chain.hubs.includes(s.id64));
-    const systemsProgress = 100 / chain.systems.length * completed.length;
+    const completed = listRows.filter(s => s.total && s.progress && s.progress >= s.total);
+    const hubs = listRows.filter(s => chain.hubs.includes(s.id64));
+    const systemsProgress = 100 / listRows.length * completed.length;
 
 
     const chartData: IChartDataPoint[] = [{
@@ -588,7 +950,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }];
     if (readyOnFCs > 0) {
       chartData.splice(1, 0, {
-        legend: 'Ready on FCs',
+        legend: 'Ready on any FC',
         data: readyOnFCs,
         color: appTheme.palette.tealDark,
       });
@@ -624,7 +986,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       <h3 className={cn.h3}>
         <>Commanders:</>
         {allowEdit && <ActionButton
-          className={cn.bBox}
           iconProps={{ iconName: 'Add' }}
           text='Add'
           title='Add a new Commander to this project'
@@ -650,7 +1011,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             <span className='listItem'>{cmdr}</span>
 
             {allowEdit && <IconButton
-              className={cn.bBox}
               iconProps={{ iconName: 'Clear' }}
               disabled={!allowRemoveCmdr}
               onClick={() => {
@@ -668,7 +1028,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderFleetCarriers(chain: Chain) {
-    const { showAddFC, fcEditMarketId } = this.state;
+    const { showAddFC, fcEditMarketId, hoverFC, shopFC, listRows, saving } = this.state;
     const allowEdit = chain.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
 
     let preMatches: Record<string, string> | undefined = undefined;
@@ -687,7 +1047,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       <h3 className={cn.h3}>
         <>Fleet Carriers:</>
         {allowEdit && <ActionButton
-          className={cn.bBox}
           iconProps={{ iconName: 'Add' }}
           text='Add'
           title='Add a new Fleet Carrier to this project'
@@ -709,34 +1068,52 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             this.setState({ saving: true });
             const newMarketIDs = Array.from(new Set([...chain.fcs.map(fc => fc.marketId), parseInt(marketId)]));
             api.chain.setFCs(chain.id, newMarketIDs)
-              .then(newChain => this.setState({ saving: false, chain: newChain, showAddFC: false }))
+              .then(newChain => this.useChain(newChain))
               .catch(err => this.setState({ saving: false, errorMsg: err.message }));
           }}
         />
       </div>}
 
       <div style={{ fontSize: 14 }}>
-        {chain.fcs.map(fc => {
-          return <Stack key={`csfs-${fc.marketId}`} horizontal verticalAlign='center'>
+        {chain.fcs.map((fc, i) => {
+          const isSysLinked = listRows.some(r => r.fcs.includes(fc.marketId));
+
+          return <Stack
+            key={`csfs-${fc.marketId}`}
+            horizontal
+            verticalAlign='center'
+            style={{ backgroundColor: hoverFC === fc.marketId ? appTheme.palette.themeLight : undefined, padding: 4 }}
+            onMouseEnter={() => this.setState({ hoverFC: fc.marketId })}
+            onMouseLeave={() => this.setState({ hoverFC: undefined })}
+          >
+            {this.renderIconFC(fc.marketId)}
+            &nbsp;
             <span className='listItem'>{fc.displayName} ({fc.name})</span>
 
             <IconButton
-              className={cn.bBox}
-              iconProps={{ iconName: 'Edit' }}
+              iconProps={{ iconName: 'Edit', style: { color: saving ? 'grey' : undefined } }}
+              disabled={saving}
               onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
             />
 
             {allowEdit && <IconButton
-              className={cn.bBox}
-              iconProps={{ iconName: 'Clear' }}
+              iconProps={{ iconName: 'Clear', style: { color: saving ? 'grey' : undefined } }}
+              disabled={saving}
               onClick={() => {
                 this.setState({ saving: true });
                 const newMarketIDs = chain.fcs.map(x => x.marketId).filter(x => x !== fc.marketId);
                 api.chain.setFCs(chain.id, newMarketIDs)
-                  .then(newChain => this.setState({ saving: false, chain: newChain }))
+                  .then(newChain => this.useChain(newChain))
                   .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />}
+
+            {isSysLinked && <IconButton
+              iconProps={{ iconName: 'ShoppingCart', style: { color: saving ? 'grey' : undefined } }}
+              disabled={saving}
+              onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
+            />}
+
           </Stack>;
         })}
       </div>
@@ -751,7 +1128,87 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </div>;
   }
 
+  renderShopFC(chain: Chain, marketId: number) {
+    const { listRows } = this.state;
+    const fc = chain.fcs.find(fc => fc.marketId === marketId);
+    if (!fc) { return null; }
+
+    const need = mergeCargo(listRows
+      .filter(r => r.fcs.includes(marketId))
+      .map(r => r.needs ?? {}));
+
+    // search where the FC is located, or the first assigned system if that is not known
+    const systemName = fc.systemName ?? listRows.find(r => r.fcs.includes(marketId))?.name ?? '';
+
+    return <>
+      <WhereToBuy
+        visible={!!marketId}
+        buildIds={[marketId?.toString()]}
+        systemName={systemName}
+        need={need}
+        have={fc.cargo}
+        onClose={() => this.setState({ shopFC: undefined })}
+      />
+    </>;
+  }
+
+  renderIconFC(marketId: number, id64?: number) {
+    const { chain, hoverFC, expandFC } = this.state;
+    const fc = chain?.fcs.find(fc => fc.marketId === marketId);
+    if (!fc) { throw new Error(`No FC found by: ${marketId}`); }
+    const idx = chain!.fcs.indexOf(fc);
+
+    const iconName = fcIconList[idx % fcIconList.length];
+
+    if (!id64) {
+      return <Icon
+        key={`fci-${marketId}`}
+        iconName={iconName}
+        title={`${fc.displayName} (${fc.name})`}
+        style={{
+          color: marketId === hoverFC ? appTheme.palette.themeDark : appTheme.palette.themeSecondary,
+          fontSize: 24,
+        }}
+        onMouseEnter={() => this.setState({ hoverFC: marketId })}
+        onMouseLeave={() => this.setState({ hoverFC: undefined })}
+      />
+    } else {
+      return <IconButton
+        id={`fcc-${id64}-${marketId}`}
+        key={`fci-${marketId}`}
+        iconProps={{ iconName: iconName, style: { fontSize: 24, } }}
+        title={`${fc.displayName} (${fc.name})`}
+        style={{
+          color: marketId === hoverFC ? appTheme.palette.themeDark : appTheme.palette.themeSecondary,
+        }}
+        onMouseEnter={() => this.setState({ hoverFC: marketId })}
+        onMouseLeave={() => this.setState({ hoverFC: undefined })}
+        onClick={() => this.setState({ expandFC: expandFC ? undefined : { id64, marketId } })}
+      />
+    }
+  }
+
 }
+
+const fcIconList: string[] = [
+  'FerrySolid',
+  'BusSolid',
+  'TrainSolid',
+  'ParkingSolid',
+  'GiftBoxSolid',
+  'LadybugSolid',
+  'ParachuteSolid',
+  'ColorSolid',
+  'BankSolid',
+  'FiltersSolid',
+  'DiamondSolid',
+  'VerifiedBrandSolid',
+  'CircleShapeSolid',
+  'SquareShapeSolid',
+  'TriangleShapeSolid',
+  'DropShapeSolid',
+  'StarburstSolid',
+]
 
 export const CmdrChains: FunctionComponent<{}> = (props) => {
   const [chains, setChains] = useState<Record<string, string> | undefined>(undefined);
@@ -787,7 +1244,6 @@ export const CmdrChains: FunctionComponent<{}> = (props) => {
   </div>
     ;
 };
-
 
 export const AddCmdr: FunctionComponent<{ onClose: (cmdr: string | undefined) => void }> = (props) => {
   const [cmdr, setCmdr] = useState('');

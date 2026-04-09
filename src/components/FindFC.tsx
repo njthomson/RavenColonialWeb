@@ -1,13 +1,31 @@
 import * as api from '../api';
-import { ComboBox, IComboBox, IComboBoxOption, IconButton, Stack } from '@fluentui/react';
+import { ComboBox, IComboBox, IComboBoxOption, Icon, IconButton, mergeStyles, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { Component, createRef } from 'react';
 import { appTheme } from '../theme';
+
+const css = mergeStyles({
+  alignIitems: 'flex-start',
+  '.ms-ComboBox-container': {
+    width: 230,
+  },
+  '.add-fc-upper': {
+    padding: 0,
+  },
+  '.ms-ComboBox-optionsContainer :hover': {
+    backgroundColor: appTheme.palette.themeLight,
+  },
+});
 
 interface FindFCProps {
   onChange: (marketId: string | undefined) => void;
   match?: boolean;
-  preMatches?: Record<string, string>
-  notThese: string[]
+  preMatchText?: string;
+  preMatches?: Record<string, string>;
+  notThese: string[];
+  disabled?: boolean;
+  noSpanshCheck?: boolean;
+  processing?: boolean;
+  iconMap?: Record<string, string>;
 }
 
 interface FindFCState {
@@ -29,7 +47,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     const preMatches = Object.entries(props.preMatches ?? {})?.map(([marketId, fullName]) => ({
       key: marketId,
       text: fullName,
-    }));
+    } as IComboBoxOption));
 
     this.state = {
       matches: preMatches,
@@ -53,8 +71,9 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     const { matches, errorMsg } = this.state;
 
     return <>
-      <Stack className='add-fc' horizontal tokens={{ childrenGap: 8 }}>
+      <Stack className={css} horizontal verticalAlign='center' tokens={{ childrenGap: 8 }} >
         <ComboBox
+          calloutProps={{ className: css }}
           id='add-fc-combo'
           componentRef={this.comboFindFC}
           openOnKeyboardFocus
@@ -64,11 +83,14 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
             callout: {
               border: '1px solid ' + appTheme.palette.themePrimary,
               display: errorMsg ? 'none' : 'flex',
+              cursor: 'default',
             },
+            inputDisabled: { color: 'grey', },
           }}
           allowFreeform
           autoComplete='off'
           options={matches}
+          disabled={this.props.disabled}
 
           onRenderUpperContent={() => {
             const hint = this.getUpperContentHint();
@@ -76,6 +98,13 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
               return <div className='add-fc-upper' style={{ color: appTheme.palette.themePrimary }}>{hint}</div>;
             else
               return null;
+          }}
+          onRenderOption={(p, dd) => {
+            const iconName = this.props.iconMap && this.props.iconMap[p?.key ?? ''];
+            return <Stack horizontal verticalAlign='baseline'>
+              {iconName && <Icon className='icon-inline' iconName={iconName} style={{ marginRight: 4, color: appTheme.palette.accent, fontSize: 18 }} />}
+              <span className='lbl' style={{ marginLeft: this.props.iconMap && !iconName ? 24 : 0 }}>{p?.text}</span>
+            </Stack>;
           }}
 
           onInputValueChange={this.onType}
@@ -92,13 +121,19 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
               this.onChooseFC(newMarketId);
             }
           }}
+          onKeyDown={ev => {
+            if (ev.key === 'Escape') { this.props.onChange(undefined); }
+          }}
         />
 
-        <IconButton
+        {!this.props.processing && <IconButton
           title='Cancel'
-          iconProps={{ iconName: 'Cancel' }}
+          iconProps={{ iconName: 'Cancel', style: { color: this.props.disabled ? 'grey' : undefined } }}
+          disabled={this.props.disabled}
           onClick={() => this.props.onChange(undefined)}
-        />
+        />}
+
+        {!!this.props.processing && <Spinner size={SpinnerSize.medium} labelPosition='right' style={{ margin: 0, paddingLeft: 8 }} />}
 
       </Stack>
     </>;
@@ -108,7 +143,7 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
     const { preMatch, matchName, searching } = this.state;
 
     if (preMatch)
-      return 'Commander linked Fleet Carriers:';
+      return this.props.preMatchText ?? 'Commander linked Fleet Carriers:';
     else if (!preMatch && (!matchName || matchName.length < 3))
       return 'Type 3 characters to begin search';
     else if (searching)
@@ -187,13 +222,15 @@ export class FindFC extends Component<FindFCProps, FindFCState> {
   };
 
   onChooseFC = async (marketId: string) => {
-    try {
-      // check we know this FC first
-      await api.fc.check(marketId);
-    } catch (err: any) {
-      if (err.statusCode !== 409) {
-        this.setState({ errorMsg: err.message });
-        return;
+    if (!this.props.noSpanshCheck) {
+      try {
+        // check we know this FC first
+        await api.fc.check(marketId);
+      } catch (err: any) {
+        if (err.statusCode !== 409) {
+          this.setState({ errorMsg: err.message });
+          return;
+        }
       }
     }
 

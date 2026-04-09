@@ -67,6 +67,7 @@ interface ProjectViewState {
   cargoContext?: string;
 
   showAddFC: boolean;
+  savingFC?: boolean;
 
   fcCargo: Record<string, Cargo>;
   fcEditMarketId?: string;
@@ -1405,7 +1406,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderLinkedFC() {
-    const { proj, showAddFC, fcEditMarketId } = this.state;
+    const { proj, showAddFC, savingFC, fcEditMarketId } = this.state;
     if (!proj) { return <div />; }
 
     const rows = proj.linkedFC.map(item => (<li key={`@${item.marketId}`}>
@@ -1468,8 +1469,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         <FindFC
           preMatches={preMatches}
           notThese={linkedMarketIds}
+          processing={savingFC}
           onChange={(marketId) => {
-
             if (marketId) {
               this.onClickLinkFC(marketId)
             } else {
@@ -1552,10 +1553,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   onClickLinkFC = async (marketId: string) => {
     if (this.state.buildId && marketId) {
       try {
+        this.setState({ savingFC: true });
         const linkedFCs = await api.project.linkFC(this.state.buildId, marketId);
         this.updateLinkedFC(this.state.buildId, linkedFCs);
       } catch (err: any) {
-        this.setState({ errorMsg: err.message });
+        this.setState({ errorMsg: err.message, savingFC: false });
       }
     }
   }
@@ -1585,6 +1587,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       proj: updatedProj,
       lastTimestamp: updatedProj.timestamp,
       showAddFC: false,
+      savingFC: false,
       deliverMarketId: linkedFCs.find(fc => fc.marketId.toString() === this.state.deliverMarketId)?.marketId.toString() ?? 'site',
       errorMsg: undefined,
     });

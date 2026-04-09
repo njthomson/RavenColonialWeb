@@ -555,10 +555,11 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         {searching && <Spinner hidden label='Searching' labelPosition='right' style={{ margin: 6 }} />}
 
         <PrimaryButton
-          iconProps={{ iconName: 'Search' }}
+          iconProps={{ iconName: 'Search', style: { color: searching || !refSystem ? 'grey' : undefined } }}
           text="Search"
           disabled={searching || !refSystem}
-          onClick={this.doSearch} style={{ height: 25 }}
+          style={{ height: 25, color: searching || !refSystem ? 'grey' : undefined }}
+          onClick={this.doSearch}
         />
 
         <DefaultButton
