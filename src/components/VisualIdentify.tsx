@@ -29,7 +29,7 @@ const supportedTypes: Record<string, ImageData> = {
   'alala': { cmdr: 'DziwnyCwiek', location: `Hirase Vision - HIP 105872, AB 1 e` },
   'alastor': { cmdr: 'Abe Andet', location: `Bierce Platform - Arietis Sector PJ-Q B5-5` },
   'aletheia': { cmdr: 'Disnaematter', location: `Taylor Sanctuary - Synuefe EM-M c23-8` },
-  'ananke': { cmdr: 'Kai Thoreau', location: `Nakayama Landing - HIP 87968, 4 A` },
+  'ananke': { cmdr: 'Dubior', location: `Skovoroda Expedition - Lagoon Sector RY-R b4-7, A 1` },
   'angelia': { cmdr: 'Grinning2001', location: `Samos Gateway - IC 2391 Sector LH-V b2-5, A 8` },
   'annona': { cmdr: 'Kekosummer', location: `Zabuzhko Botanical Garden - Col 285 Sector GL-X c1-11, A 4`, more: [{ n: 'annona-plan.jpg', c: 'Cmdr Grinning2001' }] },
   'antevorta': { cmdr: 'Disnaematter', location: `Neumann Gateway - Synuefe EM-M c23-8` },
