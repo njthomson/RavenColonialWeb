@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { GGGRow } from '../api/misc';
 import { isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
-import { applyTax } from '../system-model2';
 
 const css = mergeStyles({
   cursor: 'default',
