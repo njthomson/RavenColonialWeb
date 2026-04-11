@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { GGGRow } from '../api/misc';
 import { isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
+import { applyTax } from '../system-model2';
 
 const css = mergeStyles({
   cursor: 'default',
@@ -19,6 +20,10 @@ const css = mergeStyles({
     ':hover': {
       backgroundColor: appTheme.palette.themeLight,
     }
+  },
+  'tbody td': {
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   '.tableBodies': {
     fontSize: 14,
@@ -36,8 +41,12 @@ const css = mergeStyles({
       textAlign: 'right',
     },
     '.json': {
-      textAlign: 'center',
-      paddingRight: 0,
+      textAlign: 'left',
+      paddingLeft: 10,
+      '.ms-Button--icon': {
+        width: 24,
+        height: 24,
+      },
     },
   },
   '.tableScan': {
@@ -46,18 +55,93 @@ const css = mergeStyles({
       paddingRight: 10,
     }
   },
+  'th.sortable': {
+    paddingLeft: 2,
+    cursor: 'pointer',
+    ":hover": {
+      color: appTheme.palette.themePrimary,
+      backgroundColor: appTheme.palette.themeLight,
+    }
+  },
 });
 
+interface GGGListRow extends Omit<GGGRow, 'journalJson'> {
+  planetClass: string;
+  journalJsons: JournalJson[];
+}
+
+interface JournalJson {
+  BodyName: string;
+  PlanetClass: string;
+  Timestamp: string;
+}
+
+type SortField = 'bodyName' | 'planetClass' | 'surfaceTemp' | 'tag' | 'cmdr';
+
+const sortBy = (gggData: GGGListRow[], by: SortField, invert: boolean) => {
+  const sorted = gggData?.sort((a, b) => {
+    switch (by) {
+      case 'bodyName': return a.bodyName.localeCompare(b.bodyName) * (invert ? -1 : 1);
+      case 'planetClass': return a.planetClass.localeCompare(b.planetClass) * (invert ? -1 : 1);
+      case 'surfaceTemp': return (a.surfaceTemp - b.surfaceTemp) * (invert ? -1 : 1);
+      case 'tag': return a.tag.localeCompare(b.tag) * (invert ? -1 : 1);
+      case 'cmdr': return a.cmdr.localeCompare(b.cmdr) * (invert ? -1 : 1);
+      default: throw new Error(`Unexpected sortField: ${by}`);
+    }
+  });
+  return sorted;
+};
+
 export const GGG: React.FunctionComponent = () => {
-  const [gggData, setGGGData] = useState<GGGRow[] | undefined>(undefined);
-  const [showJournal, setShowJournal] = useState<GGGRow | undefined>(undefined);
+  const [gggData, setGGGData] = useState<GGGListRow[] | undefined>(undefined);
+  const [journalJson, setJournalJson] = useState<JournalJson | undefined>(undefined);
   const [showSrvHelp, setShowSrvHelp] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('bodyName');
+  const [sortInvert, setSortInvert] = useState(false);
 
   window.document.title = `Green Gas Giants`;
 
   useMemo(() => {
-    api.misc.ggg().then(result => setGGGData(result));
+    api.misc.ggg().then(result => {
+      // reduce extra rows onto the first
+      const map = result.reduce((m, r) => {
+        const jj = { Commander: r.cmdr, Timestamp: '', ...JSON.parse(r.journalJson) };
+        jj.Timestamp = jj.timestamp;
+        delete jj.timestamp;
+        if (!m[r.bodyName]) {
+          m[r.bodyName] = { ...r, planetClass: jj.PlanetClass, journalJsons: [jj] };
+        } else {
+          m[r.bodyName].journalJsons.push(jj);
+        }
+        return m;
+      }, {} as Record<string, GGGListRow>);
+
+      setGGGData(sortBy(Object.values(map), 'bodyName', false));
+    });
   }, []);
+
+  useMemo(() => {
+    setGGGData(g => sortBy(g ?? [], sortField, sortInvert));
+  }, [sortField, sortInvert]);
+
+  const renderColumn = (text: string, by: SortField | undefined) => {
+    return <th className={by ? 'sortable' : undefined} onClick={() => {
+      if (sortField === by) {
+        setSortInvert(!sortInvert);
+      } else if (by) {
+        setSortField(by);
+      }
+    }}>
+      <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
+        {!!by && <Icon
+          iconName={sortField !== by ? 'CalculatorSubtract' : sortInvert ? 'CaretSolidUp' : 'CaretSolidDown'}
+          style={{ color: sortField !== by ? 'grey' : appTheme.palette.themePrimary }}
+        />}
+        <span>{text}</span>
+
+      </Stack>
+    </th>;
+  };
 
   return <div className={css} style={{ width: 'fit-content', margin: 10, }}>
     <div className='top'>
@@ -107,23 +191,22 @@ export const GGG: React.FunctionComponent = () => {
       {!!gggData && <table className='tableBodies' cellSpacing={0} cellPadding={0}>
         <thead>
           <tr>
-            <th>Body</th>
-            <th>Planet class</th>
-            <th>Temperature</th>
-            <th>Tagged</th>
-            <th>Commander</th>
-            <th>Journal</th>
+            {renderColumn('Body', 'bodyName')}
+            {renderColumn('Planet Class', 'planetClass')}
+            {renderColumn('Temperature', 'surfaceTemp')}
+            {renderColumn('Tagged', 'tag')}
+            {renderColumn('Commander', 'cmdr')}
+            {renderColumn('Journal Scan', undefined)}
           </tr>
         </thead>
 
         <tbody>
           {gggData.map((row, index) => {
-            const planetClass = JSON.parse(row.journalJson)?.PlanetClass ?? 'Unknown';
-            return <tr key={index}>
+            return <tr key={index} style={{ backgroundColor: index % 2 ? appTheme.palette.themeLighter : undefined }}>
               <td className='name'>
                 <CopyButton text={row.bodyName} fontSize={12} color={appTheme.palette.themeSecondary} />&nbsp;{row.bodyName}
               </td>
-              <td>{planetClass}</td>
+              <td>{row.planetClass}</td>
               <td className='temp'>{row.surfaceTemp} K</td>
               <td>
                 <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
@@ -133,12 +216,13 @@ export const GGG: React.FunctionComponent = () => {
               </td>
               <td>{row.cmdr}</td>
               <td className='json'>
-                <IconButton
-                  id={`row-${row.id64}-${row.bodyID}`}
+                {row.journalJsons.map(jj => <IconButton
+                  key={`jjb-${jj.BodyName}-${jj.Timestamp}`}
+                  id={`row-${jj.BodyName}-${jj.Timestamp}`}
                   className={cn.bBox}
                   iconProps={{ iconName: 'TextDocument' }}
-                  onClick={() => setShowJournal(showJournal === row ? undefined : row)}
-                />
+                  onClick={() => setJournalJson(journalJson === jj ? undefined : jj)}
+                />)}
               </td>
             </tr>;
           })}
@@ -146,14 +230,14 @@ export const GGG: React.FunctionComponent = () => {
       </table>}
     </div>
 
-    {!!showJournal && <>
+    {!!journalJson && <>
       <Panel
         className={css}
         isOpen
         allowTouchBodyScroll={isMobile()}
         type={PanelType.medium}
         customWidth={'380px'}
-        headerText={`Journal Scan: ${showJournal.bodyName}`}
+        headerText={`Journal Scan: ${journalJson.BodyName}`}
         isLightDismiss
         styles={{
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
@@ -166,7 +250,7 @@ export const GGG: React.FunctionComponent = () => {
               className={cn.bBox}
               iconProps={{ iconName: 'Copy' }}
               text='Copy JSON'
-              onClick={() => navigator.clipboard.writeText(showJournal.journalJson)}
+              onClick={() => navigator.clipboard.writeText(JSON.stringify(journalJson))}
             />
           </>;
         }}
@@ -177,23 +261,23 @@ export const GGG: React.FunctionComponent = () => {
               let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
               while (!!btn?.parentElement && btn.tagName !== 'BUTTON') { btn = btn.parentElement; }
 
-              if (btn?.id.startsWith('row-') && btn.id !== `row-${showJournal.id64}-${showJournal.bodyID}`) {
+              if (btn?.id.startsWith('row-') && btn.id !== `row-${journalJson.BodyName}-${journalJson.Timestamp}`) {
                 btn.click();
               }
             }, 10);
           }
 
           // but close the panel first
-          setShowJournal(undefined);
+          setJournalJson(undefined);
         }}
       >
         <div>
           <table className='tableScan' cellSpacing={0}>
             <tbody>
-              {Object.entries(JSON.parse(showJournal.journalJson)).map(([key, value]) => {
+              {Object.entries(journalJson).map(([key, value]) => {
                 const val = typeof value === 'object'
                   ? JSON.stringify(value, null, 2)
-                  : value?.toString();
+                  : value?.toString() || <span style={{ color: 'grey' }}>(blank)</span>;
 
                 return <tr key={key}>
                   <td className='scanKey'>{key}</td>
