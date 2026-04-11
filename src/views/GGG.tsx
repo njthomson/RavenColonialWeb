@@ -111,6 +111,7 @@ export const GGG: React.FunctionComponent = () => {
           m[r.bodyName] = { ...r, planetClass: jj.PlanetClass, journalJsons: [jj] };
         } else {
           m[r.bodyName].journalJsons.push(jj);
+          m[r.bodyName].cmdr = Array.from(new Set([...m[r.bodyName].cmdr.split(', '), r.cmdr])).join(', ');
         }
         return m;
       }, {} as Record<string, GGGListRow>);
