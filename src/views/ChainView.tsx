@@ -174,20 +174,20 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
   componentDidUpdate(prevProps: Readonly<ChainViewProps>, prevState: Readonly<ChainViewState>, snapshot?: any): void {
     if (prevProps.id !== this.props.id) {
+      this.setState({
+        listRows: [],
+        chain: {
+          id: '',
+          name: '',
+          cmdrs: [],
+          fcs: [],
+          open: false,
+          systems: [],
+          hubs: [],
+        }
+      });
       if (this.props.id) {
         this.loadChain(this.props.id);
-      } else {
-        this.setState({
-          chain: {
-            id: '',
-            name: '',
-            cmdrs: [],
-            fcs: [],
-            open: false,
-            systems: [],
-            hubs: [],
-          }
-        });
       }
     }
   }

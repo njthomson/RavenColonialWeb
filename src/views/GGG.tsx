@@ -124,7 +124,7 @@ export const GGG: React.FunctionComponent = () => {
                 <CopyButton text={row.bodyName} fontSize={12} color={appTheme.palette.themeSecondary} />&nbsp;{row.bodyName}
               </td>
               <td>{planetClass}</td>
-              <td className='temp'>{row.surfaceTemp.toLocaleString()} K</td>
+              <td className='temp'>{row.surfaceTemp} K</td>
               <td>
                 <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }}>
                   <Icon iconName={mapTagIcon[row.tag]} />
@@ -193,7 +193,7 @@ export const GGG: React.FunctionComponent = () => {
               {Object.entries(JSON.parse(showJournal.journalJson)).map(([key, value]) => {
                 const val = typeof value === 'object'
                   ? JSON.stringify(value, null, 2)
-                  : typeof value === 'number' ? value.toLocaleString() : value?.toString();
+                  : value?.toString();
 
                 return <tr key={key}>
                   <td className='scanKey'>{key}</td>
