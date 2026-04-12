@@ -1255,9 +1255,9 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   // T2 surface hubs
   hestia: [4, 4, 4], // Civilian Surface Outpost
   decima: [4, 4, 4], // Civilian Surface Outpost
-  atropos: [4, 4, 2], // Civilian Surface Outpost
+  atropos: [4, 2, 2], // Civilian Surface Outpost
   nona: [4, 4, 4], // Civilian Surface Outpost
-  lachesis: [4, 4, 4], // Civilian Surface Outpost
+  lachesis: [4, 2, 2], // Civilian Surface Outpost
   clotho: [4, 4, 2], // Civilian Surface Outpost
   hephaestus: [4, 4, 4], // Industrial Surface Outpost
   opis: [4, 4, 4], // Industrial Surface Outpost <-- confirm
@@ -1266,8 +1266,8 @@ export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
   bia: [4, 2, 2], // Industrial Surface Outpost
   mefitis: [4, 4, 2], // Industrial Surface Outpost
   necessitas: [4, 4, 4], // Scientific Surface Outpost
-  ananke: [4, 4, 2], // Scientific Surface Outpost
-  fauna: [4, 4, 2], // Scientific Surface Outpost
+  ananke: [4, 4, 4], // Scientific Surface Outpost
+  fauna: [4, 2, 2], // Scientific Surface Outpost
   providentia: [4, 4, 4], // Scientific Surface Outpost
   antevorta: [4, 2, 2], // Scientific Surface Outpost <-- confirm
   porrima: [4, 4, 2], // Scientific Surface Outpost
