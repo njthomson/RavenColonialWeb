@@ -1,33 +1,46 @@
 var map = {
-  init: async function () {
+  ready: function() {
+    window.parent.postMessage({ready: 'iframe'});
+    window.addEventListener('message', async ev => {
+      if (ev.data.source !== 'opener') {return;}
+      // console.log('!iframe!', ev.data);
+      map.init(ev.data);
+    });
+  },
+  init: async function (msg) {
     try {
       let pPos = [0, 0, 0];
+      let mapData = msg.mapData;
 
-      const params = new URLSearchParams(window.location.search.substring(1));
-      const cmdr = params.get('cmdr');
+      if (!mapData) {
+        const params = new URLSearchParams(window.location.search.substring(1));
+        const cmdr = params.get('cmdr');
 
-      const response = await fetch(`https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
-      // const response = await fetch(`https://localhost:7007/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
+        const response = await fetch(`https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
+        // const response = await fetch(`https://localhost:7007/api/cmdr/${encodeURIComponent(cmdr)}/map/architect`);
 
-      // exit early if not success
-      if (response.status !== 200) {
-        console.error(`Failed to load map data: ${response.status} : ${response.statusText}`);
-        return;
+        // exit early if not success
+        if (response.status !== 200) {
+          console.error(`Failed to load map data: ${response.status} : ${response.statusText}`);
+          return;
+        }
+        mapData = await response.json();
       }
-      const mapData = await response.json();
 
       // process infos json into html
       for (const sys of mapData.systems) {
-        if (sys.cat[0] === 4) {
+        pPos[0] += sys.coords.x;
+        pPos[1] += sys.coords.y;
+        pPos[2] += sys.coords.z;
+
+        if (sys.infos[0] === '<') { continue; }
+
+        if (sys.cat[0] === 4 || !sys.infos) {
           sys.infos = `<a class='bl' href='/#sys=${sys.name}' target='_blank' style="font-size: 12px">View: ${sys.name}</a><br/>`
           continue;
         }
 
         var blob = JSON.parse(sys.infos);
-
-        pPos[0] += blob.pos[0];
-        pPos[1] += blob.pos[1];
-        pPos[2] += blob.pos[2];
 
         sys.infos = `<a class='bl' href='/#sys=${blob.id64}' target='_blank' style="font-size: 12px">View: ${blob.name}</a><br/>`
         if (blob.fav) { sys.infos += `(favourite)<br/>`; }
@@ -60,7 +73,6 @@ var map = {
       pPos[1] = pPos[1] / mapData.systems.length;
       pPos[2] = pPos[2] / mapData.systems.length;
 
-      document.getElementById('loading').style.display = 'none';
       Ed3d.init({
         container: 'edmap',
         json: mapData,
@@ -75,12 +87,12 @@ var map = {
         popupDetail: true,
         showStarField: false,
         useRegionsImage: true,
+        ...msg.init, // allow opening page to override init values
       });
-    } catch (err) {
+   } catch (err) {
       console.log(err.stack);
       document.getElementById('bad-error').innerText = err.stack;
       document.getElementById('oops').style.display = 'block';
-      document.getElementById('loading').style.display = 'none';
     }
   },
 }

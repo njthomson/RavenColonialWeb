@@ -775,7 +775,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       if (!missedCargo.includes(cargo) && !hasEnough) {
         titleTxt = `** Not available in any markets below **\n\n` + titleTxt;
         if (!isHighlighted) {
-          textColor = appTheme.palette.white;
+          textColor = appTheme.palette.themePrimary;
         }
       }
 
@@ -966,7 +966,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       titleTxt += ' (Insufficient supply)';
 
       if (!isHighlighted) {
-        textColor = appTheme.palette.white;
+        textColor = appTheme.palette.themePrimary;
       }
     }
 

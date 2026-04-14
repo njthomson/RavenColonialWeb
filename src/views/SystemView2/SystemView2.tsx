@@ -20,7 +20,6 @@ import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName, ProjectCreate } from '../../components';
 import { createRandomPhoneticName, delayFocus, getRelativeDuration, isMatchingCmdr, isMobile } from '../../util';
-import { ShowMySystems } from './ShowMySystems';
 import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
@@ -885,7 +884,6 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         />
         {!anonymous && <>
           <ArchitectSummary sysView={this} />
-          <ShowMySystems />
         </>}
         {!store.cmdrName && this.renderLoginPrompt()}
       </div>
