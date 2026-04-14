@@ -138,6 +138,7 @@ interface ChainViewState {
 
   shopFC?: number;
   showRemaining?: number;
+  mapWindow: WindowProxy | null;
 }
 
 interface SysRow extends ChainSys {
@@ -165,10 +166,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       loading: true,
       listRows: [],
       expandFC: { id64: 20436125953969, marketId: 3714461184 },
+      mapWindow: null,
     };
   }
 
   componentDidMount(): void {
+    window.addEventListener('message', this.messageListener);
     this.toggleAutoRefresh();
   }
 
@@ -184,18 +187,79 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           open: false,
           systems: [],
           hubs: [],
-        }
+        },
+        mapWindow: null,
       });
       if (this.props.id) {
         this.loadChain(this.props.id);
       }
     }
+
+    if (prevState.mapWindow !== this.state.mapWindow && this.state.mapWindow !== null) {
+      this.postMapData();
+    }
   }
 
   componentWillUnmount(): void {
+    window.removeEventListener('message', this.messageListener);
     if (this.timer) {
       clearTimeout(this.timer);
     }
+  }
+
+  messageListener = (ev: MessageEvent) => {
+    if (ev.data.ready === 'host') {
+      //console.log(`!map!`, ev.data);
+      this.postMapData();
+    }
+  }
+
+  postMapData() {
+    const { chain, currentSystem, mapWindow } = this.state;
+    if (!chain || !mapWindow) { return; }
+
+    const systems = chain.systems.map(d => {
+      const progress = (!d.progress ? 0 : 100 / d.total * d.progress).toFixed(0);
+      const infos = `<a class='bl' href='/#sys=${d.name}' target='_blank' style="font-size: 12px">View: ${d.name}</a>
+<br/><br/><table>
+<tr><td>Progress:</td><td>${progress} %</td></tr>
+</table>`;
+      return {
+        name: d.nickname ?? d.name,
+        coords: { x: d.pos[0], y: d.pos[1], z: d.pos[2] },
+        cat: [currentSystem?.id64 === d.id64 ? 1 : d.progress > 0 && d.progress === d.total ? 0 : 2],
+        infos: infos,
+      };
+    });
+
+    const playerPos = currentSystem?.pos ?? chain.systems[0].pos;
+    const msg = {
+      source: 'opener',
+      init: {
+        startAnim: true,
+        effectScaleSystem: [25, 10000],
+        playerPos: playerPos,
+        cameraPos: undefined,
+      },
+      mapData: {
+        categories: {
+          'Tag:': {
+            '0': { name: "Complete", color: '#00CC00'.substring(1) },
+            '1': { name: "Current", color: '#CCCC00'.substring(1) },
+            '2': { name: "Pending", color: '#00CCCC'.substring(1) },
+          },
+        },
+        systems: systems,
+        routes: [{
+          title: chain.name,
+          points: systems.map(s => { return { s: s.name } as { s: string, label?: string }; })
+        }],
+      },
+    };
+    msg.mapData.routes[0].points[0].label = 'Start';
+    msg.mapData.routes[0].points[msg.mapData.routes[0].points.length - 1].label = 'End';
+
+    mapWindow.postMessage(msg);
   }
 
   async loadChain(id: string) {
@@ -468,12 +532,25 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
       <CommandBar className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`} items={[
         {
+          className: cn.bBox,
           key: 'btn-refresh',
           text: 'Refresh',
           title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
           iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
           disabled: saving || loading,
           onClick: () => this.toggleAutoRefresh(),
+        },
+        {
+          className: cn.bBox,
+          key: 'btn-map',
+          text: 'Show on map',
+          title: 'Show on a map',
+          iconProps: { iconName: 'Globe' },
+          disabled: loading,
+          onClick: () => {
+            const mapWindow = window.open('/#map', 'ravenMap');
+            this.setState({ mapWindow });
+          }
         },
         {
           key: 'sys-loading',
@@ -521,7 +598,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       let completion = isComplete ? <>Completed</> : '';
       const completionTitle = progress > 0 ? `Delivered ${s.progress.toLocaleString()} of ${s.total.toLocaleString()}` : undefined;
 
-      if (s.fcs.length && !isCurrent) {
+      if (s.fcs.length && !isCurrent && !isComplete) {
         const chartData: IChartDataPoint[] = [{
           legend: 'Ready on FCs',
           data: s.available,

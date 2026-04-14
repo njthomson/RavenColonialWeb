@@ -80,6 +80,7 @@ var map = {
         withHudPanel: true,
         hudMultipleSelect: true,
         effectScaleSystem: [100, 10000],
+        optDistObj: 50,
         startAnim: true,
         playerPos: pPos,
         cameraPos: [0, 4000, -4000],
