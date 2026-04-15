@@ -338,8 +338,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
 
     // calculate the current system
+    let hitCompleted = false;
     const currentSystem = listRows.reduceRight((l, s) => {
-      if (!s.progress || (s.total > 0 && s.progress < s.total)) { l = s; }
+      if (!hitCompleted && (!s.progress || (s.total > 0 && s.progress < s.total))) { l = s; }
+      if (s.total === s.progress && s.total > 0) { hitCompleted = true; }
       return l;
     }, undefined as SysRow | undefined);
 
@@ -727,7 +729,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       }
 
       if (lastWasCurrent) { lastWasCurrent = false; }
-      if (isCurrent) {
+      if (s.total > 0 && s.progress < s.total) {
         lastWasCurrent = true;
         const chartData: IChartDataPoint[] = [{
           legend: 'Delivered',
