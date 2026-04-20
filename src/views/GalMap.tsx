@@ -3,7 +3,20 @@ import { store } from '../local-storage';
 import { appTheme } from '../theme';
 import { Component } from 'react';
 
-interface GalMapProps { }
+
+export type MapData = {
+  source: string;
+  init: Record<string, any>;
+  mapData: {
+    categories: Record<string, Record<string, { name: string; color: string; }>>;
+    systems: { name: string; coords: { x: number; y: number; z: number; }; cat: number[]; infos: string; }[];
+    routes?: { title: string; points: { s: string; label?: string | undefined; }[]; }[];
+  }
+}
+
+interface GalMapProps {
+  source: string | undefined;
+}
 
 interface GalMapState {
   mapData?: any;
@@ -11,11 +24,18 @@ interface GalMapState {
 }
 
 export class GalMap extends Component<GalMapProps, GalMapState> {
+  static open(mapData: MapData) {
+    localStorage.setItem(`map-${mapData.source}`, JSON.stringify(mapData));
+    window.open(`/#map=${mapData.source}`, 'ravenMap');
+  }
+
   constructor(props: GalMapProps) {
     super(props);
 
     // use data previously given?
-    const mapData = localStorage.getItem('mapData');
+    const mapData = localStorage.getItem(`map-${props.source}`);
+    if (!mapData) { throw new Error(`No mapData from source: ${props.source}`); }
+
     this.state = {
       mapData: mapData && JSON.parse(mapData),
     };
@@ -33,22 +53,29 @@ export class GalMap extends Component<GalMapProps, GalMapState> {
     window.removeEventListener('message', this.messageListener);
   }
 
+  componentDidUpdate(prevProps: Readonly<GalMapProps>, prevState: Readonly<GalMapState>, snapshot?: any): void {
+    if (prevProps.source !== this.props.source) {
+      const mapData = localStorage.getItem(`map-${this.props.source}`);
+      if (!mapData) { throw new Error(`No mapData from source: ${this.props.source}`); }
+
+      this.setState({ posting: true });
+
+      setTimeout(() => {
+        this.setState({
+          posting: false,
+          mapData: mapData && JSON.parse(mapData),
+        });
+      }, 50);
+    }
+  }
+
   messageListener = (ev: MessageEvent) => {
     const { mapData } = this.state;
 
     // iframe is ready to receive data
     if (ev.data.ready === 'iframe' && !!mapData) {
-      // console.log(`!host!`, mapData);
+      console.log(`!host!`, mapData);
       ev.source?.postMessage(mapData);
-    }
-
-    // opener is sending us data
-    if (ev.data.source === 'opener') {
-      // console.log(`!dataReceived!`, ev);
-      localStorage.setItem('mapData', JSON.stringify(ev.data));
-      // explicitly kill any existing iframe, so we can cleanly load another
-      this.setState({ posting: true, mapData: ev.data });
-      setTimeout(() => this.setState({ posting: false }), 10);
     }
   }
 

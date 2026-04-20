@@ -12,6 +12,7 @@ import { FleetCarrier } from './FleetCarrier';
 import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames } from '../types';
 import { WhereToBuy } from '../components/WhereToBuy/WhereToBuy';
+import { GalMap, MapData } from './GalMap';
 
 const css = mergeStyles({
   '.ms-Button--action, .ms-Button--icon': {
@@ -126,6 +127,7 @@ interface ChainViewState {
   cargoFC?: Cargo;
   autoUpdateUntil: number;
   lastPoll?: string;
+  isMember?: boolean;
 
   showAddCmdr?: boolean;
   showAddFC?: boolean;
@@ -138,7 +140,6 @@ interface ChainViewState {
 
   shopFC?: number;
   showRemaining?: number;
-  mapWindow: WindowProxy | null;
 }
 
 interface SysRow extends ChainSys {
@@ -166,12 +167,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       loading: true,
       listRows: [],
       expandFC: { id64: 20436125953969, marketId: 3714461184 },
-      mapWindow: null,
     };
   }
 
   componentDidMount(): void {
-    window.addEventListener('message', this.messageListener);
     this.toggleAutoRefresh();
   }
 
@@ -188,35 +187,22 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           systems: [],
           hubs: [],
         },
-        mapWindow: null,
       });
       if (this.props.id) {
         this.loadChain(this.props.id);
       }
     }
-
-    if (prevState.mapWindow !== this.state.mapWindow && this.state.mapWindow !== null) {
-      this.postMapData();
-    }
   }
 
   componentWillUnmount(): void {
-    window.removeEventListener('message', this.messageListener);
     if (this.timer) {
       clearTimeout(this.timer);
     }
   }
 
-  messageListener = (ev: MessageEvent) => {
-    if (ev.data.ready === 'host') {
-      //console.log(`!map!`, ev.data);
-      this.postMapData();
-    }
-  }
-
-  postMapData() {
-    const { chain, currentSystem, mapWindow } = this.state;
-    if (!chain || !mapWindow) { return; }
+  prepMapData() {
+    const { chain, currentSystem } = this.state;
+    if (!chain) { return; }
 
     const systems = chain.systems.map(d => {
       const progress = (!d.progress ? 0 : 100 / d.total * d.progress).toFixed(0);
@@ -233,8 +219,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     });
 
     const playerPos = currentSystem?.pos ?? chain.systems[0].pos;
-    const msg = {
-      source: 'opener',
+    const msg: MapData = {
+      source: 'chain',
       init: {
         startAnim: true,
         effectScaleSystem: [25, 10000],
@@ -256,10 +242,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         }],
       },
     };
-    msg.mapData.routes[0].points[0].label = 'Start';
-    msg.mapData.routes[0].points[msg.mapData.routes[0].points.length - 1].label = 'End';
+    msg.mapData.routes![0].points[0].label = 'Start';
+    msg.mapData.routes![0].points[msg.mapData.routes![0].points.length - 1].label = 'End';
 
-    mapWindow.postMessage(msg);
+    GalMap.open(msg);
   }
 
   async loadChain(id: string) {
@@ -345,6 +331,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       return l;
     }, undefined as SysRow | undefined);
 
+    const isMember = newChain.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
+
     this.setState({
       loading: false,
       saving: false,
@@ -355,6 +343,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       listRows: listRows,
       currentSystem: currentSystem,
       cargoFC: mergeCargo(newChain.fcs.map(fc => fc.cargo)),
+      isMember: isMember,
       editSystems: undefined,
     });
     window.document.title = `Chain: ${newChain.name}`;
@@ -549,10 +538,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           title: 'Show on a map',
           iconProps: { iconName: 'Globe' },
           disabled: loading,
-          onClick: () => {
-            const mapWindow = window.open('/#map', 'ravenMap');
-            this.setState({ mapWindow });
-          }
+          onClick: () => this.prepMapData()
         },
         {
           key: 'sys-loading',
@@ -575,7 +561,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderSystems(chain: Chain) {
-    const { currentSystem, listRows, cargoFC, addingSysFC, saving, loading, expandFC, showRemaining } = this.state;
+    const { currentSystem, listRows, cargoFC, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
 
     let remainingCargoFC = { ...cargoFC };
 
@@ -769,12 +755,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     return <div className='half' style={{ marginTop: 10 }}>
       <h3 className={cn.h3}>
         <>Systems:</>
-        <ActionButton
+        {isMember && <ActionButton
           iconProps={{ iconName: 'EditNote' }}
           text='Edit'
           title='Edit and re-order systems'
           onClick={() => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false })}
-        />
+        />}
       </h3>
       <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12, marginBottom: 8 }}>
         Systems with 2 or more facilities will be considered a hub
@@ -783,8 +769,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       {!rows.length && <div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
         <ActionButton
           text='Add systems...'
-          disabled={loading || saving}
-          style={{ color: loading || saving ? 'grey' : undefined }}
+          disabled={loading || saving || !isMember}
+          style={{ color: loading || saving || !isMember ? 'grey' : undefined }}
           onClick={() => this.setState({ editSystems: '\n' })}
         />
       </div>}
@@ -1110,14 +1096,13 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderCommanders(chain: Chain) {
-    const { showAddCmdr } = this.state;
-    const allowEdit = chain.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
+    const { showAddCmdr, isMember } = this.state;
     const allowRemoveCmdr = chain.cmdrs.length > 1;
 
     return <div className='statBox'>
       <h3 className={cn.h3}>
         <>Commanders:</>
-        {allowEdit && <ActionButton
+        {isMember && <ActionButton
           iconProps={{ iconName: 'Add' }}
           text='Add'
           title='Add a new Commander to this project'
@@ -1142,7 +1127,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           return <Stack key={`csc-${cmdr}`} horizontal verticalAlign='center'>
             <span className='listItem'>{cmdr}</span>
 
-            {allowEdit && <IconButton
+            {isMember && <IconButton
               iconProps={{ iconName: 'Clear' }}
               disabled={!allowRemoveCmdr}
               onClick={() => {
@@ -1160,8 +1145,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderFleetCarriers(chain: Chain) {
-    const { showAddFC, fcEditMarketId, hoverFC, shopFC, listRows, saving } = this.state;
-    const allowEdit = chain.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
+    const { showAddFC, fcEditMarketId, hoverFC, shopFC, listRows, saving, isMember } = this.state;
 
     let preMatches: Record<string, string> | undefined = undefined;
     if (showAddFC) {
@@ -1178,7 +1162,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     return <div className='statBox'>
       <h3 className={cn.h3}>
         <>Fleet Carriers:</>
-        {allowEdit && <ActionButton
+        {isMember && <ActionButton
           iconProps={{ iconName: 'Add' }}
           text='Add'
           title='Add a new Fleet Carrier to this project'
@@ -1228,7 +1212,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
               onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
             />
 
-            {allowEdit && <IconButton
+            {isMember && <IconButton
               iconProps={{ iconName: 'Clear', style: { color: saving ? 'grey' : undefined } }}
               disabled={saving}
               onClick={() => {

@@ -6,6 +6,7 @@ import { Component } from 'react';
 import { GGGRow } from '../api/misc';
 import { isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
+import { GalMap, MapData } from './GalMap';
 
 const css = mergeStyles({
   cursor: 'default',
@@ -85,7 +86,6 @@ interface GGGState {
   showSrvHelp?: boolean;
   sortField: string;
   sortInvert: boolean;
-  mapWindow: WindowProxy | null;
 }
 
 export class GGG extends Component<GGGProps, GGGState> {
@@ -95,38 +95,16 @@ export class GGG extends Component<GGGProps, GGGState> {
       gggData: [],
       sortField: 'bodyName',
       sortInvert: false,
-      mapWindow: null,
     };
   }
 
   componentDidMount(): void {
     window.document.title = `Green Gas Giants`;
-    window.addEventListener('message', this.messageListener);
     this.loadData();
   }
 
-  componentWillUnmount(): void {
-    window.removeEventListener('message', this.messageListener);
-  }
-
-  componentDidUpdate(prevProps: Readonly<GGGProps>, prevState: Readonly<GGGState>, snapshot?: any): void {
-    const { mapWindow } = this.state;
-
-    if (prevState.mapWindow !== mapWindow && mapWindow !== null) {
-      this.postMapData();
-    }
-  }
-
-  messageListener = (ev: MessageEvent) => {
-    if (ev.data.ready === 'host') {
-      //console.log(`!map!`, ev.data);
-      this.postMapData();
-    }
-  }
-
-  postMapData() {
-    const { gggData, mapWindow } = this.state;
-    if (!mapWindow || !gggData.length) { return; }
+  prepMapData() {
+    const { gggData } = this.state;
 
     const systems = gggData.map(d => {
       const infos = `<table>
@@ -144,8 +122,8 @@ export class GGG extends Component<GGGProps, GGGState> {
       };
     });
 
-    const msg = {
-      source: 'opener',
+    const msg: MapData = {
+      source: 'ggg',
       init: {
         effectScaleSystem: [1000, 10000],
         playerPos: [0, 4000, -1000],
@@ -164,7 +142,7 @@ export class GGG extends Component<GGGProps, GGGState> {
       },
     };
 
-    mapWindow.postMessage(msg);
+    GalMap.open(msg);
   }
 
   loadData() {
@@ -221,10 +199,7 @@ export class GGG extends Component<GGGProps, GGGState> {
             iconProps={{ iconName: 'Globe' }}
             text='Map'
             style={{ float: 'right' }}
-            onClick={() => {
-              const mapWindow = window.open('/#map', 'ravenMap');
-              this.setState({ mapWindow });
-            }}
+            onClick={() => this.prepMapData()}
           />
           <div>Green gas giants are incredibly rare. Cmdr Arcanic has catalogged all known GGGs at <Link2 href='https://ed-ggg.github.io/edggg/' text='https://ed-ggg.github.io/edggg/' /></div>
           <div style={{ marginBottom: 20 }}>Learn more about them by watching <Link2 href='https://youtu.be/hVS-S6FEJj4' text="Arcanic's video: Strange Temperatures" /> or see <Link2 href='https://forums.frontier.co.uk/threads/marxs-guide-to-green-gas-giants.618994/' text="Marx's guide to Green Gas Giants" /></div>

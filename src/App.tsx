@@ -430,7 +430,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.vis: return <VisualIdentify buildType={pivotArg} />;
       case TopPivot.table: return <BigSiteTablePage />;
       case TopPivot.login: return <div><Spinner style={{ marginTop: 100 }} size={SpinnerSize.large} label='Logging in ...' /></div>;
-      case TopPivot.map: return <GalMap />;
+      case TopPivot.map: return <GalMap source={pivotArg} />;
       case TopPivot.chain: return <ChainView id={pivotArg} />;
       case TopPivot.ggg: return <GGG />;
     }

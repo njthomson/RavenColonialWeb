@@ -2,7 +2,7 @@ var map = {
   ready: function() {
     window.parent.postMessage({ready: 'iframe'});
     window.addEventListener('message', async ev => {
-      if (ev.data.source !== 'opener') {return;}
+      if (!ev.data.source) {return;}
       // console.log('!iframe!', ev.data);
       map.init(ev.data);
     });

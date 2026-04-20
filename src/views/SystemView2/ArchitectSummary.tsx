@@ -17,6 +17,7 @@ import { CopyButton } from '../../components/CopyButton';
 import { CalloutMsg } from '../../components/CalloutMsg';
 import { HaulSize } from '../../components/BigSiteTable/BigSiteTable';
 import { ProjectRef } from '../../types';
+import { MapData, GalMap } from '../GalMap';
 
 const css = mergeStyleSets({
   component: {
@@ -98,7 +99,6 @@ interface ArchitectSummaryState {
   onlyFav: boolean;
   showMoreStats: boolean;
   moreStats: ArchStats | undefined;
-  mapWindow: WindowProxy | null;
 
   loadingHelped?: boolean;
   refsHelped?: ProjectRef[]
@@ -117,37 +117,16 @@ export class ArchitectSummary extends Component<ArchitectSummaryProps, Architect
       onlyFav: store.archFav,
       showMoreStats: false,
       moreStats: undefined,
-      mapWindow: null,
     };
   }
 
   componentDidMount(): void {
-    window.addEventListener('message', this.messageListener);
     this.loadData();
   }
 
-  componentWillUnmount(): void {
-    window.removeEventListener('message', this.messageListener);
-  }
-
-  componentDidUpdate(prevProps: Readonly<ArchitectSummaryProps>, prevState: Readonly<ArchitectSummaryState>, snapshot?: any): void {
-    const { mapWindow } = this.state;
-
-    if (prevState.mapWindow !== mapWindow && mapWindow !== null) {
-      this.postMapData();
-    }
-  }
-
-  messageListener = (ev: MessageEvent) => {
-    if (ev.data.ready === 'host') {
-      //console.log(`!map!`, ev.data);
-      this.postMapData();
-    }
-  }
-
-  async postMapData() {
-    const { systems, mapWindow } = this.state;
-    if (!mapWindow || !systems?.length) { return; }
+  async prepMapData() {
+    const { systems } = this.state;
+    if (!systems?.length) { return; }
 
     // fetch helped systems if not already known
     let refsHelped = this.state.refsHelped;
@@ -199,8 +178,8 @@ export class ArchitectSummary extends Component<ArchitectSummaryProps, Architect
     }
 
 
-    const msg = {
-      source: 'opener',
+    const msg: MapData = {
+      source: 'architect',
       init: {
         // startAnim: false,
       },
@@ -217,7 +196,7 @@ export class ArchitectSummary extends Component<ArchitectSummaryProps, Architect
         systems: mapSystems,
       },
     };
-    mapWindow.postMessage(msg);
+    GalMap.open(msg);
   }
 
   loadData() {
@@ -558,10 +537,7 @@ export class ArchitectSummary extends Component<ArchitectSummaryProps, Architect
               style={{ height: 24, fontSize: 12 }}
               iconProps={{ iconName: 'Globe', style: { fontSize: 12 } }}
               text='Show on map'
-              onClick={() => {
-                const mapWindow = window.open('/#map', 'ravenMap');
-                this.setState({ mapWindow });
-              }}
+              onClick={() => this.prepMapData()}
             />
 
             <div style={{ marginLeft: 20, height: 24, paddingTop: 4 }}>
