@@ -4,7 +4,7 @@ import { Chain, ChainSys } from "../api/chain";
 import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
-import { asGrey, delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, removeCargo, sumCargo } from '../util';
+import { asGrey, delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, sumCargo } from '../util';
 import { store } from '../local-storage';
 import { CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
@@ -280,6 +280,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     for (const s of newChain.systems) {
       let needs = s.needs;
       let total = s.total;
+      if (s.builds.length > 0 && !s.progress) { s.progress = 0; }
+
       // substitute an outpost if blank
       if (!s.needs && !s.total) {
         needs = getAvgHaulCosts('outpost (primary)');
@@ -622,9 +624,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderSystems(chain: Chain) {
-    const { currentSystem, listRows, cargoFC, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
-
-    let remainingCargoFC = { ...cargoFC };
+    const { currentSystem, listRows, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
 
     let rows: JSX.Element[] = [];
     let flip = undefined;
@@ -647,7 +647,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       let completion = isComplete ? <>Completed</> : '';
       const completionTitle = progress > 0 ? `Delivered ${s.progress.toLocaleString()} of ${s.total.toLocaleString()}` : undefined;
 
-      if (s.fcs.length && !isCurrent && !isComplete) {
+      if (s.fcs.length && !isCurrent && !isComplete && !s.builds.length) {
         const chartData: IChartDataPoint[] = [{
           legend: 'Ready on FCs',
           data: s.available,
@@ -669,11 +669,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             data={{ chartData }}
           />
         </Stack>
-      }
-
-      if (s.needs) {
-        // remove remaining FC cargo based on what this system needs
-        remainingCargoFC = removeCargo(remainingCargoFC, s.needs!);
       }
 
       rows.push(<tr key={`cs-${s.id64}`} style={{ backgroundColor: bc, fontWeight: isCurrent ? 'bold' : undefined }}>
