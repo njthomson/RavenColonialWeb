@@ -1,10 +1,10 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
 import { Chain, ChainSys } from "../api/chain";
-import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
-import { delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, removeCargo, sumCargo } from '../util';
+import { asGrey, delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, removeCargo, sumCargo } from '../util';
 import { store } from '../local-storage';
 import { CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
@@ -128,6 +128,8 @@ interface ChainViewState {
   autoUpdateUntil: number;
   lastPoll?: string;
   isMember?: boolean;
+  confirmDelete?: boolean;
+  submitting?: boolean;
 
   showAddCmdr?: boolean;
   showAddFC?: boolean;
@@ -181,6 +183,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         chain: {
           id: '',
           name: '',
+          owner: '',
           cmdrs: [],
           fcs: [],
           open: false,
@@ -290,7 +293,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       for (const name in remaining) {
         // ... pull it from the FCs
         for (const mid of s.fcs) {
-          const fcCargo = fcCargos[mid];
+          const fcCargo = fcCargos[mid] ?? {};
           const need = remaining[name];
           if (!need || !fcCargo[name]) { continue; }
 
@@ -410,8 +413,27 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
   }
 
+  deleteChain = async () => {
+    const id = this.state.chain?.id;
+    if (!id) { return; }
+
+    try {
+      await api.chain.delete(id);
+      window.location.replace("/#chain");
+    } catch (err: any) {
+      if (err.statusCode === 404) {
+        // ignore cases when a chain is not found
+        console.log(`loadChain: ${err.stack}`);
+        this.setState({ loading: false, errorMsg: err.message });
+      } else {
+        console.error(`loadChain: ${err.stack}`);
+        this.setState({ loading: false, errorMsg: err.message });
+      }
+    }
+  }
+
   render() {
-    const { chain, errorMsg, loading, editSystems, currentSystem, shopFC } = this.state;
+    const { chain, errorMsg, loading, editSystems, currentSystem, shopFC, confirmDelete, submitting } = this.state;
 
     // show create/find UX
     if (!this.props.id) {
@@ -430,9 +452,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
 
     return <div className={css} style={{ cursor: 'default' }}>
-      {!chain && loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
+      {!chain?.id && loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
 
-      {!!chain && <>
+      {!!chain?.id && <>
         {this.renderTitles(chain)}
         <div className='contain-horiz'>
           {this.renderSystems(chain)}
@@ -445,6 +467,34 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           {editSystems && this.renderEditSystems(chain)}
           {shopFC && this.renderShopFC(chain, shopFC)}
         </div>
+
+        {confirmDelete && <Modal
+          isOpen
+          onDismiss={() => this.setState({ confirmDelete: false })}
+          styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
+        >
+          <div className='center'>
+            <p>
+              <h3 className={cn.h3}>Are you sure you want to delete?</h3>
+              <br />
+              This cannot be undone.</p>
+            <DefaultButton
+              text='Yes'
+              disabled={submitting}
+              iconProps={{ iconName: 'Warning' }}
+              style={{ backgroundColor: appTheme.palette.yellowDark, color: 'black' }}
+              onClick={this.deleteChain}
+            />
+            &nbsp;
+            <DefaultButton
+              text='No'
+              id='delete-no'
+              iconProps={{ iconName: 'Cancel' }}
+              disabled={submitting}
+              onClick={() => this.setState({ confirmDelete: false })}
+            />
+          </div>
+        </Modal>}
       </>}
     </div>;
   }
@@ -503,6 +553,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
   renderTitles(chain: Chain) {
     const { errorMsg, saving, loading, autoUpdateUntil } = this.state;
+    const isOwner = isMatchingCmdr(chain.owner, store.cmdrName);
 
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
@@ -530,6 +581,16 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
           disabled: saving || loading,
           onClick: () => this.toggleAutoRefresh(),
+        },
+        {
+          className: cn.bBox,
+          key: 'btn-del',
+          text: 'Delete',
+          title: 'Delete this chain',
+          iconProps: { iconName: 'Delete', style: { color: asGrey(!isOwner) } },
+          style: { color: asGrey(!isOwner) },
+          disabled: loading || !isOwner,
+          onClick: () => this.setState({ confirmDelete: true }),
         },
         {
           className: cn.bBox,
@@ -759,6 +820,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           iconProps={{ iconName: 'EditNote' }}
           text='Edit'
           title='Edit and re-order systems'
+          disabled={saving}
           onClick={() => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false })}
         />}
       </h3>
@@ -770,7 +832,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         <ActionButton
           text='Add systems...'
           disabled={loading || saving || !isMember}
-          style={{ color: loading || saving || !isMember ? 'grey' : undefined }}
+          style={{ color: asGrey(loading || saving || !isMember) }}
           onClick={() => this.setState({ editSystems: '\n' })}
         />
       </div>}
@@ -863,10 +925,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
         <Stack horizontal tokens={{ childrenGap: 4 }}>
           <ActionButton
-            iconProps={{ iconName: 'Clear', style: { color: saving ? 'grey' : undefined } }}
+            iconProps={{ iconName: 'Clear', style: { color: asGrey(saving) } }}
             title='Unlink FC from this system'
             text={`Unlink FC`}
-            style={{ height: 28, color: saving ? 'grey' : undefined }}
+            style={{ height: 28, color: asGrey(saving) }}
             disabled={saving}
             onClick={() => {
               this.setState({ saving: true });
@@ -878,19 +940,19 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           />
 
           <ActionButton
-            iconProps={{ iconName: 'Edit', style: { color: saving ? 'grey' : undefined } }}
+            iconProps={{ iconName: 'Edit', style: { color: asGrey(saving) } }}
             title='Edit cargo on this FC'
             text={`Edit`}
-            style={{ height: 28, color: saving ? 'grey' : undefined }}
+            style={{ height: 28, color: asGrey(saving) }}
             disabled={saving}
             onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
           />
 
           <ActionButton
-            iconProps={{ iconName: 'ShoppingCart', style: { color: saving ? 'grey' : undefined } }}
+            iconProps={{ iconName: 'ShoppingCart', style: { color: asGrey(saving) } }}
             title='Shop for supplies for this FC'
             text={`Shop`}
-            style={{ height: 28, color: saving ? 'grey' : undefined }}
+            style={{ height: 28, color: asGrey(saving) }}
             disabled={saving}
             onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
           />
@@ -953,7 +1015,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
               iconProps={{ iconName: 'Save' }}
               onClick={() => {
                 this.setState({ saving: true });
-
                 const newNames = Array.from(new Set(editSystems?.split(`\n`)));
                 api.chain.setSystems(chain.id, newNames)
                   .then(newChain => this.useChain(newChain))
@@ -974,6 +1035,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         <div>
           <TextField
             multiline
+            autoFocus
             label='Systems:'
             rows={20}
             value={editSystems}
@@ -1124,10 +1186,13 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
       <div style={{ fontSize: 14 }}>
         {chain.cmdrs.map(cmdr => {
+          const isOwner = isMatchingCmdr(cmdr, chain.owner);
           return <Stack key={`csc-${cmdr}`} horizontal verticalAlign='center'>
             <span className='listItem'>{cmdr}</span>
 
-            {isMember && <IconButton
+            {isOwner && <Icon iconName='Crown' style={{ color: 'grey', width: 10, height: 16, margin: '0 3px' }} title={`The owner of this chain cannot be removed`} />}
+
+            {isMember && !isOwner && <IconButton
               iconProps={{ iconName: 'Clear' }}
               disabled={!allowRemoveCmdr}
               onClick={() => {
@@ -1207,13 +1272,13 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             <span className='listItem'>{fc.displayName} ({fc.name})</span>
 
             <IconButton
-              iconProps={{ iconName: 'Edit', style: { color: saving ? 'grey' : undefined } }}
+              iconProps={{ iconName: 'Edit', style: { color: asGrey(saving) } }}
               disabled={saving}
               onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
             />
 
             {isMember && <IconButton
-              iconProps={{ iconName: 'Clear', style: { color: saving ? 'grey' : undefined } }}
+              iconProps={{ iconName: 'Clear', style: { color: asGrey(saving) } }}
               disabled={saving}
               onClick={() => {
                 this.setState({ saving: true });
@@ -1225,7 +1290,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             />}
 
             {isSysLinked && <IconButton
-              iconProps={{ iconName: 'ShoppingCart', style: { color: saving ? 'grey' : undefined } }}
+              iconProps={{ iconName: 'ShoppingCart', style: { color: asGrey(saving) } }}
               disabled={saving}
               onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
             />}

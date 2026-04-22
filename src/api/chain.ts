@@ -8,6 +8,10 @@ export const chain = {
     return await callAPI<Chain>(`/api/chain/create`, 'PUT', JSON.stringify({ name: name }));
   },
 
+  delete: async (id: string): Promise<Chain> => {
+    return await callAPI<Chain>(`/api/chain/delete/${encodeURIComponent(id)}`, 'DELETE');
+  },
+
   get: async (id: string): Promise<Chain> => {
     return await callAPI<Chain>(`/api/chain/${encodeURIComponent(id)}`);
   },
@@ -34,6 +38,7 @@ export type Chain = {
   id: string;
   name: string;
   open: boolean;
+  owner: string;
   cmdrs: string[];
   fcs: KnownFC[];
   systems: ChainSys[];

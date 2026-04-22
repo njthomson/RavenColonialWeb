@@ -294,3 +294,7 @@ export const siteAsProjRef = (site: SiteMap2): ProjectRefLite => {
   };
   return ref;
 }
+
+export const asGrey = (condition?: boolean) => {
+  return condition ? 'grey' : undefined;
+}
