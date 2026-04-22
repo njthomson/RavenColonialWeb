@@ -295,7 +295,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         for (const mid of s.fcs) {
           const fcCargo = fcCargos[mid] ?? {};
           const need = remaining[name];
-          if (!need || !fcCargo[name]) { continue; }
+          if (!need) { continue; }
 
           const onFC = fcCargo[name] ?? 0;
           fromFC[mid] = { ...fromFC[mid] ?? {} };
