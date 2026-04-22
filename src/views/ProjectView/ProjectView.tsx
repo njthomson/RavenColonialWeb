@@ -85,6 +85,7 @@ interface ProjectViewState {
   isPrep?: boolean;
   prepBuilds?: Record<string, number>;
   savingPrepBuilds?: boolean;
+  prepBuildsDiffer?: boolean;
 }
 
 enum Mode {
@@ -236,6 +237,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
       }
 
+      const prepBuildsDiffer = isPrep && newProj.prepBuilds && sumCargo(newProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepBuilds(newProj.prepBuilds));
+
       this.setState({
         buildId: newProj.buildId,
         proj: newProj,
@@ -252,6 +255,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         showShips,
         isPrep,
         prepBuilds: newProj.prepBuilds ?? {},
+        prepBuildsDiffer,
       });
 
       if (newProj.complete) {
@@ -499,9 +503,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       commands.splice(0, 1); // Deliver
       commands.splice(1, 1); // Edit commodities
       commands.splice(3, 1); // Set primary
-    } else if (isPrep) {
-      // remove buttons for isPrep projects
-      commands.splice(2, 1); // Edit commodities
     }
 
     // prepare rich copy link
@@ -545,7 +546,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           onClose={() => this.setState({ showWhereToBuy: false })}
         />
 
-        {!isPrep && !!editCommodities && !proj.complete && this.renderEditCommodities()}
+        {!!editCommodities && !proj.complete && this.renderEditCommodities()}
 
         {mode === Mode.view && this.renderProjectDetails(proj)}
 
@@ -626,14 +627,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderEditCommodities() {
-    const { proj, editCommodities, sort, submitting } = this.state;
+    const { proj, editCommodities, sort, submitting, isPrep } = this.state;
     const isDefaultCargo = Object.values(proj!.commodities).every(v => v === 10 || v === -1);
 
     return <Panel
       isOpen
       allowTouchBodyScroll={isMobile()}
       type={PanelType.custom}
-      customWidth={'380px'}
+      customWidth={'400px'}
       headerText='Edit commodities'
       onDismiss={() => this.setState({ mode: Mode.view, editCommodities: undefined })}
       styles={{
@@ -679,7 +680,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </MessageBar>}
 
       <EditCargo
-        noAdd noDelete showTotalsRow
+        noAdd={!isPrep} noDelete={!isPrep} showTotalsRow
         cargo={editCommodities!}
         sort={sort}
         onChange={cargo => this.setState({ editCommodities: cargo })}
@@ -695,7 +696,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const cargo: Cargo = {
       ...proj.commodities,
       // always show tritium
-      tritium: 0,
+      tritium: proj.commodities.tritium ?? 0,
     };
     if (!hideFCColumns) {
       for (const fcc of Object.values(fcCargo)) {
@@ -1186,7 +1187,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   };
 
   renderPrepBuilds() {
-    const { prepBuilds, proj, savingPrepBuilds } = this.state;
+    const { prepBuilds, proj, savingPrepBuilds, prepBuildsDiffer } = this.state;
     if (!prepBuilds || !proj) { return; }
 
     const rows = Object.entries(prepBuilds).map(([buildType, count]) => {
@@ -1231,19 +1232,6 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     return <div style={{ userSelect: 'none' }}>
       <h3 className={cn.h3} style={{ marginTop: 20 }}>
-        {isDirty && <ActionButton
-          className={cn.bBox}
-          iconProps={{ iconName: 'Save' }}
-          text='Save'
-          title='Save changes to buildings'
-          style={{
-            float: 'right',
-            height: 22,
-            color: savingPrepBuilds ? 'grey' : undefined,
-          }}
-          disabled={savingPrepBuilds}
-          onClick={this.onSavePrepBuilds}
-        />}
 
         <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign='center'>
           <span>Building:</span>
@@ -1260,6 +1248,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             />
           </span>
 
+          {isDirty && !savingPrepBuilds && <ActionButton
+            className={cn.bBox}
+            iconProps={{ iconName: 'Save' }}
+            text='Save'
+            title='Save changes to buildings'
+            style={{ height: 22, color: savingPrepBuilds ? 'grey' : undefined, }}
+            disabled={savingPrepBuilds}
+            onClick={this.onSavePrepBuilds}
+          />}
+
           {savingPrepBuilds && isDirty && <Spinner
             style={{ marginTop: -2 }}
             size={SpinnerSize.small}
@@ -1269,9 +1267,15 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </Stack>
       </h3>
 
+      {prepBuildsDiffer && <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ color: appTheme.palette.yellowDark, fontSize: 12, marginBottom: 4 }}>
+        <Icon iconName='Warning' />
+        <span>Commodities have been manually adjusted</span>
+        <Icon iconName='Warning' />
+      </Stack>}
+
       <div style={{ fontSize: 14, marginLeft: 20 }}>
         {rows}
-      </div >
+      </div>
     </div>;
   }
 
@@ -1315,6 +1319,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     });
   }
 
+  calcCargoNeedsForPrepBuilds(prepBuilds: Record<string, number>) {
+    // alpha sort + collect total cargo needs
+    const cargos: Cargo[] = [];
+    Object.keys(prepBuilds)
+      .reduce((m, bt) => {
+        m[bt] = prepBuilds[bt];
+        // sum cargo needs
+        const haul = getAvgHaulCosts(bt);
+        for (let n = 0; n < m[bt]; n++) {
+          cargos.push(haul);
+        }
+
+        return m;
+      }, {} as Record<string, number>)
+
+    // determine new cargo needs
+    const cargoNeeded = mergeCargo(cargos);
+    return cargoNeeded;
+  }
+
   onSavePrepBuilds = async () => {
     const { proj, prepBuilds } = this.state;
     if (!proj?.buildId || !prepBuilds) return;
@@ -1330,7 +1354,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       const savedProj = await api.project.update(proj.buildId, deltaProj);
 
       // success
-      console.log('onSavePrepBuilds: savedProj:', savedProj);
+      const prepBuildsDiffer = this.state.isPrep && savedProj.prepBuilds && sumCargo(savedProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepBuilds(savedProj.prepBuilds));
       this.setState({
         savingPrepBuilds: false,
         proj: savedProj,
@@ -1339,6 +1363,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         sumTotal: sumCargo(savedProj.commodities),
         hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
         prepBuilds: savedProj.prepBuilds,
+        prepBuildsDiffer,
       });
 
     } catch (err: any) {
@@ -1709,6 +1734,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           deltaProj.commodities[key] = editCommodities[key];
         }
       }
+      // delete anything that was removed?
+      for (const key in proj.commodities) {
+        if (!!proj.commodities[key] && !editCommodities[key]) {
+          deltaProj.commodities[key] = -1;
+        }
+      }
 
       // stop here if nothing changed
       if (Object.keys(deltaProj.commodities).length === 0) {
@@ -1725,6 +1756,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       try {
         const savedProj = await api.project.update(proj.buildId, deltaProj);
+        const prepBuildsDiffer = this.state.isPrep && savedProj.prepBuilds && sumCargo(savedProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepBuilds(savedProj.prepBuilds));
 
         // success - apply new commodity count
         this.setState({
@@ -1736,6 +1768,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           editCommodities: undefined,
           mode: Mode.view,
           submitting: false,
+          prepBuildsDiffer,
         });
 
       } catch (err: any) {
