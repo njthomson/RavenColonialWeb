@@ -13,6 +13,8 @@ import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames } from '../types';
 import { WhereToBuy } from '../components/WhereToBuy/WhereToBuy';
 import { GalMap, MapData } from './GalMap';
+import { ViewEditName } from './SystemView2/ViewEditName';
+import { Link2 } from '../components/LinkSrvSurvey';
 
 const css = mergeStyles({
   '.ms-Button--action, .ms-Button--icon': {
@@ -168,7 +170,6 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       lastPoll: 'x',
       loading: true,
       listRows: [],
-      expandFC: { id64: 20436125953969, marketId: 3714461184 },
     };
   }
 
@@ -336,7 +337,18 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       return l;
     }, undefined as SysRow | undefined);
 
+    newNexus.cmdrs.sort();
     const isMember = newNexus.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
+
+    // don't auto-poll if final system is complete
+    let autoUpdateUntil = this.state.autoUpdateUntil;
+    if (newNexus.systems.length) {
+      const lastSystem = newNexus.systems[newNexus.systems.length - 1];
+      if (lastSystem.progress === lastSystem.total) {
+        clearTimeout(this.timer);
+        autoUpdateUntil = 0;
+      }
+    }
 
     this.setState({
       loading: false,
@@ -350,6 +362,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       cargoFC: mergeCargo(newNexus.fcs.map(fc => fc.cargo)),
       isMember: isMember,
       editSystems: undefined,
+      autoUpdateUntil: autoUpdateUntil,
     });
     window.document.title = `Nexus: ${newNexus.name}`;
   }
@@ -372,6 +385,14 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     if (!this.props.id) { return; }
 
     try {
+      // skip polling when editing systems, or there are zero systems + FC
+      if ((this.state.editSystems && Date.now() < this.state.autoUpdateUntil) || (!!this.state.nexus && !this.state.nexus.systems.length && !this.state.nexus.fcs.length)) {
+        // just schedule the next poll
+        this.timer = setTimeout(() => this.pollLastTimestamp(), autoUpdateFrequency);
+        console.debug(`skip polling...`);
+        return;
+      }
+
       this.setState({ loading: true });
 
       // call server to see if anything changed
@@ -397,9 +418,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       // schedule next poll?
       if (this.state.autoUpdateUntil > 0) {
         if (Date.now() < this.state.autoUpdateUntil) {
-          this.timer = setTimeout(() => {
-            this.pollLastTimestamp();
-          }, autoUpdateFrequency);
+          this.timer = setTimeout(() => this.pollLastTimestamp(), autoUpdateFrequency);
         } else {
           console.log(`Stopping auto-update after one hour of no changes at: ${new Date().toISOString()}`);
           this.setState({ autoUpdateUntil: 0 });
@@ -447,7 +466,10 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
         <div style={{ marginTop: 40, textAlign: 'center' }}>
           <p>Cannot view a nexus by id: {this.props.id}</p>
-          <p><Link href='/#nexus'>View nexus</Link></p>
+          <p><Link onClick={() => {
+            this.setState({ nexus: undefined, listRows: [], errorMsg: undefined, loading: false, saving: false, lastPoll: 'x', expandFC: undefined, hoverFC: undefined });
+            window.location.assign('/#nexus');
+          }} >View nexus</Link></p>
         </div>
       </>;
     }
@@ -514,11 +536,18 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         You need to login to use this.
       </MessageBar>}
 
+      <Stack horizontal verticalAlign='center' style={{ margin: '10px 0 -40px 30px', color: appTheme.palette.themeSecondary, fontSize: 14 }}>
+        <Icon iconName='Info' style={{ marginRight: 8 }} />
+        <div>
+          What is a nexus? <Link2 href='/#about=nexus' target='about' text='Learn more' />
+        </div>
+      </Stack >
+
       <div className='contain-horiz' style={{ margin: 20 }}>
         <CmdrNexus />
 
         <div className='half' style={{ marginTop: 10 }}>
-          <h2 className={cn.h3}>Start a new nexus:</h2>
+          <h2 className={cn.h3}>Create a nexus:</h2>
 
           <Stack horizontal verticalAlign='end' tokens={{ childrenGap: 10 }}>
             <TextField
@@ -553,34 +582,79 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
   }
 
   renderTitles(nexus: Nexus) {
-    const { errorMsg, saving, loading, autoUpdateUntil } = this.state;
+    const { errorMsg, saving, loading, autoUpdateUntil, isMember } = this.state;
     const isOwner = isMatchingCmdr(nexus.owner, store.cmdrName);
+
+    // prepare rich copy link
+    var copyLink = new ClipboardItem({
+      'text/plain': window.location.toString(),
+      'text/html': new Blob([`<a href='${window.location.toString()}'>${nexus.name}</a>`], { type: 'text/html' }),
+    });
 
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
-        <CopyButton text={nexus.name} fontSize={16} />
-        {nexus.name || ' ...'}
+        <Stack horizontal verticalAlign='center'>
+          <div>
+            <ViewEditName
+              blockEmpty
+              disabled={!isMember}
+              name={nexus.name}
+              onChange={txt => {
+                if (txt) {
+                  this.setState({ saving: true });
+                  api.nexus.setName(nexus.id, txt)
+                    .then(newNexus => this.setState({ nexus: newNexus, saving: false }))
+                    .catch((err: any) => {
+                      console.error(`setName: ${err.stack}`);
+                      this.setState({ saving: false, errorMsg: err.message });
+                    });
+                }
+              }}
+            />
+          </div>
 
-        <IconButton
-          id='sysView2_SearchNew'
-          title='Search for a different nexus'
-          iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
-          style={{ marginLeft: 10 }}
-          onClick={() => {
-            this.setState({ nexus: undefined, listRows: [] });
-            window.location.assign('/#nexus');
-          }}
-        />
+          <span style={{ marginLeft: 4, color: appTheme.palette.themeTertiary }}><CopyButton text={copyLink} title='Copy link to this nexus' fontSize={14} /></span>
+
+          <IconButton
+            id='sysView2_SearchNew'
+            title='Search for a different nexus'
+            iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
+            style={{ marginLeft: 10 }}
+            onClick={() => {
+              this.setState({ nexus: undefined, listRows: [], errorMsg: undefined, loading: false, saving: false, lastPoll: 'x', expandFC: undefined, hoverFC: undefined });
+              window.location.assign('/#nexus');
+            }}
+          />
+        </Stack>
       </h2>
 
       <CommandBar className={`top-bar ${cn.bb} ${cn.bt} ${cn.topBar}`} items={[
         {
           className: cn.bBox,
+          key: 'btn-private',
+          text: nexus.open ? 'Open' : 'Private',
+          title: nexus.open ? 'Click to mark as private' : 'Click to mark as open',
+          iconProps: { iconName: nexus.open ? 'Unlock' : 'LockSolid', style: { color: asGrey(!isMember || loading || saving) } },
+          disabled: !isMember || saving || loading,
+          style: { color: asGrey(!isMember || loading || saving) },
+          onClick: () => {
+            this.setState({ saving: true });
+            api.nexus.setPrivate(nexus.id, nexus.open)
+              .then(newNexus => this.setState({ nexus: newNexus, saving: false }))
+              .catch((err: any) => {
+                console.error(`setPrivate: ${err.stack}`);
+                this.setState({ saving: false, errorMsg: err.message });
+              });
+          },
+        },
+        {
+          className: cn.bBox,
           key: 'btn-refresh',
           text: 'Refresh',
           title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
-          iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
+          iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh', style: { color: asGrey(loading || saving) } },
           disabled: saving || loading,
+          style: { color: asGrey(saving || loading) },
           onClick: () => this.toggleAutoRefresh(),
         },
         {
@@ -588,9 +662,9 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           key: 'btn-del',
           text: 'Delete',
           title: 'Delete this nexus',
-          iconProps: { iconName: 'Delete', style: { color: asGrey(!isOwner) } },
-          style: { color: asGrey(!isOwner) },
-          disabled: loading || !isOwner,
+          iconProps: { iconName: 'Delete', style: { color: asGrey(!isOwner || loading || saving) } },
+          style: { color: asGrey(!isOwner || loading || saving) },
+          disabled: !isOwner || loading || saving,
           onClick: () => this.setState({ confirmDelete: true }),
         },
         {
@@ -598,9 +672,18 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           key: 'btn-map',
           text: 'Show on map',
           title: 'Show on a map',
-          iconProps: { iconName: 'Globe' },
-          disabled: loading,
+          iconProps: { iconName: 'Globe', style: { color: asGrey(loading || !nexus.systems.length) } },
+          style: { color: asGrey(loading || !nexus.systems.length) },
+          disabled: loading || !nexus.systems.length,
           onClick: () => this.prepMapData()
+        },
+        {
+          className: cn.bBox,
+          key: 'btn-help',
+          title: 'Learn more',
+          iconProps: { iconName: 'Help' },
+          href: '/#about=nexus',
+          target: 'about'
         },
         {
           key: 'sys-loading',
@@ -1025,7 +1108,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       }}
     >
       <div>
-        <div style={{ color: appTheme.palette.themeSecondary }}>Paste, edit, arrange system names below. One per line, in the desired order</div>
+        <div style={{ color: appTheme.palette.themeSecondary }}>Paste, edit, arrange system names below. One per line, in the desired order:</div>
         <div>
           <TextField
             multiline
@@ -1110,7 +1193,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
     const completed = listRows.filter(s => s.total && s.progress && s.progress >= s.total);
     const hubs = listRows.filter(s => nexus.hubs.includes(s.id64));
-    const systemsProgress = 100 / listRows.length * completed.length;
+    const systemsProgress = listRows.length ? 100 / listRows.length * completed.length : 0;
 
 
     const chartData: IChartDataPoint[] = [{
@@ -1400,14 +1483,13 @@ export const CmdrNexus: FunctionComponent<{}> = (props) => {
     }
   }, []);
 
-
   return <div className='half' style={{ marginTop: 10 }}>
     <h2 className={cn.h3}>Choose a nexus:</h2>
     <div>
       {nexus && Object.keys(nexus).map(key => {
         return <div key={`ck-${key}`}>
           <Link href={`/#nexus=${encodeURIComponent(key)}`}>
-            <Icon iconName='BuildQueue' style={{ marginRight: 4 }} />
+            <Icon iconName='BuildQueue' style={{ marginRight: 4, fontSize: 12, textDecoration: 'none' }} />
             {nexus[key]}
           </Link>
         </div>;

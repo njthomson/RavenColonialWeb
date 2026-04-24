@@ -97,7 +97,7 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
       <td>
         <Stack horizontal verticalAlign='center'>
           <ViewEditName
-            noBold
+            noBold blockEmpty
             disabled={site.status === 'demolish'}
             name={site.name}
             dim={!inCalcIds}

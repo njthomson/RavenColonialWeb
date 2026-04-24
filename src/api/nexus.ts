@@ -16,6 +16,14 @@ export const nexus = {
     return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}`);
   },
 
+  setName: async (id: string, name: string): Promise<Nexus> => {
+    return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setName`, 'POST', JSON.stringify(name));
+  },
+
+  setPrivate: async (id: string, isPrivate: boolean): Promise<Nexus> => {
+    return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setPrivate`, 'POST', JSON.stringify(isPrivate));
+  },
+
   setCmdrs: async (id: string, cmdrs: string[]): Promise<Nexus> => {
     return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setCmdrs`, 'POST', JSON.stringify(cmdrs));
   },

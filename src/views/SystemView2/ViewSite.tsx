@@ -30,6 +30,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       <div>Site:</div>
       <h2>
         <ViewEditName
+          blockEmpty
           name={site.name}
           onChange={newName => {
             site.name = newName;

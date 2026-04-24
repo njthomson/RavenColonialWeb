@@ -26,6 +26,7 @@ export const learnAbout = (currentHelpId?: string) => {
     groups: 'Working in groups',
     fc: 'Linking Fleet Carriers',
     markets: 'Finding markets',
+    nexus: 'Building a nexus',
   }
 
   return <div className={`home-box rel ${cn.greyer}`}>
@@ -233,6 +234,28 @@ export const About: React.FunctionComponent = () => {
         <li>Toggle <span style={{ color: appTheme.palette.themePrimary }}>FC Diff</span> to reduce commodities already loaded onto linked Fleet Carriers.</li>
         <li>Tap the system name to view the market in Inara.</li>
         <li>The bar at the bottom shows an approximate view of how highlighted commodities would fit in your ships cargo hold.</li>
+        <IconBtnScrollTop />
+      </ul>
+    </div>}
+
+
+    {(!helpId || helpId === 'nexus') && <div className={`home-box rel ${cn.greyer}`}>
+      <h3 className={cn.h3}>Building a nexus</h3>
+      A nexus is simply a plan for many systems. They could be a bridge or chain, or just some systems you plan to build in.
+      <ul>
+        <li>It uses existing build-projects or system plans to know what you would like to build.</li>
+        <li>Fleet Carriers can be linked to one or more systems and the nexus will allocate cargo for what is planned in each system.</li>
+        <li>When linking Fleet Carriers to multiple systems, it will be aware of what was already allocated.</li>
+        <li>It assumes you'll finish building in each system before moving onto the next, but it's okay if you skip ahead. </li>
+        <li>If you haven't saved any plans for a system, it will assume a Commercial Outpost (Plutus) by default.</li>
+        <li>If you have planned multiple projects in a system, it will be considered a "hub" but that just means there's 2 or more facilities. </li>
+        <li>Only members of a nexus can edit them. Only the creator (owner) can delete them.</li>
+        <li>Anyone can view an open nexus, but you'll need a link if not a member. If marked private, only members can view a nexus.</li>
+      </ul>
+      The main benefits are:
+      <ul>
+        <li>Show progress loading cargo onto FCs per system, so you know you have enough before departing. </li>
+        <li>Starting a build-project in a system in a nexus will auto-assign nexus-linked Commanders to the project, as well as any FCs linked to that system.</li>
         <IconBtnScrollTop />
       </ul>
     </div>}

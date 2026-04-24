@@ -65,6 +65,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <div>Site:</div>
           <h2>
             <ViewEditName
+              blockEmpty
               name={site.name}
               onChange={newName => {
                 site.original.name = newName;

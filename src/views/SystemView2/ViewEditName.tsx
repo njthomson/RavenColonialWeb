@@ -1,12 +1,12 @@
 import { ActionButton, IconButton } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
-import { delayFocus } from "../../util";
+import { asGrey, delayFocus } from "../../util";
 
-export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; editing?: boolean; dim?: boolean; onEditing?: (editing: boolean) => void }> = (props) => {
+export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName: string) => void; noBold?: boolean, disabled?: boolean; prefix?: string; editing?: boolean; dim?: boolean; onEditing?: (editing: boolean) => void; blockEmpty?: boolean; }> = (props) => {
   const [editing, setEditing] = useState(props.editing);
   const [name, setName] = useState(props.name);
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState(props.editing ? name : '');
 
   if (name !== props.name) {
     setName(props.name);
@@ -66,8 +66,9 @@ export const ViewEditName: FunctionComponent<{ name: string; onChange: (newName:
       <IconButton
         className={cn.bBox}
         title='Accept changes'
-        iconProps={{ iconName: 'Accept' }}
+        iconProps={{ iconName: 'Accept', style: { color: asGrey(props.blockEmpty && !editName) } }}
         style={{ marginLeft: 4 }}
+        disabled={props.blockEmpty && !editName}
         onClick={(ev) => {
           ev.preventDefault();
           props.onChange(editName.trim());
