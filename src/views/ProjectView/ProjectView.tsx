@@ -292,6 +292,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   doNextPoll = async (buildId: string) => {
     try {
+      // skip polling when editing prepBuilds
+      if (this.state.isPrep && this.state.prepBuilds && this.state.proj) {
+        const prepBuildsDirty = JSON.stringify(this.state.prepBuilds) !== JSON.stringify(this.state.proj.prepBuilds ?? {});
+        if (prepBuildsDirty) {
+          // just schedule the next poll
+          this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
+          console.debug(`skip polling when editing prepBuilds...`);
+          return;
+        }
+      }
+
       // call server to see if anything changed
       const pollData = await api.project.poll([buildId, ...Object.keys(this.state.fcCargo)]);
       const timestamp = pollData.max;
@@ -1233,7 +1244,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     return <div style={{ userSelect: 'none' }}>
       <h3 className={cn.h3} style={{ marginTop: 20 }}>
 
-        <Stack horizontal tokens={{ childrenGap: 8 }} verticalAlign='center'>
+        <Stack horizontal verticalAlign='center'>
           <span>Building:</span>
 
           <span>
@@ -1256,6 +1267,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             style={{ height: 22, color: savingPrepBuilds ? 'grey' : undefined, }}
             disabled={savingPrepBuilds}
             onClick={this.onSavePrepBuilds}
+          />}
+
+          {isDirty && !savingPrepBuilds && <ActionButton
+            className={cn.bBox}
+            iconProps={{ iconName: 'Undo' }}
+            text='Undo'
+            title='Undo changes to buildings'
+            style={{ height: 22, color: savingPrepBuilds ? 'grey' : undefined, }}
+            disabled={savingPrepBuilds}
+            onClick={() => this.setState({ prepBuilds: proj.prepBuilds ?? {} })}
           />}
 
           {savingPrepBuilds && isDirty && <Spinner

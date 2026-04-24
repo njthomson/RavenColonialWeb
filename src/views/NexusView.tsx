@@ -1,6 +1,6 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
-import { Chain, ChainSys } from "../api/chain";
+import { Nexus, NexusSys } from "../api/nexus";
 import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
@@ -111,17 +111,17 @@ const css = mergeStyles({
   }
 });
 
-interface ChainViewProps {
+interface NexusViewProps {
   id?: string;
 }
 
-interface ChainViewState {
+interface NexusViewState {
   loading: boolean;
   saving?: boolean;
   errorMsg?: string;
   createName?: string;
 
-  chain?: Chain;
+  nexus?: Nexus;
   listRows: SysRow[];
   currentSystem?: SysRow;
   cargoFC?: Cargo;
@@ -144,7 +144,7 @@ interface ChainViewState {
   showRemaining?: number;
 }
 
-interface SysRow extends ChainSys {
+interface SysRow extends NexusSys {
   /** Count of cargo needing to be supplied */
   pending: number;
   /** Count of cargo that could be supplied */
@@ -157,10 +157,10 @@ interface SysRow extends ChainSys {
   fromFC: Record<number, Cargo>;
 }
 
-export class ChainView extends Component<ChainViewProps, ChainViewState> {
+export class NexusView extends Component<NexusViewProps, NexusViewState> {
   private timer?: NodeJS.Timeout;
 
-  constructor(props: ChainViewProps) {
+  constructor(props: NexusViewProps) {
     super(props);
 
     this.state = {
@@ -176,11 +176,11 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     this.toggleAutoRefresh();
   }
 
-  componentDidUpdate(prevProps: Readonly<ChainViewProps>, prevState: Readonly<ChainViewState>, snapshot?: any): void {
+  componentDidUpdate(prevProps: Readonly<NexusViewProps>, prevState: Readonly<NexusViewState>, snapshot?: any): void {
     if (prevProps.id !== this.props.id) {
       this.setState({
         listRows: [],
-        chain: {
+        nexus: {
           id: '',
           name: '',
           owner: '',
@@ -192,7 +192,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         },
       });
       if (this.props.id) {
-        this.loadChain(this.props.id);
+        this.loadNexus(this.props.id);
       }
     }
   }
@@ -204,10 +204,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   prepMapData() {
-    const { chain, currentSystem } = this.state;
-    if (!chain) { return; }
+    const { nexus, currentSystem } = this.state;
+    if (!nexus) { return; }
 
-    const systems = chain.systems.map(d => {
+    const systems = nexus.systems.map(d => {
       const progress = (!d.progress ? 0 : 100 / d.total * d.progress).toFixed(0);
       const infos = `<a class='bl' href='/#sys=${d.name}' target='_blank' style="font-size: 12px">View: ${d.name}</a>
 <br/><br/><table>
@@ -221,9 +221,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       };
     });
 
-    const playerPos = currentSystem?.pos ?? chain.systems[0].pos;
+    const playerPos = currentSystem?.pos ?? nexus.systems[0].pos;
     const msg: MapData = {
-      source: 'chain',
+      source: 'nexus',
       init: {
         startAnim: true,
         effectScaleSystem: [25, 10000],
@@ -240,7 +240,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         },
         systems: systems,
         routes: [{
-          title: chain.name,
+          title: nexus.name,
           points: systems.map(s => { return { s: s.name } as { s: string, label?: string }; })
         }],
       },
@@ -251,33 +251,33 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     GalMap.open(msg);
   }
 
-  async loadChain(id: string) {
+  async loadNexus(id: string) {
     this.setState({ loading: true, errorMsg: undefined });
 
     try {
-      const newChain = await api.chain.get(id);
-      this.useChain(newChain);
+      const newNexus = await api.nexus.get(id);
+      this.useNexus(newNexus);
     } catch (err: any) {
       if (err.statusCode === 404) {
-        // ignore cases when a chain is not found
-        console.log(`loadChain: ${err.stack}`);
+        // ignore cases when a nexus is not found
+        console.log(`loadNexus: ${err.stack}`);
         this.setState({ loading: false, errorMsg: err.message });
       } else {
-        console.error(`loadChain: ${err.stack}`);
+        console.error(`loadNexus: ${err.stack}`);
         this.setState({ loading: false, errorMsg: err.message });
       }
     }
   }
 
-  useChain(newChain: Chain) {
+  useNexus(newNexus: Nexus) {
     // process systems and allocate cargo from FCs
     const listRows: SysRow[] = [];
-    const fcCargos = newChain.fcs.reduce((m, fc) => {
+    const fcCargos = newNexus.fcs.reduce((m, fc) => {
       m[fc.marketId] = { ...fc.cargo };
       return m;
     }, {} as Record<number, Cargo>)
 
-    for (const s of newChain.systems) {
+    for (const s of newNexus.systems) {
       let needs = s.needs;
       let total = s.total;
       if (s.builds.length > 0 && !s.progress) { s.progress = 0; }
@@ -336,7 +336,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       return l;
     }, undefined as SysRow | undefined);
 
-    const isMember = newChain.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
+    const isMember = newNexus.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
 
     this.setState({
       loading: false,
@@ -344,14 +344,14 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       showAddFC: false,
       addingSysFC: undefined,
       expandFC: undefined,
-      chain: newChain,
+      nexus: newNexus,
       listRows: listRows,
       currentSystem: currentSystem,
-      cargoFC: mergeCargo(newChain.fcs.map(fc => fc.cargo)),
+      cargoFC: mergeCargo(newNexus.fcs.map(fc => fc.cargo)),
       isMember: isMember,
       editSystems: undefined,
     });
-    window.document.title = `Chain: ${newChain.name}`;
+    window.document.title = `Nexus: ${newNexus.name}`;
   }
 
   toggleAutoRefresh = () => {
@@ -360,7 +360,6 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       console.log(`Stopping timer at: ${new Date().toISOString()}`);
       clearTimeout(this.timer);
       this.setState({ autoUpdateUntil: 0 });
-      // setTimeout(() => { if (this.props.id) { this.loadChain(this.props.id, true); } }, 10);
     } else {
       // start polling (which causes an immediate refresh)
       console.log(`Starting timer at: ${new Date().toISOString()}`);
@@ -376,13 +375,13 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       this.setState({ loading: true });
 
       // call server to see if anything changed
-      const { chain, lastPoll } = this.state;
+      const { nexus, lastPoll } = this.state;
 
       let currentPoll = 'x';
       if (!force) {
-        var fcIDs = chain?.fcs.map(fc => fc.marketId.toString()) ?? [];
+        var fcIDs = nexus?.fcs.map(fc => fc.marketId.toString()) ?? [];
 
-        const buildIds = chain?.systems.flatMap(s => s.builds.map(b => b.buildId)) ?? [];
+        const buildIds = nexus?.systems.flatMap(s => s.builds.map(b => b.buildId)) ?? [];
         const pollData = await api.project.poll([...buildIds, ...fcIDs]);
         currentPoll = pollData.max;
       }
@@ -392,7 +391,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       if (currentPoll !== lastPoll || force) {
         this.setState({ lastPoll: currentPoll });
         // something changed
-        await this.loadChain(this.props.id);
+        await this.loadNexus(this.props.id);
       }
 
       // schedule next poll?
@@ -415,59 +414,59 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     }
   }
 
-  deleteChain = async () => {
-    const id = this.state.chain?.id;
+  deleteNexus = async () => {
+    const id = this.state.nexus?.id;
     if (!id) { return; }
 
     try {
-      await api.chain.delete(id);
-      window.location.replace("/#chain");
+      await api.nexus.delete(id);
+      window.location.replace("/#nexus");
     } catch (err: any) {
       if (err.statusCode === 404) {
-        // ignore cases when a chain is not found
-        console.log(`loadChain: ${err.stack}`);
+        // ignore cases when a nexus is not found
+        console.log(`deleteNexus: ${err.stack}`);
         this.setState({ loading: false, errorMsg: err.message });
       } else {
-        console.error(`loadChain: ${err.stack}`);
+        console.error(`deleteNexus: ${err.stack}`);
         this.setState({ loading: false, errorMsg: err.message });
       }
     }
   }
 
   render() {
-    const { chain, errorMsg, loading, editSystems, currentSystem, shopFC, confirmDelete, submitting } = this.state;
+    const { nexus, errorMsg, loading, editSystems, currentSystem, shopFC, confirmDelete, submitting } = this.state;
 
     // show create/find UX
     if (!this.props.id) {
       return this.renderCreate();
     }
 
-    // failed to load chain by ID
-    if (!chain && !loading) {
+    // failed to load nexus by ID
+    if (!nexus && !loading) {
       return <>
         {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
         <div style={{ marginTop: 40, textAlign: 'center' }}>
-          <p>Cannot view a chain by id: {this.props.id}</p>
-          <p><Link href='/#chain'>View chains</Link></p>
+          <p>Cannot view a nexus by id: {this.props.id}</p>
+          <p><Link href='/#nexus'>View nexus</Link></p>
         </div>
       </>;
     }
 
     return <div className={css} style={{ cursor: 'default' }}>
-      {!chain?.id && loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
+      {!nexus?.id && loading && <Spinner style={{ marginTop: 20 }} size={SpinnerSize.large} labelPosition='right' label='Loading ...' />}
 
-      {!!chain?.id && <>
-        {this.renderTitles(chain)}
+      {!!nexus?.id && <>
+        {this.renderTitles(nexus)}
         <div className='contain-horiz'>
-          {this.renderSystems(chain)}
+          {this.renderSystems(nexus)}
           <div className='half' style={{ marginTop: 10, cursor: 'default' }}>
-            {currentSystem && this.renderCurrentSystem(chain, currentSystem)}
-            {this.renderRouteStats(chain)}
-            {this.renderCommanders(chain)}
-            {this.renderFleetCarriers(chain)}
+            {currentSystem && this.renderCurrentSystem(nexus, currentSystem)}
+            {this.renderRouteStats(nexus)}
+            {this.renderCommanders(nexus)}
+            {this.renderFleetCarriers(nexus)}
           </div>
-          {editSystems && this.renderEditSystems(chain)}
-          {shopFC && this.renderShopFC(chain, shopFC)}
+          {editSystems && this.renderEditSystems(nexus)}
+          {shopFC && this.renderShopFC(nexus, shopFC)}
         </div>
 
         {confirmDelete && <Modal
@@ -485,7 +484,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
               disabled={submitting}
               iconProps={{ iconName: 'Warning' }}
               style={{ backgroundColor: appTheme.palette.yellowDark, color: 'black' }}
-              onClick={this.deleteChain}
+              onClick={this.deleteNexus}
             />
             &nbsp;
             <DefaultButton
@@ -504,7 +503,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   renderCreate() {
     const { createName, errorMsg } = this.state;
 
-    window.document.title = `Chains`;
+    window.document.title = `Nexus`;
     return <>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
       {!store.apiKey && <MessageBar
@@ -516,10 +515,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       </MessageBar>}
 
       <div className='contain-horiz' style={{ margin: 20 }}>
-        <CmdrChains />
+        <CmdrNexus />
 
         <div className='half' style={{ marginTop: 10 }}>
-          <h2 className={cn.h3}>Start a new chain:</h2>
+          <h2 className={cn.h3}>Start a new nexus:</h2>
 
           <Stack horizontal verticalAlign='end' tokens={{ childrenGap: 10 }}>
             <TextField
@@ -532,18 +531,18 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             />
 
             <DefaultButton
-              id='chain-name'
+              id='nexus-name'
               text='Create'
               disabled={!createName || !store.apiKey}
               onClick={() => {
                 this.setState({ saving: false, errorMsg: '' });
 
-                api.chain.create(createName!)
-                  .then(newChain => {
-                    console.log(newChain);
-                    window.location.assign(`/#chain=${encodeURIComponent(newChain.id)}`);
+                api.nexus.create(createName!)
+                  .then(newNexus => {
+                    console.log(newNexus);
+                    window.location.assign(`/#nexus=${encodeURIComponent(newNexus.id)}`);
                   }).catch((err: any) => {
-                    console.error(`loadChain: ${err.stack}`);
+                    console.error(`nexusCreate: ${err.stack}`);
                     this.setState({ saving: false, errorMsg: err.message });
                   });
               }} />
@@ -553,23 +552,23 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </>;
   }
 
-  renderTitles(chain: Chain) {
+  renderTitles(nexus: Nexus) {
     const { errorMsg, saving, loading, autoUpdateUntil } = this.state;
-    const isOwner = isMatchingCmdr(chain.owner, store.cmdrName);
+    const isOwner = isMatchingCmdr(nexus.owner, store.cmdrName);
 
     return <div className='full'>
       <h2 style={{ margin: 10 }}>
-        <CopyButton text={chain.name} fontSize={16} />
-        {chain.name || ' ...'}
+        <CopyButton text={nexus.name} fontSize={16} />
+        {nexus.name || ' ...'}
 
         <IconButton
           id='sysView2_SearchNew'
-          title='Search for a different chain'
+          title='Search for a different nexus'
           iconProps={{ iconName: "Search", style: { cursor: 'pointer' } }}
           style={{ marginLeft: 10 }}
           onClick={() => {
-            this.setState({ chain: undefined, listRows: [] });
-            window.location.assign('/#chain');
+            this.setState({ nexus: undefined, listRows: [] });
+            window.location.assign('/#nexus');
           }}
         />
       </h2>
@@ -588,7 +587,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           className: cn.bBox,
           key: 'btn-del',
           text: 'Delete',
-          title: 'Delete this chain',
+          title: 'Delete this nexus',
           iconProps: { iconName: 'Delete', style: { color: asGrey(!isOwner) } },
           style: { color: asGrey(!isOwner) },
           disabled: loading || !isOwner,
@@ -623,7 +622,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </div>;
   }
 
-  renderSystems(chain: Chain) {
+  renderSystems(nexus: Nexus) {
     const { currentSystem, listRows, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
 
     let rows: JSX.Element[] = [];
@@ -633,7 +632,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       let progress = 100 / s.total * s.progress;
       if (isNaN(progress)) { progress = 0; }
       const remaining = !s.total ? getAverageHauls('plutus') : s.total - (s.progress ?? 0);
-      const isHub = chain.hubs.includes(s.id64);
+      const isHub = nexus.hubs.includes(s.id64);
       const isComplete = remaining === 0;
       const isCurrent = s.id64 === currentSystem?.id64;
 
@@ -688,7 +687,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
         <td className='c1'>
           <CopyButton text={s.name} fontSize={10} color={appTheme.palette.themeTertiary} />
-          <Link target='chainSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ marginLeft: 4, color: textColor }}>{s.nickname ?? s.name}</Link>
+          <Link target='nexusSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ marginLeft: 4, color: textColor }}>{s.nickname ?? s.name}</Link>
           {!isComplete && <IconButton
             className='info'
             id={`rem-${s.id64}`}
@@ -717,8 +716,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       </tr>);
 
       if (addingSysFC === s.id64) {
-        // start with chain linked FCs
-        const preMatches: Record<string, string> = chain.fcs.reduce((m, fc) => {
+        // start with nexus linked FCs
+        const preMatches: Record<string, string> = nexus.fcs.reduce((m, fc) => {
           if (!s.fcs.includes(fc.marketId)) {
             m[fc.marketId.toString()] = `${fc.displayName} (${fc.name})`;
           }
@@ -731,7 +730,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           }
         }
 
-        const iconMap = chain.fcs.reduce((m, fc, i) => {
+        const iconMap = nexus.fcs.reduce((m, fc, i) => {
           m[fc.marketId.toString()] = fcIconList[i % fcIconList.length];
           return m;
         }, {} as Record<string, string>);
@@ -761,8 +760,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
 
                 this.setState({ saving: true });
                 const newMarketIDs = Array.from(new Set([...s.fcs, parseInt(marketId)]));
-                api.chain.setSysFCs(chain.id, s.id64, newMarketIDs)
-                  .then(newChain => this.useChain(newChain))
+                api.nexus.setSysFCs(nexus.id, s.id64, newMarketIDs)
+                  .then(newNexus => this.useNexus(newNexus))
                   .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />
@@ -816,7 +815,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
           text='Edit'
           title='Edit and re-order systems'
           disabled={saving}
-          onClick={() => this.setState({ editSystems: chain?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false })}
+          onClick={() => this.setState({ editSystems: nexus?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false })}
         />}
       </h3>
       <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12, marginBottom: 8 }}>
@@ -838,12 +837,12 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         </table>
       </>}
 
-      {!!expandFC && this.renderFCCard(chain, expandFC.id64, expandFC.marketId)}
-      {!!showRemaining && this.renderRemaining(chain, showRemaining)}
+      {!!expandFC && this.renderFCCard(nexus, expandFC.id64, expandFC.marketId)}
+      {!!showRemaining && this.renderRemaining(nexus, showRemaining)}
     </div>;
   }
 
-  renderRemaining(chain: Chain, id64: number) {
+  renderRemaining(nexus: Nexus, id64: number) {
     const { listRows } = this.state;
     const sysRow = listRows.find(s => s.id64 === id64);
     if (!sysRow) { return null; }
@@ -892,9 +891,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </>;
   }
 
-  renderFCCard(chain: Chain, id64: number, marketId: number) {
+  renderFCCard(nexus: Nexus, id64: number, marketId: number) {
     const { expandFC, listRows, saving, shopFC } = this.state;
-    const fc = chain.fcs.find(fc => fc.marketId === marketId);
+    const fc = nexus.fcs.find(fc => fc.marketId === marketId);
     const sysRow = listRows.find(s => s.id64 === id64);
     if (!expandFC || !fc || !sysRow) { return null; }
 
@@ -928,8 +927,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             onClick={() => {
               this.setState({ saving: true });
               const newMarketIDs = sysRow.fcs.filter(mid => mid !== marketId);
-              api.chain.setSysFCs(chain.id, sysRow.id64, newMarketIDs)
-                .then(newChain => this.useChain(newChain))
+              api.nexus.setSysFCs(nexus.id, sysRow.id64, newMarketIDs)
+                .then(newNexus => this.useNexus(newNexus))
                 .catch(err => this.setState({ saving: false, errorMsg: err.message }));
             }}
           />
@@ -981,7 +980,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </>;
   }
 
-  renderEditSystems(chain: Chain) {
+  renderEditSystems(nexus: Nexus) {
     const { editSystems, saving } = this.state;
 
     return <Panel
@@ -1011,8 +1010,8 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
               onClick={() => {
                 this.setState({ saving: true });
                 const newNames = Array.from(new Set(editSystems?.split(`\n`)));
-                api.chain.setSystems(chain.id, newNames)
-                  .then(newChain => this.useChain(newChain))
+                api.nexus.setSystems(nexus.id, newNames)
+                  .then(newNexus => this.useNexus(newNexus))
                   .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />
@@ -1042,7 +1041,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </Panel>;
   }
 
-  renderCurrentSystem(chain: Chain, currentSystem: SysRow) {
+  renderCurrentSystem(nexus: Nexus, currentSystem: SysRow) {
     // const { cargoFC } = this.state;
     const activeProjects = currentSystem.builds ?? [];
     const linkColor = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
@@ -1053,7 +1052,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       <h3 className={cn.h3}>Current system:</h3>
 
       <div style={{ fontSize: 14 }}>
-        <Link target='chainSys' href={`/#sys=${encodeURIComponent(currentSystem.id64)}`} style={{ fontWeight: 'bold', color: linkColor }}>{currentSystem.nickname ?? currentSystem.name}</Link>
+        <Link target='nexusSys' href={`/#sys=${encodeURIComponent(currentSystem.id64)}`} style={{ fontWeight: 'bold', color: linkColor }}>{currentSystem.nickname ?? currentSystem.name}</Link>
 
         <div style={{ marginTop: 4, marginBottom: 4 }}>
           Active projects: {activeProjects.length ? activeProjects.length : <span style={{ color: 'grey' }}>None</span>}
@@ -1100,7 +1099,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </div>;
   }
 
-  renderRouteStats(chain: Chain) {
+  renderRouteStats(nexus: Nexus) {
     const { cargoFC, listRows } = this.state;
 
     const sumTotal = listRows.map(s => s.total ?? 0).reduce((t, c) => t + c, 0);
@@ -1110,7 +1109,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     const sumRemaining = sumTotal - sumDelivered - readyOnFCs;
 
     const completed = listRows.filter(s => s.total && s.progress && s.progress >= s.total);
-    const hubs = listRows.filter(s => chain.hubs.includes(s.id64));
+    const hubs = listRows.filter(s => nexus.hubs.includes(s.id64));
     const systemsProgress = 100 / listRows.length * completed.length;
 
 
@@ -1137,7 +1136,7 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
       <div style={{ fontSize: 14 }}>
         <Stack className='boxes' horizontal tokens={{ childrenGap: 40 }}>
           <div><div className='h'>Hubs:</div>{hubs.length}</div>
-          <div><div className='h'>Systems complete:</div>{completed.length} of {chain.systems.length}</div>
+          <div><div className='h'>Systems complete:</div>{completed.length} of {nexus.systems.length}</div>
           <div><div className='h'>Progress:</div>{systemsProgress.toFixed()} %</div>
         </Stack>
 
@@ -1152,9 +1151,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </div>;
   }
 
-  renderCommanders(chain: Chain) {
+  renderCommanders(nexus: Nexus) {
     const { showAddCmdr, isMember } = this.state;
-    const allowRemoveCmdr = chain.cmdrs.length > 1;
+    const allowRemoveCmdr = nexus.cmdrs.length > 1;
 
     return <div className='statBox'>
       <h3 className={cn.h3}>
@@ -1174,27 +1173,27 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
         if (!newCmdr) { this.setState({ showAddCmdr: false }); return; }
 
         this.setState({ saving: true, showAddCmdr: false });
-        const newCmdrs = Array.from(new Set([...chain.cmdrs, newCmdr]));
-        api.chain.setCmdrs(chain.id, newCmdrs)
-          .then(newChain => this.setState({ saving: false, chain: newChain }));
+        const newCmdrs = Array.from(new Set([...nexus.cmdrs, newCmdr]));
+        api.nexus.setCmdrs(nexus.id, newCmdrs)
+          .then(newNexus => this.setState({ saving: false, nexus: newNexus }));
       }} />}
 
       <div style={{ fontSize: 14 }}>
-        {chain.cmdrs.map(cmdr => {
-          const isOwner = isMatchingCmdr(cmdr, chain.owner);
+        {nexus.cmdrs.map(cmdr => {
+          const isOwner = isMatchingCmdr(cmdr, nexus.owner);
           return <Stack key={`csc-${cmdr}`} horizontal verticalAlign='center'>
             <span className='listItem'>{cmdr}</span>
 
-            {isOwner && <Icon iconName='Crown' style={{ color: 'grey', width: 10, height: 16, margin: '0 3px' }} title={`The owner of this chain cannot be removed`} />}
+            {isOwner && <Icon iconName='Crown' style={{ color: 'grey', width: 10, height: 16, margin: '0 3px' }} title={`The owner of this nexus cannot be removed`} />}
 
             {isMember && !isOwner && <IconButton
               iconProps={{ iconName: 'Clear' }}
               disabled={!allowRemoveCmdr}
               onClick={() => {
                 this.setState({ saving: true });
-                const newCmdrs = chain.cmdrs.filter(c => c !== cmdr);
-                api.chain.setCmdrs(chain.id, newCmdrs)
-                  .then(newChain => this.setState({ saving: false, chain: newChain }))
+                const newCmdrs = nexus.cmdrs.filter(c => c !== cmdr);
+                api.nexus.setCmdrs(nexus.id, newCmdrs)
+                  .then(newNexus => this.setState({ saving: false, nexus: newNexus }))
                   .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />}
@@ -1204,20 +1203,20 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </div>
   }
 
-  renderFleetCarriers(chain: Chain) {
+  renderFleetCarriers(nexus: Nexus) {
     const { showAddFC, fcEditMarketId, hoverFC, shopFC, listRows, saving, isMember } = this.state;
 
     let preMatches: Record<string, string> | undefined = undefined;
     if (showAddFC) {
       const cmdrLinkedFCs = store.cmdrLinkedFCs;
       preMatches = Object.keys(store.cmdrLinkedFCs)
-        .filter(marketId => chain.fcs.every(fc => fc.marketId.toString() !== marketId))
+        .filter(marketId => nexus.fcs.every(fc => fc.marketId.toString() !== marketId))
         .reduce((map, marketId) => {
           map[marketId] = cmdrLinkedFCs[marketId];
           return map;
         }, {} as Record<string, string>);
     }
-    const linkedMarketIds = chain.fcs.map(fc => fc.marketId.toString()) ?? [];
+    const linkedMarketIds = nexus.fcs.map(fc => fc.marketId.toString()) ?? [];
 
     return <div className='statBox'>
       <h3 className={cn.h3}>
@@ -1242,16 +1241,16 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
             if (!marketId) { this.setState({ showAddFC: false }); return; }
 
             this.setState({ saving: true });
-            const newMarketIDs = Array.from(new Set([...chain.fcs.map(fc => fc.marketId), parseInt(marketId)]));
-            api.chain.setFCs(chain.id, newMarketIDs)
-              .then(newChain => this.useChain(newChain))
+            const newMarketIDs = Array.from(new Set([...nexus.fcs.map(fc => fc.marketId), parseInt(marketId)]));
+            api.nexus.setFCs(nexus.id, newMarketIDs)
+              .then(newNexus => this.useNexus(newNexus))
               .catch(err => this.setState({ saving: false, errorMsg: err.message }));
           }}
         />
       </div>}
 
       <div style={{ fontSize: 14 }}>
-        {chain.fcs.map((fc, i) => {
+        {nexus.fcs.map((fc, i) => {
           const isSysLinked = listRows.some(r => r.fcs.includes(fc.marketId));
 
           return <Stack
@@ -1277,9 +1276,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
               disabled={saving}
               onClick={() => {
                 this.setState({ saving: true });
-                const newMarketIDs = chain.fcs.map(x => x.marketId).filter(x => x !== fc.marketId);
-                api.chain.setFCs(chain.id, newMarketIDs)
-                  .then(newChain => this.useChain(newChain))
+                const newMarketIDs = nexus.fcs.map(x => x.marketId).filter(x => x !== fc.marketId);
+                api.nexus.setFCs(nexus.id, newMarketIDs)
+                  .then(newNexus => this.useNexus(newNexus))
                   .catch(err => this.setState({ saving: false, errorMsg: err.message }));
               }}
             />}
@@ -1304,9 +1303,9 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
     </div>;
   }
 
-  renderShopFC(chain: Chain, marketId: number) {
+  renderShopFC(nexus: Nexus, marketId: number) {
     const { listRows } = this.state;
-    const fc = chain.fcs.find(fc => fc.marketId === marketId);
+    const fc = nexus.fcs.find(fc => fc.marketId === marketId);
     if (!fc) { return null; }
 
     const need = mergeCargo(listRows
@@ -1329,10 +1328,10 @@ export class ChainView extends Component<ChainViewProps, ChainViewState> {
   }
 
   renderIconFC(marketId: number, id64?: number) {
-    const { chain, hoverFC, expandFC } = this.state;
-    const fc = chain?.fcs.find(fc => fc.marketId === marketId);
+    const { nexus, hoverFC, expandFC } = this.state;
+    const fc = nexus?.fcs.find(fc => fc.marketId === marketId);
     if (!fc) { return null; }
-    const idx = chain!.fcs.indexOf(fc);
+    const idx = nexus!.fcs.indexOf(fc);
 
     const iconName = fcIconList[idx % fcIconList.length];
 
@@ -1386,36 +1385,35 @@ const fcIconList: string[] = [
   'StarburstSolid',
 ]
 
-export const CmdrChains: FunctionComponent<{}> = (props) => {
-  const [chains, setChains] = useState<Record<string, string> | undefined>(undefined);
+export const CmdrNexus: FunctionComponent<{}> = (props) => {
+  const [nexus, setNexus] = useState<Record<string, string> | undefined>(undefined);
 
   useMemo(async () => {
     try {
-      console.debug(`Fetch Cmdr chains`);
-      const newChains = await api.cmdr.getMyChains();
-      setChains(newChains);
+      const newNexus = await api.cmdr.getMyNexus();
+      setNexus(newNexus);
     } catch (err: any) {
       if (err.statusCode !== 404) {
         // ignore cases where a project is not found
-        console.error(`CmdrChains failed: ${err.stack}`);
+        console.error(`CmdrNexus failed: ${err.stack}`);
       }
     }
   }, []);
 
 
   return <div className='half' style={{ marginTop: 10 }}>
-    <h2 className={cn.h3}>Choose a chain:</h2>
+    <h2 className={cn.h3}>Choose a nexus:</h2>
     <div>
-      {chains && Object.keys(chains).map(key => {
+      {nexus && Object.keys(nexus).map(key => {
         return <div key={`ck-${key}`}>
-          <Link href={`/#chain=${encodeURIComponent(key)}`}>
+          <Link href={`/#nexus=${encodeURIComponent(key)}`}>
             <Icon iconName='BuildQueue' style={{ marginRight: 4 }} />
-            {chains[key]}
+            {nexus[key]}
           </Link>
         </div>;
       })}
 
-      {!Object.keys(chains ?? {}).length && <div style={{ color: 'grey' }}>You are not linked to any chains</div>}
+      {!Object.keys(nexus ?? {}).length && <div style={{ color: 'grey' }}>You are not linked to any nexus</div>}
     </div>
   </div>
     ;

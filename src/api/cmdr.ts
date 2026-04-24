@@ -68,7 +68,7 @@ export const cmdr = {
     return await callAPI<KnownFC[]>(`/api/cmdr/fleetCarriers`, 'POST');
   },
 
-  getMyChains: async (): Promise<Record<string, string>> => {
+  getMyNexus: async (): Promise<Record<string, string>> => {
     return await callAPI<Record<string, string>>(`/api/cmdr/chains`);
   },
 };

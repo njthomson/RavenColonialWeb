@@ -15,7 +15,7 @@ import { BigSiteTablePage } from './components/BigSiteTable/BigSiteTable';
 import { processLoginCodes, redirectToFrontierAuth } from './api/auth';
 import { ShareFeedback } from './components/ShareFeedback';
 import { GalMap } from './views/GalMap';
-import { ChainView } from './views/ChainView';
+import { NexusView } from './views/NexusView';
 import { GGG } from './views/GGG';
 
 // Initialize icons in case this example uses them
@@ -180,8 +180,8 @@ export class App extends Component<AppProps, AppState> {
       nextState.cmdrEdit = true;
     } else if (params.has('map')) {
       nextState.pivot = TopPivot.map;
-    } else if (params.has('chain')) {
-      nextState.pivot = TopPivot.chain;
+    } else if (params.has('chain') || params.has('nexus')) {
+      nextState.pivot = TopPivot.nexus;
     } else if (params.has('ggg')) {
       nextState.pivot = TopPivot.ggg;
     } else {
@@ -222,8 +222,8 @@ export class App extends Component<AppProps, AppState> {
       return [TopPivot.table, pivotArg];
     } else if (params.has('map')) {
       return [TopPivot.map, pivotArg];
-    } else if (params.has('chain')) {
-      return [TopPivot.chain, pivotArg];
+    } else if (params.has('chain') || params.has('nexus')) {
+      return [TopPivot.nexus, pivotArg];
     } else if (params.has('ggg')) {
       return [TopPivot.ggg, pivotArg];
     } else {
@@ -431,7 +431,7 @@ export class App extends Component<AppProps, AppState> {
       case TopPivot.table: return <BigSiteTablePage />;
       case TopPivot.login: return <div><Spinner style={{ marginTop: 100 }} size={SpinnerSize.large} label='Logging in ...' /></div>;
       case TopPivot.map: return <GalMap source={pivotArg} />;
-      case TopPivot.chain: return <ChainView id={pivotArg} />;
+      case TopPivot.nexus: return <NexusView id={pivotArg} />;
       case TopPivot.ggg: return <GGG />;
     }
   }

@@ -522,7 +522,6 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
 
         {hiddenIDsChanged && <ActionButton
           className={cn.bBox2}
-          disabled={loading}
           iconProps={{ iconName: 'Save' }}
           style={{ float: 'right' }}
           text='Save'

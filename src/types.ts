@@ -14,7 +14,7 @@ export enum TopPivot {
   table = 'bst',
   login = 'login',
   map = 'map',
-  chain = 'chain',
+  nexus = 'chain',
   ggg = 'ggg',
 }
 
