@@ -1149,7 +1149,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             onChange={(_, txt) => this.setState({ editSystems: txt })}
           />
         </div>
-        <div style={{ marginTop: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>Make sure these systems are already known to <Link href='spansh.co.uk'>spansh.co.uk</Link></div>
+        <div style={{ marginTop: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>Make sure these systems are already known to <Link href='https://spansh.co.uk' target='_blank'>spansh.co.uk</Link></div>
       </div>
 
     </Panel>;
