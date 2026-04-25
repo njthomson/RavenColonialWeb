@@ -184,6 +184,18 @@ const coachingContent: Record<string, {
     </div>,
   },
 
+  buildNexus: {
+    headline: 'Plan your Nexus?',
+    directionalHint: DirectionalHint.rightTopEdge,
+    body: <div>
+      <div>A nexus is simply a plan for many systems. They could be a bridge or chain, or just some systems you plan to build in.</div>
+      <br />
+      <div>They help gathering enough cargo on Fleet Carriers before creating build-projects. New build-projects in your Nexus will have Commanders and Fleet Carriers auto-assigned.</div>
+      <br />
+      <LinkSrvSurvey href='#about=nexus' text='Learn more?' title='Learn more on the About page' />
+    </div>,
+  },
+
   largeBuildType: {
     headline: 'Compare and contrast (new!)',
     directionalHint: DirectionalHint.bottomCenter,
