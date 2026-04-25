@@ -1,10 +1,10 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
-import { Nexus, NexusSys } from "../api/nexus";
+import { Nexus, NexusSummary, NexusSys } from "../api/nexus";
 import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
-import { asGrey, delayFocus, getCargoCountOnHand, isMatchingCmdr, isMobile, mergeCargo, sumCargo } from '../util';
+import { asGrey, delayFocus, getCargoCountOnHand, getSystemDistance, isMatchingCmdr, isMobile, mergeCargo, sumCargo } from '../util';
 import { store } from '../local-storage';
 import { CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
@@ -29,7 +29,7 @@ const css = mergeStyles({
   },
   '.statBox': {
     marginBottom: 20,
-    '.ms-Button--icon': {
+    '.btn': {
       width: 20,
       height: 20,
       '.ms-Button-icon': {
@@ -82,6 +82,10 @@ const css = mergeStyles({
     '.c4': {
       textAlign: 'right'
     },
+    '.dist': {
+      color: 'grey',
+      fontSize: 9,
+    }
   },
   '.routeStats': {
     '.h': {
@@ -157,6 +161,7 @@ interface SysRow extends NexusSys {
   missingCargo: Cargo;
   /** Explicit cargo allocated from each FC */
   fromFC: Record<number, Cargo>;
+  distance: number;
 }
 
 export class NexusView extends Component<NexusViewProps, NexusViewState> {
@@ -278,6 +283,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       return m;
     }, {} as Record<number, Cargo>)
 
+    let lastPos = undefined;
     for (const s of newNexus.systems) {
       let needs = s.needs;
       let total = s.total;
@@ -326,7 +332,10 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         missing: pending - available,
         missingCargo: remaining,
         fromFC,
+        distance: lastPos ? getSystemDistance(s.pos, lastPos) : 0,
       });
+
+      lastPos = s.pos;
     }
 
     // calculate the current system
@@ -363,6 +372,15 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       isMember: isMember,
       editSystems: undefined,
       autoUpdateUntil: autoUpdateUntil,
+      // reset these just in case
+      createName: undefined,
+      errorMsg: undefined,
+      confirmDelete: undefined,
+      hoverFC: undefined,
+      shopFC: undefined,
+      showAddCmdr: undefined,
+      showRemaining: undefined,
+      submitting: undefined
     });
     window.document.title = `Nexus: ${newNexus.name}`;
   }
@@ -441,7 +459,9 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       await api.nexus.delete(id);
       window.location.replace("/#nexus");
     } catch (err: any) {
-      if (err.statusCode === 404) {
+      if (err.statusCode === 204) {
+        window.location.replace("/#nexus");
+      } else if (err.statusCode === 404) {
         // ignore cases when a nexus is not found
         console.log(`deleteNexus: ${err.stack}`);
         this.setState({ loading: false, errorMsg: err.message });
@@ -554,6 +574,10 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               label='Name:'
               value={createName}
               disabled={!store.apiKey}
+              onKeyDown={ev => {
+                if (ev.key === 'Enter') { document.getElementById('nexus-name')?.click(); }
+                if (ev.key === 'Escape') { this.setState({ createName: '' }); }
+              }}
               onChange={((_, txt) => {
                 this.setState({ createName: txt! });
               })}
@@ -768,6 +792,10 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           <Icon iconName={iconName} style={{ color: iconColor }} />
         </td>
 
+        <td className='c4'>
+          {!!s.distance && <span className='dist'>{s.distance.toLocaleString(undefined, { maximumFractionDigits: 1 })} ly</span>}
+        </td>
+
         <td className='c1'>
           <CopyButton text={s.name} fontSize={10} color={appTheme.palette.themeTertiary} />
           <Link target='nexusSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ marginLeft: 4, color: textColor }}>{s.nickname ?? s.name}</Link>
@@ -788,7 +816,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               title='Assign a Fleet Carrier to this system'
               iconProps={{ iconName: 'AddTo', style: { color: saving ? 'grey' : appTheme.palette.themeTertiary } }}
               disabled={saving}
-              onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64 })}
+              onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64, showAddCmdr: false, showAddFC: false, })}
             />
           </Stack>}
         </td>
@@ -829,7 +857,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               borderRight: '2px dotted ' + appTheme.palette.themeTertiary,
             }} />
           </td>
-          <td colSpan={4} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
+          <td colSpan={5} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
             <FindFC
               preMatchText='Linked Fleet Carriers:'
               preMatches={preMatches}
@@ -874,7 +902,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
         rows.push(<tr key={`cs-${s.id64}-c`} style={{ backgroundColor: bc }}>
           <td />
-          <td colSpan={4} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 6 }}>
+          <td colSpan={5} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 6 }}>
             <Stack horizontal tokens={{ childrenGap: 8 }}>
               <StackedBarChart
                 ignoreFixStyle
@@ -906,8 +934,8 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       </div>
 
       {!rows.length && <div key='no-systems' style={{ marginTop: 20, textAlign: 'center' }}>
-        <ActionButton
-          text='Add systems...'
+        <PrimaryButton
+          text='Add systems to get started ...'
           disabled={loading || saving || !isMember}
           style={{ color: asGrey(loading || saving || !isMember) }}
           onClick={() => this.setState({ editSystems: '\n' })}
@@ -1042,9 +1070,11 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         <table className='tableCargoFC' cellPadding={0} cellSpacing={0}>
           <tbody>
             {Object.entries(sysRow.fromFC[marketId]).map(([n, v], i) => {
-              const w = 100 / fc.cargo[n] * v;
+              const w = fc.cargo[n] ? 100 / fc.cargo[n] * v : 0;
+              // if (!w) { return null; }
+
               return <tr key={`fccc-${marketId}-${i}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : undefined }}>
-                <td className='c1'>
+                <td className='c1' style={{ color: asGrey(!w) }}>
                   <CommodityIcon name={n} />
                   &nbsp;
                   {mapCommodityNames[n] ?? n}:
@@ -1119,6 +1149,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             onChange={(_, txt) => this.setState({ editSystems: txt })}
           />
         </div>
+        <div style={{ marginTop: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>Make sure these systems are already known to <Link href='spansh.co.uk'>spansh.co.uk</Link></div>
       </div>
 
     </Panel>;
@@ -1246,7 +1277,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           text='Add'
           title='Add a new Commander to this project'
           onClick={() => {
-            this.setState({ showAddCmdr: true, showAddFC: false });
+            this.setState({ showAddCmdr: !showAddCmdr, showAddFC: false, addingSysFC: undefined });
             delayFocus('new-cmdr-edit');
           }}
         />}
@@ -1270,6 +1301,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             {isOwner && <Icon iconName='Crown' style={{ color: 'grey', width: 10, height: 16, margin: '0 3px' }} title={`The owner of this nexus cannot be removed`} />}
 
             {isMember && !isOwner && <IconButton
+              className='btn'
               iconProps={{ iconName: 'Clear' }}
               disabled={!allowRemoveCmdr}
               onClick={() => {
@@ -1309,7 +1341,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           text='Add'
           title='Add a new Fleet Carrier to this project'
           onClick={() => {
-            this.setState({ showAddFC: true, showAddCmdr: false });
+            this.setState({ showAddFC: !showAddFC, showAddCmdr: false, addingSysFC: undefined });
             delayFocus('new-cmdr-edit');
           }}
         />}
@@ -1349,12 +1381,14 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             <span className='listItem'>{fc.displayName} ({fc.name})</span>
 
             <IconButton
+              className='btn'
               iconProps={{ iconName: 'Edit', style: { color: asGrey(saving) } }}
               disabled={saving}
               onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
             />
 
             {isMember && <IconButton
+              className='btn'
               iconProps={{ iconName: 'Clear', style: { color: asGrey(saving) } }}
               disabled={saving}
               onClick={() => {
@@ -1367,6 +1401,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             />}
 
             {isSysLinked && <IconButton
+              className='btn'
               iconProps={{ iconName: 'ShoppingCart', style: { color: asGrey(saving) } }}
               disabled={saving}
               onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
@@ -1469,7 +1504,8 @@ const fcIconList: string[] = [
 ]
 
 export const CmdrNexus: FunctionComponent<{}> = (props) => {
-  const [nexus, setNexus] = useState<Record<string, string> | undefined>(undefined);
+  const [nexus, setNexus] = useState<NexusSummary[] | undefined>(undefined);
+  const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
 
   useMemo(async () => {
     try {
@@ -1479,23 +1515,26 @@ export const CmdrNexus: FunctionComponent<{}> = (props) => {
       if (err.statusCode !== 404) {
         // ignore cases where a project is not found
         console.error(`CmdrNexus failed: ${err.stack}`);
+        setErrorMsg(err.message);
       }
     }
   }, []);
 
   return <div className='half' style={{ marginTop: 10 }}>
+    {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setErrorMsg(undefined)}>{errorMsg}</MessageBar>}
     <h2 className={cn.h3}>Choose a nexus:</h2>
     <div>
-      {nexus && Object.keys(nexus).map(key => {
-        return <div key={`ck-${key}`}>
-          <Link href={`/#nexus=${encodeURIComponent(key)}`}>
+      {!!nexus?.length && nexus.map(n => {
+        return <div key={`ck-${n.id}`}>
+          <Link href={`/#nexus=${encodeURIComponent(n.id)}`}>
             <Icon iconName='BuildQueue' style={{ marginRight: 4, fontSize: 12, textDecoration: 'none' }} />
-            {nexus[key]}
+            {n.name}
+            {!!n.destination && <span style={{ color: appTheme.palette.themeDarker, fontSize: 12 }}> ≫ {n.destination}</span>}
           </Link>
         </div>;
       })}
 
-      {!Object.keys(nexus ?? {}).length && <div style={{ color: 'grey' }}>You are not linked to any nexus</div>}
+      {!nexus?.length && <div style={{ color: 'grey', textAlign: 'center' }}>You are not linked to any nexus <br /><br /><Link2 href='/#nexus=sample' text='View a sample' /></div>}
     </div>
   </div>
     ;

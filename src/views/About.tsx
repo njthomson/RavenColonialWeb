@@ -1,5 +1,5 @@
 import { DefaultButton, Icon, IconButton, Link, Stack } from "@fluentui/react";
-import { LinkSrvSurvey } from "../components/LinkSrvSurvey";
+import { Link2, LinkSrvSurvey } from "../components/LinkSrvSurvey";
 import { appTheme, cn } from "../theme";
 import { mapStatusIcon } from "./SystemView2/ViewEditStatus";
 import { App } from "../App";
@@ -241,7 +241,7 @@ export const About: React.FunctionComponent = () => {
 
     {(!helpId || helpId === 'nexus') && <div className={`home-box rel ${cn.greyer}`}>
       <h3 className={cn.h3}>Building a nexus</h3>
-      A nexus is simply a plan for many systems. They could be a bridge or chain, or just some systems you plan to build in.
+      A nexus is simply a plan for many systems. They could be a bridge or chain, or just some systems you plan to build in. <Link2 href='/#nexus=sample' text='View a sample' />
       <ul>
         <li>It uses existing build-projects or system plans to know what you would like to build.</li>
         <li>Fleet Carriers can be linked to one or more systems and the nexus will allocate cargo for what is planned in each system.</li>

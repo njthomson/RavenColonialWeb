@@ -298,3 +298,14 @@ export const siteAsProjRef = (site: SiteMap2): ProjectRefLite => {
 export const asGrey = (condition?: boolean) => {
   return condition ? 'grey' : undefined;
 }
+
+export const getSystemDistance = (here: number[], there: number[]) => {
+  if (here == null || there == null) return -1;
+
+  var dist = Math.sqrt(
+    Math.pow(here[0] - there[0], 2)
+    + Math.pow(here[1] - there[1], 2)
+    + Math.pow(here[2] - there[2], 2)
+  );
+  return dist;
+}

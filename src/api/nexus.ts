@@ -39,8 +39,15 @@ export const nexus = {
   setSystems: async (id: string, systemNames: string[]): Promise<Nexus> => {
     return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setSystems`, 'POST', JSON.stringify(systemNames));
   },
-
 };
+
+export type NexusSummary = {
+  id: string;
+  name: string;
+  open: boolean;
+  owner: string;
+  destination?: string;
+}
 
 export type Nexus = {
   id: string;

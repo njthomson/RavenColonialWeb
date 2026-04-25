@@ -1,5 +1,6 @@
 import { CmdrPatch, CmdrSummary, CmdrView, KnownFC, Project, ProjectRef } from "../types";
 import { callAPI } from "./api-util";
+import { NexusSummary } from "./nexus";
 
 /** Fleet Carrier APIs */
 export const cmdr = {
@@ -68,8 +69,8 @@ export const cmdr = {
     return await callAPI<KnownFC[]>(`/api/cmdr/fleetCarriers`, 'POST');
   },
 
-  getMyNexus: async (): Promise<Record<string, string>> => {
-    return await callAPI<Record<string, string>>(`/api/cmdr/chains`);
+  getMyNexus: async (): Promise<NexusSummary[]> => {
+    return await callAPI<NexusSummary[]>(`/api/cmdr/nexus`);
   },
 };
 
