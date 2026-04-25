@@ -7,7 +7,7 @@ import { CargoGrid, CargoRemaining, ChartGeneralProgress, ProjectLink } from '..
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, fc_loading, KnownFC, Project } from '../../types';
 import { store } from '../../local-storage';
-import { delayFocus, fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
+import { asGrey, delayFocus, fcFullName, getCargoCountOnHand, mergeCargo, openDiscordLink, sumCargo, sumCargo as sumCargos } from '../../util';
 import { FleetCarrier } from '../FleetCarrier';
 import { CopyButton } from '../../components/CopyButton';
 import { ModalCommander } from '../../components/ModalCommander';
@@ -296,7 +296,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
               disabled: loading,
               className: cn.bBox,
-              style: { color: (loading) ? 'grey' : undefined },
+              style: { color: asGrey(loading) },
               onClick: () => {
                 this.toggleAutoRefresh();
               }
@@ -307,13 +307,22 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               text: 'New FC Loading',
               title: 'Create a new FC loading project',
               iconProps: { iconName: 'AddToShoppingList' },
-              disabled: loading || !store.apiKey,
+              disabled: !store.apiKey,
               className: cn.bBox,
-              style: { color: (loading) ? 'grey' : undefined },
               onClick: () => {
                 this.setState({ showPreNewFcLoading: true, newFcLoadingName: '' });
                 delayFocus('#new-loading-name');
               }
+            },
+
+            {
+              key: 'btn-nexus',
+              text: 'Nexus',
+              title: 'View nexus plans',
+              iconProps: { iconName: 'BuildQueue' },
+              disabled: !store.apiKey,
+              className: cn.bBox,
+              href: '/#nexus'
             },
 
             {

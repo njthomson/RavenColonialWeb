@@ -353,7 +353,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     let autoUpdateUntil = this.state.autoUpdateUntil;
     if (newNexus.systems.length) {
       const lastSystem = newNexus.systems[newNexus.systems.length - 1];
-      if (lastSystem.progress === lastSystem.total) {
+      if (lastSystem.total > 0 && lastSystem.progress === lastSystem.total) {
         clearTimeout(this.timer);
         autoUpdateUntil = 0;
       }
@@ -658,7 +658,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           key: 'btn-private',
           text: nexus.open ? 'Open' : 'Private',
           title: nexus.open ? 'Click to mark as private' : 'Click to mark as open',
-          iconProps: { iconName: nexus.open ? 'Unlock' : 'LockSolid', style: { color: asGrey(!isMember || loading || saving) } },
+          iconProps: { iconName: nexus.open ? 'Unlock' : 'LockSolid' },
           disabled: !isMember || saving || loading,
           style: { color: asGrey(!isMember || loading || saving) },
           onClick: () => {
@@ -676,7 +676,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           key: 'btn-refresh',
           text: 'Refresh',
           title: !!autoUpdateUntil ? 'Click to stop auto updating' : 'Click to refresh now and auto update every 30 seconds',
-          iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh', style: { color: asGrey(loading || saving) } },
+          iconProps: { iconName: !!autoUpdateUntil ? 'PlaybackRate1x' : 'Refresh' },
           disabled: saving || loading,
           style: { color: asGrey(saving || loading) },
           onClick: () => this.toggleAutoRefresh(),
@@ -686,7 +686,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           key: 'btn-del',
           text: 'Delete',
           title: 'Delete this nexus',
-          iconProps: { iconName: 'Delete', style: { color: asGrey(!isOwner || loading || saving) } },
+          iconProps: { iconName: 'Delete' },
           style: { color: asGrey(!isOwner || loading || saving) },
           disabled: !isOwner || loading || saving,
           onClick: () => this.setState({ confirmDelete: true }),
@@ -696,7 +696,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           key: 'btn-map',
           text: 'Show on map',
           title: 'Show on a map',
-          iconProps: { iconName: 'Globe', style: { color: asGrey(loading || !nexus.systems.length) } },
+          iconProps: { iconName: 'Globe' },
           style: { color: asGrey(loading || !nexus.systems.length) },
           disabled: loading || !nexus.systems.length,
           onClick: () => this.prepMapData()
