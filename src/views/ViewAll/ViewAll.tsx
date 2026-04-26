@@ -428,7 +428,8 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         const sumNeed = sumCargos(p.commodities);
         const approxProgress = isPrep ? 0 : p.maxNeed - sumNeed;
         const countReadyOnFCs = getCargoCountOnHand(p.commodities, fcCargo);
-        const percent = p.maxNeed === 0 ? 0 : 100 / p.maxNeed * (isPrep ? countReadyOnFCs : approxProgress);
+        const maxNeed = isPrep ? sumNeed : p.maxNeed;
+        const percent = p.maxNeed === 0 ? 0 : 100 / maxNeed * (isPrep ? countReadyOnFCs : approxProgress);
 
         const checkProj = !hiddenIDs.has(p.buildId);
         if (checkProj) { checkCount++; }
@@ -469,7 +470,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
           </Stack>
 
           <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center'>
-            <ChartGeneralProgress maxNeed={p.maxNeed} progress={approxProgress} readyOnFC={countReadyOnFCs} minimal />
+            <ChartGeneralProgress maxNeed={maxNeed} progress={approxProgress} readyOnFC={countReadyOnFCs} minimal />
             <Label style={{ marginBottom: 2, color: checkProj ? undefined : 'grey' }}>&nbsp;&nbsp;{percent.toFixed(0)}%</Label>
           </Stack>
 
@@ -497,7 +498,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
             this.setState({ hiddenIDs, projects, sumCargo, commodityNeeds });
           }} />
 
-          {isFcLoading && <span>FC Loading :</span>}
+          {isFcLoading && <span>FC Loading:</span>}
           {!isFcLoading && <>
             <Link href={`#sys=${encodeURIComponent(systemName)}`} style={{ color: checkSys ? undefined : appTheme.palette.themeTertiary }}>{systemName}</Link>
             <CopyButton text={systemName} />

@@ -471,6 +471,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
     // use measured size, but defer to static size if not known
     const haulSize = getAverageHauls(type.displayName2);
+    const haulPerScore = (haulSize / (type.score ?? 1)).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
     return <tr
       key={`btr${type.subTypes}1`}
@@ -564,7 +565,10 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
       <td className={`${cn.br}`}><Chevrons name='tech' count={type.effects.tech} title={`Tech level: ${asPosNegTxt(type.effects.tech!)}`} /></td>
       <td className={`${cn.br}`}><Chevrons name='sol' count={type.effects.sol} title={`Standard of Living: ${asPosNegTxt(type.effects.sol!)}`} /></td>
       <td className={`${cn.br}`}><Chevrons name='dev' count={type.effects.dev} title={`Development level: ${asPosNegTxt(type.effects.dev!)}`} /></td>
-      <td style={{ borderRight: isCurrentSelection ? `8px solid ${appTheme.palette.accent}` : undefined }}>+{type.score}</td>
+      <td style={{ borderRight: isCurrentSelection ? `8px solid ${appTheme.palette.accent}` : undefined }} title={`Haul per score ratio: ${haulPerScore}`}>
+        <div style={{ textAlign: 'right', marginRight: 44 }}>+{type.score}</div>
+        <div style={{ fontSize: 10, color: appTheme.palette.themeTertiary, textAlign: 'right', marginRight: 8 }}>{haulPerScore}</div>
+      </td>
     </tr>;
   }
 
@@ -668,7 +672,7 @@ Click to filter positive impacts.`,
   sol: `Changes to system standard of living once complete.
 Click to filter positive impacts.`,
   dev: `Changes to system development level once complete. Click to filter`,
-  score: `Score contributed to system score once complete.`,
+  score: `Score contributed to system score once complete (higher is better) + the haul-per-score ratio (lower is better)`,
 }
 
 const mapCyclicFilters: Record<string, string[]> = {
