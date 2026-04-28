@@ -262,7 +262,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         const sys = await api.systemV2.getSys(newProj.systemAddress.toString());
         const sysMap = buildSystemModel2(sys, false, store.applyBuffNerf);
         this.setState({ sysMap });
-      } else {
+      } else if (!isPrep) {
         // if ALL commodities have a count of -1 ... it means the project is brand new and we want people to edit them to real numbers
         if (Object.values(newProj.commodities).every(v => v === 10 || v === -1)) {
           this.setState({
