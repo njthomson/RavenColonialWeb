@@ -399,11 +399,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         className: cn.bBox,
         key: 'deliver-cargo',
         text: 'Deliver',
+        title: (isPrep && !proj.linkedFC.length) ? 'Add Fleet Carriers to enable deliveries' : undefined,
         iconProps: { iconName: 'DeliveryTruck' },
-        disabled: proj.complete || refreshing,
-        style: { color: proj.complete || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
+        disabled: proj.complete || refreshing || (isPrep && !proj.linkedFC.length),
+        style: { color: proj.complete || refreshing || (isPrep && !proj.linkedFC.length) ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
-          this.setState({ mode: Mode.deliver });
+          this.setState({ mode: Mode.deliver, deliverMarketId: '' });
           delayFocus('deliver-commodity');
         },
       },
@@ -678,7 +679,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </>;
       }}
     >
-      {isDefaultCargo && <MessageBar
+      {isDefaultCargo && !isPrep && <MessageBar
         messageBarType={MessageBarType.warning}
         actions={<MessageBarButton onClick={this.setDefaultApproxCargoCounts}
         >
