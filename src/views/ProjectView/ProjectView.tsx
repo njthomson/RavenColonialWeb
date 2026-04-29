@@ -410,7 +410,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               delete nextDelivery[k];
             }
           }
-          this.setState({ mode: Mode.deliver, deliverMarketId: '', nextDelivery });
+          this.setState({ mode: Mode.deliver, nextDelivery });
           delayFocus('deliver-commodity');
         },
       },
