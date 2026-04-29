@@ -84,6 +84,7 @@ interface ProjectViewState {
   // specific for prepation projects
   isPrep?: boolean;
   prepBuilds?: Record<string, number>;
+  originalCargo?: Cargo;
   savingPrepBuilds?: boolean;
   prepBuildsDiffer?: boolean;
 }
@@ -242,6 +243,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({
         buildId: newProj.buildId,
         proj: newProj,
+        originalCargo: { ...newProj.commodities },
         editProject: window.location.hash.startsWith('#edit'),
         editReady: new Set(newProj.ready),
         sumTotal: Object.values(newProj.commodities).reduce((total, current) => total += current, 0),
@@ -582,6 +584,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             const cmdrName = store.cmdrName;
             this.setState({
               proj: savedProj,
+              originalCargo: { ...savedProj.commodities },
               editProject: false,
               lastTimestamp: savedProj.timestamp,
               editReady: new Set(savedProj.ready),
@@ -1205,7 +1208,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   };
 
   renderPrepBuilds() {
-    const { prepBuilds, proj, savingPrepBuilds, prepBuildsDiffer } = this.state;
+    const { prepBuilds, proj, savingPrepBuilds, prepBuildsDiffer, originalCargo } = this.state;
     if (!prepBuilds || !proj) { return; }
 
     const rows = Object.entries(prepBuilds).map(([buildType, count]) => {
@@ -1242,7 +1245,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     });
 
     const noBuilds = Object.keys(prepBuilds).length === 0;
-    const isDirty = JSON.stringify(prepBuilds) !== JSON.stringify(proj.prepBuilds ?? {});
+    const isDirty = JSON.stringify(originalCargo) !== JSON.stringify(proj.commodities);
 
     if (!rows.length) {
       rows.push(<div key='pbb-none' style={{ color: appTheme.palette.themeTertiary }}>None</div>);
@@ -1252,9 +1255,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <h3 className={cn.h3} style={{ marginTop: 20 }}>
 
         <Stack horizontal verticalAlign='center'>
-          <span>Building:</span>
+          <span>Building:&nbsp;</span>
 
-          <span>
+          {!savingPrepBuilds && <span>
             <ViewEditBuildType
               asAddBtn
               highlightAdd={noBuilds}
@@ -1264,7 +1267,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
                 this.adjustPrepBuilds(bt);
               }}
             />
-          </span>
+          </span>}
 
           {isDirty && !savingPrepBuilds && <ActionButton
             className={cn.bBox}
@@ -1283,7 +1286,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             title='Undo changes to buildings'
             style={{ height: 22, color: savingPrepBuilds ? 'grey' : undefined, }}
             disabled={savingPrepBuilds}
-            onClick={() => this.setState({ prepBuilds: proj.prepBuilds ?? {} })}
+            onClick={() => {
+              this.setState({
+                prepBuilds: proj.prepBuilds ?? {},
+                proj: { ...proj, commodities: originalCargo ?? {} }
+              });
+            }}
           />}
 
           {savingPrepBuilds && isDirty && <Spinner
@@ -1386,6 +1394,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       this.setState({
         savingPrepBuilds: false,
         proj: savedProj,
+        originalCargo: { ...savedProj.commodities },
         lastTimestamp: savedProj.timestamp,
         editReady: new Set(savedProj.ready),
         sumTotal: sumCargo(savedProj.commodities),
@@ -1638,6 +1647,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     };
     this.setState({
       proj: updatedProj,
+      originalCargo: { ...updatedProj.commodities },
       lastTimestamp: updatedProj.timestamp,
       showAddFC: false,
       savingFC: false,
@@ -1789,6 +1799,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         // success - apply new commodity count
         this.setState({
           proj: savedProj,
+          originalCargo: { ...savedProj.commodities },
           lastTimestamp: savedProj.timestamp,
           editReady: new Set(savedProj.ready),
           sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
@@ -1815,6 +1826,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       // success - apply new commodity count
       this.setState({
         proj: savedProj,
+        originalCargo: { ...savedProj.commodities },
         lastTimestamp: savedProj.timestamp,
         editReady: new Set(savedProj.ready),
         sumTotal: Object.values(savedProj.commodities).reduce((total, current) => total += current, 0),
@@ -1881,6 +1893,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       console.log('saveNewMarketId: savedProj:', savedProj);
       this.setState({
         proj: savedProj,
+        originalCargo: { ...savedProj.commodities },
         lastTimestamp: savedProj.timestamp,
         editReady: new Set(savedProj.ready),
         sumTotal: sumCargo(savedProj.commodities),

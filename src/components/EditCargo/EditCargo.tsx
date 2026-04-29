@@ -125,6 +125,8 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         }}
       />}
 
+      {!hasCargoRows && <Label>No known cargo. Please add ...</Label>}
+
       {showAddNew && this.renderAddNew()}
 
       {hasCargoRows && <table cellSpacing={0}>
@@ -177,10 +179,8 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         {totalsRow && this.renderTotalsRow()}
       </table>}
 
-      {!hasCargoRows && <Label>No known cargo. Please add ...</Label>}
 
-
-      {!showAddNew && canAddMore && addButtonBelow && <ActionButton
+      {!showAddNew && canAddMore && (addButtonBelow || !hasCargoRows) && <ActionButton
         text='Add commodity?'
         iconProps={{ iconName: 'Add' }}
         onClick={() => {
