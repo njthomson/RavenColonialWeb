@@ -118,7 +118,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       hideDoneRows: store.commodityHideCompleted,
       hideFCColumns: store.commodityHideFCColumns,
       showBubble: !store.cmdr,
-      nextDelivery: store.deliver,
+      nextDelivery: {},
       deliverMarketId: store.deliverDestination,
       submitting: false,
 
@@ -163,7 +163,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         hideDoneRows: store.commodityHideCompleted,
         hideFCColumns: store.commodityHideFCColumns,
         showBubble: !store.cmdr,
-        nextDelivery: store.deliver,
+        nextDelivery: {},
         deliverMarketId: store.deliverDestination,
         submitting: false,
 
@@ -404,7 +404,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         disabled: proj.complete || refreshing || (isPrep && !proj.linkedFC.length),
         style: { color: proj.complete || refreshing || (isPrep && !proj.linkedFC.length) ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
-          this.setState({ mode: Mode.deliver, deliverMarketId: '' });
+          const nextDelivery = { ...store.deliver };
+          for (const k of Object.keys(nextDelivery)) {
+            if (!proj.commodities[k]) {
+              delete nextDelivery[k];
+            }
+          }
+          this.setState({ mode: Mode.deliver, deliverMarketId: '', nextDelivery });
           delayFocus('deliver-commodity');
         },
       },
@@ -1988,7 +1994,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {!submitting && <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
         <PrimaryButton
           text='Deliver'
-          disabled={submitting || !deliverMarketId || sumCargo(nextDelivery) === 0}
+          disabled={submitting || sumCargo(nextDelivery) === 0 || (isPrep && !deliverMarketId)}
           iconProps={{ iconName: 'DeliveryTruck' }}
           onClick={this.deliverToSite}
         />
