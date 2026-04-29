@@ -383,7 +383,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     this.setState({ processingMsg: 'Importing ...', errorMsg: '', fssNeeded: false, showConfirmAction: undefined });
 
-    api.systemV2.import(this.props.systemName, type)
+    const nameOrNum = this.state.sysMap?.id64.toString() ?? this.props.systemName;
+    api.systemV2.import(nameOrNum, type)
       .then(newSys => {
         if (type === 'sites') {
           this.setState({ importSitesComplete: true });
