@@ -761,7 +761,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
   }
 
   renderSystems(nexus: Nexus) {
-    const { currentSystem, listRows, editing, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
+    const { currentSystem, listRows, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
 
     let rows: JSX.Element[] = [];
     let flip = undefined;
