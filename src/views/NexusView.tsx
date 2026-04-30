@@ -15,6 +15,7 @@ import { WhereToBuy } from '../components/WhereToBuy/WhereToBuy';
 import { GalMap, MapData } from './GalMap';
 import { ViewEditName } from './SystemView2/ViewEditName';
 import { Link2 } from '../components/LinkSrvSurvey';
+import { EditNotes } from './SystemView2/SystemView2';
 
 const css = mergeStyles({
   '.ms-Button--action, .ms-Button--icon': {
@@ -136,9 +137,8 @@ interface NexusViewState {
   isMember?: boolean;
   confirmDelete?: boolean;
   submitting?: boolean;
+  editing?: Editing;
 
-  showAddCmdr?: boolean;
-  showAddFC?: boolean;
   editSystems?: string;
   fcEditMarketId?: string;
 
@@ -149,6 +149,8 @@ interface NexusViewState {
   shopFC?: number;
   showRemaining?: number;
 }
+
+type Editing = 'addCmdr' | 'addFC' | 'notes';
 
 interface SysRow extends NexusSys {
   /** Count of cargo needing to be supplied */
@@ -362,7 +364,6 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     this.setState({
       loading: false,
       saving: false,
-      showAddFC: false,
       addingSysFC: undefined,
       expandFC: undefined,
       nexus: newNexus,
@@ -378,7 +379,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       confirmDelete: undefined,
       hoverFC: undefined,
       shopFC: undefined,
-      showAddCmdr: undefined,
+      editing: undefined,
       showRemaining: undefined,
       submitting: undefined
     });
@@ -606,7 +607,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
   }
 
   renderTitles(nexus: Nexus) {
-    const { errorMsg, saving, loading, autoUpdateUntil, isMember } = this.state;
+    const { errorMsg, saving, loading, autoUpdateUntil, isMember, editing } = this.state;
     const isOwner = isMatchingCmdr(nexus.owner, store.cmdrName);
 
     // prepare rich copy link
@@ -692,6 +693,21 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           onClick: () => this.setState({ confirmDelete: true }),
         },
         {
+          key: 'sys-edit-notes',
+          text: 'Notes',
+          title: 'Edit notes',
+          className: cn.bBox,
+          iconProps: {
+            iconName: !!nexus?.notes ? 'QuickNoteSolid' : 'QuickNote',
+            style: { color: !!nexus?.notes ? appTheme.palette.yellowDark : undefined, }
+          },
+          disabled: loading || saving || !isMember,
+          onClick: () => {
+            this.setState({ editing: editing === 'notes' ? undefined : 'notes', addingSysFC: undefined });
+            delayFocus('edit-system-notes');
+          }
+        },
+        {
           className: cn.bBox,
           key: 'btn-map',
           text: 'Show on map',
@@ -726,11 +742,26 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       ]} />
       {errorMsg && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => this.setState({ errorMsg: undefined })}>{errorMsg}</MessageBar>}
 
+      {editing === 'notes' && <EditNotes
+        text='Nexus notes'
+        notes={nexus.notes ?? ''}
+        readOnly={!isMember}
+        onChange={(newNotes) => {
+          if (newNotes === undefined) {
+            this.setState({ editing: undefined });
+          } else {
+            this.setState({ saving: true, editing: undefined });
+            api.nexus.setNotes(nexus.id, newNotes)
+              .then(newNexus => this.useNexus(newNexus))
+              .catch(err => this.setState({ saving: false, errorMsg: err.message }));
+          }
+        }}
+      />}
     </div>;
   }
 
   renderSystems(nexus: Nexus) {
-    const { currentSystem, listRows, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
+    const { currentSystem, listRows, editing, addingSysFC, saving, loading, expandFC, showRemaining, isMember } = this.state;
 
     let rows: JSX.Element[] = [];
     let flip = undefined;
@@ -816,7 +847,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               title='Assign a Fleet Carrier to this system'
               iconProps={{ iconName: 'AddTo', style: { color: saving ? 'grey' : appTheme.palette.themeTertiary } }}
               disabled={saving}
-              onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64, showAddCmdr: false, showAddFC: false, })}
+              onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64, editing: undefined })}
             />
           </Stack>}
         </td>
@@ -867,7 +898,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               noSpanshCheck
               iconMap={iconMap}
               onChange={(marketId) => {
-                if (!marketId) { this.setState({ addingSysFC: undefined }); return; }
+                if (!marketId) { this.setState({ editing: undefined }); return; }
 
                 this.setState({ saving: true });
                 const newMarketIDs = Array.from(new Set([...s.fcs, parseInt(marketId)]));
@@ -926,7 +957,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           text='Edit'
           title='Edit and re-order systems'
           disabled={saving}
-          onClick={() => this.setState({ editSystems: nexus?.systems.map(s => s.name).join(`\n`) + `\n`, showAddCmdr: false, showAddFC: false })}
+          onClick={() => this.setState({ editSystems: nexus?.systems.map(s => s.name).join(`\n`) + `\n`, editing: undefined, addingSysFC: undefined })}
         />}
       </h3>
       <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12, marginBottom: 8 }}>
@@ -1059,7 +1090,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             text={`Shop`}
             style={{ height: 28, color: asGrey(saving) }}
             disabled={saving}
-            onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
+            onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId, editing: undefined, addingSysFC: undefined })}
           />
         </Stack>
 
@@ -1138,7 +1169,8 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       }}
     >
       <div>
-        <div style={{ color: appTheme.palette.themeSecondary }}>Paste, edit, arrange system names below. One per line, in the desired order:</div>
+        <div style={{ color: appTheme.palette.themeSecondary }}>Paste, edit, arrange system names below. One per line, in the desired order.</div>
+        <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12 }}>(Make sure these systems are already known to <Link href='https://spansh.co.uk' target='_blank'>spansh.co.uk</Link>)</div>
         <div>
           <TextField
             multiline
@@ -1146,10 +1178,11 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             label='Systems:'
             rows={20}
             value={editSystems}
+            disabled={saving}
             onChange={(_, txt) => this.setState({ editSystems: txt })}
           />
         </div>
-        <div style={{ marginTop: 8, color: appTheme.palette.themeTertiary, fontSize: 12 }}>Make sure these systems are already known to <Link href='https://spansh.co.uk' target='_blank'>spansh.co.uk</Link></div>
+        <div style={{ marginTop: 8, color: appTheme.palette.themeDark }}>Or paste a url from: <Link href='https://spansh.co.uk/colonisation' target='_blank'>Spansh Colonisation Plotter</Link></div>
       </div>
 
     </Panel>;
@@ -1266,7 +1299,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
   }
 
   renderCommanders(nexus: Nexus) {
-    const { showAddCmdr, isMember } = this.state;
+    const { editing, isMember } = this.state;
     const allowRemoveCmdr = nexus.cmdrs.length > 1;
 
     return <div className='statBox'>
@@ -1277,16 +1310,16 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           text='Add'
           title='Add a new Commander to this project'
           onClick={() => {
-            this.setState({ showAddCmdr: !showAddCmdr, showAddFC: false, addingSysFC: undefined });
+            this.setState({ editing: editing === 'addCmdr' ? undefined : 'addCmdr', addingSysFC: undefined });
             delayFocus('new-cmdr-edit');
           }}
         />}
       </h3>
 
-      {showAddCmdr && <AddCmdr onClose={newCmdr => {
-        if (!newCmdr) { this.setState({ showAddCmdr: false }); return; }
+      {editing === 'addCmdr' && <AddCmdr onClose={newCmdr => {
+        if (!newCmdr) { this.setState({ editing: undefined }); return; }
 
-        this.setState({ saving: true, showAddCmdr: false });
+        this.setState({ saving: true, editing: undefined });
         const newCmdrs = Array.from(new Set([...nexus.cmdrs, newCmdr]));
         api.nexus.setCmdrs(nexus.id, newCmdrs)
           .then(newNexus => this.setState({ saving: false, nexus: newNexus }));
@@ -1319,10 +1352,10 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
   }
 
   renderFleetCarriers(nexus: Nexus) {
-    const { showAddFC, fcEditMarketId, hoverFC, shopFC, listRows, saving, isMember } = this.state;
+    const { editing, fcEditMarketId, hoverFC, shopFC, listRows, saving, isMember } = this.state;
 
     let preMatches: Record<string, string> | undefined = undefined;
-    if (showAddFC) {
+    if (editing === 'addFC') {
       const cmdrLinkedFCs = store.cmdrLinkedFCs;
       preMatches = Object.keys(store.cmdrLinkedFCs)
         .filter(marketId => nexus.fcs.every(fc => fc.marketId.toString() !== marketId))
@@ -1341,19 +1374,19 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           text='Add'
           title='Add a new Fleet Carrier to this project'
           onClick={() => {
-            this.setState({ showAddFC: !showAddFC, showAddCmdr: false, addingSysFC: undefined });
+            this.setState({ editing: editing === 'addFC' ? undefined : 'addFC', addingSysFC: undefined });
             delayFocus('new-cmdr-edit');
           }}
         />}
       </h3>
 
-      {showAddFC && <div>
+      {editing === 'addFC' && <div>
         <Label>Enter Fleet Carrier name:</Label>
         <FindFC
           preMatches={preMatches}
           notThese={linkedMarketIds}
           onChange={(marketId) => {
-            if (!marketId) { this.setState({ showAddFC: false }); return; }
+            if (!marketId) { this.setState({ editing: undefined }); return; }
 
             this.setState({ saving: true });
             const newMarketIDs = Array.from(new Set([...nexus.fcs.map(fc => fc.marketId), parseInt(marketId)]));
@@ -1384,7 +1417,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               className='btn'
               iconProps={{ iconName: 'Edit', style: { color: asGrey(saving) } }}
               disabled={saving}
-              onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
+              onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString(), editing: undefined, addingSysFC: undefined })}
             />
 
             {isMember && <IconButton
@@ -1404,7 +1437,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               className='btn'
               iconProps={{ iconName: 'ShoppingCart', style: { color: asGrey(saving) } }}
               disabled={saving}
-              onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId })}
+              onClick={() => this.setState({ shopFC: shopFC === fc.marketId ? undefined : fc.marketId, editing: undefined, addingSysFC: undefined })}
             />}
 
           </Stack>;

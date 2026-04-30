@@ -19,7 +19,7 @@ import { SitesBodyView } from './SitesBodyView';
 import { store } from '../../local-storage';
 import { SystemCard } from './SystemCard';
 import { FindSystemName, ProjectCreate } from '../../components';
-import { createRandomPhoneticName, delayFocus, getRelativeDuration, isMatchingCmdr, isMobile } from '../../util';
+import { asGrey, createRandomPhoneticName, delayFocus, getRelativeDuration, isMatchingCmdr, isMobile } from '../../util';
 import { ShowCoachingMarks, ShowManyCoachingMarks } from '../../components/ShowCoachingMarks';
 import { BodyFeature, Project } from '../../types';
 import { AuditTestWholeSystem } from './AuditTestWholeSystem';
@@ -1465,7 +1465,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     </div>;
 
     return <div className='system-view2' style={{}}>
-      {showEditNotes && <EditSystemNotes systemNotes={sysMap.notes ?? ''} onChange={(newNotes) => {
+      {showEditNotes && <EditNotes text='System notes' notes={sysMap.notes ?? ''} onChange={(newNotes) => {
         if (newNotes === undefined) {
           this.setState({ showEditNotes: false });
         } else {
@@ -1922,8 +1922,8 @@ export interface SitesViewProps {
 }
 
 
-const EditSystemNotes: FunctionComponent<{ systemNotes: string, onChange: (notes: string | undefined) => void }> = (props) => {
-  const [editNotes, setEditNotes] = useState(props.systemNotes);
+export const EditNotes: FunctionComponent<{ text: string, notes: string, onChange: (notes: string | undefined) => void, readOnly?: boolean }> = (props) => {
+  const [editNotes, setEditNotes] = useState(props.notes);
 
   return <div
     style={{
@@ -1940,29 +1940,30 @@ const EditSystemNotes: FunctionComponent<{ systemNotes: string, onChange: (notes
     }}
   >
     <div>
-      <span>System notes:</span>
+      <span>{props.text}:</span>
 
 
       <IconButton
         className={cn.bBox}
-        title='Cancel changes'
+        title='Close'
         iconProps={{ iconName: 'Cancel' }}
         style={{ float: 'right', marginRight: 4 }}
         onClick={() => props.onChange(undefined)}
       />
-      <IconButton
+      {!props.readOnly && <IconButton
         className={cn.bBox}
         title='Accept changes'
-        iconProps={{ iconName: 'Accept' }}
-        style={{ float: 'right', marginRight: 4 }}
+        iconProps={{ iconName: 'Accept', style: { color: asGrey(props.readOnly) } }}
+        style={{ float: 'right', marginRight: 4, color: asGrey(props.readOnly) }}
         onClick={() => props.onChange(editNotes)}
-      />
+      />}
     </div>
 
     <textarea
       id='edit-system-notes'
       value={editNotes}
       onChange={(ev) => setEditNotes(ev.target.value)}
+      disabled={props.readOnly}
       style={{
         width: 275,
         height: 225,

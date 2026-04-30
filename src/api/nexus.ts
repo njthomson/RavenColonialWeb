@@ -20,6 +20,10 @@ export const nexus = {
     return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setName`, 'POST', JSON.stringify(name));
   },
 
+  setNotes: async (id: string, notes: string): Promise<Nexus> => {
+    return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setNotes`, 'POST', JSON.stringify(notes));
+  },
+
   setPrivate: async (id: string, isPrivate: boolean): Promise<Nexus> => {
     return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setPrivate`, 'POST', JSON.stringify(isPrivate));
   },
@@ -58,6 +62,7 @@ export type Nexus = {
   fcs: KnownFC[];
   systems: NexusSys[];
   hubs: number[];
+  notes?: string;
 }
 
 export type NexusSys = {
