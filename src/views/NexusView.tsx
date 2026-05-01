@@ -714,7 +714,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             iconName: !!nexus?.notes ? 'QuickNoteSolid' : 'QuickNote',
             style: { color: !!nexus?.notes ? appTheme.palette.yellowDark : undefined, }
           },
-          disabled: loading || saving || !isMember,
+          disabled: loading || saving,
           onClick: () => {
             this.setState({ editing: editing === 'notes' ? undefined : 'notes', addingSysFC: undefined });
             delayFocus('edit-system-notes');
@@ -838,12 +838,12 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
             {s.fcs.map(mid => this.renderIconFC(mid, s.id64))}
 
-            <IconButton
+            {isMember && <IconButton
               title='Assign a Fleet Carrier to this system'
               iconProps={{ iconName: 'AddTo', style: { color: saving ? 'grey' : isCurrent ? iconColor : appTheme.palette.themeTertiary } }}
               disabled={saving}
               onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64, editing: undefined })}
-            />
+            />}
 
             {chartData && <StackedBarChart
               ignoreFixStyle
