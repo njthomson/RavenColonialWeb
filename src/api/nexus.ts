@@ -79,6 +79,7 @@ export type NexusSys = {
   needs?: Cargo;
   fcs: number[];
   builds: Project[];
+  buildTypes: Record<string, number>;
 }
 
 export enum NexusType {

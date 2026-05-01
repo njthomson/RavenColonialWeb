@@ -105,7 +105,7 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, 
           overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
         }}
         onDismiss={(ev: any) => {
-          setShowList(false)
+          setShowList(false);
         }}
 
         onRenderFooterContent={() => {
@@ -140,7 +140,12 @@ export const HaulList: FunctionComponent<{ buildTypes: string[], size?: number, 
           </Modal>}
         </div>
 
-        <CargoGrid cargo={cargoNeeded} linkedFC={knownFC} onRefresh={() => setRefetch(refetch + 1)} whereToBuy={props.shopNearSystem ? { refSystem: props.shopNearSystem, buildIds: [] } : undefined} />
+        <CargoGrid
+          cargo={cargoNeeded}
+          linkedFC={knownFC}
+          onRefresh={() => setRefetch(refetch + 1)}
+          whereToBuy={props.shopNearSystem ? { refSystem: props.shopNearSystem, buildIds: [] } : undefined}
+        />
       </Panel>
     </>}
   </>;

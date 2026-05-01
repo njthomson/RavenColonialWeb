@@ -48,6 +48,9 @@ interface WhereToBuyState extends FindMarketsOptions {
   sortAscending: boolean;
   stale?: boolean;
   showStaleMsg?: boolean;
+
+  marketHover?: number;
+  systemHover?: string;
 }
 
 export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
@@ -843,7 +846,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
   }
 
   renderMarketSummary(market: MarketSummary, idx: number) {
-    const { expandMatches, highlights, expandHighlights, filterNoHighlights } = this.state;
+    const { expandMatches, highlights, expandHighlights, filterNoHighlights, marketHover, systemHover } = this.state;
 
     if (filterNoHighlights && highlights.size > 0 && !Object.keys(market.supplies).some(cargo => highlights.has(cargo))) {
       return null;
@@ -874,11 +877,14 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       `Updated: ${updatedAt.toLocaleDateString()} ${updatedAt.toLocaleTimeString()}\n`
       ;
 
+    const rowBackcolor = marketHover === market.marketId ? appTheme.palette.themeLight : systemHover === market.systemName ? appTheme.palette.themeLighter : undefined;
+
     // row1: main visible data
     const row1 = <tr
       key={`summary${market.marketId}`}
       className={`${cn.trh}`}
       title={rowTitle}
+      style={{ backgroundColor: rowBackcolor }}
       onClick={() => {
         if (isExpanded) {
           expandMatches.delete(market.stationName);
@@ -887,6 +893,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
         }
         this.setState({ expandMatches: expandMatches });
       }}
+      onMouseEnter={() => this.setState({ systemHover: market.systemName, marketHover: market.marketId })}
+      onMouseLeave={() => this.setState({ systemHover: undefined, marketHover: undefined })}
     >
       <td className='c1'>
         <ActionButton
@@ -940,7 +948,13 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     </tr>;
 
     // row2: list of bubbles
-    const row2 = !isExpanded ? null : <tr className='r2' key={`summary${market.marketId}r2`}>
+    const row2 = !isExpanded ? null : <tr
+      className='r2'
+      key={`summary${market.marketId}r2`}
+      style={{ backgroundColor: rowBackcolor }}
+      onMouseEnter={() => this.setState({ systemHover: market.systemName, marketHover: market.marketId })}
+      onMouseLeave={() => this.setState({ systemHover: undefined, marketHover: undefined })}
+    >
       <td className='c1' colSpan={6}>
         <Stack horizontal wrap>
           {subMatches.map(([cargo, count]) => this.renderSupplyBubble(cargo, count, market.marketId))}

@@ -6,7 +6,7 @@ import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
 import { asGrey, delayFocus, getCargoCountOnHand, getSystemDistance, isMatchingCmdr, isMobile, mergeCargo, sumCargo } from '../util';
 import { store } from '../local-storage';
-import { CommodityIcon, FindFC, ProjectLink } from '../components';
+import { CargoGrid, CargoRemaining, CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
 import { FleetCarrier } from './FleetCarrier';
 import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
@@ -16,6 +16,7 @@ import { GalMap, MapData } from './GalMap';
 import { ViewEditName } from './SystemView2/ViewEditName';
 import { Link2 } from '../components/LinkSrvSurvey';
 import { EditNotes } from './SystemView2/SystemView2';
+import { getSiteType } from '../site-data';
 
 const css = mergeStyles({
   '.ms-Button--action, .ms-Button--icon': {
@@ -98,6 +99,11 @@ const css = mergeStyles({
   },
   '.tableCargoFC': {
     width: '100%',
+    'td': {
+      paddingLeft: 4,
+      paddingTop: 2,
+      paddingBottom: 2,
+    },
     '.c2': {
       paddingLeft: 8,
       minWidth: 50,
@@ -148,6 +154,7 @@ interface NexusViewState {
 
   shopFC?: number;
   showRemaining?: number;
+  expandBuilding?: boolean;
 }
 
 type Editing = 'addCmdr' | 'addFC' | 'notes';
@@ -177,6 +184,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       lastPoll: 'x',
       loading: true,
       listRows: [],
+      expandBuilding: true,
     };
   }
 
@@ -295,6 +303,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       if (!s.needs && !s.total) {
         needs = getAvgHaulCosts('outpost (primary)');
         total = Object.values(needs).reduce((sum, val) => sum += val, 0);
+        s.buildTypes = { plutus: 1 };
       }
 
       // for each cargo needed ...
@@ -351,6 +360,11 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     newNexus.cmdrs.sort();
     const isMember = newNexus.cmdrs.some(cmdr => isMatchingCmdr(cmdr, store.cmdrName));
 
+    // assign FC icons
+    for (const fc of newNexus.fcs) {
+      fc.icon = fcIconList[newNexus.fcs.indexOf(fc) % fcIconList.length];
+    }
+
     // don't auto-poll if final system is complete
     let autoUpdateUntil = this.state.autoUpdateUntil;
     if (newNexus.systems.length) {
@@ -380,7 +394,6 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       hoverFC: undefined,
       shopFC: undefined,
       editing: undefined,
-      showRemaining: undefined,
       submitting: undefined
     });
     window.document.title = `Nexus: ${newNexus.name}`;
@@ -665,7 +678,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           onClick: () => {
             this.setState({ saving: true });
             api.nexus.setPrivate(nexus.id, nexus.open)
-              .then(newNexus => this.setState({ nexus: newNexus, saving: false }))
+              .then(newNexus => this.useNexus(newNexus))
               .catch((err: any) => {
                 console.error(`setPrivate: ${err.stack}`);
                 this.setState({ saving: false, errorMsg: err.message });
@@ -778,35 +791,19 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       const bb = (isComplete || isCurrent ? '2px solid ' : '2px dotted ') + appTheme.palette.themeTertiary;
 
       const iconName = isHub ? 'ShieldSolid' : isCurrent ? 'Location' : 'LocationDot';
-      const iconColor = isCurrent ? (appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod') : isComplete ? appTheme.semanticColors.bodyText : appTheme.palette.themeSecondary;
+      const iconColor = isCurrent ? (appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod') : isComplete ? 'grey' : appTheme.palette.themeDark;
       const textColor = isCurrent ? iconColor : isComplete ? appTheme.palette.themeTertiary : appTheme.palette.themeSecondary;
 
-      let completion = isComplete ? <>Completed</> : '';
-      const completionTitle = progress > 0 ? `Delivered ${s.progress.toLocaleString()} of ${s.total.toLocaleString()}` : undefined;
+      const chartData: IChartDataPoint[] | undefined = s.fcs.length && !isCurrent && !isComplete && !s.builds.length ? [{
+        legend: 'Ready on FCs',
+        data: s.available,
+        color: appTheme.palette.tealDark,
+      }, {
+        legend: 'Remaining',
+        data: s.missing,
+        color: 'grey',
 
-      if (s.fcs.length && !isCurrent && !isComplete && !s.builds.length) {
-        const chartData: IChartDataPoint[] = [{
-          legend: 'Ready on FCs',
-          data: s.available,
-          color: appTheme.palette.tealDark,
-        }, {
-          legend: 'Remaining',
-          data: s.missing,
-          color: 'grey',
-
-        }];
-        completion = <Stack
-          horizontal
-          verticalAlign='center'
-        >
-          <StackedBarChart
-            ignoreFixStyle
-            hideLegend
-            styles={{ root: { marginTop: 4, width: 100, height: 18 } }}
-            data={{ chartData }}
-          />
-        </Stack>
-      }
+      }] : undefined;
 
       rows.push(<tr key={`cs-${s.id64}`} style={{ backgroundColor: bc, fontWeight: isCurrent ? 'bold' : undefined }}>
         <td className='c0'>
@@ -815,7 +812,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               position: 'absolute',
               left: 8,
               width: 1,
-              top: lastWasCurrent ? '-150%' : '-50%',
+              top: lastWasCurrent ? '-150%' : '-40%',
               bottom: '+50%',
               borderRight: bb,
             }} />
@@ -830,31 +827,41 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         <td className='c1'>
           <CopyButton text={s.name} fontSize={10} color={appTheme.palette.themeTertiary} />
           <Link target='nexusSys' href={`/#sys=${encodeURIComponent(s.id64)}`} style={{ marginLeft: 4, color: textColor }}>{s.nickname ?? s.name}</Link>
-          {!isComplete && <IconButton
-            className='info'
-            id={`rem-${s.id64}`}
-            iconProps={{ iconName: 'Info' }}
-            onClick={() => this.setState({ showRemaining: showRemaining === s.id64 ? undefined : s.id64 })}
-          />}
         </td>
 
         <td className='c2' style={{ color: textColor }}>{isHub ? 'Hub' : ' '}</td>
 
-        <td className='c4' colSpan={!completion ? 2 : 1}>
-          {!isComplete && <Stack horizontal horizontalAlign='end'>
+        <td className='c3' style={{ color: textColor }}>
+          {isComplete && <span title={`Hauled: ${s.progress.toLocaleString()}`}>Completed</span>}
+
+          {!isComplete && <Stack horizontal verticalAlign='center' horizontalAlign='end' tokens={{ childrenGap: 4 }}>
+
             {s.fcs.map(mid => this.renderIconFC(mid, s.id64))}
+
             <IconButton
               title='Assign a Fleet Carrier to this system'
-              iconProps={{ iconName: 'AddTo', style: { color: saving ? 'grey' : appTheme.palette.themeTertiary } }}
+              iconProps={{ iconName: 'AddTo', style: { color: saving ? 'grey' : isCurrent ? iconColor : appTheme.palette.themeTertiary } }}
               disabled={saving}
               onClick={() => this.setState({ addingSysFC: addingSysFC === s.id64 ? undefined : s.id64, editing: undefined })}
+            />
+
+            {chartData && <StackedBarChart
+              ignoreFixStyle
+              hideLegend
+              styles={{ root: { marginTop: 4, width: 100, height: 18 } }}
+              data={{ chartData }}
+            />}
+
+            <IconButton
+              id={`cargo-${s.id64}`}
+              title='View cargo needs'
+              iconProps={{ iconName: 'MSNVideosSolid', style: { color: saving ? 'grey' : textColor } }}
+              disabled={saving}
+              onClick={() => this.setState({ showRemaining: showRemaining === s.id64 ? undefined : s.id64, addingSysFC: undefined })}
             />
           </Stack>}
         </td>
 
-        {!!completion && <td className='c3' style={{ color: textColor }} title={completionTitle}>
-          {completion}
-        </td>}
       </tr>);
 
       if (addingSysFC === s.id64) {
@@ -888,7 +895,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               borderRight: '2px dotted ' + appTheme.palette.themeTertiary,
             }} />
           </td>
-          <td colSpan={5} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
+          <td colSpan={6} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 4 }}>
             <FindFC
               preMatchText='Linked Fleet Carriers:'
               preMatches={preMatches}
@@ -898,7 +905,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
               noSpanshCheck
               iconMap={iconMap}
               onChange={(marketId) => {
-                if (!marketId) { this.setState({ editing: undefined }); return; }
+                if (!marketId) { this.setState({ addingSysFC: undefined }); return; }
 
                 this.setState({ saving: true });
                 const newMarketIDs = Array.from(new Set([...s.fcs, parseInt(marketId)]));
@@ -933,7 +940,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
         rows.push(<tr key={`cs-${s.id64}-c`} style={{ backgroundColor: bc }}>
           <td />
-          <td colSpan={5} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 6 }}>
+          <td colSpan={6} className='c1 sysName' style={{ paddingLeft: 8, paddingRight: 6 }}>
             <Stack horizontal tokens={{ childrenGap: 8 }}>
               <StackedBarChart
                 ignoreFixStyle
@@ -980,56 +987,92 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       </>}
 
       {!!expandFC && this.renderFCCard(nexus, expandFC.id64, expandFC.marketId)}
-      {!!showRemaining && this.renderRemaining(nexus, showRemaining)}
+      {!!showRemaining && this.renderSystemCargo(nexus, showRemaining)}
     </div>;
   }
 
-  renderRemaining(nexus: Nexus, id64: number) {
-    const { listRows } = this.state;
+  renderSystemCargo(nexus: Nexus, id64: number) {
+    const { listRows, expandBuilding } = this.state;
     const sysRow = listRows.find(s => s.id64 === id64);
     if (!sysRow) { return null; }
 
+    const linkedFC = sysRow.fcs.map(mid => nexus.fcs.find(fc => fc.marketId === mid)!);
+    const width = !linkedFC.length ? 520 : 480 + linkedFC.length * 80;
+
+    const rows = Object.entries(sysRow.buildTypes).map(([buildType, count]) => {
+      const type = getSiteType(buildType)!;
+      return <div key={`asl-${buildType}`}>
+        {count} x {type.displayName2} ({buildType})
+      </div>;
+    });
+
     return <>
-      <Callout
+      <Panel
         className={css}
-        target={`#rem-${id64}`}
-        setInitialFocus
-        alignTargetEdge
-        directionalHint={DirectionalHint.rightTopEdge}
-        gapSpace={4}
+        isOpen
+        isLightDismiss
+        headerText={sysRow.nickname ?? sysRow.name}
+        allowTouchBodyScroll={isMobile()}
+        type={PanelType.custom}
+        customWidth={`${width}px`}
         styles={{
-          beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
-          calloutMain: {
-            backgroundColor: appTheme.palette.neutralTertiaryAlt,
-            color: appTheme.palette.neutralDark,
-            cursor: 'default',
+          header: { textTransform: 'capitalize', cursor: 'default' },
+          overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
+        }}
+        onDismiss={(ev: any) => {
+          this.setState({ showRemaining: undefined });
+
+          // if the mouse is over a button for another ... try clicking it
+          if (ev.type === 'click') {
+            setTimeout(() => {
+              let btn = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
+              while (!!btn?.parentElement && btn.tagName !== 'BUTTON') { btn = btn.parentElement; }
+
+              if (btn?.id.startsWith('cargo-') && !btn.id.endsWith(sysRow.id64.toString())) {
+                btn.click();
+              }
+            }, 10);
           }
         }}
-        onDismiss={() => this.setState({ showRemaining: undefined })}
+
+        onRenderFooterContent={() => {
+          return <>
+            <CargoRemaining sumTotal={sysRow.pending} label='Remaining cargo' />
+            <CargoRemaining sumTotal={sysRow.missing} label='Fleet Carrier deficit' />
+          </>;
+        }}
       >
-        <h3 className={cn.h3}>{sysRow.name}</h3>
 
-        <div style={{ fontSize: 12, color: appTheme.palette.themePrimary, marginBottom: 4 }}>
-          Cargo remaining: {sysRow.missing.toLocaleString()}
-        </div>
+        <Stack horizontal verticalAlign='start'
+          style={{
+            color: appTheme.palette.themeSecondary,
+            marginBottom: 4,
+            fontSize: 12,
+          }}>
+          {rows.length >= 1 && <ActionButton
+            text='Building'
+            disabled={rows.length === 1}
+            iconProps={{ iconName: rows.length === 1 ? '' : expandBuilding ? 'ChevronDownSmall' : 'ChevronUpSmall' }}
+            style={{ height: 22, color: appTheme.palette.themeDark }}
+            onClick={() => this.setState({ expandBuilding: !expandBuilding })}
+          />}
 
-        <table className='tableCargoFC' cellPadding={0} cellSpacing={0}>
-          <tbody>
-            {Object.entries(sysRow.missingCargo).filter(([n, v]) => v > 0).map(([n, v], i) => {
-              return <tr key={`mrc-${i}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : undefined }}>
-                <td className='c1'>
-                  <CommodityIcon name={n} />
-                  &nbsp;
-                  {mapCommodityNames[n] ?? n}:
-                </td>
-                <td className='c2'>
-                  {v.toLocaleString()}
-                </td>
-              </tr>;
-            })}
-          </tbody>
-        </table>
-      </Callout>
+          <div style={{
+            marginLeft: 4,
+            marginTop: 4,
+          }}>
+            {(expandBuilding || rows.length === 1) && rows}
+            {!expandBuilding && rows.length > 1 && <div>{Object.values(sysRow.buildTypes).reduce((t, c) => t += c, 0)} x Facilities</div>}
+          </div>
+
+        </Stack>
+
+        <CargoGrid
+          cargo={sysRow.needs ?? {}}
+          linkedFC={linkedFC}
+          whereToBuy={{ refSystem: sysRow.name, buildIds: sysRow.builds.map(bp => bp.buildId) }}
+        />
+      </Panel>
     </>;
   }
 
@@ -1039,13 +1082,15 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     const sysRow = listRows.find(s => s.id64 === id64);
     if (!expandFC || !fc || !sysRow) { return null; }
 
+    const appliedCargo = sysRow.fromFC[marketId];
+    let flip = false;
     return <>
       <Callout
         className={css}
         target={`#fcc-${expandFC.id64}-${expandFC.marketId}`}
         setInitialFocus
         alignTargetEdge
-        directionalHint={DirectionalHint.rightTopEdge}
+        directionalHint={DirectionalHint.bottomRightEdge}
         gapSpace={4}
         styles={{
           beak: { backgroundColor: appTheme.palette.neutralTertiaryAlt, },
@@ -1094,17 +1139,19 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           />
         </Stack>
 
-        <div style={{ fontSize: 12, color: appTheme.palette.themePrimary, marginBottom: 4 }}>
-          FC cargo to apply in this system:
+        <div style={{ fontSize: 12, color: appTheme.palette.themePrimary, margin: '8px 0' }}>
+          FC cargo applied in this system:
         </div>
 
         <table className='tableCargoFC' cellPadding={0} cellSpacing={0}>
           <tbody>
-            {Object.entries(sysRow.fromFC[marketId]).map(([n, v], i) => {
+            {!sumCargo(appliedCargo) && <div style={{ color: 'grey' }}>None</div>}
+            {Object.entries(appliedCargo).map(([n, v], i) => {
               const w = fc.cargo[n] ? 100 / fc.cargo[n] * v : 0;
-              // if (!w) { return null; }
+              if (!w) { return null; }
+              flip = !flip;
 
-              return <tr key={`fccc-${marketId}-${i}`} style={{ backgroundColor: i % 2 ? appTheme.palette.neutralQuaternaryAlt : undefined }}>
+              return <tr key={`fccc-${marketId}-${i}`} style={{ backgroundColor: flip ? appTheme.palette.neutralQuaternaryAlt : undefined }}>
                 <td className='c1' style={{ color: asGrey(!w) }}>
                   <CommodityIcon name={n} />
                   &nbsp;
@@ -1482,14 +1529,11 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     const { nexus, hoverFC, expandFC } = this.state;
     const fc = nexus?.fcs.find(fc => fc.marketId === marketId);
     if (!fc) { return null; }
-    const idx = nexus!.fcs.indexOf(fc);
-
-    const iconName = fcIconList[idx % fcIconList.length];
 
     if (!id64) {
       return <Icon
         key={`fci-${marketId}`}
-        iconName={iconName}
+        iconName={fc.icon}
         title={`${fc.displayName} (${fc.name})`}
         style={{
           color: marketId === hoverFC ? appTheme.palette.themeDark : appTheme.palette.themeSecondary,
@@ -1502,7 +1546,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       return <IconButton
         id={`fcc-${id64}-${marketId}`}
         key={`fci-${marketId}`}
-        iconProps={{ iconName: iconName, style: { fontSize: 24, } }}
+        iconProps={{ iconName: fc.icon, style: { fontSize: 24, } }}
         title={`${fc.displayName} (${fc.name})`}
         style={{
           color: marketId === hoverFC ? appTheme.palette.themeDark : appTheme.palette.themeSecondary,
@@ -1534,6 +1578,10 @@ const fcIconList: string[] = [
   'TriangleShapeSolid',
   'DropShapeSolid',
   'StarburstSolid',
+  'BugSolid',
+  'HealthSolid',
+  'RepoSolid',
+  'ConfigurationSolid',
 ]
 
 export const CmdrNexus: FunctionComponent<{}> = (props) => {

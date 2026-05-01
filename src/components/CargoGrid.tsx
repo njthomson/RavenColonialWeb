@@ -309,6 +309,7 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
             className='fake-link'
             onClick={() => this.setState({ fcEditMarketId: fc.marketId.toString() })}
           >
+            {fc.icon && <Icon iconName={fc.icon} style={{ marginRight: 4, color: appTheme.palette.themeDark, textDecoration: 'none' }} />}
             {fc.name}
           </Link>
         </th>;
