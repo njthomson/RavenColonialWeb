@@ -309,3 +309,13 @@ export const getSystemDistance = (here: number[], there: number[]) => {
   );
   return dist;
 }
+
+/** Return the sum of numbers given */
+export const sum = (nums: number[]) => {
+  return nums.reduce((total, num) => total += num, 0);
+};
+
+/** Return the sum of numbers in the named member for each item in the list */
+export const sumOf = (list: any[], name: string) => {
+  return list.reduce((total, item) => total += (item[name] ?? 0), 0);
+};

@@ -1,10 +1,10 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
-import { Nexus, NexusSummary, NexusSys } from "../api/nexus";
+import { Nexus, NexusSummary, NexusSys, NexusType } from "../api/nexus";
 import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
-import { asGrey, delayFocus, getCargoCountOnHand, getSystemDistance, isMatchingCmdr, isMobile, mergeCargo, sumCargo } from '../util';
+import { asGrey, delayFocus, getCargoCountOnHand, getSystemDistance, isMatchingCmdr, isMobile, mergeCargo, removeCargo, sum, sumCargo } from '../util';
 import { store } from '../local-storage';
 import { CargoGrid, CargoRemaining, CommodityIcon, FindFC, ProjectLink } from '../components';
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
@@ -397,6 +397,49 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
       submitting: undefined
     });
     window.document.title = `Nexus: ${newNexus.name}`;
+  }
+
+  getSysRowForAll(nexus: Nexus): SysRow {
+    const { listRows } = this.state;
+
+    const all: SysRow = {
+      // for NexusSys
+      id64: 1,
+      fcs: nexus.fcs.map(fc => fc.marketId),
+      builds: [],
+      buildTypes: {},
+      name: listRows[0].name,
+      nickname: 'All of: ' + nexus.name,
+      total: 0,
+      progress: 0,
+      needs: {},
+      pos: listRows[0].pos,
+      type: NexusType.hub,
+      // for SysRow
+      pending: 0,
+      missing: 0,
+      available: 0,
+      distance: 0,
+      fromFC: {},
+      missingCargo: {},
+    };
+
+    for (const s of listRows) {
+      all.total += s.total;
+      all.progress += s.progress;
+      if (s.needs) { all.needs = mergeCargo([all.needs!, s.needs]); }
+      all.builds.push(...s.builds);
+      for (const bt in s.buildTypes) {
+        all.buildTypes[bt] = (all.buildTypes[bt] ?? 0) + (s.buildTypes[bt]);
+      }
+
+      all.pending += s.pending;
+      all.missing += s.missing;
+      all.available += s.available;
+      all.missingCargo = mergeCargo([all.missingCargo, s.missingCargo]);
+    }
+
+    return all;
   }
 
   toggleAutoRefresh = () => {
@@ -854,7 +897,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
             <IconButton
               id={`cargo-${s.id64}`}
-              title='View cargo needs'
+              title={`View cargo needs for: ${s.nickname ?? s.name}`}
               iconProps={{ iconName: 'MSNVideosSolid', style: { color: saving ? 'grey' : textColor } }}
               disabled={saving}
               onClick={() => this.setState({ showRemaining: showRemaining === s.id64 ? undefined : s.id64, addingSysFC: undefined })}
@@ -966,6 +1009,15 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           disabled={saving}
           onClick={() => this.setState({ editSystems: nexus?.systems.map(s => s.name).join(`\n`) + `\n`, editing: undefined, addingSysFC: undefined })}
         />}
+
+        <IconButton
+          id={`cargo-all`}
+          title='View cargo needs for: all systems'
+          iconProps={{ iconName: 'MSNVideosSolid', style: { color: appTheme.palette.black } }}
+          style={{ float: 'right', marginRight: 6, marginTop: -6 }}
+          disabled={saving}
+          onClick={() => this.setState({ showRemaining: showRemaining === 1 ? undefined : 1, addingSysFC: undefined })}
+        />
       </h3>
       <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12, marginBottom: 8 }}>
         Systems with 2 or more facilities will be considered a hub
@@ -993,11 +1045,25 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
   renderSystemCargo(nexus: Nexus, id64: number) {
     const { listRows, expandBuilding } = this.state;
-    const sysRow = listRows.find(s => s.id64 === id64);
+    const sysRow = id64 === 1
+      ? this.getSysRowForAll(nexus)
+      : listRows.find(s => s.id64 === id64);
     if (!sysRow) { return null; }
 
-    const linkedFC = sysRow.fcs.map(mid => nexus.fcs.find(fc => fc.marketId === mid)!);
-    const width = !linkedFC.length ? 520 : 480 + linkedFC.length * 80;
+    let fcCargoReduced = false;
+    const linkedFC = sysRow.fcs.map((mid) => {
+      // find the FC
+      const fc = { ...nexus.fcs.find(fc => fc.marketId === mid)! };
+      // then reduce it's cargo based on prior allocations
+      for (const prior of listRows.slice(0, listRows.indexOf(sysRow))) {
+        if (fc.marketId in prior.fromFC) {
+          fc.cargo = removeCargo(fc.cargo, prior.fromFC[fc.marketId]);
+          fcCargoReduced = true;
+        }
+      }
+      return fc;
+    });
+    const width = !linkedFC.length ? 540 : 480 + linkedFC.length * 90;
 
     const rows = Object.entries(sysRow.buildTypes).map(([buildType, count]) => {
       const type = getSiteType(buildType)!;
@@ -1037,7 +1103,12 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
 
         onRenderFooterContent={() => {
           return <>
-            <CargoRemaining sumTotal={sysRow.pending} label='Remaining cargo' />
+            {fcCargoReduced && <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 4 }} style={{ fontSize: 11, color: appTheme.palette.yellowDark, marginBottom: 4 }}>
+              <Icon iconName='Warning' />
+              <span>FC Cargo has be reduced based on prior system needs.</span>
+            </Stack>}
+            <CargoRemaining sumTotal={sysRow.total} label='Total cargo' />
+            {sysRow.total !== sysRow.pending && <CargoRemaining sumTotal={sysRow.pending} label='Remaining cargo' />}
             <CargoRemaining sumTotal={sysRow.missing} label='Fleet Carrier deficit' />
           </>;
         }}
@@ -1062,7 +1133,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             marginTop: 4,
           }}>
             {(expandBuilding || rows.length === 1) && rows}
-            {!expandBuilding && rows.length > 1 && <div>{Object.values(sysRow.buildTypes).reduce((t, c) => t += c, 0)} x Facilities</div>}
+            {!expandBuilding && rows.length > 1 && <div>{sum(Object.values(sysRow.buildTypes))} x Facilities</div>}
           </div>
 
         </Stack>
@@ -1071,6 +1142,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
           cargo={sysRow.needs ?? {}}
           linkedFC={linkedFC}
           whereToBuy={{ refSystem: sysRow.name, buildIds: sysRow.builds.map(bp => bp.buildId) }}
+          onFCCargoChanged={mid => this.pollLastTimestamp()}
         />
       </Panel>
     </>;

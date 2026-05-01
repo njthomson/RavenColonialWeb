@@ -46,6 +46,7 @@ interface CargoGridProps {
   minWidthNeed?: number;
   commodityNeeds?: Record<string, Record<string, Record<string, number>>>;
   ships?: CmdrShip[];
+  onFCCargoChanged?: (mid: number, cargoUpdated: Cargo) => void;
 }
 
 interface CargoGridState {
@@ -273,7 +274,10 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
             const { linkedFC } = this.state;
             if (cargoUpdated) {
               const fc = linkedFC.find(fc => fc.marketId.toString() === fcEditMarketId);
-              if (fc) { fc.cargo = cargoUpdated; }
+              if (fc) {
+                fc.cargo = cargoUpdated;
+                if (this.props.onFCCargoChanged) { this.props.onFCCargoChanged(fc.marketId, cargoUpdated); }
+              }
             }
 
             this.setState({

@@ -3,7 +3,7 @@ import { Component } from 'react';
 import * as api from '../api';
 import { EditCargo, FindSystemName } from '../components';
 import { appTheme } from '../theme';
-import { KnownFC } from '../types';
+import { Cargo, KnownFC } from '../types';
 import { store } from '../local-storage';
 import { delay, fcFullName, isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
@@ -24,7 +24,7 @@ const css = mergeStyles({
 
 interface FleetCarrierProps {
   marketId: string;
-  onClose: (cargoUpdated?: Record<string, number>) => void;
+  onClose: (cargoUpdated?: Cargo) => void;
 }
 
 interface FleetCarrierState {
@@ -35,14 +35,14 @@ interface FleetCarrierState {
   loading: boolean;
   saving?: boolean;
   fc?: KnownFC;
-  editCargo: Record<string, number>;
+  editCargo: Cargo;
   editDisplayName?: string;
   editSystemName?: string;
   cmdrLinked: boolean;
 }
 
 export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState> {
-  firstCargo: Record<string, number> = {};
+  firstCargo: Cargo = {};
 
   constructor(props: FleetCarrierProps) {
     super(props);

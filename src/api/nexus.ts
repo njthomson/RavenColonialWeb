@@ -68,7 +68,7 @@ export type Nexus = {
 export type NexusSys = {
   id64: number;
   name: string;
-  nickname: string;
+  nickname?: string;
   pos: number[];
   type: NexusType
   /** Grand total count of cargo needed for this system */
