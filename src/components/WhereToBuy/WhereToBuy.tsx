@@ -18,6 +18,10 @@ import { FindSystemName } from '../FindSystemName';
 const maxMaxDistance = 1000;
 const maxMaxArrival = 250_000;
 
+// Shortage highlight: opposes default blue (themeSecondary) chip; uses theme red ramp.
+const insufficientHighlightBack = appTheme.isInverted ? appTheme.palette.red : appTheme.palette.redDark;
+const insufficientHighlightText = '#ffffff';
+
 interface WhereToBuyProps {
   visible: boolean;
   buildIds: string[];
@@ -755,7 +759,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
 
     const bubbles = bubbleNames.map(cargo => {
       const isHighlighted = highlights.has(cargo);
-      const backColor = isHighlighted ? appTheme.palette.themeSecondary : appTheme.palette.neutralTertiaryAlt;
+      let backColor = isHighlighted ? appTheme.palette.themeSecondary : appTheme.palette.neutralTertiaryAlt;
       let textColor = isHighlighted ? 'white' : appTheme.palette.black;
 
       let sourceMarkets = mapSourceEconomy[cargo].split(',').map(t => ' - ' + mapName[t]).join('\n');
@@ -774,7 +778,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       }
       if (!missedCargo.includes(cargo) && !hasEnough) {
         titleTxt = `** Not available in any markets below **\n\n` + titleTxt;
-        if (!isHighlighted) {
+        if (isHighlighted) {
+          backColor = insufficientHighlightBack;
+          textColor = insufficientHighlightText;
+        } else {
           textColor = appTheme.palette.themePrimary;
         }
       }
@@ -955,7 +962,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const { highlightHover, highlights } = this.state;
 
     const isHighlighted = highlights.has(cargo);
-    const backColor = isHighlighted ? appTheme.palette.themeSecondary : appTheme.palette.neutralTertiaryAlt;
+    let backColor = isHighlighted ? appTheme.palette.themeSecondary : appTheme.palette.neutralTertiaryAlt;
 
     let textColor = isHighlighted ? 'white' : appTheme.palette.black;
     let titleTxt = isHighlighted ? `Remove ${mapCommodityNames[cargo]} from highlights` : `Click to highlight: ${mapCommodityNames[cargo]}`
@@ -965,7 +972,10 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
       // should we include the deficit count?
       titleTxt += ' (Insufficient supply)';
 
-      if (!isHighlighted) {
+      if (isHighlighted) {
+        backColor = insufficientHighlightBack;
+        textColor = insufficientHighlightText;
+      } else {
         textColor = appTheme.palette.themePrimary;
       }
     }

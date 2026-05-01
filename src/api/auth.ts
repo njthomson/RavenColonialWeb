@@ -2,7 +2,18 @@ import { store } from "../local-storage";
 import { callAPI } from "./api-util";
 
 const clientId = '2690fd97-4086-45dd-80e7-e3443be6ff5d';
-const redirectUrl = 'https://ravencolonial.com/login';
+
+/** OAuth redirect_uri; must match a URI registered for this client_id at Frontier. */
+function authRedirectUrl(): string {
+  const explicit = process.env.REACT_APP_AUTH_REDIRECT_URL;
+  if (explicit) {
+    return explicit;
+  }
+  if (process.env.NODE_ENV === 'development') {
+    return `${window.location.origin}/login`;
+  }
+  return 'https://ravencolonial.com/login';
+}
 
 export const redirectToFrontierAuth = async () => {
   const { codeVerifier, codeChallenge } = await generateCodeVerifierAndChallenge();
@@ -16,7 +27,7 @@ export const redirectToFrontierAuth = async () => {
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
     state: state,
-    redirect_uri: redirectUrl,
+    redirect_uri: authRedirectUrl(),
     audience: 'frontier,steam,epic',
   });
 
@@ -40,7 +51,7 @@ export const processLoginCodes = async () => {
 
     const body = asFormData({
       client_id: clientId,
-      redirect_uri: redirectUrl,
+      redirect_uri: authRedirectUrl(),
       grant_type: 'authorization_code',
       code,
       code_verifier: codeVerifier

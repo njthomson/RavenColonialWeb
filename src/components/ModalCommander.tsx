@@ -5,7 +5,7 @@ import { store } from '../local-storage';
 import { appTheme, cn } from '../theme';
 import { delay, delayFocus, fcFullName } from '../util';
 import { FindFC } from './FindFC';
-import { FleetCarrier } from '../views';
+import { FleetCarrier } from '../views/FleetCarrier';
 import { CalloutMsg } from './CalloutMsg';
 import { redirectToFrontierAuth, resetApiKey } from '../api/auth';
 import { CopyButton } from './CopyButton';

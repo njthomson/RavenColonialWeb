@@ -5,7 +5,7 @@ import { store } from '../local-storage';
 import { Cargo, CmdrShip, KnownFC, mapCommodityNames, mapShipNames, SortMode } from '../types';
 import { flattenObj, getGroupedCommodities, getRelativeDuration, mergeCargo, nextSort, sumCargo } from '../util';
 import { CommodityIcon } from './CommodityIcon/CommodityIcon';
-import { FleetCarrier } from '../views';
+import { FleetCarrier } from '../views/FleetCarrier';
 import { EconomyBlock } from './EconomyBlock';
 import { mapName } from '../site-data';
 import { WhereToBuy } from './WhereToBuy/WhereToBuy';
@@ -209,8 +209,8 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
       {!hideGrid && <table className={`commodities`} cellSpacing={0} cellPadding={0} style={{ cursor: 'default' }}>
         <thead>
           <tr>
-            <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
-            {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} style={{ minWidth: this.props.minWidthNeed }} title='Total needed for this commodity'>Need</th>}
+            <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity Needed</th>
+            {!zeroNeed && <th className={`commodity-need ${cn.bb} ${cn.br}`} style={{ minWidth: this.props.minWidthNeed }} title='Total needed for this commodity'>Total</th>}
             {showShips && <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Cargo on tracked ships'>
               <IconButton
                 id='show-all-ships'
