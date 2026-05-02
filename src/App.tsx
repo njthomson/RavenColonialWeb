@@ -40,7 +40,8 @@ export class App extends Component<AppProps, AppState> {
   private static scrollBarWidth = 0;
   private static fakeScroll: HTMLDivElement;
   private static instance: App | undefined;
-  public static preNav?: (url: string) => void;
+  /** Return true to cancel navigation and let the host show a confirm UI, then navigate with the same url if the user confirms. */
+  public static preNav?: (url: string) => boolean | void;
 
   public static showFeedback(topic?: string, body?: string) {
     App.instance?.setState({ showFeedback: [topic ?? 'Raven Colonial', body] });
@@ -80,6 +81,18 @@ export class App extends Component<AppProps, AppState> {
     window.onhashchange = () => {
       // console.debug('onhashchange:', ev);
       let [newPivot, pivotArg] = this.getPivotFromHash();
+      const wasOnBuild = this.state.pivot === TopPivot.build;
+      const leavingBuildTab = wasOnBuild && newPivot !== TopPivot.build;
+      const switchingBuildId =
+        wasOnBuild && newPivot === TopPivot.build && pivotArg !== this.state.pivotArg;
+      if ((leavingBuildTab || switchingBuildId) && App.preNav) {
+        const targetUrl = window.location.hash ? `/${window.location.hash}` : '/';
+        const blocked = App.preNav(targetUrl) === true;
+        if (blocked) {
+          window.history.back();
+          return;
+        }
+      }
       this.setState({
         pivot: newPivot,
         pivotArg: pivotArg,
@@ -245,10 +258,14 @@ export class App extends Component<AppProps, AppState> {
               iconProps: { iconName: 'Home' },
               title: 'Home',
               checked: pivot === 'home',
-              href: '/#home',
               onClick: (ev) => {
-                const blockNavigate = App.preNav && App.preNav('/#home');
-                if (blockNavigate) { ev?.preventDefault(); }
+                ev?.preventDefault();
+                const blockNavigate = App.preNav && App.preNav('/#home') === true;
+                if (blockNavigate) {
+                  ev?.stopPropagation();
+                  return;
+                }
+                window.location.assign('/#home');
               }
             },
             {
@@ -256,12 +273,14 @@ export class App extends Component<AppProps, AppState> {
               key: 'find', text: 'System',
               iconProps: { iconName: 'HomeGroup' },
               checked: pivot === 'sys',
-              href: '/#sys',
               onClick: (ev, i) => {
-                const blockNavigate = App.preNav && App.preNav('/#sys');
+                ev?.preventDefault();
+                const blockNavigate = App.preNav && App.preNav('/#sys') === true;
                 if (blockNavigate || window.location.hash.startsWith('#find')) {
-                  ev?.preventDefault();
+                  ev?.stopPropagation();
+                  return;
                 }
+                window.location.assign('/#sys');
               }
             },
             {
@@ -269,10 +288,14 @@ export class App extends Component<AppProps, AppState> {
               key: 'build', text: 'Build',
               iconProps: { iconName: 'Manufacturing' },
               checked: pivot === 'build',
-              href: '/#build',
               onClick: (ev) => {
-                const blockNavigate = App.preNav && App.preNav('/#build');
-                if (blockNavigate) { ev?.preventDefault(); }
+                ev?.preventDefault();
+                const blockNavigate = App.preNav && App.preNav('/#build') === true;
+                if (blockNavigate) {
+                  ev?.stopPropagation();
+                  return;
+                }
+                window.location.assign('/#build');
               }
             },
             {
@@ -280,10 +303,14 @@ export class App extends Component<AppProps, AppState> {
               key: 'about', text: 'About',
               iconProps: { iconName: 'Help' },
               checked: pivot === 'about',
-              href: '/#about',
               onClick: (ev) => {
-                const blockNavigate = App.preNav && App.preNav('/#about');
-                if (blockNavigate) { ev?.preventDefault(); }
+                ev?.preventDefault();
+                const blockNavigate = App.preNav && App.preNav('/#about') === true;
+                if (blockNavigate) {
+                  ev?.stopPropagation();
+                  return;
+                }
+                window.location.assign('/#about');
               }
             },
 

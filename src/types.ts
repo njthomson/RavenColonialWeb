@@ -143,7 +143,10 @@ export const fc_loading = 'fc_loading';
 export interface CreateProject extends ProjectRef {
   commodities: Record<string, number>;
   commanders?: Record<string, string[]>;
+  /** Counts per build type (legacy / redundant if prepBuildOrder is set). */
   prepBuilds?: Record<string, number>;
+  /** Ordered list of build-type keys, one per slot; preserves #1 / #2 order across reloads when API stores it. */
+  prepBuildOrder?: string[];
 }
 
 export interface Project extends ProjectRef {
@@ -154,6 +157,8 @@ export interface Project extends ProjectRef {
   ready: string[];
   linkedFC: ProjectFC[];
   prepBuilds?: Record<string, number>;
+  /** When present and consistent with prepBuilds, defines slot order for prep projects. */
+  prepBuildOrder?: string[];
 }
 
 export interface ProjectFC {

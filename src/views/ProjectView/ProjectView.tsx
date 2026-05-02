@@ -1,13 +1,16 @@
 import './ProjectView.css';
 import * as api from '../../api';
 import inara16 from '../../assets/inara-16x16.png';
-import { ActionButton, Callout, CommandBar, ContextualMenu, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, Callout, CommandBar, ContextualMenu, DefaultButton, Dialog, DialogFooter, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
 import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, CmdrShip, fc_loading, mapCommodityNames, mapShipNames, Project, ProjectFC, SortMode, SupplyStatsSummary } from '../../types';
-import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, getRelativeDuration, iconForSort, isMatchingCmdr, isMobile, mergeCargo, nextSort, openDiscordLink, sumCargo } from '../../util';
+import { delay, delayFocus, fcFullName, flattenObj, getCargoCountOnHand, getColorTable, getGroupedCommodities, getRelativeDuration, iconForSort, isMatchingCmdr, isMobile, mergeCargo, nextSort, openDiscordLink, parseIntLocale, sumCargo } from '../../util';
+import type { PrepDeliverHistMap, PrepDeliverHistoryEntry, PrepFcAdjustMap } from '../../prep-deliver-history';
+import { fcAdjustKey, histKey, prunePrepDeliverData, writePrepDeliverHist, writePrepFcAdjust } from '../../prep-deliver-history';
+import { resolvePrepDeliverUiPrefs, writePrepDeliverUiPrefs } from '../../prep-deliver-ui-prefs';
 import { CopyButton } from '../../components/CopyButton';
 import { FleetCarrier } from '../FleetCarrier';
 import { LinkSrvSurvey } from '../../components/LinkSrvSurvey';
@@ -23,6 +26,98 @@ import { ViewEditBuildType } from '../SystemView2/ViewEditBuildType';
 import { getAvgHaulCosts } from '../../avg-haul-costs';
 import { EconomyTable2 } from '../SystemView2/EconomyTable2';
 import { buildSystemModel2, SysMap2 } from '../../system-model2';
+import { App } from '../../App';
+import { getPrepSlotDeliverMap, normalizeDeliverMap, prepSlotDeliverKey, setPrepSlotDeliverMap } from '../../prep-slot-deliver';
+import { nextPrepSlotIds, readPrepSlotMeta, readServerBaseline, writePrepSlotMeta, writeServerBaseline } from '../../prep-slot-ids';
+import { prunePrepBuildNicknames, setPrepBuildNicknameForSlot } from '../../prep-build-nicknames';
+import { PrepLoadHistoryEntry, readPrepLoadHistory, writePrepLoadHistory } from '../../prep-load-history';
+import { clearLoadFcDraft, readLoadFcDraft, writeLoadFcDraft } from '../../prep-load-fc-draft';
+import { writeLoadFcDiag } from '../../prep-load-fc-diag';
+import { CmdrShipMode, pruneCmdrShipMode, writeCmdrShipMode } from '../../cmdr-ship-mode';
+
+/** Expand API prepBuild counts into an ordered slot list (sorted type keys, repeated). */
+function prepBuildRecordToSlots(prepBuilds: Record<string, number>): string[] {
+  const slots: string[] = [];
+  Object.keys(prepBuilds)
+    .sort((a, b) => a.localeCompare(b))
+    .forEach(bt => {
+      const n = prepBuilds[bt] ?? 0;
+      for (let i = 0; i < n; i++) { slots.push(bt); }
+    });
+  return slots;
+}
+
+function prepBuildSlotsToRecord(slots: string[]): Record<string, number> {
+  return slots.reduce((m, bt) => {
+    m[bt] = (m[bt] ?? 0) + 1;
+    return m;
+  }, {} as Record<string, number>);
+}
+
+/** Slots from API: use prepBuildOrder when it matches prepBuilds counts; else expand record alphabetically. */
+function slotsFromProject(proj: Pick<Project, 'prepBuilds' | 'prepBuildOrder'>): string[] {
+  const rec = proj.prepBuilds ?? {};
+  const order = proj.prepBuildOrder;
+  if (order && order.length > 0) {
+    const fromOrder = prepBuildSlotsToRecord(order);
+    if (JSON.stringify(fromOrder) === JSON.stringify(rec)) {
+      return [...order];
+    }
+  }
+  return prepBuildRecordToSlots(rec);
+}
+
+/** After GET: keep local slot order when server omits prepBuildOrder but counts still match (same build). */
+function mergePrepSlotsAfterFetch(prevBuildId: string | undefined, prevSlots: string[], fetchedProj: Project): string[] {
+  if (prevBuildId !== fetchedProj.buildId) {
+    return slotsFromProject(fetchedProj);
+  }
+  if (fetchedProj.prepBuildOrder && fetchedProj.prepBuildOrder.length > 0) {
+    return slotsFromProject(fetchedProj);
+  }
+  const rec = fetchedProj.prepBuilds ?? {};
+  if (JSON.stringify(prepBuildSlotsToRecord(prevSlots)) === JSON.stringify(rec)) {
+    return prevSlots;
+  }
+  return prepBuildRecordToSlots(rec);
+}
+
+/** After PATCH save: prefer server prepBuildOrder; else keep local order if counts match. */
+function mergePrepSlotsAfterSave(localSlots: string[], savedProj: Project): string[] {
+  if (savedProj.prepBuildOrder && savedProj.prepBuildOrder.length > 0) {
+    return slotsFromProject(savedProj);
+  }
+  const rec = savedProj.prepBuilds ?? {};
+  if (JSON.stringify(prepBuildSlotsToRecord(localSlots)) === JSON.stringify(rec)) {
+    return localSlots;
+  }
+  return prepBuildRecordToSlots(rec);
+}
+
+/** Persist stable slot ids + deliver map; returns state fields for prep columns. */
+function hydratePrepSlotStorage(
+  buildId: string,
+  mergedSlots: string[],
+  serverSlots: string[],
+): { mergedIds: string[]; serverIds: string[]; subsPruned: Record<string, number> } {
+  const basePrev = readServerBaseline(buildId);
+  const serverIds = nextPrepSlotIds(basePrev.slots, basePrev.ids, serverSlots);
+  writeServerBaseline(buildId, serverSlots, serverIds);
+
+  const workPrev = readPrepSlotMeta(buildId);
+  const wConsistent = !!(workPrev && workPrev.ids.length === workPrev.slots.length);
+  const mergedIds = JSON.stringify(mergedSlots) === JSON.stringify(serverSlots)
+    ? serverIds
+    : nextPrepSlotIds(wConsistent ? workPrev!.slots : [], wConsistent ? workPrev!.ids : [], mergedSlots);
+
+  const subsRaw = getPrepSlotDeliverMap(buildId);
+  const subsPruned = normalizeDeliverMap(subsRaw, mergedIds);
+  if (JSON.stringify(subsPruned) !== JSON.stringify(subsRaw)) {
+    setPrepSlotDeliverMap(buildId, subsPruned);
+  }
+  writePrepSlotMeta(buildId, mergedSlots, mergedIds);
+  return { mergedIds, serverIds, subsPruned };
+}
 
 interface ProjectViewProps {
   buildId?: string;
@@ -44,25 +139,40 @@ interface ProjectViewState {
   confirmDelete?: boolean;
   confirmComplete?: boolean;
   errorMsg?: string;
+  /** Shown after Load FC closes (e.g. server applied only part of the request). Dismissible; not cleared by refresh. */
+  loadFcNotice?: string;
+  /** Blocking explanation when the API stores less cargo than requested (always paired with `loadFcLastDiag` in localStorage). */
+  loadFcPartialDialog?: { title: string; body: string };
 
   assignCommodity?: string;
   assignCmdr?: string;
   hasAssignments?: boolean;
 
   editCommodities?: Cargo;
+  /** Prep: which building column is being edited in the commodities panel (slot index). */
+  editCommoditiesSlotIndex?: number;
   editReady: Set<string>;
   editProject: boolean;
   disableDelete?: boolean;
   fixMarketId?: string;
   summary?: SupplyStatsSummary;
   sumTotal: number;
+  /** Per-commander selected ship class for cargo-cap references in this build. */
+  cmdrShipMode: Record<string, CmdrShipMode>;
 
   showBubble: boolean;
   hideDoneRows: boolean;
   hideFCColumns: boolean;
 
   nextDelivery: Cargo;
+  /** After closing Load FC without submitting, reopen restores `nextDelivery` exactly (including zero rows). */
+  loadFcReuseLastClosedDraft: boolean;
   deliverMarketId: string;
+  /**
+   * Prep Load FC: which building(s) MAX REQ uses as its template (not a cap on manual amounts).
+   * `-1` = all buildings (sum of #1..#N remaining); `0..n-1` = single building column.
+   */
+  deliverReferenceSlotIndex: number;
   submitting: boolean;
   cargoContext?: string;
 
@@ -83,10 +193,45 @@ interface ProjectViewState {
 
   // specific for prepation projects
   isPrep?: boolean;
-  prepBuilds?: Record<string, number>;
+  prepBuildSlots: string[];
+  /** Last persisted prep slot order from server (for unsaved navigation guard). */
+  lastServerPrepSlots: string[];
+  /** Stable id per server slot row (Undo restores this with lastServerPrepSlots). */
+  lastServerPrepSlotIds: string[];
   originalCargo?: Cargo;
   savingPrepBuilds?: boolean;
   prepBuildsDiffer?: boolean;
+  /** When set, user confirmed leaving with unsaved prep buildings; assign this URL. */
+  pendingNavUrl?: string;
+
+  /** Stable slot id per prep column (same length as prepBuildSlots when prep UI is active). */
+  prepSlotIds: string[];
+  /** Per-slot commodity subtracted amounts for prep # columns (localStorage-backed). */
+  prepSlotDeliverSubs: Record<string, number>;
+  /** Prep deliver popup audit log keyed `slotId::commodity`. */
+  prepDeliverHistory: PrepDeliverHistMap;
+  /** Amount to hide from each FC commodity cell (`marketId::commodity`). */
+  prepDeliverFcAdjust: PrepFcAdjustMap;
+  /** Local "Load FC" history entries (last 20), used by deliver panel side column. */
+  prepLoadHistory: PrepLoadHistoryEntry[];
+  /** Prep building display names keyed by stable slot id (localStorage). */
+  prepBuildNicknames: Record<string, string>;
+  prepNicknameCallout?: {
+    slotIndex: number;
+    anchor: HTMLElement;
+    draft: string;
+  };
+  prepDeliverCallout?: {
+    slotIndex: number;
+    commodity: string;
+    anchor: HTMLElement;
+    draft: string;
+    selectedCommander: string;
+    /** `ship` or FC `marketId` string. */
+    selectedFromKey: string;
+    /** When true, amount field tracks max subtractable; toggling off clears draft to 0. */
+    allToggleActive?: boolean;
+  };
 }
 
 enum Mode {
@@ -96,8 +241,35 @@ enum Mode {
 
 export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   private timer?: NodeJS.Timeout;
+  /** Prevents overlapping deliverToSite2 runs (double Primary or rapid re-entry races). */
+  private deliverInFlight = false;
   /** The count of needed cargo already loaded on Fleet Carriers */
   private countReadyOnFCs: number = 0;
+
+  private onPrepPreNavigate = (url: string): boolean => {
+    this.setState({ pendingNavUrl: url });
+    return true;
+  };
+
+  private prepBuildBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (this.hasUnsavedPrepBuildings()) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  };
+
+  private hasUnsavedPrepBuildings(): boolean {
+    const { isPrep, proj, prepBuildSlots, lastServerPrepSlots } = this.state;
+    return !!(isPrep && proj && JSON.stringify(prepBuildSlots) !== JSON.stringify(lastServerPrepSlots));
+  }
+
+  private syncPrepPreNavGuard() {
+    if (this.hasUnsavedPrepBuildings()) {
+      App.preNav = this.onPrepPreNavigate;
+    } else if (App.preNav === this.onPrepPreNavigate) {
+      App.preNav = undefined;
+    }
+  }
 
   constructor(props: ProjectViewProps) {
     super(props);
@@ -114,23 +286,37 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       showAddCmdr: false,
       disableDelete: true,
       sumTotal: 0,
+      cmdrShipMode: {},
 
       editReady: new Set<string>(),
       hideDoneRows: store.commodityHideCompleted,
       hideFCColumns: store.commodityHideFCColumns,
       showBubble: !store.cmdr,
       nextDelivery: {},
+      loadFcReuseLastClosedDraft: false,
       deliverMarketId: store.deliverDestination,
+      deliverReferenceSlotIndex: 0,
       submitting: false,
 
       showAddFC: false,
       fcCargo: {},
 
       notAgain: store.notAgain,
+
+      prepBuildSlots: [],
+      lastServerPrepSlots: [],
+      lastServerPrepSlotIds: [],
+      prepSlotIds: [],
+      prepSlotDeliverSubs: {},
+      prepDeliverHistory: {},
+      prepDeliverFcAdjust: {},
+      prepLoadHistory: [],
+      prepBuildNicknames: {},
     };
   }
 
   componentDidMount() {
+    window.addEventListener('beforeunload', this.prepBuildBeforeUnload);
     // fetch initial data, which starts auto-updating as necessary
     if (this.props.buildId) {
       this.doNextPoll(this.props.buildId);
@@ -139,6 +325,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   componentWillUnmount(): void {
     if (this.timer) { clearTimeout(this.timer); }
+    window.removeEventListener('beforeunload', this.prepBuildBeforeUnload);
+    if (App.preNav === this.onPrepPreNavigate) {
+      App.preNav = undefined;
+    }
   }
 
   componentDidUpdate(prevProps: Readonly<ProjectViewProps>, prevState: Readonly<ProjectViewState>, snapshot?: any): void {
@@ -159,17 +349,32 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         showAddCmdr: false,
         disableDelete: true,
         sumTotal: 0,
+        cmdrShipMode: {},
 
         editReady: new Set<string>(),
         hideDoneRows: store.commodityHideCompleted,
         hideFCColumns: store.commodityHideFCColumns,
         showBubble: !store.cmdr,
         nextDelivery: {},
+        loadFcReuseLastClosedDraft: false,
         deliverMarketId: store.deliverDestination,
+        deliverReferenceSlotIndex: 0,
         submitting: false,
 
         showAddFC: false,
         fcCargo: {},
+
+        prepBuildSlots: [],
+        lastServerPrepSlots: [],
+        lastServerPrepSlotIds: [],
+        prepSlotIds: [],
+        prepSlotDeliverSubs: {},
+        prepDeliverHistory: {},
+        prepDeliverFcAdjust: {},
+        prepLoadHistory: [],
+        prepBuildNicknames: {},
+        prepNicknameCallout: undefined,
+        editCommoditiesSlotIndex: undefined,
       });
     }
 
@@ -180,6 +385,417 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         this.fetchProject(this.state.buildId, false);
       }
     }
+
+    const prepN = this.state.prepBuildSlots.length;
+    const refSi = this.state.deliverReferenceSlotIndex;
+    if (this.state.mode === Mode.deliver && this.state.isPrep && prepN > 0 && refSi !== -1 && refSi >= prepN) {
+      this.setState({ deliverReferenceSlotIndex: prepN - 1 });
+    }
+
+    // Prep deliver callout: keep a valid commander when the project roster changes (otherwise Submit / All stay disabled with no obvious reason).
+    const pd = this.state.prepDeliverCallout;
+    const pProj = this.state.proj;
+    if (pd && pProj?.commanders) {
+      const roster = Object.keys(pProj.commanders).sort((a, b) => a.localeCompare(b));
+      if (roster.length > 0) {
+        const sel = String(pd.selectedCommander ?? '').trim();
+        if (!sel || !roster.includes(sel)) {
+          this.patchPrepDeliverCalloutState({ selectedCommander: roster[0] });
+        }
+      }
+    }
+
+    this.syncPrepPreNavGuard();
+  }
+
+  getPrepSlotSub(slotIndex: number, commodity: string): number {
+    const sid = this.state.prepSlotIds[slotIndex];
+    if (!sid) { return 0; }
+    return this.state.prepSlotDeliverSubs[prepSlotDeliverKey(sid, commodity)] ?? 0;
+  }
+
+  /** Displayed remaining need per commodity for one prep slot column (template minus subs). */
+  buildPrepColumnEditCargo(slotIndex: number): Cargo {
+    const bt = this.state.prepBuildSlots[slotIndex];
+    if (!bt) { return {}; }
+    const haul = getAvgHaulCosts(bt);
+    const cargo: Cargo = {};
+    for (const key of Object.keys(haul)) {
+      if (!(key in mapCommodityNames)) { continue; }
+      const base = haul[key] ?? 0;
+      const sub = this.getPrepSlotSub(slotIndex, key);
+      if (base > 0 || sub > 0) {
+        cargo[key] = Math.max(0, base - sub);
+      }
+    }
+    return cargo;
+  }
+
+  getPrepSlotEditValidKeys(slotIndex: number): string[] {
+    return Object.keys(this.buildPrepColumnEditCargo(slotIndex)).sort();
+  }
+
+  prepBuildingDropdownLabel(slotIndex: number): string {
+    const { prepBuildSlots, prepSlotIds, prepBuildNicknames } = this.state;
+    const buildType = prepBuildSlots[slotIndex];
+    if (!buildType) { return `#${slotIndex + 1}`; }
+    const type = getSiteType(buildType);
+    const slotId = prepSlotIds[slotIndex];
+    const defaultMiddle = type ? `${type.displayName2} : ${buildType}` : buildType;
+    const nick = slotId && prepBuildNicknames[slotId]?.trim();
+    const middle = nick || defaultMiddle;
+    return `#${slotIndex + 1} ${middle}`;
+  }
+
+  getPrimaryCommanderKey(): string | undefined {
+    const cmdrs = this.state.proj?.commanders;
+    if (!cmdrs) { return undefined; }
+    const keys = Object.keys(cmdrs);
+    return keys.length > 0 ? keys[0] : undefined;
+  }
+
+  /**
+   * Load FC total cap should follow the active CMDR first.
+   * Falls back to first project commander when active name isn't on the roster.
+   */
+  getCmdrCargoCapForLoad(): number {
+    const large = store.cmdr?.largeMax ?? 800;
+    const med = store.cmdr?.medMax ?? 400;
+    const cmdrKeys = Object.keys(this.state.proj?.commanders ?? {});
+    const active = store.cmdrName;
+    const selected = active
+      ? (cmdrKeys.find(k => isMatchingCmdr(k, active)) ?? this.getPrimaryCommanderKey())
+      : this.getPrimaryCommanderKey();
+    if (!selected) { return large; }
+    const mode = this.state.cmdrShipMode[selected] ?? 'large';
+    return mode === 'medium' ? med : large;
+  }
+
+  /** Remove draft lines for commodities no longer on the project. */
+  private pruneDeliveryDraftForProject(proj: Project, draft: Cargo): Cargo {
+    const out = { ...draft };
+    for (const k of Object.keys(out)) {
+      if (!(k in proj.commodities)) {
+        delete out[k];
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Opening Load FC: reuse any in-memory draft (including from localStorage after reload, or rows at 0).
+   * Only seed from `store.deliver` when there is no staged draft yet.
+   */
+  private getLoadFcOpenState(proj: Project): { nextDelivery: Cargo; resetReferenceSlot: boolean } {
+    const pruned = this.pruneDeliveryDraftForProject(proj, this.state.nextDelivery);
+    const hasLocalDraft =
+      this.state.loadFcReuseLastClosedDraft
+      || Object.keys(pruned).length > 0
+      || sumCargo(pruned) > 0;
+    if (hasLocalDraft) {
+      return {
+        nextDelivery: pruned,
+        resetReferenceSlot: false,
+      };
+    }
+    return {
+      nextDelivery: this.pruneDeliveryDraftForProject(proj, { ...store.deliver }),
+      resetReferenceSlot: true,
+    };
+  }
+
+  private persistLoadFcDraft = (): void => {
+    const proj = this.state.proj;
+    const bid = proj?.buildId;
+    if (!bid || proj.complete) { return; }
+    const { nextDelivery, deliverMarketId, deliverReferenceSlotIndex, loadFcReuseLastClosedDraft } = this.state;
+    writeLoadFcDraft(bid, {
+      v: 1,
+      nextDelivery: this.pruneDeliveryDraftForProject(proj, nextDelivery),
+      deliverMarketId,
+      deliverReferenceSlotIndex,
+      loadFcReuseLastClosedDraft,
+    });
+  };
+
+  private appendPrepLoadHistory(buildId: string, entry: PrepLoadHistoryEntry) {
+    const merged = [...this.state.prepLoadHistory, entry].slice(-20);
+    writePrepLoadHistory(buildId, merged);
+    this.setState({ prepLoadHistory: merged });
+  }
+
+  private removePrepLoadHistory = (entryId: string) => {
+    const bid = this.state.proj?.buildId;
+    if (!bid) { return; }
+    const entry = this.state.prepLoadHistory.find(e => e.id === entryId);
+    if (!entry) { return; }
+    const nextHist = this.state.prepLoadHistory.filter(e => e.id !== entryId);
+    writePrepLoadHistory(bid, nextHist);
+    // Undo persistently via FC display adjustment map, so server refresh/poll doesn't re-apply removed lines visually.
+    const rollback = entry.deltas ?? entry.items;
+    const nextFcAdjust = { ...this.state.prepDeliverFcAdjust };
+    for (const [k, v] of Object.entries(rollback)) {
+      if (!v || v <= 0) { continue; }
+      const fk = fcAdjustKey(entry.marketId, k);
+      const nv = (nextFcAdjust[fk] ?? 0) + v;
+      if (nv <= 0) { delete nextFcAdjust[fk]; }
+      else { nextFcAdjust[fk] = nv; }
+    }
+    writePrepFcAdjust(bid, nextFcAdjust);
+    this.setState({ prepLoadHistory: nextHist, prepDeliverFcAdjust: nextFcAdjust });
+  };
+
+  commitPrepSlotSubs(next: Record<string, number>) {
+    const bid = this.state.proj?.buildId;
+    if (bid) {
+      setPrepSlotDeliverMap(bid, next);
+    }
+    this.setState({ prepSlotDeliverSubs: next });
+  }
+
+  setPrepSlotDeliverSub(slotIndex: number, commodity: string, subtracted: number) {
+    const sid = this.state.prepSlotIds[slotIndex];
+    if (!sid) { return; }
+    const k = prepSlotDeliverKey(sid, commodity);
+    const next = { ...this.state.prepSlotDeliverSubs };
+    const v = Math.max(0, Math.floor(subtracted));
+    if (v <= 0) {
+      delete next[k];
+    } else {
+      next[k] = v;
+    }
+    this.commitPrepSlotSubs(next);
+  }
+
+  getPrepFcDeliverDisplay(marketId: string, commodity: string): number {
+    const raw = this.state.fcCargo[marketId]?.[commodity] ?? 0;
+    const adj = this.state.prepDeliverFcAdjust[fcAdjustKey(marketId, commodity)] ?? 0;
+    return Math.max(0, raw - adj);
+  }
+
+  /** Max units that can be delivered in one submission (slot remaining ∩ FC stock if a carrier is selected). */
+  getPrepDeliverMaxDraft(
+    slotIndex: number,
+    commodity: string,
+    selectedFromKey: string,
+    curSubOverride?: number,
+    fcAdjustOverride?: PrepFcAdjustMap,
+  ): number {
+    const sid = this.state.prepSlotIds[slotIndex];
+    if (!sid) { return 0; }
+    const bt = this.state.prepBuildSlots[slotIndex];
+    const base = bt ? (getAvgHaulCosts(bt)[commodity] ?? 0) : 0;
+    const curSub = curSubOverride !== undefined ? curSubOverride : this.getPrepSlotSub(slotIndex, commodity);
+    const remainingSlot = Math.max(0, base - curSub);
+    let n = remainingSlot;
+    const fromKey = !selectedFromKey || selectedFromKey === 'ship' ? 'ship' : selectedFromKey;
+    if (fromKey !== 'ship') {
+      const raw = this.state.fcCargo[fromKey]?.[commodity] ?? 0;
+      const fcAdj = fcAdjustOverride ?? this.state.prepDeliverFcAdjust;
+      const adj = fcAdj[fcAdjustKey(fromKey, commodity)] ?? 0;
+      const avail = Math.max(0, raw - adj);
+      n = Math.min(n, avail);
+    }
+    return Math.max(0, Math.floor(n));
+  }
+
+  submitPrepDeliverAmount = (slotIndex: number, commodity: string, want: number) => {
+    const c = this.state.prepDeliverCallout;
+    if (!c || c.slotIndex !== slotIndex || c.commodity !== commodity) { return; }
+    const proj = this.state.proj;
+    if (!proj?.buildId) { return; }
+    const cmdrs = proj.commanders ? Object.keys(proj.commanders) : [];
+    if (cmdrs.length > 0 && !c.selectedCommander.trim()) { return; }
+
+    const sid = this.state.prepSlotIds[slotIndex];
+    if (!sid) { return; }
+    const bt = this.state.prepBuildSlots[slotIndex];
+    const base = bt ? (getAvgHaulCosts(bt)[commodity] ?? 0) : 0;
+    const curSub = this.getPrepSlotSub(slotIndex, commodity);
+    const remainingSlot = Math.max(0, base - curSub);
+
+    let n = Math.max(0, Math.floor(want));
+    n = Math.min(n, remainingSlot);
+    if (n <= 0) { return; }
+
+    const fromKey = !c.selectedFromKey || c.selectedFromKey === 'ship' ? 'ship' : c.selectedFromKey;
+    if (fromKey !== 'ship') {
+      const raw = this.state.fcCargo[fromKey]?.[commodity] ?? 0;
+      const adj = this.state.prepDeliverFcAdjust[fcAdjustKey(fromKey, commodity)] ?? 0;
+      const avail = Math.max(0, raw - adj);
+      n = Math.min(n, avail);
+    }
+    if (n <= 0) { return; }
+
+    const fromLabel = fromKey === 'ship'
+      ? 'Ship Only'
+      : this.getFullFCName(fromKey);
+
+    const entry: PrepDeliverHistoryEntry = {
+      id: crypto.randomUUID(),
+      amount: n,
+      commander: cmdrs.length > 0 ? c.selectedCommander : '—',
+      fromKey,
+      fromLabel,
+    };
+
+    const hk = histKey(sid, commodity);
+    const nextHist = { ...this.state.prepDeliverHistory };
+    nextHist[hk] = [...(nextHist[hk] ?? []), entry];
+
+    const nextSubs = { ...this.state.prepSlotDeliverSubs };
+    const sk = prepSlotDeliverKey(sid, commodity);
+    const nv = curSub + n;
+    if (nv <= 0) { delete nextSubs[sk]; }
+    else { nextSubs[sk] = nv; }
+
+    const nextFc = { ...this.state.prepDeliverFcAdjust };
+    if (fromKey !== 'ship') {
+      const fk = fcAdjustKey(fromKey, commodity);
+      nextFc[fk] = (nextFc[fk] ?? 0) + n;
+    }
+
+    setPrepSlotDeliverMap(proj.buildId, nextSubs);
+    writePrepDeliverHist(proj.buildId, nextHist);
+    writePrepFcAdjust(proj.buildId, nextFc);
+
+    writePrepDeliverUiPrefs(proj.buildId, {
+      commander: cmdrs.length > 0 ? c.selectedCommander : '',
+      fromKey,
+    });
+
+    this.setState({
+      prepSlotDeliverSubs: nextSubs,
+      prepDeliverHistory: nextHist,
+      prepDeliverFcAdjust: nextFc,
+      prepDeliverCallout: { ...c, draft: '0', allToggleActive: false },
+    });
+  };
+
+  removePrepDeliverLine = (slotIndex: number, commodity: string, entryId: string) => {
+    const sid = this.state.prepSlotIds[slotIndex];
+    const bid = this.state.proj?.buildId;
+    if (!sid || !bid) { return; }
+    const hk = histKey(sid, commodity);
+    const list = [...(this.state.prepDeliverHistory[hk] ?? [])];
+    const idx = list.findIndex(e => e.id === entryId);
+    if (idx < 0) { return; }
+    const e = list[idx];
+    list.splice(idx, 1);
+    const nextHist = { ...this.state.prepDeliverHistory };
+    if (list.length === 0) { delete nextHist[hk]; }
+    else { nextHist[hk] = list; }
+
+    const curSub = this.getPrepSlotSub(slotIndex, commodity);
+    const applied = e.slotSubDelta !== undefined ? e.slotSubDelta : e.amount;
+    const newSub = Math.max(0, curSub - applied);
+    const nextSubs = { ...this.state.prepSlotDeliverSubs };
+    const sk = prepSlotDeliverKey(sid, commodity);
+    if (newSub <= 0) { delete nextSubs[sk]; }
+    else { nextSubs[sk] = newSub; }
+
+    const nextFc = { ...this.state.prepDeliverFcAdjust };
+    if (e.fromKey && e.fromKey !== 'ship' && e.fromKey !== 'editor') {
+      const fk = fcAdjustKey(e.fromKey, commodity);
+      const v = (nextFc[fk] ?? 0) - e.amount;
+      if (v <= 0) { delete nextFc[fk]; }
+      else { nextFc[fk] = v; }
+    }
+
+    setPrepSlotDeliverMap(bid, nextSubs);
+    writePrepDeliverHist(bid, nextHist);
+    writePrepFcAdjust(bid, nextFc);
+
+    const cc = this.state.prepDeliverCallout;
+    const calloutPatch =
+      cc && cc.slotIndex === slotIndex && cc.commodity === commodity && cc.allToggleActive
+        ? {
+          prepDeliverCallout: {
+            ...cc,
+            draft: String(this.getPrepDeliverMaxDraft(slotIndex, commodity, cc.selectedFromKey || 'ship', newSub, nextFc)),
+          },
+        }
+        : {};
+
+    this.setState({ prepSlotDeliverSubs: nextSubs, prepDeliverHistory: nextHist, prepDeliverFcAdjust: nextFc, ...calloutPatch });
+  };
+
+  resetPrepDeliverSlotCommodity = (slotIndex: number, commodity: string) => {
+    const sid = this.state.prepSlotIds[slotIndex];
+    const bid = this.state.proj?.buildId;
+    if (!sid || !bid) { return; }
+    const hk = histKey(sid, commodity);
+    const entries = this.state.prepDeliverHistory[hk] ?? [];
+    const nextFc = { ...this.state.prepDeliverFcAdjust };
+    for (const e of entries) {
+      if (e.fromKey && e.fromKey !== 'ship' && e.fromKey !== 'editor') {
+        const fk = fcAdjustKey(e.fromKey, commodity);
+        const v = (nextFc[fk] ?? 0) - e.amount;
+        if (v <= 0) { delete nextFc[fk]; }
+        else { nextFc[fk] = v; }
+      }
+    }
+    const nextHist = { ...this.state.prepDeliverHistory };
+    delete nextHist[hk];
+    const nextSubs = { ...this.state.prepSlotDeliverSubs };
+    delete nextSubs[prepSlotDeliverKey(sid, commodity)];
+
+    setPrepSlotDeliverMap(bid, nextSubs);
+    writePrepDeliverHist(bid, nextHist);
+    writePrepFcAdjust(bid, nextFc);
+
+    const curCallout = this.state.prepDeliverCallout;
+    this.setState({
+      prepSlotDeliverSubs: nextSubs,
+      prepDeliverHistory: nextHist,
+      prepDeliverFcAdjust: nextFc,
+      prepDeliverCallout: curCallout ? { ...curCallout, draft: '0', allToggleActive: false } : undefined,
+    });
+  };
+
+  private patchPrepDeliverCalloutState = (partial: Partial<NonNullable<ProjectViewState['prepDeliverCallout']>>) => {
+    const cur = this.state.prepDeliverCallout;
+    if (!cur) { return; }
+    const next = { ...cur, ...partial };
+    this.setState({ prepDeliverCallout: next });
+    const bid = this.state.proj?.buildId;
+    if (bid && ('selectedCommander' in partial || 'selectedFromKey' in partial)) {
+      writePrepDeliverUiPrefs(bid, {
+        commander: next.selectedCommander,
+        fromKey: next.selectedFromKey || 'ship',
+      });
+    }
+  };
+
+  sumSlotDisplayedUnits(haul: Cargo, si: number): number {
+    return Object.keys(haul)
+      .filter(ck => ck in mapCommodityNames)
+      .reduce((s, ck) => {
+        const base = haul[ck] ?? 0;
+        const sub = this.getPrepSlotSub(si, ck);
+        return s + Math.max(0, base - sub);
+      }, 0);
+  }
+
+  /**
+   * Prep + one or more tracked buildings: sum of per-column remainings (matches each #N cell).
+   * Non-prep or no buildings: not used (caller keeps project `commodities` total).
+   */
+  getPrepMultiSlotRemainingForCommodity(key: string): number | 'unknown' {
+    const slots = this.state.prepBuildSlots;
+    if (!this.state.isPrep || slots.length < 1) {
+      return 0;
+    }
+    let sum = 0;
+    for (let si = 0; si < slots.length; si++) {
+      const bt = slots[si];
+      const slotNeed = getAvgHaulCosts(bt)[key] ?? 0;
+      if (slotNeed === -1) {
+        return 'unknown';
+      }
+      sum += Math.max(0, slotNeed - this.getPrepSlotSub(si, key));
+    }
+    return sum;
   }
 
   getFullFCName(marketId: string) {
@@ -238,9 +854,24 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         showShips = ships.some(ship => Object.keys(ship.cargo).some(c => ship.cargo[c] > 0 && newProj.commodities[c] > 0));
       }
 
-      const prepBuildsDiffer = isPrep && newProj.prepBuilds && sumCargo(newProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepBuilds(newProj.prepBuilds));
+      const prepBuildsDiffer = isPrep && newProj.prepBuilds && sumCargo(newProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepProject(newProj));
 
-      this.setState({
+      const mergedSlots = mergePrepSlotsAfterFetch(this.state.buildId, this.state.prepBuildSlots, newProj);
+      const bid = newProj.buildId;
+      const serverSlots = slotsFromProject(newProj);
+      const { mergedIds, serverIds, subsPruned } = hydratePrepSlotStorage(bid, mergedSlots, serverSlots);
+      const prunedDel = prunePrepDeliverData(bid, new Set(mergedIds));
+
+      if (newProj.complete) {
+        clearLoadFcDraft(bid);
+      }
+
+      // First paint often comes from doNextPoll → fetchProject(..., true, true); still hydrate LS draft once proj is bound.
+      const shouldHydrateLoadFc =
+        !newProj.complete &&
+        ((!refreshing && !polling) || !this.state.proj);
+      let deliverMarketIdHydrated = deliverMarketId;
+      const fetchState: Partial<ProjectViewState> = {
         buildId: newProj.buildId,
         proj: newProj,
         originalCargo: { ...newProj.commodities },
@@ -255,10 +886,42 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         autoUpdateUntil: newAutoUpdateUntil,
         ships,
         showShips,
+        cmdrShipMode: pruneCmdrShipMode(bid, Object.keys(newProj.commanders ?? {})),
         isPrep,
-        prepBuilds: newProj.prepBuilds ?? {},
+        prepBuildSlots: mergedSlots,
+        prepSlotIds: mergedIds,
+        lastServerPrepSlots: serverSlots,
+        lastServerPrepSlotIds: serverIds,
+        prepSlotDeliverSubs: subsPruned,
+        prepDeliverHistory: prunedDel.history,
+        prepDeliverFcAdjust: prunedDel.fcAdjust,
+        prepLoadHistory: readPrepLoadHistory(bid),
+        prepBuildNicknames: prunePrepBuildNicknames(bid, mergedIds),
         prepBuildsDiffer,
-      });
+      };
+
+      if (shouldHydrateLoadFc) {
+        const persisted = readLoadFcDraft(bid);
+        if (persisted) {
+          fetchState.nextDelivery = this.pruneDeliveryDraftForProject(newProj, persisted.nextDelivery);
+          const pMid = persisted.deliverMarketId;
+          const fcHas = (mid: string) => newProj.linkedFC.some(fc => String(fc.marketId) === mid);
+          if (!isPrep && (pMid === 'site' || fcHas(pMid))) {
+            deliverMarketIdHydrated = pMid;
+          } else if (isPrep && fcHas(pMid)) {
+            deliverMarketIdHydrated = pMid;
+          }
+          const pn = mergedSlots.length;
+          const pRef = persisted.deliverReferenceSlotIndex;
+          fetchState.deliverReferenceSlotIndex = pn > 0
+            ? (pRef === -1 ? -1 : Math.min(Math.max(0, pRef), pn - 1))
+            : 0;
+          fetchState.loadFcReuseLastClosedDraft = persisted.loadFcReuseLastClosedDraft;
+        }
+      }
+      fetchState.deliverMarketId = deliverMarketIdHydrated;
+
+      this.setState(fetchState as ProjectViewState);
 
       if (newProj.complete) {
         const sys = await api.systemV2.getSys(newProj.systemAddress.toString());
@@ -294,9 +957,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
   doNextPoll = async (buildId: string) => {
     try {
-      // skip polling when editing prepBuilds
-      if (this.state.isPrep && this.state.prepBuilds && this.state.proj) {
-        const prepBuildsDirty = JSON.stringify(this.state.prepBuilds) !== JSON.stringify(this.state.proj.prepBuilds ?? {});
+      // skip polling when prep slot list differs from last server snapshot (do not use proj — applyPrepSlots patches proj.prepBuildOrder and would hide dirty state)
+      if (this.state.isPrep && this.state.proj) {
+        const prepBuildsDirty = JSON.stringify(this.state.prepBuildSlots) !== JSON.stringify(this.state.lastServerPrepSlots);
         if (prepBuildsDirty) {
           // just schedule the next poll
           this.timer = setTimeout(() => this.doNextPoll(buildId), autoUpdateFrequency);
@@ -372,7 +1035,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   render() {
-    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy, fcCargo, isPrep } = this.state;
+    const { mode, proj, loading, refreshing, confirmDelete, confirmComplete, errorMsg, loadFcNotice, loadFcPartialDialog, editProject, disableDelete, submitting, primaryBuildId, editCommodities, autoUpdateUntil, showWhereToBuy, fcCargo, isPrep, pendingNavUrl } = this.state;
 
     if (loading) {
       return <div className='project-view'>
@@ -400,20 +1063,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       {
         className: cn.bBox,
         key: 'deliver-cargo',
-        text: 'Deliver',
+        text: 'Load FC',
         title: (isPrep && !proj.linkedFC.length) ? 'Add Fleet Carriers to enable deliveries' : undefined,
         iconProps: { iconName: 'DeliveryTruck' },
         disabled: proj.complete || refreshing || (isPrep && !proj.linkedFC.length),
         style: { color: proj.complete || refreshing || (isPrep && !proj.linkedFC.length) ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
-          const nextDelivery = { ...store.deliver };
-          for (const k of Object.keys(nextDelivery)) {
-            if (!proj.commodities[k]) {
-              delete nextDelivery[k];
+          const { nextDelivery, resetReferenceSlot } = this.getLoadFcOpenState(proj);
+          const validCargoKeys = Object.keys(proj.commodities).filter(k => proj.commodities[k] > 0);
+          const prepN = this.state.prepBuildSlots.length;
+          const curRef = this.state.deliverReferenceSlotIndex;
+          const deliverReferenceSlotIndex = resetReferenceSlot || prepN <= 0
+            ? 0
+            : (curRef === -1 ? -1 : Math.min(Math.max(0, curRef), prepN - 1));
+          this.setState({ mode: Mode.deliver, nextDelivery, submitting: false, deliverReferenceSlotIndex }, () => {
+            this.persistLoadFcDraft();
+            // Focus first amount field; avoid #deliver-destination — programmatic focus opens the FC dropdown (openOnKeyboardFocus).
+            if (validCargoKeys.length > 0) {
+              delayFocus(`edit-${validCargoKeys[0]}`);
             }
-          }
-          this.setState({ mode: Mode.deliver, nextDelivery });
-          delayFocus('deliver-commodity');
+          });
         },
       },
       {
@@ -433,7 +1102,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         disabled: proj.complete || refreshing,
         style: { color: proj.complete || refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
         onClick: () => {
-          this.setState({ editCommodities: { ...this.state.proj!.commodities } });
+          if (this.state.isPrep && this.state.prepBuildSlots.length >= 1) {
+            const si = 0;
+            this.setState({
+              editCommodities: this.buildPrepColumnEditCargo(si),
+              editCommoditiesSlotIndex: si,
+            });
+          } else {
+            this.setState({
+              editCommodities: { ...this.state.proj!.commodities },
+              editCommoditiesSlotIndex: undefined,
+            });
+          }
           delayFocus('first-commodity-edit');
         }
       },
@@ -533,6 +1213,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const fcMergedCargo = mergeCargo(Object.values(fcCargo))
     return <div className='project-view'>
+      {loadFcNotice && <MessageBar
+        messageBarType={MessageBarType.severeWarning}
+        onDismiss={() => this.setState({ loadFcNotice: undefined })}
+        dismissButtonAriaLabel='Dismiss'
+      >
+        {loadFcNotice}
+      </MessageBar>}
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
@@ -582,6 +1269,38 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             }
 
             const cmdrName = store.cmdrName;
+            const prepPatch = savedProj.buildType === fc_loading && savedProj.buildId
+              ? (() => {
+                const mergedSlots = mergePrepSlotsAfterFetch(this.state.buildId, this.state.prepBuildSlots, savedProj);
+                const serverSlots = slotsFromProject(savedProj);
+                const { mergedIds, serverIds, subsPruned } = hydratePrepSlotStorage(savedProj.buildId, mergedSlots, serverSlots);
+                const prunedDel = prunePrepDeliverData(savedProj.buildId, new Set(mergedIds));
+                return {
+                  prepBuildSlots: mergedSlots,
+                  prepSlotIds: mergedIds,
+                  lastServerPrepSlots: serverSlots,
+                  lastServerPrepSlotIds: serverIds,
+                  prepSlotDeliverSubs: subsPruned,
+                  prepDeliverHistory: prunedDel.history,
+                  prepDeliverFcAdjust: prunedDel.fcAdjust,
+                  prepLoadHistory: readPrepLoadHistory(savedProj.buildId),
+                  prepBuildNicknames: prunePrepBuildNicknames(savedProj.buildId, mergedIds),
+                  cmdrShipMode: savedProj.buildId ? pruneCmdrShipMode(savedProj.buildId, Object.keys(savedProj.commanders ?? {})) : this.state.cmdrShipMode,
+                };
+              })()
+              : {
+                prepBuildSlots: this.state.prepBuildSlots,
+                prepSlotIds: this.state.prepSlotIds,
+                lastServerPrepSlots: this.state.lastServerPrepSlots,
+                lastServerPrepSlotIds: this.state.lastServerPrepSlotIds,
+                prepSlotDeliverSubs: this.state.prepSlotDeliverSubs,
+                prepDeliverHistory: this.state.prepDeliverHistory,
+                prepDeliverFcAdjust: this.state.prepDeliverFcAdjust,
+                prepLoadHistory: this.state.prepLoadHistory,
+                prepBuildNicknames: this.state.prepBuildNicknames,
+                cmdrShipMode: this.state.cmdrShipMode,
+              };
+
             this.setState({
               proj: savedProj,
               originalCargo: { ...savedProj.commodities },
@@ -593,6 +1312,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               disableDelete: !!cmdrName && !!savedProj.architectName && savedProj.architectName.toLowerCase() !== cmdrName.toLowerCase(),
               mode: Mode.view,
               submitting: false,
+              ...prepPatch,
             });
           }}
         />}
@@ -643,13 +1363,79 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         </div >
       </Modal>
 
+      {!!pendingNavUrl && <Dialog
+        hidden={false}
+        modalProps={{ isBlocking: true }}
+        dialogContentProps={{ title: 'Warning' }}
+        styles={{
+          main: {
+            backgroundColor: appTheme.semanticColors.bodyBackground,
+            color: appTheme.semanticColors.bodyText,
+            border: `1px solid ${appTheme.palette.themePrimary}`,
+            borderRadius: 2,
+          },
+        }}
+        onDismiss={() => this.setState({ pendingNavUrl: undefined })}
+      >
+        <Icon iconName='Warning' style={{ fontSize: 36, float: 'left', marginRight: 12, color: appTheme.palette.themePrimary }} />
+        <div>
+          Warning: You have unsaved changes to your Buildings! All changes will be undone. Do you wish to proceed?
+        </div>
+        <DialogFooter>
+          <DefaultButton
+            text='Yes'
+            iconProps={{ iconName: 'CheckMark', style: { color: appTheme.palette.themePrimary } }}
+            onClick={() => {
+              const url = this.state.pendingNavUrl;
+              if (App.preNav === this.onPrepPreNavigate) {
+                App.preNav = undefined;
+              }
+              this.setState({ pendingNavUrl: undefined }, () => {
+                if (url) { window.location.assign(url); }
+              });
+            }}
+          />
+          <PrimaryButton
+            text='No'
+            iconProps={{ iconName: 'Cancel' }}
+            onClick={() => this.setState({ pendingNavUrl: undefined })}
+          />
+        </DialogFooter>
+      </Dialog>}
+
+      {!!loadFcPartialDialog && <Dialog
+        hidden={false}
+        modalProps={{ isBlocking: true }}
+        dialogContentProps={{ title: loadFcPartialDialog.title }}
+        styles={{
+          main: {
+            backgroundColor: appTheme.semanticColors.bodyBackground,
+            color: appTheme.semanticColors.bodyText,
+            border: `1px solid ${appTheme.palette.themePrimary}`,
+            borderRadius: 2,
+          },
+        }}
+        onDismiss={() => this.setState({ loadFcPartialDialog: undefined })}
+      >
+        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{loadFcPartialDialog.body}</div>
+        <DialogFooter>
+          <PrimaryButton
+            text='OK'
+            onClick={() => this.setState({ loadFcPartialDialog: undefined })}
+          />
+        </DialogFooter>
+      </Dialog>}
+
       {mode === Mode.deliver && this.renderDeliver()}
     </div>;
   }
 
   renderEditCommodities() {
-    const { proj, editCommodities, sort, submitting, isPrep } = this.state;
+    const { proj, editCommodities, sort, submitting, isPrep, prepBuildSlots, editCommoditiesSlotIndex } = this.state;
     const isDefaultCargo = Object.values(proj!.commodities).every(v => v === 10 || v === -1);
+    const prepColumnMode = !!(isPrep && prepBuildSlots.length >= 1 && editCommoditiesSlotIndex !== undefined);
+    const slotIndex = prepColumnMode ? (editCommoditiesSlotIndex ?? 0) : 0;
+    const haulForSlot = prepColumnMode ? getAvgHaulCosts(prepBuildSlots[slotIndex]) : undefined;
 
     return <Panel
       isOpen
@@ -657,7 +1443,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       type={PanelType.custom}
       customWidth={'400px'}
       headerText='Edit commodities'
-      onDismiss={() => this.setState({ mode: Mode.view, editCommodities: undefined })}
+      onDismiss={() => this.setState({ mode: Mode.view, editCommodities: undefined, editCommoditiesSlotIndex: undefined })}
+      onRenderNavigation={prepColumnMode && prepBuildSlots.length >= 1 ? () => (
+        <Stack tokens={{ childrenGap: 6 }} styles={{ root: { padding: '8px 16px 12px', width: '100%', boxSizing: 'border-box' } }}>
+          <Label style={{ fontSize: 12 }}>Building column</Label>
+          <Dropdown
+            selectedKey={String(editCommoditiesSlotIndex ?? 0)}
+            options={prepBuildSlots.map((_, si) => ({ key: String(si), text: this.prepBuildingDropdownLabel(si) }))}
+            onChange={(_, o) => {
+              if (!o) { return; }
+              const si = parseInt(String(o.key), 10);
+              if (Number.isNaN(si) || si < 0 || si >= prepBuildSlots.length) { return; }
+              this.setState({
+                editCommoditiesSlotIndex: si,
+                editCommodities: this.buildPrepColumnEditCargo(si),
+              });
+            }}
+            styles={{ root: { width: '100%' }, dropdown: { width: '100%' } }}
+          />
+        </Stack>
+      ) : undefined}
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
       }}
@@ -667,7 +1472,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         return <>
           {submitting && <Spinner
             className='submitting'
-            label="Updating commodities ..."
+            label={prepColumnMode ? 'Applying column edits ...' : 'Updating commodities ...'}
             labelPosition="right"
           />}
 
@@ -681,7 +1486,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               text='Cancel'
               iconProps={{ iconName: 'Cancel' }}
               onClick={() => {
-                this.setState({ mode: Mode.view, editCommodities: undefined });
+                this.setState({ mode: Mode.view, editCommodities: undefined, editCommoditiesSlotIndex: undefined });
               }}
             />
           </Stack>}
@@ -701,7 +1506,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </MessageBar>}
 
       <EditCargo
-        noAdd={!isPrep} noDelete={!isPrep} showTotalsRow
+        key={prepColumnMode ? `prep-col-${editCommoditiesSlotIndex}` : 'commodities-full'}
+        noAdd={prepColumnMode ? true : !isPrep}
+        noDelete={prepColumnMode ? true : !isPrep}
+        showTotalsRow
+        validNames={prepColumnMode ? this.getPrepSlotEditValidKeys(slotIndex) : undefined}
+        maxCounts={prepColumnMode && haulForSlot ? haulForSlot : undefined}
         cargo={editCommodities!}
         sort={sort}
         onChange={cargo => this.setState({ editCommodities: cargo })}
@@ -710,14 +1520,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderCommodities(fcMergedCargo: Cargo) {
-    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy, showShips, showShipsTargetId, showShipsTargetCargo, isPrep } = this.state;
+    const { proj, assignCommodity, sumTotal, mode, sort, hideDoneRows, hideFCColumns, hasAssignments, fcCargo, showWhereToBuy, showShips, showShipsTargetId, showShipsTargetCargo, isPrep, prepDeliverCallout, prepNicknameCallout } = this.state;
     if (!proj?.commodities) { return <div />; }
 
     // start with commodities from project, adding things on FCs (if they are visible)
     const cargo: Cargo = {
       ...proj.commodities,
-      // always show tritium
-      tritium: proj.commodities.tritium ?? 0,
     };
     if (!hideFCColumns) {
       for (const fcc of Object.values(fcCargo)) {
@@ -778,12 +1586,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     if (fcCount > 0) colSpan += fcCount + 1;
     if (hasAssignments) colSpan++;
     if (showShips) colSpan++;
+    const prepSlotCount = isPrep && this.state.prepBuildSlots.length >= 1 ? this.state.prepBuildSlots.length : 0;
 
     // calculate sum cargo diff for all FCs per commodity name
     const fcMarketIds = Object.keys(fcCargo);
     const mapSumCargoDiff = Object.keys(mapCommodityNames).reduce((map, key) => {
       const need = cargo[key] ?? 0;
-      if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
+      if (need >= 0) {
+        map[key] = fcMarketIds.reduce(
+          (sum, marketId) => sum + this.getPrepFcDeliverDisplay(marketId, key),
+          0,
+        ) - need;
+      }
       return map;
     }, {} as Cargo);
 
@@ -801,10 +1615,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         if (sort === SortMode.alpha) { continue; }
 
         // group row
-        let td = <td colSpan={2 + colSpan} className='hint'> {key}</td>;
+        let td = <td colSpan={2 + prepSlotCount + colSpan} className='hint'> {key}</td>;
         if (sort === SortMode.econ) {
           const txt = key.split(',').map(t => mapName[t] ?? '??').join(' / ');
-          td = <td colSpan={2 + colSpan}>
+          td = <td colSpan={2 + prepSlotCount + colSpan}>
             <Stack horizontal verticalAlign='center'>
               <div><EconomyBlock economy={key} /></div>
               <div className='hint'>{txt}</div>
@@ -828,13 +1642,38 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }
     }
 
-    // generate a totals row at the bottom
-    const totals: string[] = [sumTotal.toLocaleString()];
+    // generate a totals row at the bottom (prep multi-building: first column sums row Total remainings, not raw project commodities)
+    let sumTotalDisplayed = sumTotal;
+    if (isPrep && this.state.prepBuildSlots.length >= 1) {
+      let s = 0;
+      let unk = false;
+      for (const key of groupsAndCommodityKeys) {
+        if (key in groupedCommodities) { continue; }
+        const rem = this.getPrepMultiSlotRemainingForCommodity(key);
+        if (rem === 'unknown') { unk = true; break; }
+        s += rem;
+      }
+      sumTotalDisplayed = unk ? NaN : s;
+    }
+    const totals: string[] = [Number.isNaN(sumTotalDisplayed) ? '?' : sumTotalDisplayed.toLocaleString()];
+    if (isPrep && this.state.prepBuildSlots.length >= 1) {
+      this.state.prepBuildSlots.forEach((bt, si) => {
+        const haul = getAvgHaulCosts(bt);
+        totals.push(this.sumSlotDisplayedUnits(haul, si).toLocaleString());
+      });
+    }
     if (showShips) { totals.push(''); }
     if (!hideFCColumns && Object.keys(fcCargo).length > 0) {
       totals.push('');
-      for (const fcc of Object.values(fcCargo)) {
-        totals.push(sumCargo(fcc).toLocaleString() ?? '');
+      for (const marketId of Object.keys(fcCargo)) {
+        const fcc = fcCargo[marketId];
+        const adjCargo: Cargo = {};
+        for (const ck of Object.keys(fcc)) {
+          if (ck in mapCommodityNames) {
+            adjCargo[ck] = this.getPrepFcDeliverDisplay(marketId, ck);
+          }
+        }
+        totals.push(sumCargo(adjCargo).toLocaleString() ?? '');
       }
     }
     let nn = 0;
@@ -896,8 +1735,13 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       <table className={`commodities ${sort}`} cellSpacing={0} cellPadding={0} style={{ fontSize: 14 }} >
         <thead>
           <tr>
-            <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity</th>
-            <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Total needed for this commodity'>Need</th>
+            <th className={`commodity-name ${cn.bb} ${cn.br}`}>Commodity Needed</th>
+            <th className={`commodity-need ${cn.bb} ${cn.br}`} title={prepSlotCount >= 1 ? 'Remaining for this commodity across all tracked buildings (after # column deliveries)' : 'Total needed for this commodity'}>Total</th>
+            {isPrep && this.state.prepBuildSlots.length >= 1 && this.state.prepBuildSlots.map((_, si) => (
+              <th key={`prep-slot-h-${si}`} className={`commodity-need ${cn.bb} ${cn.br}`} title={`Cargo required for building #${si + 1}`}>
+                #{si + 1}
+              </th>
+            ))}
             {showShips && <th className={`commodity-need ${cn.bb} ${cn.br}`} title='Cargo on tracked ships'>
               <IconButton
                 id='show-all-ships'
@@ -923,6 +1767,243 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       </div>}
 
       {!!showShipsTargetId && this.renderShipsCallout()}
+
+      {prepDeliverCallout && (() => {
+        const c = prepDeliverCallout;
+        const sid = this.state.prepSlotIds[c.slotIndex];
+        const cmdrNames = proj.commanders ? Object.keys(proj.commanders).sort((a, b) => a.localeCompare(b)) : [];
+        const cmdrOptions: IDropdownOption[] = cmdrNames.map(n => ({ key: n, text: n }));
+        const fromOptions: IDropdownOption[] = [
+          { key: 'ship', text: 'Ship Only' },
+          ...proj.linkedFC.map(fc => ({
+            key: String(fc.marketId),
+            text: fcFullName(fc.name, fc.displayName),
+          })),
+        ];
+        const historyList = sid
+          ? [...(this.state.prepDeliverHistory[histKey(sid, c.commodity)] ?? [])].reverse()
+          : [];
+        const dismiss = () => this.setState({ prepDeliverCallout: undefined });
+        const submitDisabled = cmdrNames.length > 0 && !c.selectedCommander.trim();
+        const lime = 'rgb(209, 217, 59)';
+        const allOn = !!c.allToggleActive;
+        const maxDraftHere = this.getPrepDeliverMaxDraft(c.slotIndex, c.commodity, c.selectedFromKey || 'ship');
+        return <Callout
+          target={c.anchor}
+          onDismiss={dismiss}
+          setInitialFocus
+          directionalHint={DirectionalHint.bottomAutoEdge}
+          styles={{
+            calloutMain: {
+              backgroundColor: appTheme.semanticColors.bodyBackground,
+              color: appTheme.semanticColors.bodyText,
+              border: `1px solid ${appTheme.palette.themePrimary}`,
+              borderRadius: 2,
+            },
+          }}
+        >
+          <div style={{ position: 'relative', padding: '8px 40px 12px 12px', minWidth: 360, maxWidth: 440 }}>
+            <IconButton
+              iconProps={{ iconName: 'Cancel' }}
+              title='Close'
+              ariaLabel='Close'
+              onClick={dismiss}
+              styles={{
+                root: {
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  zIndex: 1,
+                },
+              }}
+            />
+            <Stack horizontal verticalAlign='center' wrap tokens={{ childrenGap: 10 }} styles={{ root: { marginBottom: 12, paddingRight: 8 } }}>
+              <span style={{ fontWeight: 600, color: appTheme.semanticColors.bodyText }}>Delivered by:</span>
+              <Dropdown
+                placeholder='No commanders'
+                disabled={cmdrNames.length === 0}
+                options={cmdrOptions}
+                selectedKey={cmdrNames.length ? c.selectedCommander : undefined}
+                onChange={(_, opt) => opt && this.patchPrepDeliverCalloutState({ selectedCommander: String(opt.key) })}
+                styles={{
+                  dropdown: { width: 200 },
+                  title: cmdrNames.length === 0 ? { color: appTheme.palette.neutralTertiary } : undefined,
+                }}
+              />
+            </Stack>
+            {submitDisabled && (
+              <MessageBar messageBarType={MessageBarType.warning} styles={{ root: { marginBottom: 8 } }}>
+                Choose <b>Delivered by</b> (commander) to enable Submit and All.
+              </MessageBar>
+            )}
+            <Stack horizontal verticalAlign='end' wrap tokens={{ childrenGap: 8 }}>
+              <TextField
+                placeholder='0'
+                value={c.draft}
+                onChange={(_, v) => {
+                  const cur = this.state.prepDeliverCallout;
+                  if (cur) {
+                    this.setState({ prepDeliverCallout: { ...cur, draft: v ?? '0', allToggleActive: false } });
+                  }
+                }}
+                styles={{ root: { width: 140 } }}
+              />
+              <IconButton
+                disabled={submitDisabled}
+                iconProps={{ iconName: 'Accept', style: { color: appTheme.palette.themePrimary } }}
+                title={submitDisabled ? 'Choose who delivered first' : 'Submit delivery'}
+                onClick={() => {
+                  const n = Math.max(0, parseIntLocale(c.draft, true));
+                  this.submitPrepDeliverAmount(c.slotIndex, c.commodity, n);
+                }}
+              />
+              <DefaultButton
+                disabled={submitDisabled}
+                text='All'
+                title={submitDisabled ? 'Choose who delivered first' : (allOn ? 'Turn off: clear amount to 0' : 'Turn on: fill amount with the maximum you can deliver from this source for this slot')}
+                onClick={() => {
+                  if (allOn) {
+                    this.patchPrepDeliverCalloutState({ allToggleActive: false, draft: '0' });
+                  } else {
+                    const max = this.getPrepDeliverMaxDraft(c.slotIndex, c.commodity, c.selectedFromKey || 'ship');
+                    this.patchPrepDeliverCalloutState({ allToggleActive: true, draft: String(max) });
+                  }
+                }}
+                styles={allOn ? {
+                  root: {
+                    backgroundColor: appTheme.palette.themePrimary,
+                    color: appTheme.palette.white,
+                    borderColor: appTheme.palette.themeDark,
+                  },
+                  label: { fontWeight: 600 },
+                } : undefined}
+              />
+            </Stack>
+            <Stack horizontal verticalAlign='center' wrap tokens={{ childrenGap: 10 }} styles={{ root: { marginTop: 12 } }}>
+              <DefaultButton
+                text='Reset'
+                title='Clear all deliveries for this slot and commodity (restore template and FC display)'
+                onClick={() => this.resetPrepDeliverSlotCommodity(c.slotIndex, c.commodity)}
+              />
+              <span className='t' style={{ color: appTheme.semanticColors.bodyText }}>From:</span>
+              <Dropdown
+                options={fromOptions}
+                selectedKey={c.selectedFromKey || 'ship'}
+                onChange={(_, opt) => {
+                  if (!opt) { return; }
+                  const newKey = String(opt.key);
+                  const cur = this.state.prepDeliverCallout;
+                  if (!cur) { return; }
+                  if (cur.allToggleActive) {
+                    const max = this.getPrepDeliverMaxDraft(cur.slotIndex, cur.commodity, newKey);
+                    this.patchPrepDeliverCalloutState({ selectedFromKey: newKey, draft: String(max) });
+                  } else {
+                    this.patchPrepDeliverCalloutState({ selectedFromKey: newKey });
+                  }
+                }}
+                styles={{ dropdown: { width: 220 } }}
+              />
+            </Stack>
+            {!submitDisabled && maxDraftHere <= 0 && (
+              <div style={{ marginTop: 8, fontSize: 12, color: appTheme.palette.neutralSecondary }}>
+                Nothing left to deliver for this building column from the selected source (commodity already satisfied or no stock on that FC).
+              </div>
+            )}
+            {historyList.length > 0 && (
+              <div style={{ marginTop: 14, borderTop: `1px solid ${appTheme.palette.neutralTertiaryAlt}`, paddingTop: 8 }}>
+                {historyList.map(entry => (
+                  <Stack
+                    key={entry.id}
+                    horizontal
+                    verticalAlign='center'
+                    tokens={{ childrenGap: 6 }}
+                    styles={{ root: { marginBottom: 6, fontSize: 12 } }}
+                  >
+                    <span style={{ flex: 1, wordBreak: 'break-word' }}>
+                      {entry.fromKey === 'editor'
+                        ? `${entry.fromLabel} (${entry.commander})`
+                        : `${entry.amount.toLocaleString()} - Delivered By: "${entry.commander}" From "${entry.fromLabel}"`}
+                    </span>
+                    <Icon
+                      className='icon-btn'
+                      iconName='Delete'
+                      tabIndex={0}
+                      role='button'
+                      title={entry.fromKey === 'editor' ? 'Remove this commodity edit (reverts the change)' : 'Remove this delivery'}
+                      style={{ color: lime, cursor: 'pointer', flexShrink: 0 }}
+                      onClick={() => this.removePrepDeliverLine(c.slotIndex, c.commodity, entry.id)}
+                      onKeyDown={(ev) => {
+                        if (ev.key === 'Enter' || ev.key === ' ') {
+                          ev.preventDefault();
+                          this.removePrepDeliverLine(c.slotIndex, c.commodity, entry.id);
+                        }
+                      }}
+                    />
+                  </Stack>
+                ))}
+              </div>
+            )}
+          </div>
+        </Callout>;
+      })()}
+
+      {prepNicknameCallout && (() => {
+        const c = prepNicknameCallout;
+        const dismiss = () => this.setState({ prepNicknameCallout: undefined });
+        const submit = () => {
+          const bid = this.state.proj?.buildId;
+          const sid = this.state.prepSlotIds[c.slotIndex];
+          if (!bid || !sid) {
+            dismiss();
+            return;
+          }
+          const next = setPrepBuildNicknameForSlot(bid, this.state.prepSlotIds, sid, c.draft);
+          this.setState({ prepBuildNicknames: next, prepNicknameCallout: undefined });
+        };
+        return <Callout
+          target={c.anchor}
+          onDismiss={dismiss}
+          setInitialFocus
+          directionalHint={DirectionalHint.bottomAutoEdge}
+          styles={{
+            calloutMain: {
+              backgroundColor: appTheme.semanticColors.bodyBackground,
+              color: appTheme.semanticColors.bodyText,
+              border: `1px solid ${appTheme.palette.themePrimary}`,
+              borderRadius: 2,
+            },
+          }}
+        >
+          <div style={{ padding: '10px 12px 12px', minWidth: 260 }}>
+            <TextField
+              placeholder='Enter Nickname'
+              value={c.draft}
+              onChange={(_, v) => {
+                const cur = this.state.prepNicknameCallout;
+                if (cur) {
+                  this.setState({ prepNicknameCallout: { ...cur, draft: v ?? '' } });
+                }
+              }}
+              styles={{
+                root: { marginBottom: 10 },
+                field: { color: appTheme.semanticColors.bodyText },
+              }}
+            />
+            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }}>
+              <IconButton
+                iconProps={{ iconName: 'Accept', style: { color: appTheme.palette.themePrimary } }}
+                title='Save nickname'
+                onClick={submit}
+              />
+              <IconButton
+                iconProps={{ iconName: 'Cancel' }}
+                title='Cancel'
+                onClick={dismiss}
+              />
+            </Stack>
+          </div>
+        </Callout>;
+      })()}
     </div>
   }
 
@@ -946,10 +2027,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   getCommodityAssignmentRow(key: string, proj: Project, cmdrs: string[]) {
+    const fcCount = Object.keys(this.state.fcCargo).length;
+    const { hideFCColumns, showShips, hasAssignments, isPrep, prepBuildSlots } = this.state;
+    let assignColSpan = 2 + (isPrep && prepBuildSlots.length >= 1 ? prepBuildSlots.length : 0);
+    if (showShips) { assignColSpan++; }
+    if (!hideFCColumns && fcCount > 0) { assignColSpan += fcCount + 1; }
+    if (hasAssignments) { assignColSpan++; }
+
     if (Object.keys(proj.commanders).length === 0) {
       // show a warning when there's no cmdrs to add
       return <tr key={`c${key}`}>
-        <td colSpan={2}>
+        <td colSpan={assignColSpan}>
           <MessageBar messageBarType={MessageBarType.warning} onDismiss={() => this.setState({ assignCommodity: undefined })} >You need to add commanders first</MessageBar>
         </td>
       </tr>;
@@ -960,7 +2048,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         .sort();
 
       const assignRow = <tr key='c-edit'>
-        <td colSpan={2}>
+        <td colSpan={assignColSpan}>
           <Stack horizontal>
             <Dropdown
               id='assign-cmdr'
@@ -1000,7 +2088,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
 
     const need = proj.commodities[key] ?? 0;
-
+    const prepMulti = this.state.isPrep && this.state.prepBuildSlots.length >= 1;
+    const prepRemain: number | 'unknown' | null = prepMulti ? this.getPrepMultiSlotRemainingForCommodity(key) : null;
+    const totalCellText = prepMulti && prepRemain !== null
+      ? (prepRemain === 'unknown' ? '?' : prepRemain.toLocaleString())
+      : (need === -1 ? '?' : need.toLocaleString());
+    const totalForRowStyle = prepMulti && prepRemain !== null && prepRemain !== 'unknown' ? prepRemain : need;
 
     const isContextTarget = this.state.cargoContext === key;
     const isReady = this.state.editReady.has(key);
@@ -1077,7 +2170,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const fcMarketIds = Object.keys(this.state.fcCargo);
 
-    const className = need !== 0 ? '' : 'done ';
+    const className = totalForRowStyle !== 0 ? '' : 'done ';
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
     return {
       enoughOnShipsOrFC: enoughOnShipsOrFC,
@@ -1114,9 +2207,57 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
         </td>
 
-        <td className={`commodity-need ${cn.br}`}>
-          <span className='t'>{need === -1 ? '?' : need.toLocaleString()}</span>
+        <td className={`commodity-need ${cn.br}`} title={prepMulti ? 'Remaining for this commodity across all tracked buildings (after deliveries recorded in # columns)' : undefined}>
+          <span className='t'>{totalCellText}</span>
         </td>
+
+        {this.state.isPrep && this.state.prepBuildSlots.length >= 1 && this.state.prepBuildSlots.map((bt, si) => {
+          const slotNeed = getAvgHaulCosts(bt)[key] ?? 0;
+          const sub = this.getPrepSlotSub(si, key);
+          const shown = Math.max(0, slotNeed - sub);
+          const dc = this.state.prepDeliverCallout;
+          const isDeliverTarget = !!(dc && dc.slotIndex === si && dc.commodity === key);
+          /** Keep one DOM node (no wrapper) so Callout `anchor` stays valid after highlight re-render. */
+          const prepBubbleStyle: CSSProperties | undefined = isDeliverTarget
+            ? {
+              backgroundColor: appTheme.palette.yellow,
+              color: 'black',
+              display: 'inline-block',
+            }
+            : undefined;
+          return <td key={`prep-slot-${key}-${si}`} className={`commodity-need ${cn.br}`}>
+            <span
+              role='button'
+              tabIndex={0}
+              className={`prep-slot-deliverable t${isDeliverTarget ? ' bubble prep-slot-deliverable--callout' : ''}`}
+              style={prepBubbleStyle}
+              title={`Deliver / adjust #${si + 1} for this commodity (original ${slotNeed.toLocaleString()})`}
+              onKeyDown={(ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                  ev.preventDefault();
+                  (ev.currentTarget as HTMLElement).click();
+                }
+              }}
+              onClick={(e) => {
+                const prefs = resolvePrepDeliverUiPrefs(proj.buildId, proj);
+                this.setState({
+                  prepNicknameCallout: undefined,
+                  prepDeliverCallout: {
+                    slotIndex: si,
+                    commodity: key,
+                    anchor: e.currentTarget as HTMLElement,
+                    draft: '0',
+                    selectedCommander: prefs.commander,
+                    selectedFromKey: prefs.fromKey,
+                    allToggleActive: false,
+                  },
+                });
+              }}
+            >
+              {slotNeed === -1 ? '?' : shown.toLocaleString()}
+            </span>
+          </td>;
+        })}
 
         {showShips && <td className={`${cn.br}`} style={{ textAlign: 'center' }}>{onShipsElement}</td>}
 
@@ -1127,9 +2268,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {fcSumElement}
             </div>
           </td>
-          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} >
-            {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
-          </td>)}
+          {fcMarketIds.map((marketId, i) => {
+            const fcShown = this.getPrepFcDeliverDisplay(marketId, key);
+            return <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} >
+              {fcShown ? <span>{fcShown.toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
+            </td>;
+          })}
         </>
         }
 
@@ -1208,27 +2352,48 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   };
 
   renderPrepBuilds() {
-    const { prepBuilds, proj, savingPrepBuilds, prepBuildsDiffer, originalCargo } = this.state;
-    if (!prepBuilds || !proj) { return; }
+    const { prepBuildSlots, lastServerPrepSlots, proj, savingPrepBuilds, prepBuildsDiffer, originalCargo, prepSlotIds, prepBuildNicknames } = this.state;
+    if (!proj) { return; }
 
-    const rows = Object.entries(prepBuilds).map(([buildType, count]) => {
+    const rows = prepBuildSlots.map((buildType, index) => {
       const type = getSiteType(buildType)!;
-      return <div key={`pbb-${buildType}`} style={{ width: 'max-content' }}>
+      const slotId = prepSlotIds[index];
+      const defaultMiddle = `${type.displayName2} : ${buildType}`;
+      const nick = slotId && prepBuildNicknames[slotId]?.trim();
+      const middleShown = nick || defaultMiddle;
+      const hoverTitle = nick ? defaultMiddle : undefined;
+      return <div key={`pbb-${slotId ?? `i${index}`}-${buildType}`} style={{ width: 'max-content' }}>
         <Stack horizontal verticalAlign='center'>
-          <div>{count} x {type.displayName2} : {buildType}</div>
+          <div title={hoverTitle}>#{index + 1} {middleShown}</div>
           <IconButton
             className={`${cn.bBox}`}
             iconProps={{ iconName: 'BoxAdditionSolid' }}
-            title={`Add another ${buildType}`}
+            title={`Add another row with this building at the end (#${this.state.prepBuildSlots.length + 1})`}
             style={{ marginLeft: 8, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
-            onClick={() => { this.adjustPrepBuilds(buildType); }}
+            onClick={() => { this.appendDuplicatePrepSlot(index); }}
           />
           <IconButton
             className={`${cn.bBox}`}
-            iconProps={{ iconName: count > 1 ? 'BoxSubtractSolid' : 'BoxMultiplySolid' }}
-            title={`Remove a ${buildType}`}
+            iconProps={{ iconName: 'Edit' }}
+            title='Set nickname for this building (hover shows default name when nicknamed)'
             style={{ marginLeft: 4, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
-            onClick={() => { this.adjustPrepBuilds(buildType, true); }}
+            onClick={(e) => {
+              this.setState({
+                prepDeliverCallout: undefined,
+                prepNicknameCallout: {
+                  slotIndex: index,
+                  anchor: e.currentTarget as HTMLElement,
+                  draft: slotId && prepBuildNicknames[slotId] ? prepBuildNicknames[slotId] : '',
+                },
+              });
+            }}
+          />
+          <IconButton
+            className={`${cn.bBox}`}
+            iconProps={{ iconName: prepBuildSlots.length > 1 ? 'BoxSubtractSolid' : 'BoxMultiplySolid' }}
+            title={`Remove building #${index + 1}`}
+            style={{ marginLeft: 4, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
+            onClick={() => { this.removePrepSlotAt(index); }}
           />
           {buildType.endsWith(' (primary)') && <IconButton
             className={`${cn.bBox}`}
@@ -1236,16 +2401,18 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             title={`Use non-primary port costs`}
             style={{ marginLeft: 4, color: appTheme.palette.themePrimary, width: 22, height: 22 }}
             onClick={() => {
-              this.adjustPrepBuilds(buildType, true);
-              setTimeout(() => this.adjustPrepBuilds(buildType.replace(' (primary)', '')), 10);
+              const slots = [...prepBuildSlots];
+              slots[index] = buildType.replace(' (primary)', '');
+              this.applyPrepSlots(slots);
             }}
           />}
         </Stack>
       </div>;
     });
 
-    const noBuilds = Object.keys(prepBuilds).length === 0;
-    const isDirty = JSON.stringify(originalCargo) !== JSON.stringify(proj.commodities);
+    const noBuilds = prepBuildSlots.length === 0;
+    const slotsDirty = JSON.stringify(prepBuildSlots) !== JSON.stringify(lastServerPrepSlots);
+    const isDirty = JSON.stringify(originalCargo) !== JSON.stringify(proj.commodities) || slotsDirty;
 
     if (!rows.length) {
       rows.push(<div key='pbb-none' style={{ color: appTheme.palette.themeTertiary }}>None</div>);
@@ -1264,7 +2431,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               buildType=''
               onChange={bt => {
                 if (usePrimaryCosts.includes(bt)) { bt = `${bt} (primary)`; }
-                this.adjustPrepBuilds(bt);
+                this.applyPrepSlots([...this.state.prepBuildSlots, bt]);
               }}
             />
           </span>}
@@ -1287,9 +2454,37 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             style={{ height: 22, color: savingPrepBuilds ? 'grey' : undefined, }}
             disabled={savingPrepBuilds}
             onClick={() => {
+              const slots = [...lastServerPrepSlots];
+              const baseline = proj.buildId ? readServerBaseline(proj.buildId) : { slots: [] as string[], ids: [] as string[] };
+              const baselineMatchesUndo =
+                baseline.slots.length === slots.length &&
+                baseline.ids.length === slots.length &&
+                baseline.slots.every((s, i) => s === slots[i]);
+              let ids = baselineMatchesUndo ? [...baseline.ids] : [...this.state.lastServerPrepSlotIds];
+              if (ids.length !== slots.length) {
+                ids = nextPrepSlotIds([], [], slots);
+              }
+              const cargo = originalCargo ?? {};
+              const prunedSubs = normalizeDeliverMap(this.state.prepSlotDeliverSubs, ids);
+              const prunedDel = proj.buildId ? prunePrepDeliverData(proj.buildId, new Set(ids)) : { history: {} as PrepDeliverHistMap, fcAdjust: {} as PrepFcAdjustMap };
+              if (proj.buildId) {
+                writePrepSlotMeta(proj.buildId, slots, ids);
+                setPrepSlotDeliverMap(proj.buildId, prunedSubs);
+              }
               this.setState({
-                prepBuilds: proj.prepBuilds ?? {},
-                proj: { ...proj, commodities: originalCargo ?? {} }
+                prepBuildSlots: slots,
+                prepSlotIds: ids,
+                proj: {
+                  ...proj,
+                  commodities: cargo,
+                  prepBuilds: prepBuildSlotsToRecord(slots),
+                  prepBuildOrder: [...slots],
+                },
+                sumTotal: sumCargo(cargo),
+                prepSlotDeliverSubs: prunedSubs,
+                prepDeliverHistory: prunedDel.history,
+                prepDeliverFcAdjust: prunedDel.fcAdjust,
+                prepBuildNicknames: proj.buildId ? prunePrepBuildNicknames(proj.buildId, ids) : {},
               });
             }}
           />}
@@ -1315,69 +2510,59 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     </div>;
   }
 
-  adjustPrepBuilds(newBuild?: string, remove?: boolean) {
+  applyPrepSlots(slots: string[]) {
+    const prevSlots = this.state.prepBuildSlots;
+    const prevIds = this.state.prepSlotIds;
+    const nextIds = nextPrepSlotIds(prevSlots, prevIds, slots);
+    const prunedSubs = normalizeDeliverMap(this.state.prepSlotDeliverSubs, nextIds);
 
-    const newPrepBuilds = { ...this.state.prepBuilds };
-
-    if (newBuild) {
-      newPrepBuilds[newBuild] = (newPrepBuilds[newBuild] ?? 0) + (remove ? -1 : +1);
-      if (newPrepBuilds[newBuild] === 0) { delete newPrepBuilds[newBuild]; }
-    }
-
-    // alpha sort + collect total cargo needs
-    const cargos: Cargo[] = [];
-    const sorted = Object.keys(newPrepBuilds)
-      .sort((a, b) => a.localeCompare(b))
-      .reduce((m, bt) => {
-        m[bt] = newPrepBuilds[bt];
-        // sum cargo needs
-        const haul = getAvgHaulCosts(bt);
-        for (let n = 0; n < m[bt]; n++) {
-          cargos.push(haul);
-        }
-
-        return m;
-      }, {} as Record<string, number>)
-
-    // determine new cargo needs
-    const cargoNeeded = mergeCargo(cargos);
-
+    const cargoNeeded = mergeCargo(slots.map(bt => getAvgHaulCosts(bt)));
     const newProj: Project = {
       ...this.state.proj!,
       commodities: cargoNeeded,
       maxNeed: sumCargo(cargoNeeded),
+      prepBuilds: prepBuildSlotsToRecord(slots),
+      prepBuildOrder: [...slots],
     };
-
+    const bid = this.state.proj?.buildId;
+    const prunedDel = bid ? prunePrepDeliverData(bid, new Set(nextIds)) : { history: {} as PrepDeliverHistMap, fcAdjust: {} as PrepFcAdjustMap };
+    const nickPruned = bid ? prunePrepBuildNicknames(bid, nextIds) : {};
+    if (bid) {
+      writePrepSlotMeta(bid, slots, nextIds);
+      setPrepSlotDeliverMap(bid, prunedSubs);
+    }
     this.setState({
-      prepBuilds: sorted,
+      prepBuildSlots: slots,
+      prepSlotIds: nextIds,
       proj: newProj,
       sumTotal: sumCargo(cargoNeeded),
+      prepSlotDeliverSubs: prunedSubs,
+      prepDeliverHistory: prunedDel.history,
+      prepDeliverFcAdjust: prunedDel.fcAdjust,
+      prepBuildNicknames: nickPruned,
+    }, () => {
+      this.syncPrepPreNavGuard();
     });
   }
 
-  calcCargoNeedsForPrepBuilds(prepBuilds: Record<string, number>) {
-    // alpha sort + collect total cargo needs
-    const cargos: Cargo[] = [];
-    Object.keys(prepBuilds)
-      .reduce((m, bt) => {
-        m[bt] = prepBuilds[bt];
-        // sum cargo needs
-        const haul = getAvgHaulCosts(bt);
-        for (let n = 0; n < m[bt]; n++) {
-          cargos.push(haul);
-        }
+  appendDuplicatePrepSlot(index: number) {
+    const bt = this.state.prepBuildSlots[index];
+    if (!bt) { return; }
+    this.applyPrepSlots([...this.state.prepBuildSlots, bt]);
+  }
 
-        return m;
-      }, {} as Record<string, number>)
+  removePrepSlotAt(index: number) {
+    const slots = this.state.prepBuildSlots.filter((_, i) => i !== index);
+    this.applyPrepSlots(slots);
+  }
 
-    // determine new cargo needs
-    const cargoNeeded = mergeCargo(cargos);
-    return cargoNeeded;
+  calcCargoNeedsForPrepProject(proj: Pick<Project, 'prepBuilds' | 'prepBuildOrder'>) {
+    return mergeCargo(slotsFromProject(proj as Project).map(bt => getAvgHaulCosts(bt)));
   }
 
   onSavePrepBuilds = async () => {
-    const { proj, prepBuilds } = this.state;
-    if (!proj?.buildId || !prepBuilds) return;
+    const { proj, prepBuildSlots } = this.state;
+    if (!proj?.buildId) return;
 
     this.setState({ savingPrepBuilds: true });
     await delay(500);
@@ -1385,12 +2570,26 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     try {
       const deltaProj = {
         buildId: proj.buildId,
-        prepBuilds: prepBuilds,
+        prepBuilds: prepBuildSlotsToRecord(prepBuildSlots),
+        prepBuildOrder: [...prepBuildSlots],
       };
       const savedProj = await api.project.update(proj.buildId, deltaProj);
 
       // success
-      const prepBuildsDiffer = this.state.isPrep && savedProj.prepBuilds && sumCargo(savedProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepBuilds(savedProj.prepBuilds));
+      const prepBuildsDiffer = this.state.isPrep && savedProj.prepBuilds && sumCargo(savedProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepProject(savedProj));
+      const bid = proj.buildId;
+      const finalSlots = mergePrepSlotsAfterSave(prepBuildSlots, savedProj);
+      const serverSlots = slotsFromProject(savedProj);
+      const basePrev = readServerBaseline(bid);
+      const newBaselineIds = nextPrepSlotIds(basePrev.slots, basePrev.ids, serverSlots);
+      writeServerBaseline(bid, serverSlots, newBaselineIds);
+
+      const workIds = nextPrepSlotIds(this.state.prepBuildSlots, this.state.prepSlotIds, finalSlots);
+      const prunedSubs = normalizeDeliverMap(this.state.prepSlotDeliverSubs, workIds);
+      writePrepSlotMeta(bid, finalSlots, workIds);
+      setPrepSlotDeliverMap(bid, prunedSubs);
+      const prunedDel = prunePrepDeliverData(bid, new Set(workIds));
+
       this.setState({
         savingPrepBuilds: false,
         proj: savedProj,
@@ -1399,25 +2598,50 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         editReady: new Set(savedProj.ready),
         sumTotal: sumCargo(savedProj.commodities),
         hasAssignments: Object.keys(savedProj.commanders).reduce((s, c) => s += savedProj.commanders[c].length, 0) > 0,
-        prepBuilds: savedProj.prepBuilds,
+        prepBuildSlots: finalSlots,
+        prepSlotIds: workIds,
+        lastServerPrepSlots: serverSlots,
+        lastServerPrepSlotIds: newBaselineIds,
+        prepSlotDeliverSubs: prunedSubs,
+        prepDeliverHistory: prunedDel.history,
+        prepDeliverFcAdjust: prunedDel.fcAdjust,
+        prepBuildNicknames: prunePrepBuildNicknames(bid, workIds),
         prepBuildsDiffer,
       });
 
     } catch (err: any) {
-      this.setState({ errorMsg: err.message });
+      this.setState({ errorMsg: err.message, savingPrepBuilds: false });
     }
   }
 
   renderCommanders() {
-    const { proj, showAddCmdr, newCmdr, isPrep } = this.state;
+    const { proj, showAddCmdr, newCmdr, isPrep, cmdrShipMode } = this.state;
     if (!proj?.commanders) { return <div />; }
 
     const rows = [];
+    const primaryCmdr = this.getPrimaryCommanderKey();
     for (const key in proj.commanders) {
       const hideCmdrRemove = isPrep && isMatchingCmdr(key, proj.architectName);
+      const shipMode: CmdrShipMode = cmdrShipMode[key] ?? 'large';
       var row = <li key={`@${key}`}>
         <span className={`removable ${cn.removable}`}>
           {key}
+          &nbsp;
+          {primaryCmdr === key && <ActionButton
+            className={cn.bBox}
+            title={shipMode === 'large' ? 'Switch to Medium Ship' : 'Switch to Large Ship'}
+            styles={{ root: { height: 18, padding: 0, minWidth: 88 } }}
+            onClick={() => {
+              const bid = this.state.proj?.buildId;
+              if (!bid) { return; }
+              const nextMode: CmdrShipMode = shipMode === 'large' ? 'medium' : 'large';
+              const next = { ...this.state.cmdrShipMode, [key]: nextMode };
+              writeCmdrShipMode(bid, next);
+              this.setState({ cmdrShipMode: next });
+            }}
+          >
+            {shipMode === 'large' ? 'Large Ship' : 'Medium Ship'}
+          </ActionButton>}
           {!hideCmdrRemove && <Icon
             className={`btn ${cn.btn}`}
             iconName='Delete'
@@ -1482,6 +2706,16 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
           style={{ color: appTheme.palette.themePrimary }}
           onClick={() => {
             this.setState({ fcEditMarketId: item.marketId.toString() });
+          }}
+        />
+        &nbsp;
+        <Icon
+          className={`btn ${cn.btn}`}
+          iconName='Refresh'
+          title='Zero FC Cargo Values'
+          style={{ color: appTheme.palette.themePrimary }}
+          onClick={() => {
+            this.onClickZeroFCCargoValues(item.marketId.toString());
           }}
         />
         &nbsp;
@@ -1556,6 +2790,28 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       />}
     </>
   }
+
+  onClickZeroFCCargoValues = (marketId: string) => {
+    const bid = this.state.proj?.buildId;
+    if (!bid) { return; }
+    const raw = this.state.fcCargo[marketId] ?? {};
+    const nextFcAdjust = { ...this.state.prepDeliverFcAdjust };
+
+    // Replace this FC's adjustment set so display becomes exactly zero for all known raw cargo keys.
+    for (const k of Object.keys(nextFcAdjust)) {
+      if (k.startsWith(`${marketId}::`)) {
+        delete nextFcAdjust[k];
+      }
+    }
+    for (const [comm, n] of Object.entries(raw)) {
+      if (n > 0) {
+        nextFcAdjust[fcAdjustKey(marketId, comm)] = n;
+      }
+    }
+
+    writePrepFcAdjust(bid, nextFcAdjust);
+    this.setState({ prepDeliverFcAdjust: nextFcAdjust });
+  };
 
   onClickCmdrRemove = async (cmdr: string) => {
     if (!this.state.proj?.buildId || !cmdr) { return; }
@@ -1735,7 +2991,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       window.location.reload();
 
     } catch (err: any) {
-      this.setState({ errorMsg: err.message });
+      this.setState({ errorMsg: err.message, submitting: false });
     }
   }
 
@@ -1753,12 +3009,92 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       window.location.reload();
 
     } catch (err: any) {
-      this.setState({ errorMsg: err.message });
+      this.setState({ errorMsg: err.message, submitting: false });
     }
   }
 
+  applyPrepCommodityEditorSave = async () => {
+    const { proj, editCommodities, prepBuildSlots, prepSlotIds, editCommoditiesSlotIndex } = this.state;
+    const slotIndex = editCommoditiesSlotIndex ?? 0;
+    const bid = proj?.buildId;
+    const bt = prepBuildSlots[slotIndex];
+    const sid = prepSlotIds[slotIndex];
+    if (!bid || !bt || !sid || !editCommodities) {
+      this.setState({ editCommodities: undefined, editCommoditiesSlotIndex: undefined, mode: Mode.view, submitting: false });
+      return;
+    }
+
+    const haul = getAvgHaulCosts(bt);
+    const keySet = new Set([
+      ...this.getPrepSlotEditValidKeys(slotIndex),
+      ...Object.keys(editCommodities),
+    ]);
+
+    type RowEdit = { key: string; newSub: number; delta: number; effectiveDisplay: number };
+    const edits: RowEdit[] = [];
+    for (const key of keySet) {
+      if (!(key in mapCommodityNames)) { continue; }
+      const base = haul[key] ?? 0;
+      const curSub = this.getPrepSlotSub(slotIndex, key);
+      const rawD = editCommodities[key];
+      const D = Math.max(0, Math.floor(typeof rawD === 'number' && !Number.isNaN(rawD) ? rawD : parseIntLocale(String(rawD ?? ''), true)));
+      const effectiveDisplay = Math.min(D, base);
+      const newSub = Math.max(0, base - effectiveDisplay);
+      const delta = newSub - curSub;
+      if (delta === 0) { continue; }
+      edits.push({ key, newSub, delta, effectiveDisplay });
+    }
+
+    if (edits.length === 0) {
+      this.setState({ editCommodities: undefined, editCommoditiesSlotIndex: undefined, mode: Mode.view });
+      return;
+    }
+
+    this.setState({ submitting: true });
+    await delay(500);
+
+    let nextHist = { ...this.state.prepDeliverHistory };
+    let nextSubs = { ...this.state.prepSlotDeliverSubs };
+    const nextFc = { ...this.state.prepDeliverFcAdjust };
+
+    for (const { key, newSub, delta, effectiveDisplay } of edits) {
+      const hk = histKey(sid, key);
+      const entry: PrepDeliverHistoryEntry = {
+        id: crypto.randomUUID(),
+        amount: Math.abs(delta),
+        commander: 'Commodity editor',
+        fromKey: 'editor',
+        fromLabel: `Commodity edited to ${effectiveDisplay.toLocaleString()}`,
+        slotSubDelta: delta,
+      };
+      nextHist[hk] = [...(nextHist[hk] ?? []), entry];
+      const sk = prepSlotDeliverKey(sid, key);
+      if (newSub <= 0) { delete nextSubs[sk]; }
+      else { nextSubs[sk] = newSub; }
+    }
+
+    setPrepSlotDeliverMap(bid, nextSubs);
+    writePrepDeliverHist(bid, nextHist);
+    writePrepFcAdjust(bid, nextFc);
+
+    this.setState({
+      submitting: false,
+      editCommodities: undefined,
+      editCommoditiesSlotIndex: undefined,
+      mode: Mode.view,
+      prepSlotDeliverSubs: nextSubs,
+      prepDeliverHistory: nextHist,
+      prepDeliverFcAdjust: nextFc,
+    });
+  };
+
   onUpdateProjectCommodities = async () => {
-    const { proj, editCommodities } = this.state;
+    const { proj, editCommodities, isPrep, prepBuildSlots, editCommoditiesSlotIndex } = this.state;
+
+    if (isPrep && prepBuildSlots.length >= 1 && editCommoditiesSlotIndex !== undefined && proj?.buildId && editCommodities) {
+      await this.applyPrepCommodityEditorSave();
+      return;
+    }
 
     if (!!proj?.commodities && proj.buildId && editCommodities) {
       const deltaProj = {
@@ -1794,7 +3130,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       try {
         const savedProj = await api.project.update(proj.buildId, deltaProj);
-        const prepBuildsDiffer = this.state.isPrep && savedProj.prepBuilds && sumCargo(savedProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepBuilds(savedProj.prepBuilds));
+        const prepBuildsDiffer = this.state.isPrep && savedProj.prepBuilds && sumCargo(savedProj.commodities) !== sumCargo(this.calcCargoNeedsForPrepProject(savedProj));
 
         // success - apply new commodity count
         this.setState({
@@ -1811,7 +3147,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         });
 
       } catch (err: any) {
-        this.setState({ errorMsg: err.message });
+        this.setState({ errorMsg: err.message, submitting: false });
       }
     }
   };
@@ -1837,7 +3173,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       });
 
     } catch (err: any) {
-      this.setState({ errorMsg: err.message });
+      this.setState({ errorMsg: err.message, submitting: false });
     }
   }
 
@@ -1966,7 +3302,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   renderDeliver() {
-    const { proj, sort, nextDelivery, showBubble, submitting, fcCargo, deliverMarketId, isPrep } = this.state;
+    const { proj, sort, nextDelivery, showBubble, submitting, fcCargo, deliverMarketId, isPrep, prepBuildSlots, deliverReferenceSlotIndex, errorMsg } = this.state;
     if (!proj) return;
 
     // build up delivery options if there are FCs we can deliver to
@@ -1995,7 +3331,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       }}
       dropdownWidth='auto'
       selectedKey={deliverMarketId}
-      onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() })}
+      onChange={(_, o) => this.setState({ deliverMarketId: o!.key.toString() }, () => this.persistLoadFcDraft())}
       styles={{ callout: { border: '1px solid ' + appTheme.palette.themePrimary } }}
     />;
 
@@ -2003,17 +3339,43 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const validCargoKeys = Object.keys(proj.commodities)
       .filter(k => proj.commodities[k] > 0)
 
-    return <div className='delivery'>
+    const refSlot = isPrep && prepBuildSlots.length > 0 && deliverReferenceSlotIndex !== -1
+      ? Math.min(Math.max(0, deliverReferenceSlotIndex), prepBuildSlots.length - 1)
+      : 0;
+    const columnRemaining = isPrep && prepBuildSlots.length >= 1 && deliverReferenceSlotIndex !== -1
+      ? this.buildPrepColumnEditCargo(refSlot)
+      : {};
+    const maxCountsForDeliver: Cargo = {};
+    const maxReqCap = this.getCmdrCargoCapForLoad();
+    const maxTotalCargo = maxReqCap;
+    for (const k of validCargoKeys) {
+      if (isPrep && prepBuildSlots.length >= 1) {
+        if (deliverReferenceSlotIndex === -1) {
+          const rem = this.getPrepMultiSlotRemainingForCommodity(k);
+          maxCountsForDeliver[k] = rem === 'unknown' ? (proj.commodities[k] ?? 0) : rem;
+        } else {
+          maxCountsForDeliver[k] = columnRemaining[k] ?? 0;
+        }
+      } else {
+        maxCountsForDeliver[k] = proj.commodities[k] ?? 0;
+      }
+    }
+
+    return <div className='delivery' style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
+      <div>
+      {errorMsg && <MessageBar messageBarType={MessageBarType.error} styles={{ root: { margin: '8px 10px 0 10px' } }}>
+        {errorMsg}
+      </MessageBar>}
       {!submitting && <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
         <PrimaryButton
-          text='Deliver'
+          text='Load FC'
           disabled={submitting || sumCargo(nextDelivery) === 0 || (isPrep && !deliverMarketId)}
           iconProps={{ iconName: 'DeliveryTruck' }}
           onClick={this.deliverToSite}
         />
         {fcCargoKeys.length > 0 && destinationPicker}
-        <DefaultButton text='Cancel' iconProps={{ iconName: 'Cancel' }} onClick={() => {
-          this.setState({ mode: Mode.view });
+        <DefaultButton text='Close' iconProps={{ iconName: 'Cancel' }} onClick={() => {
+          this.setState({ mode: Mode.view, submitting: false, loadFcReuseLastClosedDraft: true }, () => this.persistLoadFcDraft());
         }} />
       </Stack>}
 
@@ -2024,14 +3386,47 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       />}
 
       <EditCargo
+        beforeTable={isPrep && prepBuildSlots.length >= 1 ? (
+          <Stack tokens={{ childrenGap: 6 }} styles={{ root: { padding: '4px 0 10px 0' } }}>
+            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 12 }}>
+              <span style={{ fontWeight: 600, fontSize: 14, color: appTheme.semanticColors.bodyText }}>Reference Building:</span>
+              <Dropdown
+                selectedKey={deliverReferenceSlotIndex === -1 ? 'all' : String(refSlot)}
+                options={[
+                  { key: 'all', text: 'ALL (total across buildings)' },
+                  { key: 'divider_ref', text: '-', itemType: DropdownMenuItemType.Divider },
+                  ...prepBuildSlots.map((_, si) => ({ key: String(si), text: this.prepBuildingDropdownLabel(si) })),
+                ]}
+                onChange={(_, o) => {
+                  if (!o) { return; }
+                  if (o.key === 'all') {
+                    this.setState({ deliverReferenceSlotIndex: -1 }, () => this.persistLoadFcDraft());
+                    return;
+                  }
+                  const si = parseInt(String(o.key), 10);
+                  if (Number.isNaN(si) || si < 0 || si >= prepBuildSlots.length) { return; }
+                  this.setState({ deliverReferenceSlotIndex: si }, () => this.persistLoadFcDraft());
+                }}
+                styles={{ dropdown: { minWidth: 260, maxWidth: 420 } }}
+              />
+            </Stack>
+            <span style={{ fontSize: 12, color: appTheme.palette.neutralSecondary }}>
+              Chooses what <b>MAX REQ</b> fills per line. You can type any amounts within your cargo limits; Load FC uses your entered totals.
+            </span>
+          </Stack>
+        ) : undefined}
         cargo={nextDelivery}
         readyNames={Array.from(this.state.editReady)}
-        maxCounts={proj.commodities}
+        maxCounts={maxCountsForDeliver}
+        useMaxCountsAsRowCap={false}
+        resetButtonLabelMode='maxReq'
+        maxReqCap={maxReqCap}
+        maxTotalCargo={maxTotalCargo}
         validNames={validCargoKeys}
         sort={sort}
         addButtonBelow={true}
         showTotalsRow
-        onChange={cargo => this.setState({ nextDelivery: cargo })}
+        onChange={cargo => this.setState({ nextDelivery: cargo }, () => this.persistLoadFcDraft())}
       />
 
       {showBubble && <TeachingBubble
@@ -2042,6 +3437,50 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       >
         Enter your cmdr's name to get credit for this delivery.
       </TeachingBubble>}
+      </div>
+
+      <div style={{
+        minWidth: 360,
+        maxWidth: 520,
+        border: `1px solid ${appTheme.palette.themePrimary}`,
+        padding: 10,
+      }}>
+        <h3 className={cn.h3} style={{ margin: '0 0 8px 0' }}>Load History</h3>
+        {this.state.prepLoadHistory.length === 0 && <div style={{ color: appTheme.palette.neutralTertiary, fontSize: 12 }}>
+          No loads recorded yet.
+        </div>}
+        {this.state.prepLoadHistory.slice().reverse().map(entry => (
+          <div key={entry.id} style={{ marginBottom: 8, borderBottom: `1px solid ${appTheme.palette.neutralTertiaryAlt}`, paddingBottom: 6 }}>
+            <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 6 }}>
+              <details style={{ flex: 1 }}>
+                <summary style={{ cursor: 'pointer' }}>
+                  {`${entry.commander} loaded ${entry.total.toLocaleString()} commodities into ${entry.marketLabel}`}
+                </summary>
+                <ul style={{ margin: '6px 0 0 18px', padding: 0 }}>
+                  {Object.entries(entry.items)
+                    .filter(([, n]) => (n ?? 0) > 0)
+                    .map(([k, n]) => <li key={`${entry.id}-${k}`}>{`${mapCommodityNames[k] ?? k}: ${(n ?? 0).toLocaleString()}`}</li>)}
+                </ul>
+              </details>
+              <Icon
+                className='icon-btn'
+                iconName='Delete'
+                tabIndex={0}
+                role='button'
+                title='Delete this load history line and undo its local FC cargo changes'
+                style={{ color: appTheme.palette.themePrimary, cursor: 'pointer', flexShrink: 0 }}
+                onClick={() => this.removePrepLoadHistory(entry.id)}
+                onKeyDown={(ev) => {
+                  if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault();
+                    this.removePrepLoadHistory(entry.id);
+                  }
+                }}
+              />
+            </Stack>
+          </div>
+        ))}
+      </div>
 
     </div>;
   }
@@ -2067,6 +3506,10 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
   }
 
   deliverToSite2 = async (buildId: string, nextDelivery: Cargo, deliverMarketId: string) => {
+    if (this.deliverInFlight) {
+      return;
+    }
+    this.deliverInFlight = true;
     try {
       // add a little artificial delay so the spinner doesn't flicker in and out
       this.setState({ submitting: true });
@@ -2076,6 +3519,9 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         submitting: false,
         mode: Mode.view,
         deliverMarketId: deliverMarketId,
+        deliverReferenceSlotIndex: 0,
+        nextDelivery: {},
+        loadFcReuseLastClosedDraft: false,
       }
       if (deliverMarketId === 'site') {
         // deliver to the construction site
@@ -2094,20 +3540,107 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         this.fetchProjectStats(buildId);
       } else {
         // deliver to some FC
-        const newCommodities = await api.fc.deliverToFC(deliverMarketId, nextDelivery);
+        const loadedItems: Cargo = Object.keys(nextDelivery).reduce((m, k) => {
+          const n = Math.max(0, Math.floor(nextDelivery[k] ?? 0));
+          if (n > 0) { m[k] = n; }
+          return m;
+        }, {} as Cargo);
+        const loadedTotal = Object.values(loadedItems).reduce((s, v) => s + v, 0);
+        const cap = this.getCmdrCargoCapForLoad();
+        if (loadedTotal > cap) {
+          this.setState({
+            submitting: false,
+            errorMsg: `Load exceeds selected ship capacity (${cap.toLocaleString()}). Reduce Total before loading.`,
+          });
+          return;
+        }
 
-        // update commodity counts on the FC project
-        const fcCargoUpdate = this.state.fcCargo;
-        const fcCargo = fcCargoUpdate[deliverMarketId];
-        for (const k in newCommodities) { fcCargo[k] = newCommodities[k]; }
+        const prevFcCargo = { ...(this.state.fcCargo[deliverMarketId] ?? {}) };
+        // Server expects the legacy full-draft body (same keys/shape as pre-refactor client), not a positive-only map.
+        const patchResult = await api.fc.deliverToFC(deliverMarketId, nextDelivery);
+
+        let fcCargoUpdate: Record<string, Cargo>;
+        let refreshedFromServer = false;
+        await delay(200);
+        try {
+          fcCargoUpdate = await api.project.getCargoFC(buildId);
+          refreshedFromServer = true;
+        } catch {
+          fcCargoUpdate = { ...this.state.fcCargo };
+          const merged = { ...(fcCargoUpdate[deliverMarketId] ?? {}) };
+          for (const k in patchResult) {
+            merged[k] = patchResult[k] ?? 0;
+          }
+          fcCargoUpdate[deliverMarketId] = merged;
+        }
         nextState.fcCargo = fcCargoUpdate;
+        const fcCargo = { ...(fcCargoUpdate[deliverMarketId] ?? {}) };
+        const deltaKeys = new Set<string>([...Object.keys(prevFcCargo), ...Object.keys(fcCargo)]);
+        const appliedDelta: Cargo = {};
+        for (const k of deltaKeys) {
+          const d = (fcCargo[k] ?? 0) - (prevFcCargo[k] ?? 0);
+          if (d !== 0) { appliedDelta[k] = d; }
+        }
+        const partialMisses = Object.keys(loadedItems).reduce((acc, k) => {
+          const requested = loadedItems[k] ?? 0;
+          const applied = Math.max(0, appliedDelta[k] ?? 0);
+          if (applied < requested) {
+            acc.push(`${mapCommodityNames[k] ?? k} (added ${applied.toLocaleString()} of ${requested.toLocaleString()})`);
+          }
+          return acc;
+        }, [] as string[]);
+
+        writeLoadFcDiag({
+          at: Date.now(),
+          buildId,
+          marketId: deliverMarketId,
+          commander: store.cmdrName,
+          loadedItems,
+          submittedToApi: { ...nextDelivery },
+          patchResult,
+          prevFcCargo,
+          afterFcCargo: fcCargo,
+          appliedDelta,
+          partialLines: partialMisses,
+          refreshedFromServer,
+        });
+
+        if (partialMisses.length > 0) {
+          nextState.loadFcNotice = `Load FC: the server only applied part of this haul. ${partialMisses.slice(0, 8).join('; ')}${partialMisses.length > 8 ? '; …' : ''}`;
+          nextState.loadFcPartialDialog = {
+            title: 'Load FC — incomplete',
+            body:
+              `${partialMisses.join('\n')}\n\n`
+              + `Full technical snapshot (JSON) is in your browser under localStorage key:\n`
+              + `loadFcLastDiag\n\n`
+              + `Open DevTools → Application → Local Storage, or Console → localStorage.getItem('loadFcLastDiag').`,
+          };
+          console.warn('Load FC partial apply', { requested: loadedItems, prevFcCargo, after: fcCargo, appliedDelta, refreshedFromServer });
+        }
+
+        if (loadedTotal > 0) {
+          this.appendPrepLoadHistory(buildId, {
+            id: crypto.randomUUID(),
+            at: Date.now(),
+            commander: store.cmdrName || 'Unknown',
+            marketId: deliverMarketId,
+            marketLabel: this.getFullFCName(deliverMarketId),
+            total: loadedTotal,
+            items: loadedItems,
+            deltas: appliedDelta,
+          });
+        }
       }
 
+      clearLoadFcDraft(buildId);
       this.setState(nextState as ProjectViewState);
       store.deliver = nextDelivery;
       store.deliverDestination = deliverMarketId;
     } catch (err: any) {
-      this.setState({ errorMsg: err.message });
+      // Must clear submitting: otherwise the Cancel row stays hidden and only the spinner shows (no way out).
+      this.setState({ errorMsg: err.message, submitting: false });
+    } finally {
+      this.deliverInFlight = false;
     }
   };
 

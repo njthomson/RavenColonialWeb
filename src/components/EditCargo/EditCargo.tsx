@@ -1,7 +1,7 @@
 import './EditCargo.css';
 
 import { ActionButton, Dropdown, Icon, IDropdownOption, Label, SelectableOptionMenuItemType, Stack } from '@fluentui/react';
-import { Component, CSSProperties } from 'react';
+import { Component, CSSProperties, ReactNode } from 'react';
 import { CommodityIcon } from '..';
 import { store } from '../../local-storage';
 import { appTheme } from '../../theme';
@@ -13,7 +13,7 @@ import { mapName } from '../../site-data';
 interface EditCargoProps {
   /** Counts of cargo */
   cargo: Cargo;
-  /** Max values of cargo */
+  /** Per-row default amounts; when set, shows a reset button that restores `cargo[key]` to this value. */
   maxCounts?: Cargo;
   /** Names of cargo items valid to be added */
   validNames?: string[];
@@ -29,6 +29,20 @@ interface EditCargoProps {
   addButtonBelow?: boolean;
   /** Show the add button above the table, vs next to the sort order button */
   addButtonAbove?: boolean;
+
+  /** Rendered inside `.edit-cargo` immediately above the commodity table (e.g. prep deliver reference building). */
+  beforeTable?: ReactNode;
+  /** Presentation of the reset button label; behavior always resets to `maxCounts[key]`. */
+  resetButtonLabelMode?: 'value' | 'maxReq';
+  /** Optional cap applied to MAX REQ button behavior. */
+  maxReqCap?: number;
+  /** When set, row amounts and MAX REQ are clamped so sum(cargo) never exceeds this. */
+  maxTotalCargo?: number;
+  /**
+   * When false, `maxCounts` only sets the MAX REQ / reset target (e.g. guided by a reference column).
+   * Manual typing is capped by `maxReqCap` and `maxTotalCargo` only. Default true.
+   */
+  useMaxCountsAsRowCap?: boolean;
 
   onChange?: (cargo: Cargo) => void;
 }
@@ -70,9 +84,23 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   }
 
   componentDidUpdate(prevProps: Readonly<EditCargoProps>, prevState: Readonly<EditCargoState>, snapshot?: any): void {
-    // broadcast change if the total count has changed
-    if (this.props.onChange && sumCargo(prevState.cargo) !== sumCargo(this.state.cargo)) {
-      this.props.onChange(this.state.cargo);
+    // broadcast change when totals, row set, or any amount changes (e.g. new row at 0 must sync — sum alone is not enough)
+    if (this.props.onChange) {
+      const prev = prevState.cargo;
+      const next = this.state.cargo;
+      let changed = sumCargo(prev) !== sumCargo(next);
+      if (!changed) {
+        const keys = new Set<string>([...Object.keys(prev), ...Object.keys(next)]);
+        for (const k of keys) {
+          if (prev[k] !== next[k]) {
+            changed = true;
+            break;
+          }
+        }
+      }
+      if (changed) {
+        this.props.onChange(next);
+      }
     }
 
     // if there's nothing left to be added - hide the `Add` button
@@ -107,6 +135,35 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     });
   }
 
+  private sumCargoExcept(cargo: Cargo, exceptKey: string): number {
+    let s = 0;
+    for (const k in cargo) {
+      if (k === exceptKey) { continue; }
+      const v = cargo[k];
+      if (typeof v === 'number' && v > 0) { s += v; }
+    }
+    return s;
+  }
+
+  private clampKeyToCaps(key: string, cargo: Cargo, raw: number): number {
+    let v = Math.max(0, Math.floor(Number.isFinite(raw) ? raw : 0));
+    const { maxCounts, maxTotalCargo, maxReqCap, useMaxCountsAsRowCap } = this.props;
+    const rowCapFromGuidance = useMaxCountsAsRowCap !== false;
+    const defaultCount = maxCounts && maxCounts[key] !== undefined ? maxCounts[key] : undefined;
+    if (rowCapFromGuidance && defaultCount !== undefined && defaultCount >= 0) {
+      v = Math.min(v, Math.floor(defaultCount));
+    }
+    if (typeof maxReqCap === 'number' && this.props.resetButtonLabelMode === 'maxReq') {
+      v = Math.min(v, Math.max(0, Math.floor(maxReqCap)));
+    }
+    if (typeof maxTotalCargo === 'number') {
+      const others = this.sumCargoExcept(cargo, key);
+      const cap = Math.max(0, Math.floor(maxTotalCargo));
+      v = Math.min(v, Math.max(0, cap - others));
+    }
+    return v;
+  }
+
   render() {
     const { cargo, sort, canAddMore, newCargo } = this.state;
     const { addButtonBelow, addButtonAbove, showTotalsRow: totalsRow } = this.props;
@@ -128,6 +185,8 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
       {!hasCargoRows && <Label>No known cargo. Please add ...</Label>}
 
       {showAddNew && this.renderAddNew()}
+
+      {this.props.beforeTable}
 
       {hasCargoRows && <table cellSpacing={0}>
         <thead>
@@ -189,6 +248,18 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
         }}
       />}
 
+      {!showAddNew && canAddMore && (addButtonBelow || !hasCargoRows) && !!this.props.maxCounts && this.props.resetButtonLabelMode === 'maxReq' && <div style={{ marginTop: 6, fontSize: 12, color: appTheme.palette.neutralSecondary }}>
+        {this.props.useMaxCountsAsRowCap === false ? <>
+          <b>Note</b> MAX REQ fills each line from the reference you chose (capped by cargo capacity). You can type any amounts within per-line and total capacity; Load FC sends what you enter.
+        </> : <>
+          <b>Note</b> Clicking MAX REQ caps each commodity to its required amount and to your maximum cargo capacity.
+        </>}
+        {typeof this.props.maxTotalCargo === 'number' && <>
+          <br />
+          <b>Total</b> across all lines cannot exceed that capacity; amounts and MAX REQ use whatever room is left.
+        </>}
+      </div>}
+
     </div>;
   }
 
@@ -234,16 +305,40 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
   renderItemRow(key: string, flip: boolean) {
     const { cargo } = this.state;
-    const { noDelete, maxCounts, readyNames } = this.props;
+    const { noDelete, maxCounts, readyNames, resetButtonLabelMode, maxReqCap } = this.props;
 
     const displayName = mapCommodityNames[key];
     const isReady = readyNames && readyNames.includes(key)
       ? <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />
       : undefined;
 
-    // if we have max values
-    let maxValue = maxCounts && maxCounts[key];
-    if (maxValue) { Math.min(maxValue, store.cmdr?.largeMax ?? 800) }
+    const useRowCapFromGuidance = this.props.useMaxCountsAsRowCap !== false;
+    const defaultCount = maxCounts && maxCounts[key] !== undefined ? maxCounts[key] : undefined;
+    const guidanceMax = defaultCount !== undefined && defaultCount >= 0 ? defaultCount : undefined;
+    const sumOthers = this.sumCargoExcept(cargo, key);
+    const maxTotal = this.props.maxTotalCargo;
+    const rowMaxFromTotal = typeof maxTotal === 'number'
+      ? Math.max(0, Math.floor(maxTotal) - sumOthers + (typeof cargo[key] === 'number' && cargo[key] > 0 ? cargo[key] : 0))
+      : undefined;
+    const maxReqLine = typeof maxReqCap === 'number' && resetButtonLabelMode === 'maxReq'
+      ? Math.max(0, Math.floor(maxReqCap))
+      : undefined;
+    const htmlMax = !useRowCapFromGuidance
+      ? (() => {
+          const parts = [rowMaxFromTotal, maxReqLine].filter((x): x is number => typeof x === 'number');
+          return parts.length > 0 ? Math.min(...parts) : undefined;
+        })()
+      : (guidanceMax !== undefined && rowMaxFromTotal !== undefined
+        ? Math.min(guidanceMax, rowMaxFromTotal)
+        : guidanceMax ?? rowMaxFromTotal);
+
+    const showMaxReq = resetButtonLabelMode === 'maxReq';
+    const roomUnderTotal = typeof maxTotal === 'number'
+      ? Math.max(0, Math.floor(maxTotal) - sumOthers)
+      : undefined;
+    const cappedDefault = showMaxReq && typeof maxReqCap === 'number'
+      ? Math.min(defaultCount ?? 0, Math.max(0, Math.floor(maxReqCap)), roomUnderTotal ?? Infinity)
+      : defaultCount;
 
     // different colour per row
     const rowStyle: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
@@ -262,7 +357,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
           id={`edit-${key}`}
           type='number'
           min={0}
-          max={maxValue}
+          max={htmlMax}
           value={cargo[key] === -1 ? '' : cargo[key]}
           style={{
             backgroundColor: appTheme.palette.themeLighterAlt,
@@ -270,7 +365,10 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
             border: '1px solid ' + appTheme.palette.accent
           }}
           onChange={(ev) => {
-            this.updateCargoState(uc => uc[key] = ev.target.valueAsNumber || 0);
+            const raw = ev.target.value === '' ? 0 : ev.target.valueAsNumber;
+            this.updateCargoState(uc => {
+              uc[key] = this.clampKeyToCaps(key, uc, raw);
+            });
           }}
           onFocus={(ev) => {
             ev.target.type = 'text';
@@ -293,16 +391,20 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
           }}
         />}
 
-        {/* Add max button - if we have maxCounts */}
-        {maxCounts && maxCounts[key] && <ActionButton
+        {/* Reset-to-default button when maxCounts supplies the template value for this row */}
+        {defaultCount !== undefined && defaultCount >= 0 && <ActionButton
           className='icon-btn'
-          title='Set amount needed, or ship max'
+          title={showMaxReq
+            ? `Maximum required (${defaultCount.toLocaleString()})`
+            : `Reset amount to default (${defaultCount.toLocaleString()})`}
           iconProps={{ iconName: 'CirclePlus' }}
           onClick={() => {
-            this.updateCargoState(uc => uc[key] = Math.min(this.props.maxCounts![key], store.cmdr?.largeMax ?? 800));
+            const base = showMaxReq ? cappedDefault : defaultCount;
+            const v = this.clampKeyToCaps(key, this.state.cargo, Math.max(0, Math.floor(Number(base))));
+            this.updateCargoState(uc => { uc[key] = v; });
             delayFocus(`edit-${key}`);
           }} >
-          {maxCounts[key]}
+          {showMaxReq ? 'MAX REQ' : defaultCount.toLocaleString()}
         </ActionButton>}
       </td>
     </tr>;

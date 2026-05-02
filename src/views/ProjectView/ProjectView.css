@@ -221,3 +221,23 @@ h3 .ms-Button--action {
     display: block;
   }
 }
+
+.commodities .prep-slot-deliverable {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.commodities .prep-slot-deliverable:hover {
+  opacity: 0.85;
+}
+
+/* Match FC-diff “bubble” on the same span the Callout anchors to */
+.commodities .prep-slot-deliverable.bubble.prep-slot-deliverable--callout {
+  color: black;
+  text-decoration: none;
+}
+
+.commodities .prep-slot-deliverable.bubble.prep-slot-deliverable--callout:hover {
+  opacity: 1;
+}
