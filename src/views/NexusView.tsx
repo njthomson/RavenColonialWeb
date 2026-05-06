@@ -1013,7 +1013,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         <IconButton
           id={`cargo-all`}
           title='View cargo needs for: all systems'
-          iconProps={{ iconName: 'MSNVideosSolid', style: { color: appTheme.palette.black } }}
+          iconProps={{ iconName: 'MSNVideosSolid', style: { color: appTheme.semanticColors.bodyText } }}
           style={{ float: 'right', marginRight: 6, marginTop: -6 }}
           disabled={saving}
           onClick={() => this.setState({ showRemaining: showRemaining === 1 ? undefined : 1, addingSysFC: undefined })}
