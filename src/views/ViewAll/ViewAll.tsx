@@ -15,6 +15,7 @@ import { HaulSize } from '../../components/BigSiteTable/BigSiteTable';
 import { redirectToFrontierAuth } from '../../api/auth';
 import { renderQuote } from '../Home';
 import { ShowCoachingMarks } from '../../components/ShowCoachingMarks';
+import { App } from '../../App';
 
 interface ViewAllProps {
 }
@@ -466,7 +467,7 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
               title='Open Discord link'
               onClick={() => openDiscordLink(p.discordLink)}
             />}
-            {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
+            {p.buildId === App.cmdrSettings?.primaryBuildId && <Icon iconName='SingleBookmarkSolid' title='This is your current primary project' />}
           </Stack>
 
           <Stack className='project-link' horizontal tokens={{ childrenGap: 4 }} verticalAlign='center'>

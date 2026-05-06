@@ -23,6 +23,7 @@ import { ViewEditBuildType } from '../SystemView2/ViewEditBuildType';
 import { getAvgHaulCosts } from '../../avg-haul-costs';
 import { EconomyTable2 } from '../SystemView2/EconomyTable2';
 import { buildSystemModel2, SysMap2 } from '../../system-model2';
+import { App } from '../../App';
 
 interface ProjectViewProps {
   buildId?: string;
@@ -106,7 +107,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     this.state = {
       loading: true,
       autoUpdateUntil: Date.now() + autoUpdateStopDuration,
-      primaryBuildId: store.primaryBuildId,
+      primaryBuildId: App.cmdrSettings?.primaryBuildId,
       mode: Mode.view,
       sort: sortMode ?? SortMode.group,
       newCmdr: '',
@@ -152,7 +153,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         proj: undefined,
         loading: true,
         autoUpdateUntil: Date.now() + autoUpdateStopDuration,
-        primaryBuildId: store.primaryBuildId,
+        primaryBuildId: App.cmdrSettings?.primaryBuildId,
         mode: Mode.view,
         newCmdr: '',
         editProject: false,
@@ -262,7 +263,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       if (newProj.complete) {
         const sys = await api.systemV2.getSys(newProj.systemAddress.toString());
-        const sysMap = buildSystemModel2(sys, false, store.applyBuffNerf);
+        const sysMap = buildSystemModel2(sys, false, !!App.cmdrSettings?.noBuffNerf);
         this.setState({ sysMap });
       } else if (!isPrep) {
         // if ALL commodities have a count of -1 ... it means the project is brand new and we want people to edit them to real numbers
@@ -352,7 +353,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     api.cmdr.setPrimary(store.cmdrName, buildId)
       .then(() => {
-        store.primaryBuildId = buildId;
+        store._primaryBuildId = buildId;
+        App.cmdrSettings!.primaryBuildId = buildId;
         this.setState({ refreshing: false, primaryBuildId: buildId });
       })
       .catch(err => this.setState({ refreshing: false, errorMsg: err.message }));
@@ -365,7 +367,8 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     api.cmdr.clearPrimary(store.cmdrName)
       .then(() => {
-        store.primaryBuildId = '';
+        store._primaryBuildId = '';
+        App.cmdrSettings!.primaryBuildId = '';
         this.setState({ refreshing: false, primaryBuildId: '' });
       })
       .catch(err => this.setState({ refreshing: false, errorMsg: err.message }));

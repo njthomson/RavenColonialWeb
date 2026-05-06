@@ -46,4 +46,8 @@ export const fc = {
   setLocation: async (nameOrNum: string, systemName: string): Promise<KnownFC> => {
     return await callAPI<KnownFC>(`/api/fc/${encodeURIComponent(nameOrNum)}/location/${encodeURIComponent(systemName)}`, 'POST');
   },
+
+  refreshFC: async (nameOrNum: string): Promise<KnownFC> => {
+    return await callAPI<KnownFC>(`/api/fc/${encodeURIComponent(nameOrNum)}/refresh`, 'POST');
+  },
 };

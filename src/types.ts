@@ -1,6 +1,8 @@
 
 export const autoUpdateFrequency = 30 * 1000; // 30 seconds
 export const autoUpdateStopDuration = 60 * 60 * 1000; // 60 minutes
+export const twoDays = (60 * 60 * 1000) * 24 * 2; // 2 days
+export const fourWeeks = (60 * 60 * 1000) * 24 * 28; // 28 days
 
 export enum TopPivot {
   home = 'home',
@@ -387,7 +389,15 @@ export interface KnownFC {
   systemName?: string;
   id64?: number;
   starPos?: number[];
+  access: string;
+  notorious: boolean;
   icon?: string;
+}
+
+export const mapFCAccess = (val: string) => {
+  return val === 'SquadronAndFriends'
+    ? 'Squadron and Friends'
+    : val;
 }
 
 export const mapCommodityIcon: Record<string, string> = {

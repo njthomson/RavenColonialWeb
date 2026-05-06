@@ -53,6 +53,7 @@ export const ShareFeedback: FunctionComponent<{ topic: string; body?: string; on
       </div>
 
       <TextField
+        autoFocus
         label='Subject:'
         value={subject}
         onChange={(_, v) => setSubject(v ?? '')}

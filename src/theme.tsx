@@ -198,6 +198,7 @@ export const cn = mergeStyleSets({
     borderTop: appTheme.palette.purpleDark + ' 1px solid',
     boxShadow: '0 -0.1rem 2rem 0px ' + appTheme.palette.purple,
     backgroundColor: appTheme.palette.white,
+    fontSize: 12,
   },
   topBar: {
     borderBottom: appTheme.palette.purpleDark + ' 1px solid',

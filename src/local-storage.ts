@@ -162,8 +162,8 @@ class LocalStorage {
   get commodityHideFCColumns(): boolean { return readBoolean(Stored.hideFC); }
   set commodityHideFCColumns(newValue: boolean) { writeValue(Stored.hideFC, newValue); }
 
-  get primaryBuildId(): string { return readString(Stored.primaryBuildId); }
-  set primaryBuildId(newValue: string) { writeValue(Stored.primaryBuildId, newValue); }
+  get _primaryBuildId(): string { return readString(Stored.primaryBuildId); } // TODO: retire
+  set _primaryBuildId(newValue: string) { writeValue(Stored.primaryBuildId, newValue); } // TODO: retire
 
   /** Map of FC market IDs */
   get cmdrLinkedFCs(): Record<string, string> { return readValue(Stored.cmdrLinkedFCs) ?? {}; }
@@ -175,8 +175,8 @@ class LocalStorage {
   get theme(): string { return readString(Stored.theme); }
   set theme(newValue: string) { writeValue(Stored.theme, newValue); }
 
-  get hideShipTrips(): boolean { return readBoolean(Stored.hideShipTrips); }
-  set hideShipTrips(newValue: boolean) { writeValue(Stored.hideShipTrips, newValue); }
+  get _hideShipTrips(): boolean { return readBoolean(Stored.hideShipTrips); } // TODO: retire
+  set _hideShipTrips(newValue: boolean) { writeValue(Stored.hideShipTrips, newValue); } // TODO: retire
 
   get useNativeDiscord(): boolean { return readBoolean(Stored.useNativeDiscord); }
   set useNativeDiscord(newValue: boolean) { writeValue(Stored.useNativeDiscord, newValue); }
@@ -217,8 +217,8 @@ class LocalStorage {
   get viewAllHiddenFC(): number[] { return readValue(Stored.viewAllHiddenFC, [])!; }
   set viewAllHiddenFC(newValue: number[]) { writeValue(Stored.viewAllHiddenFC, newValue); }
 
-  get applyBuffNerf(): boolean { return readBoolean(Stored.applyBuffNerf, true); }
-  set applyBuffNerf(newValue: boolean) { writeValue(Stored.applyBuffNerf, newValue); }
+  get _applyBuffNerf(): boolean { return readBoolean(Stored.applyBuffNerf, true); } // TODO: retire
+  set _applyBuffNerf(newValue: boolean) { writeValue(Stored.applyBuffNerf, newValue); } // TODO: retire
 
   get recentID64(): NameID64[] { return readValue(Stored.recentID64, [])!; }
   set recentID64(newValue: NameID64[]) { writeValue(Stored.recentID64, newValue); }

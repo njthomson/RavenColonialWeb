@@ -95,7 +95,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       processingMsg: 'Loading ...',
       useIncomplete: store.useIncomplete,
       viewType: store.sysViewView,
-      buffNerf: store.applyBuffNerf,
+      buffNerf: !App.cmdrSettings?.noBuffNerf,
     };
   }
 

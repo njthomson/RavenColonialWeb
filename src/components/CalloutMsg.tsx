@@ -5,7 +5,7 @@ import { appTheme, cn } from "../theme";
 
 let nn = 0;
 
-export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName?: string; width?: number; height?: number; iconStyle?: CSSProperties; directionalHint?: DirectionalHint }> = (props) => {
+export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName?: string; width?: number; height?: number; iconStyle?: CSSProperties; directionalHint?: DirectionalHint; color?: string; backgroundColor?: string; }> = (props) => {
   const [showBubble, setShowBubble] = useState(false);
   const [cid] = useState(`cid--${++nn}`);
   return <span id={cid}>
@@ -31,11 +31,11 @@ export const CalloutMsg: FunctionComponent<{ msg: string | JSX.Element; iconName
       directionalHint={props.directionalHint}
       styles={{
         beak: {
-          backgroundColor: appTheme.palette.themeTertiary,
+          backgroundColor: props.backgroundColor ?? appTheme.palette.themeTertiary,
         },
         calloutMain: {
-          backgroundColor: appTheme.palette.themeTertiary,
-          color: appTheme.palette.neutralDark,
+          backgroundColor: props.backgroundColor ?? appTheme.palette.themeTertiary,
+          color: props.color ?? appTheme.palette.neutralDark,
         }
       }}
       onDismiss={() => setTimeout(() => setShowBubble(false), 0)}

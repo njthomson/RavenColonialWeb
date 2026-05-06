@@ -65,6 +65,6 @@ export const renderQuote = () => {
       window.location.assign("#sys");
       window.location.reload();
     }} />
-    &nbsp;or view an existing system: <Link href='https://ravencolonial.com/#sys=HIP%2090297' target='_blank'>HIP 90297</Link>
+    &nbsp;or view an existing system: <Link href='/#sys=HIP%2090297' target='_blank'>HIP 90297</Link>
   </div>
 };

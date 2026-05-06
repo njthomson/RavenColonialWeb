@@ -6,6 +6,7 @@ import { CargoRemaining, CommodityIcon, ProjectLink } from '../../components';
 import { mapCommodityNames, ProjectRef } from '../../types';
 import { store } from '../../local-storage';
 import { appTheme, cn } from '../../theme';
+import { App } from '../../App';
 
 interface CmdrProps { }
 
@@ -122,7 +123,7 @@ export class Commander extends Component<CmdrProps, CmdrState> {
         <td colSpan={4}>
           <li className='header'>
             <ProjectLink proj={p} />
-            {p.buildId === store.primaryBuildId && <Icon iconName='SingleBookmarkSolid' className='icon-inline' title='This is your current primary project' />}
+            {p.buildId === App.cmdrSettings?.primaryBuildId && <Icon iconName='SingleBookmarkSolid' className='icon-inline' title='This is your current primary project' />}
           </li>
         </td>
       </tr>;

@@ -5,6 +5,14 @@ import { NexusSummary } from "./nexus";
 /** Fleet Carrier APIs */
 export const cmdr = {
 
+  getMyCmdr: async (): Promise<CmdrSettings> => {
+    return await callAPI<CmdrSettings>(`/api/cmdr/_`);
+  },
+
+  updateSettings: async (data: CmdrSettingsUpdate): Promise<CmdrSettings> => {
+    return await callAPI<CmdrSettings>(`/api/cmdr/_`, 'POST', JSON.stringify(data));
+  },
+
   getCmdr: async (cmdr: string): Promise<CmdrView> => {
     return await callAPI<CmdrView>(`/api/cmdr/${encodeURIComponent(cmdr)}`);
   },
@@ -79,3 +87,17 @@ export interface ViewAll {
   linkedFC: KnownFC[];
   hiddenIDs: string[];
 }
+
+export interface CmdrSettingsUpdate {
+  primaryBuildId?: string;
+  shipSizes?: number[];
+  noBuffNerf?: boolean;
+  hideShipTrips?: boolean;
+}
+
+export interface CmdrSettings extends CmdrSettingsUpdate {
+  fid: string;
+  cmdr: string;
+  lastLogin?: string;
+}
+

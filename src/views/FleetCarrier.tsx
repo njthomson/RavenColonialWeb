@@ -2,11 +2,13 @@ import { DefaultButton, IconButton, mergeStyles, MessageBar, MessageBarType, Pan
 import { Component } from 'react';
 import * as api from '../api';
 import { EditCargo, FindSystemName } from '../components';
-import { appTheme } from '../theme';
-import { Cargo, KnownFC } from '../types';
+import { appTheme, cn } from '../theme';
+import { Cargo, KnownFC, mapFCAccess } from '../types';
 import { store } from '../local-storage';
-import { delay, fcFullName, isMobile } from '../util';
+import { asGrey, delay, fcFullName, isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
+import { StackH } from '../components/Widgets';
+import { CalloutMsg } from '../components/CalloutMsg';
 
 
 const css = mergeStyles({
@@ -34,6 +36,8 @@ interface FleetCarrierState {
 
   loading: boolean;
   saving?: boolean;
+  refreshing?: boolean;
+  blockRefresh?: boolean;
   fc?: KnownFC;
   editCargo: Cargo;
   editDisplayName?: string;
@@ -75,7 +79,9 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
   }
 
   render() {
-    const { errorMsg, loading, saving } = this.state;
+    const { fc, errorMsg, loading, saving, refreshing, blockRefresh } = this.state;
+
+    const isSquadFC = fc?.name.length === 4;
 
     return <Panel
       className={css}
@@ -89,8 +95,32 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
       }}
       onDismiss={() => this.props.onClose()}
-      isFooterAtBottom
-
+      onRenderHeader={() => {
+        return <StackH style={{ marginLeft: 4, fontSize: 20, fontWeight: 600, width: 'stretch' }}>
+          {!refreshing && !loading && !saving && <IconButton
+            title={isSquadFC ? 'Squadron FCs not currently supported' : 'Refresh FC data from Frontier'}
+            className={cn.bBox}
+            iconProps={{ iconName: 'Refresh', style: { fontWeight: 'bold', color: asGrey(refreshing || blockRefresh || isSquadFC) } }}
+            disabled={refreshing || blockRefresh || isSquadFC}
+            onClick={() => {
+              this.setState({ refreshing: true });
+              api.fc.refreshFC(this.props.marketId)
+                .then(updatedFC => this.setState({ refreshing: false, fc: updatedFC, editCargo: updatedFC.cargo }))
+                .catch(err => {
+                  console.error(err.message);
+                  if (err.statusCode === 400) {
+                    this.setState({ refreshing: false, blockRefresh: true });
+                  } else {
+                    this.setState({ refreshing: false, errorMsg: err.message });
+                  }
+                });
+            }}
+          />}
+          {(refreshing || loading || saving) && <div style={{ display: 'inline-block', width: 32, height: 22 }}><Spinner size={SpinnerSize.medium} /></div>}
+          <span style={{ marginLeft: 4 }}>Edit Fleet Carrier</span>
+        </StackH>;
+      }}
+      isFooterAtBottom={!isMobile()}
       onRenderFooterContent={() => {
         return <div>
           {saving && <Spinner size={SpinnerSize.large} labelPosition='right' label={'Saving ...'} />}
@@ -116,6 +146,25 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
       }}
     >
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
+
+      {blockRefresh && <MessageBar
+        messageBarType={MessageBarType.info}
+        styles={{ text: { margin: 4 }, icon: { margin: 0 } }}
+      >
+        <div>This Fleet Carrier cannot be refreshed at this time</div>
+        <StackH gap={4}>
+          <div>Please try again later</div>
+          <CalloutMsg
+            color={appTheme.palette.white} backgroundColor={appTheme.palette.themeDark}
+            iconStyle={{ color: appTheme.palette.themeDarker, fontSize: 12 }}
+            msg={<div>
+              Refreshing Fleet Carriers needs the FC owner to have logged into Raven Colonial within the past 30 days.<br />
+              If the owner plays through Epic, this may not work unless they are currently playing the game.<br />
+              Please allow 5+ minutes between attempts.
+            </div>}
+          />
+        </StackH>
+      </MessageBar>}
 
       {this.props.marketId && this.renderFC()}
     </Panel>;
@@ -221,6 +270,17 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           <td className='lbl'>Owner:</td>
           <td className='val'>
             {fc?.owner}
+          </td>
+        </tr>}
+
+        {<tr>
+          <td className='lbl'>Access:</td>
+          <td className='val'>
+            {!!fc && <>
+              {mapFCAccess(fc.access)}
+              <span style={{ backgroundColor: appTheme.palette.white, margin: '0 4px', padding: '0 4px' }}>Notorious:</span>
+              {fc.notorious ? 'Allowed' : 'Denied'}
+            </>}
           </td>
         </tr>}
 

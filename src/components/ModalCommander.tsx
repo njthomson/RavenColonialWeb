@@ -10,6 +10,8 @@ import { CalloutMsg } from './CalloutMsg';
 import { redirectToFrontierAuth, resetApiKey } from '../api/auth';
 import { CopyButton } from './CopyButton';
 import { App } from '../App';
+import { CmdrSettingsUpdate } from '../api/cmdr';
+import { fourWeeks } from '../types';
 
 interface ModalCommanderProps {
   onComplete: () => void;
@@ -34,7 +36,7 @@ interface ModalCommanderState {
   hideShipTrips: boolean
   useNativeDiscord: boolean;
   fetchingFCs?: boolean;
-  applyBuffNerf: boolean;
+  noBuffNerf: boolean;
 }
 
 export class ModalCommander extends Component<ModalCommanderProps, ModalCommanderState> {
@@ -57,9 +59,9 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       cargoMediumMax: this.medMax,
       cmdrLinkedFCs: { ...store.cmdrLinkedFCs },
       cmdrEditLinkedFCs: { ...store.cmdrLinkedFCs },
-      hideShipTrips: store.hideShipTrips,
+      hideShipTrips: !!App.cmdrSettings?.hideShipTrips,
       useNativeDiscord: store.useNativeDiscord,
-      applyBuffNerf: store.applyBuffNerf,
+      noBuffNerf: !!App.cmdrSettings?.noBuffNerf,
     };
 
     if (props.preAddFC) {
@@ -93,7 +95,7 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   render() {
-    const { cmdr, apiKey, showApiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, applyBuffNerf, fetchingFCs } = this.state;
+    const { cmdr, apiKey, showApiKey, resetting, cargoLargeMax, cargoMediumMax, showAddFC, cmdrEditLinkedFCs, fcEditMarketId, hideShipTrips, useNativeDiscord, noBuffNerf, fetchingFCs } = this.state;
     const showLogin = true;
 
     const rows = Object.entries(cmdrEditLinkedFCs ?? {})?.map(([marketId, fullName]) => (<li key={`@${marketId}`}>
@@ -124,6 +126,9 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
       ? 'login needed'
       : showApiKey && !localStorage.getItem('streamer') ? apiKey : '(hidden)';
 
+    const timeSinceLastLogin = Date.now() - new Date(App.cmdrSettings?.lastLogin ?? '').getTime();
+    const tooLong = timeSinceLastLogin > fourWeeks;
+
     return <>
       <div className="edit-cmdr half">
         <div style={{ textAlign: 'left' }}>
@@ -132,6 +137,9 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             onMouseLeave={() => this.setState({ showApiKey: false })}
           >
             <Label style={{ margin: 0, padding: 0 }}>Commander name:</Label>
+
+            {tooLong && <div style={{ marginLeft: 12, fontSize: 12, color: appTheme.palette.yellowDark, textAlign: 'right' }}>Frontier requires a re-login every 30 days</div>}
+
             <Stack horizontal verticalAlign='end' style={{ margin: 0, padding: 0 }}>
               <TextField
                 autoFocus
@@ -147,8 +155,8 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
               {showLogin && <ActionButton
                 className={`${cn.bBox2} ${cn.bGrey}`}
-                style={{ height: 32, margin: '8px 0 8px 8px', minWidth: 88 }}
-                iconProps={{ iconName: 'SignIn' }}
+                style={{ height: 32, margin: '8px 0 8px 8px', minWidth: 88, color: tooLong ? appTheme.palette.yellowDark : undefined }}
+                iconProps={{ iconName: 'SignIn', style: { color: tooLong ? appTheme.palette.yellowDark : undefined } }}
                 text='Login'
                 onClick={() => {
                   if (cmdr && !apiKey) {
@@ -218,9 +226,9 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
               <CalloutMsg msg='Requires Discord app to be installed on this device.' directionalHint={DirectionalHint.rightCenter} iconStyle={{ fontSize: 12 }} />
             </Stack>
             <Checkbox
-              checked={applyBuffNerf}
+              checked={!noBuffNerf}
               label='Apply buff/nerf by default'
-              onChange={(_ev, checked) => this.setState({ applyBuffNerf: !!checked })}
+              onChange={(_ev, checked) => this.setState({ noBuffNerf: !checked })}
             />
           </Stack>
 
@@ -284,8 +292,19 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
         </div>
 
         <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }} horizontalAlign='end'>
-          <PrimaryButton iconProps={{ iconName: 'Save' }} text='Save' onClick={this.onSave} title='Save changes' />
-          <DefaultButton iconProps={{ iconName: 'Cancel' }} text='Cancel' onClick={this.onCancel} title='Discard changes' />
+          <PrimaryButton
+            iconProps={{ iconName: 'Save' }}
+            text='Save'
+            title='Save changes'
+            disabled={!cmdr}
+            onClick={this.onSave}
+          />
+          <DefaultButton
+            iconProps={{ iconName: 'Cancel' }}
+            text='Cancel'
+            title='Discard changes'
+            onClick={this.onCancel}
+          />
 
           <IconButton
             className={cn.bBox}
@@ -314,8 +333,26 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
   }
 
   onSave = async () => {
-    const { cmdr, cargoLargeMax, cargoMediumMax } = this.state;
+    const { cmdr, cargoLargeMax, cargoMediumMax, noBuffNerf, hideShipTrips } = this.state;
+    if (!cmdr) { return; }
+
     if (!!cmdr) {
+      // push to server - only what has changed
+      const data: CmdrSettingsUpdate = {};
+      if (JSON.stringify(App.cmdrSettings?.shipSizes ?? []) !== JSON.stringify([cargoLargeMax, cargoMediumMax])) {
+        data.shipSizes = [cargoLargeMax, cargoMediumMax];
+      }
+      if (App.cmdrSettings?.noBuffNerf !== noBuffNerf) {
+        data.noBuffNerf = noBuffNerf;
+      }
+      if (App.cmdrSettings?.hideShipTrips !== hideShipTrips) {
+        data.hideShipTrips = hideShipTrips;
+      }
+      console.log(data);
+      if (Object.values(data).length > 0) {
+        const updatedSettings = await api.cmdr.updateSettings(data);
+        App.cmdrSettings = updatedSettings!;
+      }
 
       // update server if cmdr name changed by casing ONLY
       if (cmdr.toLowerCase() === store.cmdrName.toLowerCase() && cmdr !== store.cmdrName) {
@@ -340,9 +377,9 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
 
       // and update local storage and reload whole page
       store.cmdrLinkedFCs = { ...this.state.cmdrEditLinkedFCs };
-      store.hideShipTrips = this.state.hideShipTrips;
+      store._hideShipTrips = this.state.hideShipTrips;
       store.useNativeDiscord = this.state.useNativeDiscord;
-      store.applyBuffNerf = this.state.applyBuffNerf;
+      store._applyBuffNerf = !this.state.noBuffNerf;
       if (window.location.pathname.endsWith('/user')) {
         window.location.assign('/#about');
       } else {

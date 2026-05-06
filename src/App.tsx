@@ -1,10 +1,10 @@
 import './App.css';
 import * as api from './api';
-import { CommandBar, ContextualMenu, DefaultButton, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, PrimaryButton, Spinner, SpinnerSize, ThemeProvider } from '@fluentui/react';
+import { CommandBar, ContextualMenu, DefaultButton, Dialog, DialogFooter, Icon, initializeIcons, Link, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, ThemeProvider } from '@fluentui/react';
 import { Component, ErrorInfo, } from 'react';
 import { store } from './local-storage';
 import { appTheme, cn } from './theme';
-import { SortMode, TopPivot } from './types';
+import { SortMode, fourWeeks, TopPivot, twoDays } from './types';
 import { About, Home, ProjectView } from './views';
 import { ModalCommander } from './components/ModalCommander';
 import { LinkSrvSurvey } from './components/LinkSrvSurvey';
@@ -17,6 +17,9 @@ import { ShareFeedback } from './components/ShareFeedback';
 import { GalMap } from './views/GalMap';
 import { NexusView } from './views/NexusView';
 import { GGG } from './views/GGG';
+import { CmdrSettings } from './api/cmdr';
+import { ChangeLog, lastEntry } from './views/ChangeLogView';
+import { isMobile } from './util';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -28,12 +31,14 @@ interface AppState {
   pivot: TopPivot;
   pivotArg?: string;
 
+  cmdrSettings?: CmdrSettings;
   cmdr?: string;
   cmdrEdit: boolean;
   showDonate?: boolean;
   showThemes?: boolean;
   showFeedback?: [string, string?];
   showReLogin?: boolean;
+  showChangeLog: boolean;
 }
 
 export class App extends Component<AppProps, AppState> {
@@ -41,6 +46,9 @@ export class App extends Component<AppProps, AppState> {
   private static fakeScroll: HTMLDivElement;
   private static instance: App | undefined;
   public static preNav?: (url: string) => void;
+
+  public static get cmdrSettings(): CmdrSettings | undefined { return App.instance?.state.cmdrSettings; }
+  public static set cmdrSettings(newValue: CmdrSettings | undefined) { App.instance?.setState({ cmdrSettings: newValue }); }
 
   public static showFeedback(topic?: string, body?: string) {
     App.instance?.setState({ showFeedback: [topic ?? 'Raven Colonial', body] });
@@ -75,6 +83,7 @@ export class App extends Component<AppProps, AppState> {
       pivotArg: pivotArg,
       cmdr: store.cmdrName,
       cmdrEdit: false,
+      showChangeLog: window.location.hash === '#changeLog',
     };
 
     window.onhashchange = () => {
@@ -84,13 +93,14 @@ export class App extends Component<AppProps, AppState> {
         pivot: newPivot,
         pivotArg: pivotArg,
         cmdrEdit: false,
+        showChangeLog: window.location.hash === '#changeLog',
       });
     };
   }
 
   componentDidMount(): void {
     this.setStateFromHash();
-    this.fetchPrimaryBuildId();
+    this.fetchCmdrSettings();
 
     // migrate local-storage items?
     if ((store.commoditySort as any) === 'Group by type') { store.commoditySort = SortMode.group; }
@@ -142,11 +152,25 @@ export class App extends Component<AppProps, AppState> {
     if (element) { element.innerText = `${window.location}\n\n${error.message ?? "Unknown"}\n\n${error.stack ?? "Unknown"}`; }
   }
 
-  fetchPrimaryBuildId() {
-    if (!!store.cmdrName) {
-      api.cmdr.getPrimary(store.cmdrName)
-        .then(buildId => store.primaryBuildId = buildId)
-        .catch(err => console.error(err.stack));
+  fetchCmdrSettings() {
+    if (store.apiKey) {
+      api.cmdr.getMyCmdr()
+        .then(async data => {
+          this.setState({ cmdrSettings: data });
+
+          // migrate if we had no ship sizes or other settings?
+          if (!data.shipSizes && !!store.cmdr) {
+            const newData = await api.cmdr.updateSettings({
+              shipSizes: [store.cmdr.largeMax, store.cmdr.medMax],
+              noBuffNerf: store._applyBuffNerf ? undefined : true,
+              hideShipTrips: store._hideShipTrips,
+            });
+            this.setState({ cmdrSettings: newData });
+          }
+        })
+        .catch(err => console.error(err.stack)); // TODO: warning message bar? Maybe a global one?
+    } else {
+      this.setState({ cmdrSettings: { fid: '', cmdr: '' } });
     }
   }
 
@@ -232,7 +256,12 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback, showReLogin } = this.state;
+    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback, showReLogin, cmdrSettings, showChangeLog } = this.state;
+
+    const timeSinceLastLogin = Date.now() - new Date(cmdrSettings?.lastLogin ?? '').getTime();
+    const tooLong = timeSinceLastLogin > fourWeeks;
+
+    const changeLogColor = (Date.now() - lastEntry.getTime()) < twoDays ? appTheme.semanticColors.bodyText : undefined;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>
@@ -286,7 +315,21 @@ export class App extends Component<AppProps, AppState> {
                 if (blockNavigate) { ev?.preventDefault(); }
               }
             },
-
+            {
+              key: 'sys-loading',
+              title: 'Networking ...',
+              iconProps: { iconName: 'Nav2DMapView' },
+              onRender: () => {
+                return !!cmdrSettings ? null : <div>
+                  <Spinner
+                    size={SpinnerSize.medium}
+                    labelPosition='right'
+                    label='Loading ...'
+                    style={{ marginTop: 12, cursor: 'default' }}
+                  />
+                </div>
+              },
+            },
           ]}
           farItems={[
             {
@@ -316,8 +359,13 @@ export class App extends Component<AppProps, AppState> {
             {
               className: cn.bBox,
               id: 'current-cmdr', key: 'current-cmdr',
-              iconProps: { iconName: store.cmdrName ? 'Contact' : 'UserWarning' },
+              title: tooLong ? 'It has been 30 days since you last logged in' : undefined,
+              iconProps: {
+                iconName: !store.cmdrName ? 'UserWarning' : tooLong ? 'SkypeCircleClock' : 'Contact',
+                style: { color: tooLong ? appTheme.palette.yellowDark : undefined }
+              },
               text: this.state.cmdr,
+              style: { color: tooLong ? appTheme.palette.yellowDark : undefined },
               onClick: () => this.setState({ cmdrEdit: !this.state.cmdrEdit }),
             }
           ]}
@@ -343,7 +391,7 @@ export class App extends Component<AppProps, AppState> {
           styles={{ container: { margin: -10, padding: 10, border: '1px solid ' + appTheme.palette.themePrimary, } }}
         />}
 
-        {this.renderBody()}
+        {cmdrSettings && this.renderBody()}
 
         {cmdrEdit && <Modal
           isOpen
@@ -363,6 +411,8 @@ export class App extends Component<AppProps, AppState> {
             <Link id='send-feedback' onClick={() => App.showFeedback()}>Feedback<Icon className='icon-inline' iconName='Feedback' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>
             <span style={{ color: 'grey' }}> | </span>
             <LinkSrvSurvey href='https://youtu.be/Kt4MpUJ-ISI?si=FPTNMEBlNP4a3lQl' text="Tutorial" title="Watch CMDR Mechan's tutorial"></LinkSrvSurvey>
+            <span style={{ color: 'grey' }}> | </span>
+            <Link style={{ color: changeLogColor }} onClick={() => this.setState({ showChangeLog: !showChangeLog })}>Change log{changeLogColor && <Icon iconName='AlarmClock' style={{ marginLeft: 4, textDecoration: 'none' }} />}</Link>
           </div>
         </footer>
 
@@ -406,6 +456,24 @@ export class App extends Component<AppProps, AppState> {
             <DefaultButton text='No' iconProps={{ iconName: 'Cancel' }} onClick={() => this.setState({ showReLogin: false })} />
           </DialogFooter>
         </Dialog>}
+
+        {showChangeLog && <>
+          <Panel
+            isOpen
+            isLightDismiss
+            headerText='Change Log'
+            allowTouchBodyScroll={isMobile()}
+            type={PanelType.custom}
+            customWidth='800px'
+            styles={{
+              header: { textTransform: 'capitalize', cursor: 'default' },
+              overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
+            }}
+            onDismiss={() => this.setState({ showChangeLog: false })}
+          >
+            <ChangeLog />
+          </Panel>
+        </>}
       </ThemeProvider>
     );
   }
