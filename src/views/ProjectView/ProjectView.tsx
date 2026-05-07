@@ -1130,7 +1130,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {fcSumElement}
             </div>
           </td>
-          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} style={{ border: this.getBorderStyleForFC(marketId, key) }}>
+          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} style={{ ...this.getBorderStyleForFC(marketId, key) }}>
             {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
           </td>)}
         </>
@@ -1160,7 +1160,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     if (bigMap[marketId]?.includes(cargo)) {
-      return '1px dotted ' + appTheme.palette.themeDarker;
+      return { borderTop: '1px dashed ' + appTheme.palette.themeDarker, borderBottom: '1px dashed ' + appTheme.palette.themeDarker };
     }
 
     return '';
