@@ -1130,7 +1130,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {fcSumElement}
             </div>
           </td>
-          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} >
+          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} style={{ border: this.getBorderStyleForFC(marketId, key) }}>
             {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
           </td>)}
         </>
@@ -1139,6 +1139,31 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         {this.state.hasAssignments && <td className='commodity-assigned'><span className='assigned'>{assigned}</span></td>}
       </tr>
     };
+  }
+
+  getBorderStyleForFC(marketId: string, cargo: string) {
+    if (this.state.proj?.buildId !== 'f2676464-ed64-4b8d-a173-6f5fb0f63e20') { return ''; }
+
+    const bigMap: Record<string, string[]> = {
+      '3702255104': ['medicaldiagnosticequipment', 'steel'], // BHV-1KY - Moon Bear
+      '3702409984': ['steel', 'titanium', 'nonlethalweapons'], // BHV-1HZ - Star Bear
+      '3703929856': ['water', 'liquidoxygen', 'foodcartridges'], // W2T-4KL - Space Bear 
+      '3704556800': ['titanium'], // BBV-G5F - C.N.V. Neptuni Ira
+      '3704743936': ['ceramiccomposites', 'cmmcomposite', 'fruitandvegetables', 'water'], // WHY-68G - Teddy Bear
+      '3704752640': ['cmmcomposite', 'semiconductors'], // B0V-B4G - Grizzly Bear
+      '3712755712': ['cmmcomposite', 'insulatingmembrane', 'superconductors'], // B2Y-39J - Drop Bear
+      '3714102272': ['aluminium', 'insulatingmembranes', 'polymers', 'powergenerators'], // B6W-34K - Panda Bear
+      '3714102528': ['aluminium', 'waterpurifiers'], // B6W-4HB - Polar Bear
+      '3714102784': ['aluminium', 'autofabricators', 'copper', 'steel'], // B6W-31J - Sun Bear
+      '3714103040': ['steel', 'computercomponents'], // B6W-30X - Spectacled Bear
+      '3714464512': ['titanium'], // BZT-5QN - C.N.V. Ticonderoga
+    }
+
+    if (bigMap[marketId]?.includes(cargo)) {
+      return '1px dotted ' + appTheme.palette.themeDarker;
+    }
+
+    return '';
   }
 
   renderProjectDetails(proj: Project) {
