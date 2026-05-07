@@ -1160,7 +1160,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
 
     if (bigMap[marketId]?.includes(cargo)) {
-      return { borderTop: '1px dashed ' + appTheme.palette.themeDarker, borderBottom: '1px dashed ' + appTheme.palette.themeDarker };
+      return { border: '1px solid ' + appTheme.palette.themeDarker };
     }
 
     return '';
