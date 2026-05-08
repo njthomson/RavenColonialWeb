@@ -1152,7 +1152,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
       '3704743936': ['ceramiccomposites', 'cmmcomposite', 'fruitandvegetables', 'water'], // WHY-68G - Teddy Bear
       '3704752640': ['cmmcomposite', 'semiconductors'], // B0V-B4G - Grizzly Bear
       '3712755712': ['cmmcomposite', 'insulatingmembrane', 'superconductors'], // B2Y-39J - Drop Bear
-      '3714102272': ['aluminium', 'insulatingmembranes', 'polymers', 'powergenerators'], // B6W-34K - Panda Bear
+      '3714102272': ['aluminium', 'insulatingmembrane', 'polymers', 'powergenerators'], // B6W-34K - Panda Bear
       '3714102528': ['aluminium', 'waterpurifiers'], // B6W-4HB - Polar Bear
       '3714102784': ['aluminium', 'autofabricators', 'copper', 'steel'], // B6W-31J - Sun Bear
       '3714103040': ['steel', 'computercomponents'], // B6W-30X - Spectacled Bear
