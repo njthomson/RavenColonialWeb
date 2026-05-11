@@ -106,6 +106,7 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
   }
 
   onType = async (txt: string) => {
+    txt = decodeURIComponent(txt).trim();
     this.setState({
       errorMsg: undefined,
       searchText: txt,
