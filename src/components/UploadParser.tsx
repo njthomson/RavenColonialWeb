@@ -101,7 +101,7 @@ export const UploadParser: FunctionComponent<{}> = (props) => {
 
         const sumTotal = sum(Object.values(j.fcContributions).map(x => x.count));
         const allFC = Object.values(j.fcContributions).map(x => x.ident).join(' + ');
-        const sumCopy = `/addscore user:${j.cmdr} points:${sumTotal} comment:${allFC}`;
+        const sumCopy = `/addscore user:${j.cmdr} points:${sumTotal} comment:${allFC.slice(0, 120)}`;
 
         return <div key={j.filename} className='journal'>
           <div style={{ marginBottom: 8 }}>
