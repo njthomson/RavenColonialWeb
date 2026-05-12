@@ -97,7 +97,8 @@ export const UploadParser: FunctionComponent<{}> = (props) => {
 
     {!!parsed?.length && <div>
       {parsed.map(j => {
-        if (!Object.keys(j.fcContributions).length) { return null; }
+        const countContributions = Object.keys(j.fcContributions).length;
+        if (!countContributions) { return null; }
 
         const sumTotal = sum(Object.values(j.fcContributions).map(x => x.count));
         const allFC = Object.values(j.fcContributions).map(x => x.ident).join(' + ');
@@ -122,13 +123,15 @@ export const UploadParser: FunctionComponent<{}> = (props) => {
             </StackH>
           })}
 
-          <div style={{ fontSize: 12, marginTop: 4, borderTop: '1px solid ' + appTheme.palette.themeLight, color: appTheme.palette.themeTertiary }}>Grant total:</div>
-          <StackH gap={8} >
-            <CopyButton text={sumCopy} color={appTheme.palette.themeDarker} />
-            <span>{sumTotal.toLocaleString()}</span>
-            <Icon iconName='DoubleChevronRight8' style={{ color: appTheme.palette.themeTertiary }} />
-            <span>{allFC}</span>
-          </StackH>
+          {countContributions > 1 && <>
+            <div style={{ fontSize: 12, marginTop: 4, borderTop: '1px solid ' + appTheme.palette.themeLight, color: appTheme.palette.themeTertiary }}>Grant total:</div>
+            <StackH gap={8} >
+              <CopyButton text={sumCopy} color={appTheme.palette.themeDarker} />
+              <span>{sumTotal.toLocaleString()}</span>
+              <Icon iconName='DoubleChevronRight8' style={{ color: appTheme.palette.themeTertiary }} />
+              <span>{allFC}</span>
+            </StackH>
+          </>}
         </div>;
       })}
     </div>
