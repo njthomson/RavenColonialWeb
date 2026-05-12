@@ -20,6 +20,7 @@ import { GGG } from './views/GGG';
 import { CmdrSettings } from './api/cmdr';
 import { ChangeLog, lastEntry } from './views/ChangeLogView';
 import { isMobile } from './util';
+import { UploadParser } from './components/UploadParser';
 
 // Initialize icons in case this example uses them
 initializeIcons();
@@ -39,6 +40,7 @@ interface AppState {
   showFeedback?: [string, string?];
   showReLogin?: boolean;
   showChangeLog: boolean;
+  showJournalParser?: boolean;
 }
 
 export class App extends Component<AppProps, AppState> {
@@ -256,7 +258,7 @@ export class App extends Component<AppProps, AppState> {
   }
 
   render() {
-    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback, showReLogin, cmdrSettings, showChangeLog } = this.state;
+    const { cmdrEdit, pivot, showDonate, showThemes, showFeedback, showReLogin, cmdrSettings, showChangeLog, showJournalParser } = this.state;
 
     const timeSinceLastLogin = Date.now() - new Date(cmdrSettings?.lastLogin ?? '').getTime();
     const tooLong = timeSinceLastLogin > fourWeeks;
@@ -338,7 +340,13 @@ export class App extends Component<AppProps, AppState> {
               iconProps: { iconName: 'ViewListGroup' },
               iconOnly: true,
               title: 'The table of everything',
-              onClick: () => window.open('/table', 'table'),
+              onClick: ev => {
+                if (ev?.shiftKey) {
+                  this.setState({ showJournalParser: true });
+                } else {
+                  window.open('/table', 'table');
+                }
+              },
             },
             {
               className: cn.bBox,
@@ -472,6 +480,24 @@ export class App extends Component<AppProps, AppState> {
             onDismiss={() => this.setState({ showChangeLog: false })}
           >
             <ChangeLog />
+          </Panel>
+        </>}
+
+        {showJournalParser && <>
+          <Panel
+            isOpen
+            isLightDismiss
+            headerText='Journal Parser'
+            allowTouchBodyScroll={isMobile()}
+            type={PanelType.custom}
+            customWidth='800px'
+            styles={{
+              header: { textTransform: 'capitalize', cursor: 'default' },
+              overlay: { backgroundColor: appTheme.palette.blackTranslucent40, cursor: 'default' },
+            }}
+            onDismiss={() => this.setState({ showJournalParser: false })}
+          >
+            <UploadParser />
           </Panel>
         </>}
       </ThemeProvider>

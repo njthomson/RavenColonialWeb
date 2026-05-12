@@ -159,7 +159,6 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
     const useArdent = () => {
       return api.ardent.findSystem(txt)
         .then(hits => {
-          console.log(hits);
           return hits.slice(0, 15).map(m => ({
             key: m.systemName, //m.systemAddress.toString(),
             text: m.systemName,
