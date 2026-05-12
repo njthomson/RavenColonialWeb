@@ -101,7 +101,7 @@ export const UploadParser: FunctionComponent<{}> = (props) => {
 
         const sumTotal = sum(Object.values(j.fcContributions).map(x => x.count));
         const allFC = Object.values(j.fcContributions).map(x => x.ident).join(' + ');
-        const sumCopy = `/addscore user:@${j.cmdr} points:${sumTotal} comment:${allFC}`;
+        const sumCopy = `/addscore user:${j.cmdr} points:${sumTotal} comment:${allFC}`;
 
         return <div key={j.filename} className='journal'>
           <div style={{ marginBottom: 8 }}>
@@ -112,7 +112,7 @@ export const UploadParser: FunctionComponent<{}> = (props) => {
 
           {Object.values(j.fcContributions).map((x) => {
             const displayName = j.mapDisplayNames[x.ident];
-            const copyTxt = `/addscore user:@${j.cmdr} points:${x.count} comment:${displayName} (${x.ident})`;
+            const copyTxt = `/addscore user:${j.cmdr} points:${x.count} comment:${displayName} (${x.ident})`;
             return <StackH key={`${j.filename}-${x.ident}-${x.system}`} gap={8}>
               <CopyButton text={copyTxt} color={appTheme.palette.themeDarker} />
               <span>{x.count.toLocaleString()}</span>
