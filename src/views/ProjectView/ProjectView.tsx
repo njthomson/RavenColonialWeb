@@ -665,7 +665,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
       }}
 
-      isFooterAtBottom
+      isFooterAtBottom={!isMobile()}
       onRenderFooterContent={() => {
         return <>
           {submitting && <Spinner

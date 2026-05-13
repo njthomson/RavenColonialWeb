@@ -260,7 +260,8 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const { refSystem, foundMarkets, sortedRows, largePanel, showSearchCriteria, showStaleMsg } = this.state;
 
     return <Panel
-      isHiddenOnDismiss isFooterAtBottom
+      isHiddenOnDismiss
+      isFooterAtBottom={!isMobile()}
       isLightDismiss
       allowTouchBodyScroll={isMobile()}
       isOpen={this.props.visible}

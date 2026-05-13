@@ -299,7 +299,7 @@ export class GGG extends Component<GGGProps, GGGState> {
             overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
             footerInner: { padding: 4 }
           }}
-          isFooterAtBottom
+          isFooterAtBottom={!isMobile()}
           onRenderFooterContent={() => {
             return <>
               <ActionButton

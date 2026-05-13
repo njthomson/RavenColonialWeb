@@ -24,7 +24,7 @@ export class RequestError extends Error {
   constructor(
     public statusCode: number,
     public statusText: string,
-    bodyText?: string
+    public bodyText?: string,
   ) {
     super(`${statusCode}: ${statusText}` + (bodyText ? ` - ${bodyText}` : ''));
     this.name = 'RequestError';

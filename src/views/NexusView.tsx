@@ -1257,7 +1257,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
       }}
 
-      isFooterAtBottom
+      isFooterAtBottom={!isMobile()}
       onRenderFooterContent={() => {
         return <>
           {saving && <Spinner

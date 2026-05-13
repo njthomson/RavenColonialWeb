@@ -37,7 +37,7 @@ interface FleetCarrierState {
   loading: boolean;
   saving?: boolean;
   refreshing?: boolean;
-  blockRefresh?: boolean;
+  blockRefresh?: string;
   fc?: KnownFC;
   editCargo: Cargo;
   editDisplayName?: string;
@@ -100,18 +100,20 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           {!refreshing && !loading && !saving && <IconButton
             title={isSquadFC ? 'Squadron FCs not currently supported' : 'Refresh FC data from Frontier'}
             className={cn.bBox}
-            iconProps={{ iconName: 'Refresh', style: { fontWeight: 'bold', color: asGrey(refreshing || blockRefresh || isSquadFC) } }}
-            disabled={refreshing || blockRefresh || isSquadFC}
+            iconProps={{ iconName: 'Refresh', style: { fontWeight: 'bold', color: asGrey(refreshing || !!blockRefresh || isSquadFC) } }}
+            disabled={refreshing || !!blockRefresh || isSquadFC}
             onClick={() => {
               this.setState({ refreshing: true });
               api.fc.refreshFC(this.props.marketId)
                 .then(updatedFC => this.setState({ refreshing: false, fc: updatedFC, editCargo: updatedFC.cargo }))
                 .catch(err => {
                   console.error(err.message);
-                  if (err.statusCode === 400) {
-                    this.setState({ refreshing: false, blockRefresh: true });
+                  if (err.statusCode === 429) {
+                    this.setState({ refreshing: false, blockRefresh: err.bodyText });
+                  } else if (err.statusCode === 400) {
+                    this.setState({ refreshing: false, blockRefresh: 'This FC cannot be refreshed at this time' });
                   } else {
-                    this.setState({ refreshing: false, errorMsg: err.message });
+                    this.setState({ refreshing: false, errorMsg: err.bodyText || err.message });
                   }
                 });
             }}
@@ -151,9 +153,8 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         messageBarType={MessageBarType.info}
         styles={{ text: { margin: 4 }, icon: { margin: 0 } }}
       >
-        <div>This Fleet Carrier cannot be refreshed at this time</div>
         <StackH gap={4}>
-          <div>Please try again later</div>
+          <div>{blockRefresh}</div>
           <CalloutMsg
             color={appTheme.palette.white} backgroundColor={appTheme.palette.themeDark}
             iconStyle={{ color: appTheme.palette.themeDarker, fontSize: 12 }}
@@ -274,12 +275,12 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         </tr>}
 
         {<tr>
-          <td className='lbl'>Access:</td>
-          <td className='val'>
+          <td colSpan={2}>
+            <span style={{ marginRight: 4 }}>Access:</span>
             {!!fc && <>
-              {mapFCAccess(fc.access)}
-              <span style={{ backgroundColor: appTheme.palette.white, margin: '0 4px', padding: '0 4px' }}>Notorious:</span>
-              {fc.notorious ? 'Allowed' : 'Denied'}
+              <span className='val'>{mapFCAccess(fc.access)}</span>
+              <span style={{ backgroundColor: appTheme.palette.white, padding: '0 4px' }}>Notorious:</span>
+              <span className='val' style={{ width: 'stretch' }}>{fc.notorious ? 'Allowed' : 'Denied'}</span>
             </>}
           </td>
         </tr>}
