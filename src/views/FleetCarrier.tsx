@@ -120,7 +120,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
       }}
       onDismiss={() => this.props.onClose()}
       onRenderHeader={() => {
-        return <StackH style={{ marginLeft: 4, fontSize: 20, fontWeight: 600, width: 'stretch' }}>
+        return <StackH style={{ marginLeft: 4, fontSize: 20, fontWeight: 600, width: '100%' }}>
           {!refreshing && !loading && !saving && <IconButton
             title={isSquadFC ? 'Squadron FCs not currently supported' : 'Refresh FC data from Frontier'}
             className={cn.bBox}
@@ -143,7 +143,8 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
             }}
           />}
           {(refreshing || loading || saving) && <div style={{ display: 'inline-block', width: 32, height: 22 }}><Spinner size={SpinnerSize.medium} /></div>}
-          <span style={{ marginLeft: 8, marginRight: 8 }}>Fleet Carrier</span>
+
+          <span style={{ marginLeft: 8, marginRight: 8 }}>Edit Fleet Carrier</span>
 
           {(!!fc?.sales?.length || !!fc?.purchases?.length) && <CalloutMsg
             iconName='Shop'

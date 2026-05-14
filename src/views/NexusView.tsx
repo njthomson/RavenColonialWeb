@@ -10,7 +10,7 @@ import { CargoGrid, CargoRemaining, CommodityIcon, FindFC, ProjectLink } from '.
 import { getAverageHauls, getAvgHaulCosts } from '../avg-haul-costs';
 import { FleetCarrier } from './FleetCarrier';
 import { IChartDataPoint, StackedBarChart } from '@fluentui/react-charting';
-import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, mapCommodityNames } from '../types';
+import { autoUpdateFrequency, autoUpdateStopDuration, Cargo, KnownFC, mapCommodityNames } from '../types';
 import { WhereToBuy } from '../components/WhereToBuy/WhereToBuy';
 import { GalMap, MapData } from './GalMap';
 import { ViewEditName } from './SystemView2/ViewEditName';
@@ -223,16 +223,36 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     const { nexus, currentSystem } = this.state;
     if (!nexus) { return; }
 
+    // group FCs by system
+    const mapFCs = nexus.fcs.reduce((m, fc) => {
+      if (fc.systemName) {
+        if (!m[fc.systemName]) { m[fc.systemName] = []; }
+        m[fc.systemName].push(fc);
+      }
+      return m;
+    }, {} as Record<string, KnownFC[]>)
+
     const systems = nexus.systems.map(d => {
+      const cat = [currentSystem?.id64 === d.id64 ? 1 : d.progress > 0 && d.progress === d.total ? 0 : 2];
       const progress = (!d.progress ? 0 : 100 / d.total * d.progress).toFixed(0);
-      const infos = `<a class='bl' href='/#sys=${d.name}' target='_blank' style="font-size: 12px">View: ${d.name}</a>
+      let infos = `<a class='bl' href='/#sys=${d.name}' target='_blank' style="font-size: 12px">View: ${d.name}</a>
 <br/><br/><table>
 <tr><td>Progress:</td><td>${progress} %</td></tr>
 </table>`;
+      // append any FC names?
+      if (d.name in mapFCs) {
+        infos += `\n<br/><br/>${mapFCs[d.name].length} Fleet Carrier(s):<br/>`;
+        infos += mapFCs[d.name].map(fc => `- ${fc.displayName} (${fc.name})<br/>`).join(`\n`);
+        if (cat[0] !== 3) {
+          cat.unshift(3);
+        }
+        delete mapFCs[d.name];
+      }
+
       return {
         name: d.nickname ?? d.name,
         coords: { x: d.pos[0], y: d.pos[1], z: d.pos[2] },
-        cat: [currentSystem?.id64 === d.id64 ? 1 : d.progress > 0 && d.progress === d.total ? 0 : 2],
+        cat: cat,
         infos: infos,
       };
     });
@@ -252,6 +272,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
             '0': { name: "Complete", color: '#00CC00'.substring(1) },
             '1': { name: "Current", color: '#CCCC00'.substring(1) },
             '2': { name: "Pending", color: '#00CCCC'.substring(1) },
+            '3': { name: "Fleet Carrier", color: '#ff8800'.substring(1) },
           },
         },
         systems: systems,
@@ -263,6 +284,26 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
     };
     msg.mapData.routes![0].points[0].label = 'Start';
     msg.mapData.routes![0].points[msg.mapData.routes![0].points.length - 1].label = 'End';
+
+    // add FC systems after the route was prepared
+    for (const systemName in mapFCs) {
+      const match = systems.find(x => x.name === systemName);
+      if (!match) {
+        let infos = `<a class='bl' href='/#sys=${systemName}' target='_blank' style="font-size: 12px">View: ${systemName}</a>
+<br/><br/><table>
+</table>
+<br/>${mapFCs[systemName].length} Fleet Carrier(s):<br/>`;
+        infos += mapFCs[systemName].map(fc => `- ${fc.displayName} (${fc.name})<br/>`).join(`\n`);
+
+        const starPos = mapFCs[systemName][0].starPos!;
+        systems.push({
+          name: systemName,
+          coords: { x: starPos[0], y: starPos[1], z: starPos[2] },
+          cat: [3],
+          infos: infos,
+        });
+      }
+    }
 
     GalMap.open(msg);
   }

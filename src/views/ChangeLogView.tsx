@@ -92,10 +92,12 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
         <li>These will show up in Cargo grids with <Icon className="btn icon-inline" iconName='CaretLeft8' style={{ color: appTheme.palette.green, background: appTheme.palette.greenDark, padding: '3px 1px' }} /> for sell orders, and <Icon className="btn icon-inline" iconName='CaretRight8' style={{ color: appTheme.palette.blue, background: appTheme.palette.blueDark, padding: '3px 1px' }} /> for purchase orders.</li>
         <li>Clicking these will show the relevant price and when this data was last updated.</li>
         <li>To see all purchase and sell orders for a Fleet Carrier, hit the <IconButton className='fakeBtn' disabled iconProps={{ iconName: 'Shop' }} /> button in any Fleet Carrier edit panel.</li>
+        <li>Along with these changes is a performance improvements for when there are many Fleet Carriers on a project - this should make the loading experience less jarring.</li>
+        <li>And, if refreshing a Fleet Carrier fails because it has been less than 5 minutes, the time to wait will now be shown.</li>
+        <li>And on Nexus maps, systems with linked Fleet Carriers will now show in orange.</li>
         <li className='gap soon'>Coming Soon™</li>
         <ul>
           <li>Make the FC refresh button work for Fleet Carriers.</li>
-          <li>Start showing Fleet Carriers on a Nexus map.</li>
         </ul>
       </ul>
     </div>
@@ -119,7 +121,7 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
         <ul>
           <li style={{ textDecoration: 'line-through' }}>Show FC market buy and sell orders.</li>
           <li>Make the new FC refresh button work for Fleet Carriers.</li>
-          <li>Start showing Fleet Carriers on a Nexus map.</li>
+          <li style={{ textDecoration: 'line-through' }}>Start showing Fleet Carriers on a Nexus map.</li>
         </ul>
       </ul>
     </div>
