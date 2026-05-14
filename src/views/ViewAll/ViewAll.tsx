@@ -538,7 +538,6 @@ export class ViewAll extends Component<ViewAllProps, ViewAllState> {
         {hiddenIDsChanged && <ActionButton
           className={cn.bBox2}
           iconProps={{ iconName: 'Save' }}
-          style={{ float: 'right' }}
           text='Save'
           title='Save changes to chosen projects'
           onClick={() => this.saveHiddenIDs()}

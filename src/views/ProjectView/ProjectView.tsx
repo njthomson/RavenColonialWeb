@@ -1,7 +1,7 @@
 import './ProjectView.css';
 import * as api from '../../api';
 import inara16 from '../../assets/inara-16x16.png';
-import { ActionButton, Callout, CommandBar, ContextualMenu, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
+import { ActionButton, Callout, CommandBar, ContextualMenu, DefaultButton, DirectionalHint, Dropdown, DropdownMenuItemType, ICommandBarItemProps, Icon, IconButton, IContextualMenuItem, IDropdownOption, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TeachingBubble, TextField } from '@fluentui/react';
 import { Component, CSSProperties } from 'react';
 import { BuildTypeDisplay, CargoRemaining, ChartByCmdrs, ChartByCmdrsOverTime, ChartGeneralProgress, CommodityIcon, EditCargo, FindFC } from '../../components';
 import { store } from '../../local-storage';
@@ -24,6 +24,11 @@ import { getAvgHaulCosts } from '../../avg-haul-costs';
 import { EconomyTable2 } from '../SystemView2/EconomyTable2';
 import { buildSystemModel2, SysMap2 } from '../../system-model2';
 import { App } from '../../App';
+import { InlineMarketOrders } from '../../components/InlineMarketOrders';
+
+const css = mergeStyles({
+  // TODO: ...
+});
 
 interface ProjectViewProps {
   buildId?: string;
@@ -535,7 +540,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     });
 
     const fcMergedCargo = mergeCargo(Object.values(fcCargo))
-    return <div className='project-view'>
+    return <div className={`project-view ${css}`}>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
       <div className='full'>
         <h2 className='project-title'>
@@ -1130,9 +1135,14 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               {fcSumElement}
             </div>
           </td>
-          {fcMarketIds.map((marketId, i) => <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} style={{ ...this.getBorderStyleForFC(marketId, key) }}>
-            {this.state.fcCargo[marketId][key] ? <span>{this.state.fcCargo[marketId][key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
-          </td>)}
+          {fcMarketIds.map((marketId, i) => {
+            const fcCount = this.state.fcCargo[marketId][key];
+            const fc = proj.linkedFC.find(fc => fc.marketId.toString() === marketId);
+            return <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} style={{ position: 'relative', ...this.getBorderStyleForFC(marketId, key) }}>
+              {fc && <InlineMarketOrders fc={fc} cargo={key} count={fcCount} />}
+              {this.state.fcCargo[marketId][key] ? <span>{fcCount.toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
+            </td>;
+          })}
         </>
         }
 

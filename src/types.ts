@@ -163,6 +163,9 @@ export interface ProjectFC {
   name: string;
   displayName: string;
   assign: string[];
+  sales?: MarketOrder[];
+  purchases?: MarketOrder[];
+  lastRefresh?: string;
 }
 
 export interface CmdrShip {
@@ -391,7 +394,18 @@ export interface KnownFC {
   starPos?: number[];
   access: string;
   notorious: boolean;
-  icon?: string;
+  lastRefresh?: string;
+  sales?: MarketOrder[];
+  purchases?: MarketOrder[];
+
+  icon?: string; // (added locally)
+}
+
+interface MarketOrder {
+  name: string;
+  price: number;
+  total?: number;
+  outstanding?: number;
 }
 
 export const mapFCAccess = (val: string) => {

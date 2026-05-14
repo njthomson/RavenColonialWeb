@@ -143,11 +143,12 @@ export const sumCargo = (cargo: Record<string, number> | undefined): number => {
 }
 
 export const mergeCargo = (cargos: Cargo[]): Cargo => {
+  cargos = cargos ?? [];
 
-  const names = Array.from(new Set<string>(cargos.flatMap(c => Object.keys(c))));
+  const names = Array.from(new Set<string>(cargos.flatMap(c => Object.keys(c ?? {}))));
 
   const merged = names.reduce((map, name) => {
-    map[name] = cargos.reduce((sum, cargo) => sum += cargo[name] ?? 0, 0);
+    map[name] = cargos.reduce((sum, cargo) => sum += cargo ? cargo[name] ?? 0 : 0, 0);
     return map;
   }, {} as Cargo);
   return merged;

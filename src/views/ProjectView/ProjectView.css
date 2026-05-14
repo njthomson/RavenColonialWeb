@@ -76,6 +76,7 @@ h3 .ms-Button--action {
 }
 
 .commodities .commodity-need {
+  position: relative;
   text-align: right;
   padding: 0 10px 0 10px;
   /* border-right: #e5e5e5 1px solid; */

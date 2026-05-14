@@ -9,6 +9,7 @@ import { FleetCarrier } from '../views';
 import { EconomyBlock } from './EconomyBlock';
 import { mapName } from '../site-data';
 import { WhereToBuy } from './WhereToBuy/WhereToBuy';
+import { InlineMarketOrders } from './InlineMarketOrders';
 
 const { ng, nhl, nsn, nsc, npl1, npl2 } = mergeStyleSets({
   ng: {
@@ -484,9 +485,12 @@ export class CargoGrid extends Component<CargoGridProps, CargoGridState> {
         </td>}
 
         {/* A cell for each FC */}
-        {linkedFC.map(fc => <td key={`fcc${fc.marketId}`} className={`commodity-need ${cn.br}`} >
-          {fc.cargo[key] ? <span>{fc.cargo[key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
-        </td>)}
+        {linkedFC.map(fc => {
+          return <td key={`fcc${fc.marketId}`} className={`commodity-need ${cn.br}`}>
+            <InlineMarketOrders fc={fc} cargo={key} count={fc.cargo[key]} />
+            {fc.cargo[key] ? <span>{fc.cargo[key].toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
+          </td>;
+        })}
       </>}
     </tr>;
   }

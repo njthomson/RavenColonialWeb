@@ -3,9 +3,9 @@ import { Component } from 'react';
 import * as api from '../api';
 import { EditCargo, FindSystemName } from '../components';
 import { appTheme, cn } from '../theme';
-import { Cargo, KnownFC, mapFCAccess } from '../types';
+import { Cargo, KnownFC, mapCommodityNames, mapFCAccess } from '../types';
 import { store } from '../local-storage';
-import { asGrey, delay, fcFullName, isMobile } from '../util';
+import { asGrey, delay, fcFullName, getRelativeDuration, isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
 import { StackH } from '../components/Widgets';
 import { CalloutMsg } from '../components/CalloutMsg';
@@ -21,6 +21,30 @@ const css = mergeStyles({
       padding: '0 4px',
       backgroundColor: appTheme.palette.purpleDark,
     },
+  },
+
+  '.market-orders': {
+    fontSize: 12,
+    '.count': {
+      textAlign: 'right',
+      paddingRight: 8,
+    },
+    '.name': {
+      color: appTheme.palette.themeDark,
+    },
+    '.price': {
+      textAlign: 'right',
+      color: appTheme.palette.themePrimary,
+      paddingLeft: 8,
+    },
+    '.grey': {
+      color: 'grey',
+    },
+  },
+  '.last-refresh': {
+    marginTop: 16,
+    fontSize: 12,
+    color: appTheme.palette.themeDarker,
   },
 });
 
@@ -105,7 +129,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
             onClick={() => {
               this.setState({ refreshing: true });
               api.fc.refreshFC(this.props.marketId)
-                .then(updatedFC => this.setState({ refreshing: false, fc: updatedFC, editCargo: updatedFC.cargo }))
+                .then(updatedFC => this.setState({ refreshing: false, fc: updatedFC, editCargo: updatedFC.cargo, editSystemName: updatedFC.systemName }))
                 .catch(err => {
                   console.error(err.message);
                   if (err.statusCode === 429) {
@@ -119,7 +143,51 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
             }}
           />}
           {(refreshing || loading || saving) && <div style={{ display: 'inline-block', width: 32, height: 22 }}><Spinner size={SpinnerSize.medium} /></div>}
-          <span style={{ marginLeft: 4 }}>Edit Fleet Carrier</span>
+          <span style={{ marginLeft: 8, marginRight: 8 }}>Fleet Carrier</span>
+
+          {(!!fc?.sales?.length || !!fc?.purchases?.length) && <CalloutMsg
+            iconName='Shop'
+            width={32}
+            height={32}
+            backgroundColor={appTheme.palette.neutralTertiaryAlt}
+            msg={<div className={css}>
+              <StackH verticalAlign='start' gap={32}>
+                {fc?.sales?.length && <div>
+                  <h3>Sell Orders:</h3>
+                  <table className='market-orders' cellPadding={0} cellSpacing={0} >
+                    <tbody>
+                      {fc.sales.map(x => {
+                        // if (!fc.cargo[x.name]) { return null; }
+                        return <tr key={`fcso-${x.name}`}>
+                          <td className='count'>{fc.cargo[x.name]?.toLocaleString() ?? <span className='grey'>-</span>}</td>
+                          <td className='name'>{mapCommodityNames[x.name] ?? x.name}</td>
+                          <td className='price'>{x.price.toLocaleString()} cr</td>
+                        </tr>;
+                      })}
+                    </tbody>
+                  </table>
+                </div>}
+
+                {!!fc?.purchases?.length && <div>
+                  <h3>Purchase Orders:</h3>
+                  <table className='market-orders' cellPadding={0} cellSpacing={0} >
+                    <tbody>
+                      {fc.purchases.map(x => {
+                        if (!fc.cargo[x.name]) { return null; }
+                        return <tr key={`fcso-${x.name}`}>
+                          <td className='count'>{x.outstanding?.toLocaleString()}</td>
+                          <td className='name'>{mapCommodityNames[x.name] ?? x.name}</td>
+                          <td className='price'>{x.price.toLocaleString()} cr</td>
+                        </tr>;
+                      })}
+                    </tbody>
+                  </table>
+                </div>}
+              </StackH>
+
+              {fc.lastRefresh && <div className='last-refresh'>Last update: {getRelativeDuration(new Date(fc.lastRefresh))}</div>}
+            </div>}
+          />}
         </StackH>;
       }}
       isFooterAtBottom={!isMobile()}
@@ -274,7 +342,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
           </td>
         </tr>}
 
-        {<tr>
+        <tr>
           <td colSpan={2}>
             <span style={{ marginRight: 4 }}>Access:</span>
             {!!fc && <>
@@ -283,7 +351,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
               <span className='val' style={{ width: 'stretch' }}>{fc.notorious ? 'Allowed' : 'Denied'}</span>
             </>}
           </td>
-        </tr>}
+        </tr>
 
       </tbody>
     </table>;

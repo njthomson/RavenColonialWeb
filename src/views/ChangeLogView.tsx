@@ -67,7 +67,7 @@ const css = mergeStyles({
 });
 
 
-export const lastEntry = new Date('2026-05-06T04:00:00.433Z');
+export const lastEntry = new Date('2026-05-14T04:00:00.433Z');
 
 export const ChangeLog: FunctionComponent<{}> = (props) => {
 
@@ -78,18 +78,35 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
       iconProps={{ iconName: 'FeedbackRequestSolid' }}
       onClick={() => App.showFeedback('Change log feedback or suggestions')}
     />
-
     <div className='sub1'>Recent changes and additions to Raven Colonial:</div>
     <div className='sub2'>(Something I should have been sharing since the beginning)</div>
+
+    <div style={{ marginTop: 20 }}>
+      <div className='date'>May 13th 2026</div>
+      <StackH className='head' gap={8}>
+        <Icon iconName='Bank' style={{ fontSize: 24 }} />
+        <span>Fleet Carrier Market Orders</span>
+      </StackH>
+      <ul className='block'>
+        <li>As promised below, when refreshing Fleet Carriers, market purchase and sell orders will now be stored along with cargo counts.</li>
+        <li>These will show up in Cargo grids with <Icon className="btn icon-inline" iconName='CaretLeft8' style={{ color: appTheme.palette.green, background: appTheme.palette.greenDark, padding: '3px 1px' }} /> for sell orders, and <Icon className="btn icon-inline" iconName='CaretRight8' style={{ color: appTheme.palette.blue, background: appTheme.palette.blueDark, padding: '3px 1px' }} /> for purchase orders.</li>
+        <li>Clicking these will show the relevant price and when this data was last updated.</li>
+        <li>To see all purchase and sell orders for a Fleet Carrier, hit the <IconButton className='fakeBtn' disabled iconProps={{ iconName: 'Shop' }} /> button in any Fleet Carrier edit panel.</li>
+        <li className='gap soon'>Coming Soon™</li>
+        <ul>
+          <li>Make the FC refresh button work for Fleet Carriers.</li>
+          <li>Start showing Fleet Carriers on a Nexus map.</li>
+        </ul>
+      </ul>
+    </div>
 
     <div style={{ marginTop: 20 }}>
       <div className='date'>May 5th 2026</div>
       <StackH className='head' gap={8}>
         <Icon iconName='fleetCarrierBlack' />
-        <span>Fleet Carrier Improvements and server-side settings</span>
+        <span>Fleet Carrier Improvements and Server-Side Settings</span>
       </StackH>
       <ul className='block'>
-        {/* <li>Adding features to improve working with Fleet Carriers, which has snowballed into storing settings server-side.</li> */}
         <li>When hitting <IconButton className='fakeBtn' disabled iconProps={{ iconName: 'Edit' }} /> links for FCs, below the owner, it is now possible to see docking-access and allow-notorious settings. (This is in addition to showing the last known system that was added a few weeks ago)</li>
         <li>These fields will be populated when hitting the <ActionButton className='fakeBtn' disabled text='My FC' /> button from <ActionButton className='fakeBtn' disabled iconProps={{ iconName: 'Contact' }} text='Cmdr' /> in the top/right corner.</li>
         <li>As that 'My FC' button is a bit buried, I'm also adding a <IconButton className='fakeBtn' disabled iconProps={{ iconName: 'Refresh' }} /> button to pull latest data from Frontier's API, which has the nice effect of enabling others to trigger that refresh, besides the owner. This is rate-limited on the server, per Fleet Carrier, so that requests are at least 5 minutes apart.</li>
@@ -100,9 +117,9 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
         <li className='gap'>These changes are now deployed but will be in live-testing for a few days. Let me know if you run across any issues. Bugs can be <Link2 href='https://github.com/njthomson/SrvSurvey/issues' text='reported on GitHub' title='Submit suggestions and bug reports' /> and general discussion happens through <Link2 href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss SrvSurvey' /></li>
         <li className='gap soon'>Coming Soon™</li>
         <ul>
-          <li>Show FC market buy and sell orders</li>
+          <li style={{ textDecoration: 'line-through' }}>Show FC market buy and sell orders.</li>
           <li>Make the new FC refresh button work for Fleet Carriers.</li>
-          <li>Start showing Fleet Carriers on a Nexus map</li>
+          <li>Start showing Fleet Carriers on a Nexus map.</li>
         </ul>
       </ul>
     </div>
@@ -123,7 +140,6 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
         <li>Get started with the new <ActionButton className='fakeBtn' disabled iconProps={{ iconName: 'BuildQueue' }} text='Nexus' /> button on <Link href='https://ravencolonial.com/#build'>https://ravencolonial.com/#build</Link></li>
       </ul>
     </div>
-
 
   </div >;
 };

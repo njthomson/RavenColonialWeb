@@ -111,14 +111,14 @@ export class ShowGlobalStats extends Component<ShowGlobalStatsProps, ShowGlobalS
           <StatsBox
             small='Last 7 days'
             label='Top Contributors'
-            title='Top Commanders by volume of cargo delivered.'
+            title='Top Commanders by volume of cargo delivered'
             data={stats.topContributors7d}
           />
 
           <StatsBox
             small='Last 7 days'
             label='Top Helpers'
-            title='Top Commanders by count of projects they have contributed to.'
+            title='Top Commanders by count of projects they have contributed to'
             data={stats.topHelpers7d}
           />
 
