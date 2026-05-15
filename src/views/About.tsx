@@ -247,9 +247,10 @@ export const About: React.FunctionComponent = () => {
       A nexus is simply a plan for many systems. They could be a bridge or chain, or just some systems you plan to build in. <Link2 href='/#nexus=sample' text='View a sample' />
       <ul>
         <li>It uses existing build-projects or system plans to know what you would like to build.</li>
-        <li>Fleet Carriers can be linked to one or more systems and the nexus will allocate cargo for what is planned in each system.</li>
+        <li>Fleet Carriers can be linked to one, or more systems, and the nexus will allocate cargo for what is planned in each system.</li>
         <li>When linking Fleet Carriers to multiple systems, it will be aware of what was already allocated.</li>
-        <li>It assumes you'll finish building in each system before moving onto the next, but it's okay if you skip ahead. </li>
+        <li>Use the <Icon className="btn icon-inline" iconName='MSNVideosSolid' style={{ color: appTheme.palette.themePrimary }} /> buttons on each system to see what specific cargo is needed and which linked FCs have the necessary supplies. The top most <Icon className="btn icon-inline" iconName='MSNVideosSolid' style={{ color: appTheme.palette.black }} /> button at the top shows the totals needed for the entire nexus.</li>
+        <li>A nexus assumes you'll finish building in each system before moving onto the next, but it's okay if you skip ahead. </li>
         <li>If you haven't saved any plans for a system, it will assume cargo for Commercial Outpost (Plutus) by default.</li>
         <li>If you have planned multiple projects in a system, that will be considered a "hub" but that just means there's 2 or more facilities. </li>
         <li>Only Commanders added to a nexus can edit them. Only the creator (owner) can delete them.</li>
