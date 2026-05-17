@@ -49,7 +49,7 @@ export const ShareFeedback: FunctionComponent<{ topic: string; body?: string; on
       <h3 className={cn.h3}>Feedback for Raven Colonial</h3>
 
       <div style={{ margin: '8px 0' }}>
-        You can also share feedback on <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss Raven Colonial + SrvSurvey' /> or <LinkSrvSurvey href='https://github.com/njthomson/SrvSurvey/issues' text='report issues on GitHub' title='Submit suggestions and bug reports' />
+        You can also share feedback on <LinkSrvSurvey href='https://discord.gg/nEWMqZNBdy' text="Discord" title='Discuss Raven Colonial + SrvSurvey' /> or <LinkSrvSurvey href='https://github.com/njthomson/RavenColonialWeb/issues' text='report issues on GitHub' title='Submit suggestions and bug reports' />
       </div>
 
       <TextField
