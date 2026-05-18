@@ -5,10 +5,11 @@ import { EditCargo, FindSystemName } from '../components';
 import { appTheme, cn } from '../theme';
 import { Cargo, KnownFC, mapCommodityNames, mapFCAccess } from '../types';
 import { store } from '../local-storage';
-import { asGrey, delay, fcFullName, getRelativeDuration, isMobile } from '../util';
+import { asGrey, delay, fcFullName, getRelativeDuration, isMatchingCmdr, isMobile } from '../util';
 import { CopyButton } from '../components/CopyButton';
 import { StackH } from '../components/Widgets';
 import { CalloutMsg } from '../components/CalloutMsg';
+import { App } from '../App';
 
 
 const css = mergeStyles({
@@ -252,6 +253,7 @@ export class FleetCarrier extends Component<FleetCarrierProps, FleetCarrierState
         addButtonAbove
         showTotalsRow
         cargo={editCargo}
+        fcOwner={isMatchingCmdr(fc.owner, App.cmdrSettings?.cmdr)}
         onChange={cargo => this.setState({ editCargo: cargo })}
       />}
     </>;

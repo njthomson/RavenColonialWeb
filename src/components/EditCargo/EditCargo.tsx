@@ -24,6 +24,7 @@ interface EditCargoProps {
   noAdd?: boolean;
   noDelete?: boolean;
   showTotalsRow?: boolean;
+  fcOwner?: boolean;
 
   /** Show the add button below the table, vs next to the sort order button */
   addButtonBelow?: boolean;
@@ -195,7 +196,9 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
   renderRows() {
     const { cargo, sort } = this.state;
 
-    const cargoNames = Object.keys(cargo).filter(c => c in mapCommodityNames); // filter out names unrelated to Colonization
+    const cargoNames = this.props.fcOwner
+      ? Object.keys(cargo) // FC owners should see everything
+      : Object.keys(cargo).filter(c => c in mapCommodityNames); // everyone else ... filter out names unrelated to Colonization
     const groupedCargo = getGroupedCommodities(cargoNames, sort);
     const groupsAndCommodityKeys = flattenObj(groupedCargo);
 
@@ -236,7 +239,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
     const { cargo } = this.state;
     const { noDelete, maxCounts, readyNames } = this.props;
 
-    const displayName = mapCommodityNames[key];
+    const displayName = mapCommodityNames[key] ?? key;
     const isReady = readyNames && readyNames.includes(key)
       ? <Icon iconName='SkypeCircleCheck' title={`${displayName} is ready`} />
       : undefined;
