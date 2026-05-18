@@ -257,7 +257,7 @@ export class EditCargo extends Component<EditCargoProps, EditCargoState> {
 
     return <tr key={`c-${key}`} style={rowStyle}>
       <td>
-        <CommodityIcon name={key} /> {displayName} {isReady}
+        <span style={{ position: 'relative', top: 2 }}><CommodityIcon name={key} /></span> {displayName} {isReady}
       </td>
 
       <td>

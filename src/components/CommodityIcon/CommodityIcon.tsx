@@ -9,6 +9,7 @@ export const CommodityIcon: FunctionComponent<{ name: string; }> = (props) => {
 
   let commodityClass = '';
   let iconName = '';
+  let iconColor = undefined;
 
   if (props.name in mapCommodityIcon) {
     commodityClass = props.name;
@@ -22,8 +23,9 @@ export const CommodityIcon: FunctionComponent<{ name: string; }> = (props) => {
   if (!iconName) {
     console.error(`Unexpected: ${props.name}`);
     commodityClass = 'Unknown';
-    iconName = 'ChromeClose';
+    iconName = 'Unknown';
+    iconColor = 'grey';
   }
 
-  return <Icon className="commodity-icon" iconName={iconName} title={commodityClass} />;
+  return <Icon className="commodity-icon" iconName={iconName} title={commodityClass} style={{ color: iconColor }} />;
 };
