@@ -524,9 +524,15 @@ export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolea
   }
 
   if (map.tourism > 0) {
-    if (!site.systemBuffed?.has('tourism') && site.sys.bodies.some(b => stellarRemnants.includes(b.type))) {
-      // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40*) for Tourism
-      adjust('tourism', +0.4, 'Buff: system has Black Hole or Neutron Star or White Dwarf', map, site, 'sys');
+    // If the System has a Black Hole / Neutron Star / White Dwarf (+0.40* EACH) for Tourism
+    if (site.sys.bodies.some(b => b.type === BT.bh)) {
+      adjust('tourism', +0.4, 'Buff: system has a Black Hole', map, site, 'sys');
+    }
+    if (site.sys.bodies.some(b => b.type === BT.bh)) {
+      adjust('tourism', +0.4, 'Buff: system has a Neutron Star', map, site, 'sys');
+    }
+    if (site.sys.bodies.some(b => b.type === BT.wd)) {
+      adjust('tourism', +0.4, 'Buff: system has a White Dwarf', map, site, 'sys');
     }
     if (!site.bodyBuffed?.has('tourism')) {
       if (matches([BodyFeature.bio, BodyFeature.geo], site.body?.features)) {
