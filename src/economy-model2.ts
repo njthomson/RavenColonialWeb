@@ -356,8 +356,8 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
           adjust(inf, +0.4, `+ ${reason} boost: Body has TERRAFORMABLE`, map, site, 'body');
         }
       } else {
-        if (matches([BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {
-          adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO/TERRAFORMABLE`, map, site, 'body');
+        if (matches([BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio], site.body?.features)) { // NOT , BodyFeature.terraformable?
+          adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO`, map, site, 'body'); // /TERRAFORMABLE
         }
       }
       if (matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {
@@ -622,10 +622,17 @@ const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number
     const children = sys.bodies.filter(b => parentBody && b.parents[0] === parentBody.num);
     if (children.length > 1) {
       const idx = children.findIndex(b => b.name === body.name);
-      // if we are one of the first two children and the other is a star - apply the penalty
+      // apply the penalty - if we are one of the first two children ...
       if (idx < 2) {
         const other = idx === 0 ? children[1] : children[0];
+        // ... and the other is a star
         if (matches([...stellarRemnants, BT.st], other.type)) {
+          return true;
+        }
+        // ... or the parent beyond the barycentre is a star
+        const skipParentNum = parents[0];
+        const skipParentBody = sys.bodies.find(b => b.num === skipParentNum);
+        if (skipParentBody?.type === BT.st) {
           return true;
         }
       }
