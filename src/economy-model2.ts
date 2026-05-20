@@ -590,7 +590,7 @@ const matches = <T>(listRequired: T[], check: T | T[] | undefined, avoid?: T[]) 
   }
 }
 
-const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number[]): boolean => {
+export const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?: number[]): boolean => {
 
   if (!parents) {
     parents = [...body?.parents ?? []];

@@ -1,7 +1,7 @@
 import { ActionButton, Callout, DirectionalHint, Icon, IconButton, Link, mergeStyles, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { LinkSrvSurvey } from "../../components/LinkSrvSurvey";
-import { applyBodyType, applyBuffs, applyStrongLinkBoost } from "../../economy-model2";
+import { applyBodyType, applyBuffs, applyStrongLinkBoost, bodyIsTidalToStar } from "../../economy-model2";
 import { store } from "../../local-storage";
 import { Economy, getSiteType, mapName } from "../../site-data";
 import { predictSurfaceSlots } from '../../slot-prediction';
@@ -137,6 +137,7 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
 
   // only show the hint on bodies that could be landable
   const showMissingGroundSlotsHint = !isLandable && [BT.hmc, BT.ib, BT.mrb, BT.rb, BT.ri].includes(bod.type);
+  const ignoreTidalLock = !bodyIsTidalToStar(sysView.state.sysMap, bod);
 
   return <div>
     <Callout
@@ -158,7 +159,7 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
       role="dialog"
       onDismiss={() => props.onClose()}
     >
-      <div className='system-view2' style={{ position: 'relative', padding: 10, textTransform: 'capitalize' }}>
+      <div className='system-view2' style={{ position: 'relative', padding: 10, textTransform: 'capitalize', cursor: 'default' }}>
 
         <h3 className={cn.h3} style={{ fontSize: 20 }}>{bod.name}</h3>
 
@@ -173,7 +174,16 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
             }}
           />}
 
-          <div>{bod.subType} <span style={{ color: 'grey' }}>-</span> Arrival: ~{bod.distLS.toFixed(1)} ls</div>
+          <div style={{ fontSize: 10 }}>
+            {bod.subType}
+            <span style={{ color: 'grey', margin: '0 4px' }}>-</span>
+            <span style={{ color: appTheme.palette.themeTertiary }}>Arrival:</span> ~{bod.distLS.toFixed(1)} ls
+          </div>
+          <div style={{ color: appTheme.palette.themeTertiary, fontSize: 10 }}>
+            Surface temp:&nbsp;<span style={{ color: appTheme.palette.themeSecondary, marginLeft: 4 }}>{bod.temp.toFixed(1)} K</span>
+            <span style={{ color: 'grey', margin: '0 4px' }}>-</span>
+            Gravity: <span style={{ color: appTheme.palette.themeSecondary }}>{bod.gravity.toFixed(2)} g</span>
+          </div>
 
           <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 8 }} style={{ marginTop: 10 }}>
             <div>Slots:</div>
@@ -239,16 +249,22 @@ export const BodyCard: FunctionComponent<{ targetId: string, bod: Bod | BodyMap2
             <div>Features:</div>
             <Stack className={cbt} horizontal wrap verticalAlign='center' tokens={{ childrenGap: '0 8px' }} style={{ maxWidth: 300 }}>
 
-              {bod.features.map(f => <div key={f} style={{ marginLeft: 4 }}>
-                <Icon
-                  className='icon-inline'
-                  key={`bfi-${bod.num}${f}`}
-                  title={mapBodyFeature[f]}
-                  iconName={mapBodyFeatureIcon[f]}
-                  style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.8)' }}
-                />
-                <span>&nbsp;{mapBodyFeature[f]}</span>
-              </div>)}
+              {bod.features.map(f => {
+                return <div key={f} style={{ marginLeft: 4 }} title={ignoreTidalLock ? 'Tidal lock penalty will not apply' : undefined}>
+                  <Icon
+                    className='icon-inline'
+                    key={`bfi-${bod.num}${f}`}
+                    title={mapBodyFeature[f]}
+                    iconName={mapBodyFeatureIcon[f]}
+                    style={{ color: mapBodyFeatureColor[f].slice(0, -1) + ', 0.8)' }}
+                  />
+                  <span style={{
+                    marginLeft: 6,
+                    color: f === BodyFeature.tidal && ignoreTidalLock ? 'grey' : undefined,
+                    textDecoration: f === BodyFeature.tidal && ignoreTidalLock ? 'line-through' : undefined
+                  }}>{mapBodyFeature[f]}</span>
+                </div>;
+              })}
             </Stack>
           </Stack>}
 
