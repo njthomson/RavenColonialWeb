@@ -101,10 +101,15 @@ export const About: React.FunctionComponent = () => {
       <h3 className={cn.h3}>Apps and Clients</h3>
       Raven Colonial is able to track things automatically through the use of client apps running on your PC as you play the game.
       <br /><br />
-      The original client app for Raven Colonial is <LinkSrvSurvey /> and is maintained by the same author as this website, but there are alternatives with differing levels of integration:
+      The original client app for Raven Colonial is <LinkSrvSurvey /> and is maintained by the same author as this website.
+      <br /><br />
+      These EDMC plugins also integrate with Raven Colonial:
+      <br />
+      <Icon className="icon-inline" iconName='UserWarning' /> <span style={{ fontWeight: 'bold' }}>Important:</span> If you use an EDMC plugin alongside <LinkSrvSurvey />, you must disable all Colonization features in the client app to avoid conflicts.
       <ul>
-        <li><LinkSrvSurvey href='https://github.com/aussig/BGS-Tally' text='https://github.com/aussig/BGS-Tally' title='' /> or Discord: <Link href='https://discord.gg/xGJfksTm' target="_blank">https://discord.gg/xGJfksTm</Link></li>
-        <li><LinkSrvSurvey href='https://github.com/toemaus313/ravencolonial_edmc' text='https://github.com/toemaus313/ravencolonial_edmc' title='' /></li>
+        <li><LinkSrvSurvey href='https://github.com/aussig/BGS-Tally' text='BGS-Tally' title='BGS-Tally EDMC plugin' /> — A tool to track and report your Background Simulation (BGS), Colonisation, Powerplay Merits (PP) and Thargoid War (TW) activity in Elite Dangerous. BGS-Tally counts all the BGS / Colonisation / PP / TW work you do for any faction, in any system. <LinkSrvSurvey href='https://github.com/aussig/BGS-Tally' text='GitHub' title='BGS-Tally on GitHub' /> or Discord: <Link href='https://discord.gg/xGJfksTm' target="_blank">https://discord.gg/xGJfksTm</Link></li>
+        <li><LinkSrvSurvey href='https://github.com/Fenris159/ravencolonial_edmc' text='https://github.com/Fenris159/ravencolonial_edmc' title='Ravencolonial EDMC plugin (current)' /> (current) — A dedicated plugin that tracks colonization activity and Fleet Carrier stock, and syncs with Ravencolonial. Includes Overlay Support.</li>
+        <li><LinkSrvSurvey href='https://github.com/toemaus313/ravencolonial_edmc' text='https://github.com/toemaus313/ravencolonial_edmc' title='Ravencolonial EDMC plugin (legacy)' /> (legacy) — The original dedicated plugin for Raven Colonial, now outdated.</li>
       </ul>
       It is worth noting that Raven Colonial pulls data from other Elite Dangerous community sites, namely <LinkSrvSurvey href='https://spansh.co.uk' text='Spansh' title='' /> and <LinkSrvSurvey href='https://www.edsm.net/' text='EDSM' title='' />. These sites are fed by players running apps that upload to <LinkSrvSurvey href='https://github.com/EDCD/EDDN/blob/master/README.md' text='EDDN' title='' /> as they play and without these contributions we are all starved for data. If not already, please consider running such an app when you play. My favourites are:
       <ul>
