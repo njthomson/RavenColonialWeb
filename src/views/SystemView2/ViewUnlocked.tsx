@@ -1,7 +1,7 @@
 import { ActionButton, Callout, DirectionalHint, Icon, Stack } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { appTheme, cn } from "../../theme";
-import { SysMap2, SysUnlocks, mapSysUnlocks } from "../../system-model2";
+import { SysMap2, SysUnlocks, mapSysUnlocks } from "../../economy/system-model2";
 
 export const ViewUnlockedFeatures: FunctionComponent<{ sysMap: SysMap2 }> = (props) => {
   const [showMore, setShowMore] = useState(false);

@@ -7,7 +7,7 @@ import { Bod } from '../../types2';
 import { BodyFeature, mapBodyFeature } from '../../types';
 import { BodyPut } from '../../api/v2-system';
 import { SystemView2 } from "./SystemView2";
-import { buildSystemModel2 } from '../../system-model2';
+import { buildSystemModel2 } from '../../economy/system-model2';
 
 const rs = mergeStyles({
   marginLeft: 8,

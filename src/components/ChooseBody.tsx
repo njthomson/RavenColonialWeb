@@ -3,7 +3,7 @@ import { Component, ReactNode } from "react";
 import { appTheme, cn } from "../theme";
 import { ResponseEdsmSystemBodies, ResponseEdsmSystemBody } from '../types';
 import { ComboBox, IComboBoxOption, Icon, ISelectableOption, Spinner, SpinnerSize, Stack } from '@fluentui/react';
-import { SysMap2 } from '../system-model2';
+import { SysMap2 } from '../economy/system-model2';
 
 interface ChooseBodyProps {
   systemName: string;

@@ -7,13 +7,16 @@ import { BuildType } from "../../components/BuildType/BuildType";
 import { store } from "../../local-storage";
 import { App } from "../../App";
 import { CalloutMsg } from "../../components/CalloutMsg";
-import { applyTax, isTypeValid2, SysMap2 } from "../../system-model2";
+import { applyTax, isTypeValid2, SysMap2 } from "../../economy/system-model2";
 import { TierPoint } from "../../components/TierPoints";
 import { EconomyBlock } from "../../components/EconomyBlock";
+import { BT } from "../../types2";
+import { getBuildTypeLocationForBody, isTypeAllowedForBody } from "../../components/BuildType/body-build-type-filter";
 
 interface ViewEditBuildTypeProps {
   buildType: string;
   sysMap?: SysMap2;
+  bodyType?: BT;
   dim?: boolean;
   asAddBtn?: boolean;
   highlightAdd?: boolean;
@@ -40,6 +43,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
     if (typeof isOrbital === 'boolean') {
       defaultLocation = isOrbital ? 'orbital' : 'surface';
     }
+    defaultLocation = getBuildTypeLocationForBody(props.bodyType, defaultLocation);
 
     this.state = {
       dropDown: false,
@@ -50,6 +54,10 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
   }
 
   componentDidUpdate(prevProps: Readonly<ViewEditBuildTypeProps>, prevState: Readonly<ViewEditBuildTypeState>, snapshot?: any): void {
+    if (prevProps.bodyType !== this.props.bodyType) {
+      this.setState({ location: getBuildTypeLocationForBody(this.props.bodyType, this.state.location) });
+    }
+
     if (!this.state.dropDown || prevState.dropDown) {
       this.mouseInside = false;
       App.resumePageScroll();
@@ -67,6 +75,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
 
     const validTypes = siteTypes
       .filter(t => t.tier > 0) // remove unknown types
+      .filter(t => isTypeAllowedForBody(this.props.bodyType, t))
       .filter(type => location === 'both' || location === (type.orbital ? 'orbital' : 'surface'));
 
     const displayName2 = getSiteType(this.props.buildType, true)?.displayName2 ?? '?';
@@ -142,9 +151,9 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
               paddingLeft: 5,
             }}
           >
-            {this.renderLocationButton('both')}
+            {this.props.bodyType !== BT.ac && this.renderLocationButton('both')}
             {this.renderLocationButton('orbital')}
-            {this.renderLocationButton('surface')}
+            {this.props.bodyType !== BT.ac && this.renderLocationButton('surface')}
             <ActionButton
               iconProps={{ iconName: 'ViewListGroup' }}
               text='Table'
@@ -176,6 +185,7 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
         buildType={this.props.buildType}
         tableOnly={true}
         sysMap2={this.props.sysMap}
+        bodyType={this.props.bodyType}
         onChange={(newValue) => {
           this.props.onChange(newValue);
           this.setState({ showTable: false });
@@ -186,6 +196,8 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
   }
 
   renderLocationButton(targetLocation: string) {
+    const effectiveLocation = getBuildTypeLocationForBody(this.props.bodyType, targetLocation);
+
     return <>
       <ActionButton
         text={targetLocation}
@@ -198,10 +210,10 @@ export class ViewEditBuildType extends Component<ViewEditBuildTypeProps, ViewEdi
           this.setState({ dropDown: false });
           setTimeout(() => {
             this.setState({
-              location: targetLocation,
+              location: effectiveLocation,
               dropDown: true,
             });
-            store.viewEditBuiltTypeTab = targetLocation;
+            store.viewEditBuiltTypeTab = effectiveLocation;
           }, 5);
         }}
       />

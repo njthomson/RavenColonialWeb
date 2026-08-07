@@ -1,5 +1,5 @@
 import './BuildType.css';
-import { ActionButton, IconButton, INavLink, INavLinkGroup, Nav, Panel, PanelType, Pivot, PivotItem, Stack } from "@fluentui/react";
+import { ActionButton, DirectionalHint, Icon, IconButton, INavLink, INavLinkGroup, Nav, Panel, PanelType, Pivot, PivotItem, Stack } from "@fluentui/react";
 import { Component } from "react";
 import { getBuildTypeDisplayName, getSiteType, isOrbital, mapName, SiteType, siteTypes } from "../../site-data";
 import { appTheme } from "../../theme";
@@ -7,12 +7,16 @@ import { delayFocus, isMobile } from "../../util";
 import { store } from '../../local-storage';
 import { ShowCoachingMarks } from '../ShowCoachingMarks';
 import { BigSiteTable } from '../BigSiteTable/BigSiteTable';
-import { SysMap2 } from '../../system-model2';
+import { isTypeValid2, SysMap2 } from '../../economy/system-model2';
+import { CalloutMsg } from '../CalloutMsg';
+import { BT } from '../../types2';
+import { getBuildTypeLocationForBody, isTypeAllowedForBody } from './body-build-type-filter';
 
 interface ChooseBuildTypeProps {
   buildType: string | undefined,
   onChange: (value: string) => void
   sysMap2?: SysMap2;
+  bodyType?: BT;
   tableOnly?: boolean;
 }
 
@@ -30,13 +34,14 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
     super(props);
 
     const orbital = isOrbital(props.buildType);
+    const location = getBuildTypeLocationForBody(props.bodyType, orbital ? 'orbital' : 'surface');
 
     this.state = {
       showList: props.tableOnly ?? false,
       panelType: store.buildTypeGrid || props.tableOnly ? PanelType.large : PanelType.smallFixedFar,
-      location: orbital ? 'orbital' : 'surface',
+      location,
       selection: props.buildType,
-      groups: this.getFilteredOptions2(props.buildType, orbital ? 'orbital' : 'surface'),
+      groups: this.getFilteredOptions2(props.buildType, location),
     };
   }
 
@@ -48,8 +53,8 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
   componentDidUpdate(prevProps: Readonly<ChooseBuildTypeProps>, prevState: Readonly<ChooseBuildTypeState>, snapshot?: any): void {
 
-    if (prevProps.buildType !== this.props.buildType) {
-      const location = isOrbital(this.props.buildType) ? 'orbital' : 'surface';
+    if (prevProps.buildType !== this.props.buildType || prevProps.bodyType !== this.props.bodyType) {
+      const location = getBuildTypeLocationForBody(this.props.bodyType, isOrbital(this.props.buildType) ? 'orbital' : 'surface');
       this.setState({
         selection: this.props.buildType,
         location: location,
@@ -88,6 +93,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
     const map = siteTypes
       .filter(s => s.tier === tier && s.orbital === orbital && s.buildClass !== 'unknown')
+      .filter(s => isTypeAllowedForBody(this.props.bodyType, s))
       .reduce((map, s) => {
         if (!map[s.buildClass]) { map[s.buildClass] = []; }
         map[s.buildClass].push(s);
@@ -220,6 +226,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           <BigSiteTable
             buildType={this.props.buildType}
             sysMap2={this.props.sysMap2}
+            bodyType={this.props.bodyType}
             onChange={newValue => {
               this.props.onChange(newValue);
               this.setState({ showList: false });
@@ -236,6 +243,7 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
   renderNarrow() {
     const { selection, location, groups } = this.state;
+    const asteroidClusterOnly = this.props.bodyType === BT.ac;
 
     return <div className='build-type'>
       <Pivot
@@ -247,15 +255,16 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           backgroundColor: appTheme.palette.white,
         }}
         onLinkClick={(item) => {
+          const nextLocation = getBuildTypeLocationForBody(this.props.bodyType, item?.props.itemKey ?? 'orbital');
           this.setState({
-            location: item?.props.itemKey ?? 'orbital',
-            groups: this.getFilteredOptions2(selection, item?.props.itemKey)
+            location: nextLocation,
+            groups: this.getFilteredOptions2(selection, nextLocation)
           });
         }}
       >
         <PivotItem headerText="Orbital" itemKey='orbital' />
-        <PivotItem headerText="Surface" itemKey='surface' />
-        <PivotItem headerText="Both" itemKey='both' />
+        {!asteroidClusterOnly && <PivotItem headerText="Surface" itemKey='surface' />}
+        {!asteroidClusterOnly && <PivotItem headerText="Both" itemKey='both' />}
       </Pivot>
 
       {false && location !== 'both' && <Nav
@@ -283,9 +292,11 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
 
     const rows = siteTypes
       .filter(t => t.tier > 0) // remove unknown types
+      .filter(t => isTypeAllowedForBody(this.props.bodyType, t))
       .filter(type => location === 'both' || location === (type.orbital ? 'orbital' : 'surface'))
       .map((type, idx) => {
         const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
+        const { isValid, msg, unlocks } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
 
         return <div
           className='type-row'
@@ -298,7 +309,20 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
           }}
         >
           <span style={{ fontSize: 10, float: 'right', color: appTheme.palette.themeSecondary }}>Tier: {type.tier}</span>
-          <div style={{ color: appTheme.palette.themePrimary }}>{type.displayName2}</div>
+          <Stack horizontal verticalAlign='center' style={{ color: appTheme.palette.themePrimary }}>
+            <span>{type.displayName2}</span>
+            {(msg || unlocks) && <span style={{ marginLeft: 8, marginTop: 4, }}>
+              <CalloutMsg
+                directionalHint={DirectionalHint.rightCenter}
+                msg={this.renderValidityMsg(isValid, msg, unlocks)}
+                iconName={isValid ? undefined : 'Warning'}
+                iconStyle={{
+                  fontSize: 12,
+                  fontWeight: isValid ? undefined : 'bold',
+                  color: isValid ? appTheme.palette.black : appTheme.palette.yellowDark,
+                }} />
+            </span>}
+          </Stack>
 
           <Stack horizontal wrap tokens={{ childrenGap: 0 }} style={{ marginLeft: 8, fontSize: 12 }}>
             {type.subTypes.map((st, i) => {
@@ -331,6 +355,23 @@ export class BuildType extends Component<ChooseBuildTypeProps, ChooseBuildTypeSt
       })
     return <div className='both'>
       {rows}
+    </div>;
+  }
+
+  renderValidityMsg(isValid: boolean, msg: string | undefined, unlocks: string[] | undefined) {
+    return <div>
+      {msg && <Stack horizontal verticalAlign='center'>
+        <Icon iconName={isValid ? 'Accept' : 'ChromeClose'} style={{ marginRight: 4, fontWeight: 'bolder', color: isValid ? appTheme.palette.greenLight : appTheme.palette.red }} />
+        <span>{msg}</span>
+      </Stack>}
+      {unlocks && <>
+        {unlocks.map(t => {
+          return <div key={`bt-unlock-${t}`}>
+            <Icon iconName={t.startsWith('System') ? 'UnlockSolid' : 'Unlock'} style={{ marginRight: 4 }} />
+            <span>{t}</span>
+          </div>;
+        })}
+      </>}
     </div>;
   }
 }

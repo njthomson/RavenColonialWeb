@@ -17,7 +17,16 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
 
   const siteMap = site && sysMap.siteMaps.find(s => s.id === site.id)!;
 
-  return <div className='view-site' style={{ position: 'relative' }}>
+  return <div
+    className='view-site'
+    style={{
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      maxHeight: 'calc(100vh - 104px)',
+      overflow: 'hidden',
+    }}
+  >
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'max-content max-content',
@@ -43,6 +52,7 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       <ViewEditBuildType
         buildType={site.buildType}
         sysMap={sysMap}
+        bodyType={siteMap?.body?.type}
         onChange={(newType) => {
           site.buildType = newType;
           props.onChange(site);
@@ -75,9 +85,20 @@ export const ViewSite: FunctionComponent<{ site: Site, sysView: SystemView2, onC
       </Stack>
 
     </div>
-    <EconomyTable2 site={siteMap} sysView={sysView} />
-    {siteMap?.links && <MarketLinks site={siteMap} sysView={props.sysView} />}
-    {site.buildType && <BuildEffects buildType={site.buildType} siteMap={siteMap} />}
+    <div
+      style={{
+        borderTop: '1px solid rgba(255,255,255,0.35)',
+        paddingTop: 8,
+        flex: '1 1 auto',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        minHeight: 0,
+      }}
+    >
+      <EconomyTable2 site={siteMap} sysView={sysView} />
+      {siteMap?.links && <MarketLinks site={siteMap} sysView={props.sysView} />}
+      {site.buildType && <BuildEffects buildType={site.buildType} siteMap={siteMap} />}
+    </div>
 
   </div>;
 }

@@ -32,6 +32,7 @@ enum Stored {
   viewAllHiddenFC = 'viewAllHiddenFC',
   applyBuffNerf = 'applyBuffNerf',
   recentID64 = 'recentID64',
+  terraformableAgriBonus = 'terraformableAgriBonus',
 }
 
 interface CmdrData {
@@ -222,6 +223,9 @@ class LocalStorage {
 
   get recentID64(): NameID64[] { return readValue(Stored.recentID64, [])!; }
   set recentID64(newValue: NameID64[]) { writeValue(Stored.recentID64, newValue); }
+
+  get terraformableAgriBonus(): boolean { return readBoolean(Stored.terraformableAgriBonus, false); }
+  set terraformableAgriBonus(newValue: boolean) { writeValue(Stored.terraformableAgriBonus, newValue); }
 }
 
 interface NameID64 {

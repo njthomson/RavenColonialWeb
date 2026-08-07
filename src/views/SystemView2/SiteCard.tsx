@@ -4,7 +4,7 @@ import * as api from '../../api';
 import { TierPoint } from '../../components/TierPoints';
 import { store } from '../../local-storage';
 import { getSiteType } from '../../site-data';
-import { SiteMap2 } from "../../system-model2";
+import { SiteMap2 } from "../../economy/system-model2";
 import { appTheme, cn } from "../../theme";
 import { ProjectLink2 } from "./ProjectLink2";
 import { SystemView2 } from "./SystemView2";
@@ -78,6 +78,7 @@ export const SiteCard: FunctionComponent<{ targetId: string, site: SiteMap2, sys
           <ViewEditBuildType
             buildType={site.buildType}
             sysMap={props.sysView.state.sysMap}
+            bodyType={site.body?.type}
             onChange={(newType) => {
               site.original.buildType = newType;
               props.sysView.siteChanged(site.original);

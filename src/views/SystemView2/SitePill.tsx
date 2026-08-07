@@ -1,6 +1,6 @@
 import { ActionButton, Icon } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
-import { SiteMap2 } from "../../system-model2";
+import { SiteMap2 } from "../../economy/system-model2";
 import { cn } from "../../theme";
 import { SystemView2 } from "./SystemView2";
 import { SiteCard } from "./SiteCard";

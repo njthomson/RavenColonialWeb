@@ -128,7 +128,12 @@ export interface Site {
   bodyNum: number;
   buildType: string;
   notes?: string;
-  status: BuildStatus
+  status: BuildStatus;
+  /**
+   * Player-selected weak-link source site ids for this port (future schema / import).
+   * When present, economy calc uses this subset instead of the full system candidate pool.
+   */
+  weakLinkIds?: string[];
 }
 
 export type BuildStatus = 'plan' | 'build' | 'complete' | 'demolish';

@@ -8,7 +8,11 @@ import { Icon, mergeStyleSets, Stack } from "@fluentui/react";
 import { TierPoint } from "./TierPoints";
 import { PadSize } from "./PadSize";
 import { HaulList } from "../views/SystemView2/HaulList";
-import { SiteMap2 } from "../system-model2";
+import { SiteMap2 } from "../economy/system-model2";
+import { EconomyBlock } from "./EconomyBlock";
+import { summarizeEconomicInfForBuild } from "../economy/economy-facility-registry";
+import { isUndockableFacility } from "../economy/compare/spansh-compare-reliability";
+import { SpanshCompareCaveat } from "./SpanshCompareCaveat";
 
 const { tds, tc, tr } = mergeStyleSets({
   tds: {
@@ -122,10 +126,38 @@ export const BuildEffects: FunctionComponent<{ buildType: string, noTitle?: bool
           </td>
         </tr>}
 
-        {st.inf !== 'none' && st.inf !== 'colony' && <tr>
-          <td className={tds} style={{ paddingTop }}>Economic inf:</td>
-          <td className={tds} colSpan={3} style={{ paddingTop }}><div className='grey'>{mapName[st.inf]}</div></td>
-        </tr>}
+        {st.inf !== 'none' && st.inf !== 'colony' && (() => {
+          const econSummary = summarizeEconomicInfForBuild(props.buildType, st.inf, props.siteMap, st.fixed);
+          return <tr>
+            <td className={tds} style={{ paddingTop }}>Economic inf:</td>
+            <td className={tds} colSpan={3} style={{ paddingTop }}>
+              <div className='grey'>
+                <Stack horizontal verticalAlign='center' tokens={{ childrenGap: 6 }}>
+                  <EconomyBlock economy={st.inf} size='10px' />
+                  <span>{mapName[st.inf]}</span>
+                  {econSummary.percentLabel && (
+                    <span style={{ fontWeight: 600 }} title={econSummary.note}>
+                      {econSummary.percentLabel}
+                    </span>
+                  )}
+                </Stack>
+                {econSummary.note && (
+                  <div style={{ fontSize: 11, marginTop: 2, color: appTheme.palette.neutralSecondary }}>
+                    {econSummary.note}
+                  </div>
+                )}
+              </div>
+            </td>
+          </tr>;
+        })()}
+
+        {props.siteMap && isUndockableFacility(st) && (
+          <tr>
+            <td className={tds} colSpan={4} style={{ paddingTop: 6 }}>
+              <SpanshCompareCaveat compact />
+            </td>
+          </tr>
+        )}
 
         {effectRows}
 

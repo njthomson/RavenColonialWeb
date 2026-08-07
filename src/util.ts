@@ -1,6 +1,6 @@
 import cargoTypes from './assets/cargo-types.json';
 import { store } from './local-storage';
-import { SiteMap2 } from './system-model2';
+import { SiteMap2 } from './economy/system-model2';
 import { Cargo, mapCommodityNames, mapSourceEconomy, ProjectRefLite, SortMode } from "./types";
 
 let numSeparator: string | undefined = undefined;

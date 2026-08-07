@@ -9,9 +9,10 @@ import { BuildType } from './BuildType/BuildType';
 import { delay } from '../util';
 import { CopyButton } from './CopyButton';
 import { ViewEditBody } from '../views/SystemView2/ViewEditBody';
-import { Bod } from '../types2';
-import { BodyMap2 } from '../system-model2';
+import { Bod, BT } from '../types2';
+import { BodyMap2, SysMap2 } from '../economy/system-model2';
 import { getAvgHaulCosts } from '../avg-haul-costs';
+import { asteroidClusterBuildType } from './BuildType/body-build-type-filter';
 
 interface ProjectCreateProps {
   systemName: string;
@@ -21,6 +22,7 @@ interface ProjectCreateProps {
   knownNames: string[];
   bodies?: Bod[];
   bodyMap?: Record<string, BodyMap2>
+  sysMap?: SysMap2;
 }
 
 // TODO: stop extending `CreateProject` and add `project: CreateProject` as a member of the stte
@@ -84,6 +86,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
     const { buildName, marketId, buildType, showMarketId, showMarketIdHelp, msgError, msgClass, checking } = this.state;
 
     const showNewBodies = !!this.props.bodies && !!this.props.bodyMap;
+    const selectedBody = this.props.bodies?.find(b => b.num === this.state.bodyNum);
 
     return <>
       <div className="create-project">
@@ -142,6 +145,7 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
             onChange={num => this.setState({
               bodyNum: num,
               bodyName: this.props.bodies?.find(b => b.num === num)?.name,
+              buildType: this.props.bodies?.find(b => b.num === num)?.type === BT.ac && buildType && buildType !== asteroidClusterBuildType ? '' : buildType,
             })}
             pinnedSiteId=''
           />
@@ -151,6 +155,8 @@ export class ProjectCreate extends Component<ProjectCreateProps, ProjectCreateSt
           <Label required>Build type:</Label>
           <BuildType
             buildType={buildType}
+            sysMap2={this.props.sysMap}
+            bodyType={selectedBody?.type}
             onChange={(t) => this.setState({ buildType: t })}
           />
         </Stack>

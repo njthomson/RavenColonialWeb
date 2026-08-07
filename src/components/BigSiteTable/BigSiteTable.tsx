@@ -11,8 +11,10 @@ import { PadSize } from "../PadSize";
 import { TierPoint } from "../TierPoints";
 import { BuildEffects } from '../BuildEffects';
 import { SiteImage } from '../VisualIdentify';
-import { isTypeValid2, SysMap2 } from '../../system-model2';
+import { isTypeValid2, SysMap2 } from '../../economy/system-model2';
 import { getAverageHauls } from '../../avg-haul-costs';
+import { BT } from '../../types2';
+import { isTypeAllowedForBody } from '../BuildType/body-build-type-filter';
 
 
 export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => {
@@ -70,6 +72,7 @@ export const BigSiteTablePage: FunctionComponent<{ foo?: string }> = (props) => 
 interface BigSiteTableProps {
   buildType: string | undefined,
   sysMap2?: SysMap2;
+  bodyType?: BT;
   onChange: (value: string) => void
   tableOnly?: boolean;
   stickyTop?: number;
@@ -100,6 +103,7 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
 
     const sorted = siteTypes
       .filter(t => t.tier > 0) // remove unknown types
+      .filter(t => isTypeAllowedForBody(this.props.bodyType, t))
       .filter(t => {
         // filter any of the effects
         for (const key in t.effects) {
@@ -453,7 +457,6 @@ export class BigSiteTable extends Component<BigSiteTableProps, BigSiteTableState
     // const greyDash = <span style={{ color: 'grey' }}>-</span>;
     const showValid = this.props.sysMap2;
     const { isValid, msg, unlocks } = isTypeValid2(this.props.sysMap2, type, getSiteType(this.props.buildType!, true));
-    console.log(`${type.displayName2} => ${isValid} / ${msg}`);
 
     const isCurrentSelection = selection && (type.subTypes.includes(selection) || type.altTypes?.includes(selection) || selection === type.subTypes[0] + '?');
 

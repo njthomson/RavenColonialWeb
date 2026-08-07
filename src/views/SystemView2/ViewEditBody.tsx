@@ -2,7 +2,7 @@ import { Stack, DirectionalHint, ActionButton, Icon, Callout } from "@fluentui/r
 import { Component } from "react";
 import { appTheme, cn } from "../../theme";
 import { Bod, BT } from "../../types2";
-import { BodyMap2, getUnknownBody } from "../../system-model2";
+import { BodyMap2, getUnknownBody } from "../../economy/system-model2";
 import { App } from "../../App";
 import { BodyFeature } from "../../types";
 

@@ -1,9 +1,9 @@
 import { ActionButton, ContextualMenu, ContextualMenuItemType, DefaultButton, Icon, IconButton, IContextualMenuItem, Link, Stack } from "@fluentui/react";
 import { Component, FunctionComponent, useState } from "react";
-import { stellarRemnants } from "../../economy-model2";
+import { stellarRemnants } from "../../economy";
 import { store } from "../../local-storage";
 import { predictSurfaceSlots } from '../../slot-prediction';
-import { BodyMap2, SysMap2 } from "../../system-model2";
+import { BodyMap2, SysMap2 } from "../../economy/system-model2";
 import { appTheme, cn } from "../../theme";
 import { BodyFeature, mapBodyFeature } from "../../types";
 import { Bod, BT } from "../../types2";

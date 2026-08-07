@@ -3,7 +3,7 @@ import { FunctionComponent, useState } from "react";
 import { EconomyBlock } from "../../components/EconomyBlock";
 import { EconomyBlocks, MarketLinkBlocks } from "../../components/MarketLinks/MarketLinks";
 import { getSiteType } from "../../site-data";
-import { SiteMap2 } from "../../system-model2";
+import { SiteMap2 } from "../../economy/system-model2";
 import { appTheme, cn } from "../../theme";
 import { SiteCard } from "./SiteCard";
 import { mapSiteGraphTypeIcon, SystemView2 } from "./SystemView2";

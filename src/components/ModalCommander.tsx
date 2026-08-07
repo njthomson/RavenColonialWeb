@@ -227,7 +227,8 @@ export class ModalCommander extends Component<ModalCommanderProps, ModalCommande
             </Stack>
             <Checkbox
               checked={!noBuffNerf}
-              label='Apply buff/nerf by default'
+              label='Apply system development buff/nerf model'
+              title='Developer/testing override. Leave enabled unless comparing the old pre-balance model.'
               onChange={(_ev, checked) => this.setState({ noBuffNerf: !checked })}
             />
           </Stack>

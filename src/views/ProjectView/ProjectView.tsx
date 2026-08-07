@@ -22,7 +22,7 @@ import { ShowCoachingMarks } from '../../components/ShowCoachingMarks';
 import { ViewEditBuildType } from '../SystemView2/ViewEditBuildType';
 import { getAvgHaulCosts } from '../../avg-haul-costs';
 import { EconomyTable2 } from '../SystemView2/EconomyTable2';
-import { buildSystemModel2, SysMap2 } from '../../system-model2';
+import { buildSystemModel2, SysMap2 } from '../../economy/system-model2';
 import { App } from '../../App';
 import { InlineMarketOrders } from '../../components/InlineMarketOrders';
 
@@ -268,7 +268,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       if (newProj.complete) {
         const sys = await api.systemV2.getSys(newProj.systemAddress.toString());
-        const sysMap = buildSystemModel2(sys, false, !!App.cmdrSettings?.noBuffNerf);
+        const sysMap = buildSystemModel2(sys, false, !App.cmdrSettings?.noBuffNerf);
         this.setState({ sysMap });
       } else if (!isPrep) {
         // if ALL commodities have a count of -1 ... it means the project is brand new and we want people to edit them to real numbers

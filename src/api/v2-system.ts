@@ -1,7 +1,7 @@
 
 import { store } from "../local-storage";
 import { SysEffects } from "../site-data";
-import { EconomyMap, TierPoints } from "../system-model2";
+import { EconomyMap, TierPoints } from "../economy/system-model2";
 import { BodyFeature, ReserveLevel } from "../types";
 import { Bod, Pop, Site, Sys } from "../types2";
 import { callAPI } from "./api-util";
@@ -72,6 +72,15 @@ export const systemV2 = {
 
   import: async (nameOrNum: string, type?: string): Promise<Sys> => {
     return await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/import/${type ?? ''}`, 'POST');
+  },
+
+  clearRealEconomiesCache: (nameOrNum?: string, systemName?: string) => {
+    if (nameOrNum) {
+      delete systemV2.cache.economies[nameOrNum];
+    }
+    if (systemName && systemName !== nameOrNum) {
+      delete systemV2.cache.economies[systemName];
+    }
   },
 
   getRealEconomies: async (nameOrNum: string, force?: boolean): Promise<GetRealEconomies[]> => {

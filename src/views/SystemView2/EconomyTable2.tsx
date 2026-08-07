@@ -1,8 +1,8 @@
-import { Icon, Stack, Link, Panel, PanelType } from "@fluentui/react";
+import { ActionButton, Icon, Stack, Link, Panel, PanelType } from "@fluentui/react";
 import { FunctionComponent, useState } from "react";
 import { EconomyBlock } from "../../components/EconomyBlock";
 import { EconomyMap, mapName } from "../../site-data";
-import { SiteMap2 } from "../../system-model2";
+import { SiteMap2 } from "../../economy/system-model2";
 import { appTheme, cn } from "../../theme";
 import { BodyFeature, mapBodyFeature } from "../../types";
 import { asPosNegTxt, isMobile, asPosNegTxt2 } from "../../util";
@@ -10,20 +10,40 @@ import { BodyOverride } from "./BodyOverride";
 import { SystemView2 } from "./SystemView2";
 import { mapBodyTypeNames } from "../../types2";
 import { EconomyBlocks } from "../../components/MarketLinks/MarketLinks";
-import { stellarRemnants } from "../../economy-model2";
+import { isFacilityWithEconomy, stellarRemnants } from "../../economy";
 import { App } from "../../App";
+import { findRealEconomiesRow, getSpanshCompareFailureReason, isConstructionSpanshPlaceholder } from "../../economy/compare/spansh-economy-resolve";
+import {
+  isSpanshCompareExcluded,
+  isUndockableFacility,
+  SPANSH_COMPARE_EXCLUDED_NOTE,
+  SPANSH_COMPARE_LIMITED_BODY,
+} from "../../economy/compare/spansh-compare-reliability";
+import { SpanshCompareCaveat } from "../../components/SpanshCompareCaveat";
 
 export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: SystemView2; noTableHeader?: boolean; noDisclaimer?: boolean; noChart?: boolean }> = (props) => {
-  const realMatch = props.sysView?.state.realEconomies?.find(r => typeof r.id === 'number' ? r.id === props.site?.marketId : r.id.substring(1) === props.site?.marketId.toString());
+  const resolvedSpansh = props.sysView?.resolveSpanshEconomyForSite(props.site);
+  const realMatch = resolvedSpansh?.row;
   const realEconomy = realMatch?.economies;
+  const spanshMarketId = resolvedSpansh?.spanshMarketId ?? props.site.marketId;
+  const spanshMatchNote = resolvedSpansh?.note;
+  const journalRow = findRealEconomiesRow(props.sysView?.state.realEconomies, props.site.marketId ?? 0);
+  const journalIsConstructionPlaceholder = isConstructionSpanshPlaceholder(journalRow?.economies);
   const systemName = props.site.sys.name;
 
   const [showAudit, setShowAudit] = useState(false);
   const [bodyOverride, setBodyOverride] = useState(false);
-  const [loadingCompare, setLoadingCompare] = useState(!!realEconomy);
+  const compareLoaded = props.sysView?.state.realEconomies !== undefined;
+  const loadingCompare = !!props.sysView?.state.spanshCompareLoading;
+  const spanshCompareExcluded = props.site && isSpanshCompareExcluded(props.site.type);
+  const undockableFacility = props.site && isUndockableFacility(props.site.type);
+  const spanshCompareLimited =
+    !spanshCompareExcluded &&
+    (resolvedSpansh?.reliability === "limited" || !!undockableFacility);
 
-  // exit early if the site is not complete it cannot be landed at
-  if (!props.site || props.site.type.padSize === 'none') return null;
+  if (!props.site) return null;
+  // Surface ports only — unless economy-bearing hub/installation (no pads after build).
+  if (props.site.type.padSize === "none" && !isFacilityWithEconomy(props.site)) return null;
 
   const colorYellow = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
 
@@ -44,7 +64,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
 
         // if we have realEconomy data to compare ...
         let comparisonElements = <></>;
-        if (realEconomy) {
+        if (realEconomy && !spanshCompareExcluded) {
           const realVal = realEconomy[key];
 
           // show values from Spansh
@@ -58,17 +78,19 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
             }
 
             const match = realVal === val;
+            const softMismatch = !match && spanshCompareLimited;
             comparisonElements = <>
               <td className={cn.bl}>{realVal.toFixed(0)} %</td>
               <td className={cn.bl}>
                 <Icon
                   className='icon-inline'
-                  iconName={match ? 'CheckMark' : 'Cancel'}
+                  iconName={match ? 'CheckMark' : softMismatch ? 'Warning' : 'Cancel'}
+                  title={softMismatch ? 'Spansh snapshot may not reflect in-game facility economies' : undefined}
                   style={{
                     cursor: 'Default',
                     textAlign: 'center',
                     width: '100%',
-                    color: match ? appTheme.palette.greenLight : appTheme.palette.red,
+                    color: match ? appTheme.palette.greenLight : softMismatch ? colorYellow : appTheme.palette.red,
                     fontWeight: 'bold'
                   }}
                 />
@@ -98,47 +120,93 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
         </tr>;
       });
 
-    if (props.site.marketId && !!props.sysView) {
-      if (realMatch) {
-        spanshHeader = <>
-          {!!props.sysView.state.useIncomplete && <Icon iconName='Warning' style={{ color: colorYellow }} />}
-          From&nbsp;
-          <Link
-            href={`https://spansh.co.uk/station/${props.site.marketId}`}
-            target='spansh'
-          >
-            Spansh <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
-          </Link>
+    const canShowSpanshCompare =
+      !!props.sysView &&
+      (!props.site.status || props.site.status === 'complete') &&
+      !spanshCompareExcluded;
 
-          {realMatch?.updated && <>
-            <span
-              style={{
-                fontWeight: 'normal',
-                position: 'absolute',
-                width: 'max-content',
-                color: 'grey',
-              }}
+    if (canShowSpanshCompare && props.sysView) {
+      const sysView = props.sysView;
+      if (realMatch) {
+        const edsmNameMatch = resolvedSpansh?.kind === 'edsmName';
+        spanshHeader = <div style={{ fontWeight: 'bold' }}>
+          {spanshCompareLimited && <SpanshCompareCaveat compact style={{ marginBottom: 6 }} />}
+          {!!sysView.state.useIncomplete && <Icon iconName='Warning' style={{ color: colorYellow }} />}
+          <div style={{ position: 'relative' }}>
+            {edsmNameMatch && (
+              <Icon
+                iconName='Switch'
+                title={spanshMatchNote ?? 'Matched by station name via EDSM'}
+                className='icon-inline'
+                style={{ marginRight: 4, color: colorYellow, verticalAlign: 'middle' }}
+              />
+            )}
+            <span style={{ color: colorYellow }}>From&nbsp;</span>
+            <Link
+              href={`https://spansh.co.uk/station/${spanshMarketId}`}
+              target='spansh'
+              style={{ color: colorYellow, fontWeight: 'bold' }}
             >
-              &nbsp;As of: {new Date(realMatch.updated).toLocaleString()}
-            </span>
+              Spansh <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
+            </Link>
+            {realMatch?.updated && (
+              <span
+                style={{
+                  fontWeight: 'normal',
+                  position: 'absolute',
+                  width: 'max-content',
+                  color: 'grey',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                &nbsp;As of: {new Date(realMatch.updated).toLocaleString()}
+              </span>
+            )}
+          </div>
+          {spanshMatchNote && (
+            <div style={{ color: colorYellow, fontWeight: 'normal', fontSize: 11, marginTop: 2 }}>
+              {spanshMatchNote}
+            </div>
+          )}
+        </div>;
+      } else if (compareLoaded) {
+        const noDataMsg =
+          getSpanshCompareFailureReason(
+            {
+              name: props.site.name,
+              marketId: props.site.marketId,
+              status: props.site.status,
+              buildClass: props.site.type.buildClass,
+              padSize: props.site.type.padSize,
+            },
+            sysView.state.realEconomies,
+            sysView.state.edsmMarketIdByName,
+            {
+              edsmLoadError: sysView.state.edsmCompareError,
+              edsmStationCount: sysView.state.edsmStationCount,
+            },
+          ) ??
+          (journalIsConstructionPlaceholder
+            ? 'Journal marketId is a construction placeholder (Colony only on Spansh). No operational match via EDSM name.'
+            : 'No operational Spansh data for this station');
+        spanshHeader = <span style={{ color: 'grey' }}>{noDataMsg}
+          {props.site.marketId && props.site.marketId > 0 && <>
+            &nbsp;
+            <Link href={`https://spansh.co.uk/station/${props.site.marketId}`} target='spansh'>
+              journal id <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
+            </Link>
           </>}
-        </>;
-      } else if (!realMatch && props.sysView.state.realEconomies) {
-        spanshHeader = <span style={{ color: 'grey' }}>No data from <Link
-          href={`https://spansh.co.uk/station/${props.site.marketId}`}
-          target='spansh'
-        >
-          Spansh <Icon className='icon-inline' iconName='OpenInNewWindow' style={{ textDecoration: 'none' }} />
-        </Link></span>;
+        </span>;
       } else if (loadingCompare) {
-        spanshHeader = <span style={{ color: 'grey' }}>Loading ...</span>;
+        spanshHeader = <span style={{ color: 'grey' }}>Loading Spansh and EDSM…</span>;
       } else {
         spanshHeader = <Link
-          title={`Compare estimated values with real values from Spansh.\n\nNOTE: Comparisons are only valid when everything in the system is known to Raven Colonial.`}
-          onClick={() => {
-            props.sysView?.doGetRealEconomies();
-            setLoadingCompare(true);
-          }}
+          title={
+            undockableFacility
+              ? `Compare RC model vs Spansh snapshot.\n\n${SPANSH_COMPARE_LIMITED_BODY}`
+              : `Compare estimated values with real values from Spansh.\n\nUses journal marketId when set; otherwise EDSM station name → marketId, then Spansh economies.`
+          }
+          onClick={() => sysView.doGetRealEconomies(true)}
         >
           Compare with Spansh?
         </Link>;
@@ -151,7 +219,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
   const systemFeatures = systemFeatureStarTypes.map(t => mapBodyTypeNames[t]).join(', ').toUpperCase();
   const sotlLink = getSotlLink(props.site.economies);
   let flip = false;
-  return <div style={{ minWidth: 380 }}>
+  return <div style={{ maxWidth: '100%', overflowX: 'hidden' }}>
 
     {props.site.economies && <div style={{ position: 'relative' }}>
       <h3 className={cn.h3}>
@@ -160,20 +228,40 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
           {sotlLink && <Link href={sotlLink} target='sotl' style={{ marginLeft: 8, fontSize: 10, fontWeight: 'normal' }} title='See estimated commodities at: cdb.sotl.org.uk'>Estimate commodities<Icon className="icon-inline" iconName='OpenInNewWindow' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>}
         </>}
         {!!props.noTableHeader && <>&nbsp;</>}
-        <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}>
-          {!!props.site.economyAudit && <Link
+        <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 2, marginRight: 12 }}>
+          {!!props.site.economyAudit && <ActionButton
+            iconProps={{ iconName: 'SearchData' }}
+            className={cn.bBox}
+            styles={{
+              root: {
+                height: 22,
+                padding: '0 6px',
+                minWidth: 0,
+                fontSize: 11,
+              },
+              icon: {
+                fontSize: 12,
+                marginRight: 3,
+              },
+            }}
             title='See a breakdown of economy calculations'
             onClick={() => { setShowAudit(true); }}
           >
             Audit?
-          </Link>}
+          </ActionButton>}
         </div>
       </h3>
 
       {!props.noChart && <Stack horizontal verticalAlign='baseline' style={{ position: 'relative', marginBottom: 2 }}>
         <Icon iconName='FinancialSolid' style={{ marginRight: 4, color: appTheme.palette.themeTertiary }} />
-        <EconomyBlocks economies={props.site.economies} width={370} height={14} />
+        <EconomyBlocks economies={props.site.economies} width={360} height={14} />
       </Stack>}
+      {!props.noChart && <div className='small' style={{ color: 'grey', marginBottom: 8 }}>
+        Bar width is each economy&apos;s share of the total on this port. Percentages are absolute strengths (may exceed 100%).
+      </div>}
+      {spanshCompareExcluded && (!props.site.status || props.site.status === 'complete') && (
+        <div className='small' style={{ color: 'grey', marginBottom: 8 }}>{SPANSH_COMPARE_EXCLUDED_NOTE}</div>
+      )}
 
       {showAudit && props.site.economyAudit && <Panel
         isLightDismiss
@@ -216,7 +304,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
                 // flip the background color?
                 const newPrev = x.inf !== props.site.economyAudit![i - 1]?.inf;
                 const newNext = x.inf !== props.site.economyAudit![i + 1]?.inf;
-                const realMatchKnown = newNext && !!realMatch?.economies;
+                const realMatchKnown = !spanshCompareExcluded && newNext && !!realMatch?.economies;
                 const spanshValue = realMatch?.economies && x.inf in realMatch.economies ? Math.round(realMatch.economies[x.inf as keyof EconomyMap]) : 0;
                 const realMatchEqual = realMatchKnown && realMatch?.economies && spanshValue === Math.round(x.after * 100);
 
@@ -242,7 +330,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
                       </>}
                     </>}
                   </td>
-                  <td className='cl' style={{ paddingBottom: newNext ? 8 : 0 }} >
+                  <td className='cl' style={{ paddingBottom: newNext ? 8 : 0, color: x.reason.startsWith('Skipped weak link') ? 'grey' : undefined }} >
                     {x.reason}
                     {realMatchKnown && !realMatchEqual && <div style={{ color: appTheme.palette.accent, fontWeight: 'bold' }}>According to Spansh</div>}
                   </td>

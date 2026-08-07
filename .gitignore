@@ -8,11 +8,12 @@
 # testing
 /coverage
 
-# production
+# production build output
 /build
 
 # misc
 .DS_Store
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -22,3 +23,26 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .eslintcache
+
+# Local editor / agent (never ship)
+.cursor/
+.vs/
+AGENT-HANDOFF.md
+
+# Local-only (outside src/ so dev server does not compile it)
+/local/
+
+# Local Spansh galaxy dumps and harvest caches (multi-GB; keep outside repo)
+galaxy_stations.json
+**/galaxy_stations.json
+GALAXY_STATIONS_PATH
+
+# Common verify caches if copied into repo root by mistake
+ic1805-sys.json
+ic1805-galaxy-stations.json
+hip52675-sys.json
+hip52675-galaxy-stations.json
+hr4464-sys.json
+hr4464-galaxy-stations.json
+hr4464-spansh.json
+facility-economy-registry-report.json

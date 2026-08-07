@@ -1,7 +1,7 @@
 import * as api from '../../api';
 import rcc32 from '../../assets/rcc-32.png';
 import { CSSProperties, FunctionComponent, useState } from "react";
-import { SiteMap2, SysMap2 } from "../../system-model2";
+import { SiteMap2, SysMap2 } from "../../economy/system-model2";
 import { ActionButton, Icon, IconButton, mergeStyles, Panel, PanelType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { appTheme, cn } from "../../theme";
 import { isMobile } from "../../util";

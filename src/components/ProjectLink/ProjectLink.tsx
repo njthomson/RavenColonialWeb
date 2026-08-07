@@ -3,7 +3,7 @@ import { FunctionComponent } from "react";
 import { BuildTypeDisplay } from '..';
 import { ProjectRefLite } from "../../types";
 import { appTheme } from "../../theme";
-import { SiteMap2 } from "../../system-model2";
+import { SiteMap2 } from "../../economy/system-model2";
 
 interface ProjectLinkProps {
   proj: ProjectRefLite;

@@ -4,32 +4,54 @@ import { SystemView2 } from "./SystemView2";
 import { appTheme } from '../../theme';
 import { isMobile } from '../../util';
 import { EconomyTable2 } from './EconomyTable2';
-import { EconomyMap } from "../../system-model2";
+import { EconomyMap } from "../../economy/system-model2";
 import { App } from "../../App";
+import { isSpanshCompareExcluded, spanshMismatchIsInformational } from "../../economy/compare/spansh-compare-reliability";
 
 export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onClose: () => void }> = (props) => {
   const [onlyProblems, setOnlyProblems] = useState(window.location.hostname.includes('localhost'));
-  const loadingRealEconomies = props.sysView.state.realEconomies?.length === undefined;
+  const loadingRealEconomies =
+    props.sysView.state.spanshCompareLoading ||
+    props.sysView.state.realEconomies === undefined;
 
   const sites = props.sysView.state.sysMap.siteMaps
-    .filter(s => !!s.economies && s.marketId > 4_200_000_000)
+    .filter(
+      s =>
+        !!s.economies &&
+        s.status === 'complete' &&
+        !isSpanshCompareExcluded(s.type),
+    )
     .sort((a, b) => a.bodyNum - b.bodyNum);
-  const validSites = sites.filter(s => s.status === 'complete' && s.marketId > 0);
+  const validSites = sites;
 
   const colorYellow = appTheme.isInverted ? appTheme.palette.yellow : 'goldenrod';
-  const { sysMap, realEconomies } = props.sysView.state;
+  const { sysMap } = props.sysView.state;
+  const spanshInversionHints = props.sysView.getSpanshInversionHints();
+  const spanshInversionCount = new Set(Object.values(spanshInversionHints).map(h =>
+    [h.siteId, h.swapWithSiteId].sort().join(':')
+  )).size;
+  const showFeedback = (ev?: React.MouseEvent<HTMLElement>) => {
+    ev?.preventDefault();
+    ev?.stopPropagation();
+    App.showFeedback(`Economy modelling issues in: ${props.sysView.state.systemName}`);
+  };
 
   // find sites where predicted economies do not match Spansh
   const nonMatchingSites = !loadingRealEconomies && sysMap.siteMaps.filter(site => {
     // skip sites without economies
     if (!site.economies) { return false; }
+    if (isSpanshCompareExcluded(site.type)) { return false; }
 
-    // skip sites without matching Spansh data
-    const realEconomy = realEconomies?.find(r => r.id === site?.marketId)?.economies;
+    const resolved = props.sysView.resolveSpanshEconomyForSite(site);
+    const realEconomy = resolved?.row.economies;
     if (!realEconomy) { return false; }
 
     // does any economy not match?
     const keys = Array.from(new Set([...Object.keys(site.economies), ...Object.keys(realEconomy)])) as (keyof EconomyMap)[];
+    if (spanshMismatchIsInformational(site.type)) {
+      return false;
+    }
+
     return keys.some(key => {
       const estimate = Math.round((site.economies![key] ?? 0) * 100);
       const real = realEconomy[key] ?? 0
@@ -41,11 +63,18 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
     <Panel
       isOpen
       isLightDismiss
+      isBlocking={false}
       className='build-order'
       headerText={`Compare: ${props.sysView.state.systemName}`}
       allowTouchBodyScroll={isMobile()}
       type={isMobile() ? PanelType.medium : PanelType.custom}
       customWidth='1280px'
+      focusTrapZoneProps={{
+        disabled: true,
+        forceFocusInsideTrap: false,
+        isClickableOutsideFocusTrap: true,
+      }}
+      popupProps={{ enableAriaHiddenSiblings: false }}
       styles={{
         overlay: { backgroundColor: appTheme.palette.blackTranslucent40 },
       }}
@@ -70,7 +99,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
           </div>
 
           <div>
-            Economy modelling calculations are a work in progress, please <Link onClick={() => App.showFeedback(`Economy modelling issues in: ${props.sysView.state.systemName}`)}>report errors or issues</Link>
+            Economy modelling calculations are a work in progress, please <Link onClick={showFeedback}>report errors or issues</Link>
           </div>
           <div>
             <Link onClick={() => {
@@ -85,7 +114,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
         <Spinner
           size={SpinnerSize.large}
           labelPosition='right'
-          label='Loading Spansh data...'
+          label='Loading Spansh and EDSM station index...'
         />
       </Stack>}
 
@@ -95,6 +124,8 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
           <div>
             <span>
               <Icon iconName='LightBulb' /> To update Spansh data - dock at stations with a client that uploads to EDDN
+              <br />
+              Compares sites with landing pads. Sites with no landing pads use modeled economies and are not included.
             </span>
             <Link onClick={() => setOnlyProblems(!onlyProblems)} style={{ marginLeft: 4, userSelect: 'none', fontSize: 12 }}>
               <Icon
@@ -108,6 +139,11 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
           {nonMatchingSites && nonMatchingSites.length === 0 && validSites.length > 0 && <Stack horizontal verticalAlign='center' style={{ fontSize: onlyProblems ? 18 : 12, marginTop: onlyProblems ? 20 : undefined }}>
             <Icon iconName='SkypeCircleCheck' style={{ color: appTheme.palette.greenLight, marginRight: 8, fontSize: onlyProblems ? 18 : undefined }} />
             <span>All valid site economies match Spansh data</span>
+          </Stack>}
+
+          {spanshInversionCount > 0 && <Stack horizontal verticalAlign='center' style={{ color: colorYellow, marginTop: 8 }}>
+            <Icon iconName='Switch' style={{ marginRight: 6 }} />
+            <span>{spanshInversionCount} possible same-body Spansh inversion{spanshInversionCount === 1 ? '' : 's'} found. Check the arrow hints in Order for Calculations.</span>
           </Stack>}
 
         </div>
@@ -124,7 +160,7 @@ export const AuditTestWholeSystem: FunctionComponent<{ sysView: SystemView2; onC
                 {s.status !== 'complete' && <Icon className='icon-inline' iconName={s.status === 'plan' ? 'WebAppBuilderFragment' : 'ConstructionCone'} style={{ marginRight: 8, color: s.status === 'plan' ? appTheme.palette.yellowDark : appTheme.palette.orangeLight }} />}
                 {s.name} <span style={{ color: 'grey' }}>- {s.body?.name}</span>
               </h2>
-              <div style={{ marginLeft: 40, width: 400 }}>
+              <div style={{ marginLeft: 40, width: 480 }}>
                 <EconomyTable2 site={s} sysView={props.sysView} noTableHeader noDisclaimer noChart />
               </div>
             </div>;

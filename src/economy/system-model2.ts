@@ -1,30 +1,18 @@
-import { SysSnapshot } from './api/v2-system';
-import { calculateColonyEconomies2, stellarRemnants } from './economy-model2';
-import { canReceiveLinks, ConcreteEconomy, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "./site-data";
-import { BodyFeature } from './types';
-import { Bod, BT, Site, Sys } from './types2';
+import { SysSnapshot } from '../api/v2-system';
+import { calculateColonyEconomies2, calculateFacilityEconomies2, EconomyModelOptions, isFacilityWithEconomy, stellarRemnants } from './economy-model2';
+import type { AgEconomyCalcFlags } from './economy-core';
+import {
+  bodyPrimaryReceivesGasGiantClusterAgStrongLinks,
+  findGasGiantClusterAgricultureInstallations,
+  flattenHubGrandchildStrongSites,
+} from './economy-link-sources';
+import { siteAlreadyStrongLinkedTo, siteContributesWeakLinks } from './economy-weak-links';
+import { canReceiveLinks, ConcreteEconomy, Economy, getSiteType, mapName, SiteType, SysEffects, sysEffects } from "../site-data";
+import { BodyFeature } from '../types';
+import { Bod, BT, Site, Sys } from '../types2';
+import { isExcludedFromCalculations } from './site-calc-exclusions';
 
 export const unknown = 'Unknown';
-
-// const sysMapCache: Record<string, SysMap> = {};
-
-// /** Returns what ever cached value we have for the given system */
-// export const getSysMap = (systemName: string): SysMap | undefined => {
-//   // return what ever we have cached
-//   return sysMapCache[systemName];
-// }
-
-// /** Returns cached value, or requests + calculates, for the given system. Automatically includes incomplete sites. */
-// export const fetchSysMap = async (systemName: string): Promise<SysMap> => {
-//   // return from cache if already present
-//   if (sysMapCache[systemName]) {
-//     return sysMapCache[systemName];
-//   }
-
-//   const projects = await api.system.findAllBySystem(systemName);
-//   const sysMap = buildSystemModel(projects, true);
-//   return sysMap;
-// }
 
 export type SysUnlocks =
   | 'SettlementTourist'
@@ -132,17 +120,21 @@ export const mapSysUnlocks: Record<SysUnlocks, { icon: string, title: string, ne
   },
 };
 
-export interface SysMap2 extends Sys {
-  bodyMap: Record<string, BodyMap2>;
+/** Mid-build system map: bodies/sites grouped; tier totals and economies not computed yet. */
+interface SysMapBuild extends Sys {
   siteMaps: SiteMap2[];
+  bodyMap: Record<string, BodyMap2>;
+  countSites: number;
+  systemScore: number;
+  calcIds: string[];
+}
+
+export interface SysMap2 extends SysMapBuild {
   tierPoints: TierPoints;
   economies: Record<string, number>;
   sumEffects: SysEffects;
-  systemScore: number;
-  sysUnlocks: Record<SysUnlocks, boolean>,
+  sysUnlocks: Record<SysUnlocks, boolean>;
   taxCount: number;
-  /** The set of IDs to use for system/economy calculations */
-  calcIds?: string[];
 }
 
 export interface TierPoints {
@@ -184,6 +176,12 @@ export interface SiteMap2 extends Site {
   bodyBuffed?: Set<Economy>;
   systemBuffed?: Set<Economy>;
 
+  /** Agriculture calculation flags; reset each time economies are calculated. */
+  agEconomyCalc?: AgEconomyCalcFlags;
+
+  /** Internal guard for economy dependency pre-calculation. */
+  economyCalcState?: "pending" | "calculating" | "done";
+
   /** Calculated points needed to start construction */
   calcNeeds?: { tier: number; count: number; }
 }
@@ -193,7 +191,10 @@ export type EconomyMap = Record<Exclude<Economy, 'colony' | 'none'>, number>;
 export interface SiteLinks2 {
   economies: Record<string, EconomyLink>
   strongSites: SiteMap2[];
+  /** Cross-body weak-link candidates (all economies). */
   weakSites: SiteMap2[];
+  /** Same-body subordinate weak sources — agriculture weak links only at apply time. */
+  sameBodyWeakSites?: SiteMap2[];
 }
 
 export interface EconomyLink {
@@ -201,16 +202,13 @@ export interface EconomyLink {
   weak: number;
 }
 
-export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: boolean): SysMap2 => {
-  // const orderIDs = sys.sites.map(s => s.id); // necessary?
+export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: boolean, economyModelOptions?: EconomyModelOptions): SysMap2 => {
   const idxLimit = sys.idxCalcLimit ?? sys.sites.length;
 
-  // the primary port is always the first site
-  sys.primaryPortId = sys.sites?.length > 0
-    ? sys.sites[0].id
-    : undefined;
+  // Keep API compatibility: the system primary is encoded by sites[0].
+  const primaryPortId = getSystemPrimaryPortId(sys);
 
-  sys = { ...sys };
+  sys = { ...sys, primaryPortId };
   sys.sites = sys.sites.map(s => { return { ...s }; });
 
   // Read:
@@ -222,19 +220,38 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
   // determine primary ports for each body
   const allBodies = Object.values(sysMap.bodyMap);
   for (const body of allBodies) {
-    body.surfacePrimary = getBodyPrimaryPort(body.surface, sysMap.calcIds);
+    body.surfacePrimary = getBodyPrimaryPort(body.surface, sysMap.calcIds, body.sites);
     const siblingSites = findSiblingSites(sys.bodies, sysMap.bodyMap, body, !!body.surfacePrimary);
-    body.orbitalPrimary = getBodyPrimaryPort(siblingSites, sysMap.calcIds);
+    body.orbitalPrimary = getBodyPrimaryPort(siblingSites, sysMap.calcIds, body.sites);
   }
 
-  // per body, calc strong/weak links
+  // assign subordinate links before weak-link sources are collected (sheet: tiered stations only weak-link when subordinate)
+  for (const body of allBodies) {
+    assignBodySubordinateLinks(sys.bodies, sysMap.bodyMap, body, sysMap.calcIds);
+  }
+
+  for (const site of sysMap.siteMaps) {
+    if (site.status === 'demolish' || !sysMap.calcIds.includes(site.id)) { continue; }
+    if (usesGeneratedColonyEconomy(site) || isFacilityWithEconomy(site)) {
+      site.economyCalcState = "pending";
+    }
+  }
+
+  // Per body, assemble strong/weak link graphs.
   for (const body of allBodies) {
     calcBodyLinks(sysMap.bodyMap, body, sys, sysMap.calcIds);
   }
 
+  // Then calculate link economies after every body has published its link pools.
+  for (const site of sysMap.siteMaps) {
+    calcSiteEconomies(site, sysMap.calcIds, economyModelOptions);
+  }
+
+  stabilizeSiteEconomies(sysMap.siteMaps, sysMap.calcIds, economyModelOptions);
+
   // calc sum effects from all sites
-  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, sysMap.calcIds, !useIncomplete);
-  const sumEffects = sumSystemEffects(sysMap.siteMaps, sysMap.calcIds, buffNerf);
+  const { tierPoints, taxCount } = sumTierPoints(sysMap.siteMaps, sysMap.calcIds, undefined, sysMap.primaryPortId);
+  const sumEffects = sumSystemEffects(sysMap.siteMaps, sysMap.calcIds, sysMap.primaryPortId, buffNerf, economyModelOptions);
 
   // calc system unlocks
   const sysUnlocks = {} as Record<SysUnlocks, boolean>;
@@ -246,18 +263,18 @@ export const buildSystemModel2 = (sys: Sys, useIncomplete: boolean, buffNerf?: b
   // re-sort bodies by their num value
   // sys.bodies.sort((a, b) => a.num - b.num);
 
-  const finalMap = Object.assign(sys, {
+  const finalMap: SysMap2 = {
     ...sysMap,
     ...sumEffects,
     tierPoints,
     taxCount,
     sysUnlocks,
-  });
+  };
 
-  // // store in the cache
-  // if (!noCache) {
-  //   sysMapCache[finalMap.systemName] = finalMap;
-  // }
+  for (const s of sysMap.siteMaps) {
+    s.sys = finalMap;
+  }
+
   return finalMap;
 };
 
@@ -296,14 +313,14 @@ export const getUnknownBody = (): Bod => {
   };
 }
 
-const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number) => {
+const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number): SysMapBuild => {
 
   let siteMaps: SiteMap2[] = [];
   let systemScore = 0;
 
   const calcIds = useIncomplete
-    ? sys.sites.filter((s, i) => i < idxLimit && s.status !== 'demolish').map(s => s.id) // include up to idxLimit
-    : sys.sites.filter(s => s.status === 'complete').map(s => s.id); // include only completed sites
+    ? sys.sites.filter((s, i) => i < idxLimit && s.status !== 'demolish' && !isExcludedFromCalculations(s, sys.bodies.find(b => b.num === s.bodyNum))).map(s => s.id) // include up to idxLimit
+    : sys.sites.filter(s => s.status === 'complete' && !isExcludedFromCalculations(s, sys.bodies.find(b => b.num === s.bodyNum))).map(s => s.id); // include only completed sites
 
   // first: group sites by their bodies
   if (!sys.sites) { sys.sites = []; }
@@ -345,27 +362,19 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number) =>
     return map;
   }, {} as Record<string, BodyMap2>);
 
-  // // sort bodies name but force Unknown to be first in the list
-  // const sortedKeys = Object.keys(bodies)
-  //   .filter(n => n !== unknown)
-  //   .sort();
-  // if (unknown in bodies) {
-  //   sortedKeys.unshift(unknown);
-  // }
-  // const bodyMap: Record<string, BodyMap> = {};
-  // for (let key of sortedKeys) { bodyMap[key] = bodyMap[key]; }
-
-  // // sort all sites and sites-per-body by timeCompleted, forcing unknown to be last
-  // allSites = allSites.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
-  // for (let body of Object.values(bodyMap)) {
-  //   body.sites = body.sites.sort((a, b) => (a.timeCompleted ?? '9000')?.localeCompare(b.timeCompleted ?? '9000'));
-  // }
-
   const countSites = sys.sites.length;
-  const sysMap = {
+  const sysMap: SysMapBuild = {
     ...sys,
-    siteMaps, bodyMap, countSites, systemScore, calcIds,
+    siteMaps,
+    bodyMap,
+    countSites,
+    systemScore,
+    calcIds,
   };
+
+  for (const s of siteMaps) {
+    s.sys = sysMap as unknown as SysMap2;
+  }
 
   return sysMap;
 };
@@ -411,32 +420,96 @@ export const getSysScoreDiagnostic = (sys: Sys, siteMaps: SiteMap2[]) => {
   return scoreTxt;
 };
 
-export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[], incBuildStarted?: boolean) => {
+const isIncludedForTierNeeds = (site: SiteMap2, calcIds: string[], incBuildStarted?: boolean) => {
+  if (site.status === 'demolish') { return false; }
+  if (incBuildStarted) {
+    return site.status !== 'plan';
+  }
+  return calcIds.includes(site.id);
+};
+
+const isValidSystemPrimaryPort = (sys: Sys, site: Site | undefined): boolean => {
+  if (!site || site.status !== 'complete' || isExcludedFromCalculations(site, sys.bodies.find(body => body.num === site.bodyNum))) {
+    return false;
+  }
+
+  if (!sys.bodies.some(body => body.num === site.bodyNum)) {
+    return false;
+  }
+
+  const type = getSiteType(site.buildType, true);
+  return type?.buildClass === 'starport' || type?.buildClass === 'outpost';
+};
+
+const getSystemPrimaryPortId = (sys: Sys): string | undefined => {
+  if (isValidSystemPrimaryPort(sys, sys.sites?.[0])) {
+    return sys.sites[0].id;
+  }
+
+  const fallbackPrimary = sys.sites?.find(site => isValidSystemPrimaryPort(sys, site));
+  return fallbackPrimary ? fallbackPrimary.id : sys.sites?.[0]?.id;
+};
+
+const getCanonicalTaxOrder = (siteMaps: SiteMap2[], calcIds: string[], primaryPortId: string | undefined, incBuildStarted?: boolean) =>
+  siteMaps
+    .filter(site =>
+      isIncludedForTierNeeds(site, calcIds, incBuildStarted)
+      && site.id !== primaryPortId
+      && site.type.needs.count > 0
+      && site.type.needs.tier > 1
+      && site.type.buildClass === 'starport'
+      && site.type.tier > 1
+    )
+    .sort((a, b) => {
+      const tierA = a.type.tier ?? 0;
+      const tierB = b.type.tier ?? 0;
+      if (tierA !== tierB) { return tierB - tierA; }
+
+      const bodyA = a.body?.num ?? a.bodyNum ?? Number.MAX_SAFE_INTEGER;
+      const bodyB = b.body?.num ?? b.bodyNum ?? Number.MAX_SAFE_INTEGER;
+      if (bodyA !== bodyB) { return bodyA - bodyB; }
+
+      const orbitA = a.type.orbital ? 0 : 1;
+      const orbitB = b.type.orbital ? 0 : 1;
+      if (orbitA !== orbitB) { return orbitA - orbitB; }
+
+      const marketA = a.marketId ?? Number.MAX_SAFE_INTEGER;
+      const marketB = b.marketId ?? Number.MAX_SAFE_INTEGER;
+      if (marketA !== marketB) { return marketA - marketB; }
+
+      return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+    });
+
+export const sumTierPoints = (siteMaps: SiteMap2[], calcIds: string[], incBuildStarted?: boolean, primaryPortIdOverride?: string) => {
 
   const tierPoints: TierPoints = { tier2: 0, tier3: 0 };
-  const primaryPortId = siteMaps && siteMaps[0]?.id;
+  const primaryPortId = primaryPortIdOverride ?? siteMaps[0]?.id;
+
+  for (const site of siteMaps) {
+    delete site.calcNeeds;
+  }
 
   let taxCount = -2;
+  for (const site of getCanonicalTaxOrder(siteMaps, calcIds, primaryPortId, incBuildStarted)) {
+    taxCount++;
+    site.calcNeeds = {
+      tier: site.type.needs.tier,
+      count: applyTax(site.type.tier, site.type.needs.count, taxCount),
+    };
+  }
+
   for (const site of siteMaps) {
-    if (site.status === 'demolish') { continue; }
-    // skip mock sites, unless ...
-    if (incBuildStarted) {
-      // allow status:build or complete even though they may not be in calcIds
-      if (site.status === 'plan') { continue; }
-    } else if (!calcIds.includes(site.id)) { continue; }
+    if (!isIncludedForTierNeeds(site, calcIds, incBuildStarted)) { continue; }
 
     // sum system tier points needed - these are already spent for projects in-progress
     if (site.id !== primaryPortId && site.type.needs.count > 0 && site.type.needs.tier > 1) {
-      let needCount = site.type.needs.count;
-      if (site.type.buildClass === 'starport' && site.type.tier > 1) {
-        taxCount++;
-        needCount = applyTax(site.type.tier, needCount, taxCount);
-      }
+      const needCount = site.calcNeeds?.count ?? site.type.needs.count;
 
       const tierName = site.type.needs.tier === 2 ? 'tier2' : 'tier3';
       tierPoints[tierName] -= needCount;
-      // store this on the site itself, so we can display these adjusted costs
-      site.calcNeeds = { tier: site.type.needs.tier, count: needCount };
+      if (!site.calcNeeds) {
+        site.calcNeeds = { tier: site.type.needs.tier, count: needCount };
+      }
     }
 
     // skip incomplete sites, unless ...
@@ -465,22 +538,18 @@ export const applyTax = (tier: number, cost: number, taxCount: number) => {
   return cost;
 };
 
-const sumSystemEffects = (siteMaps: SiteMap2[], calcIds: string[], buffNerf?: boolean) => {
+const sumSystemEffects = (siteMaps: SiteMap2[], calcIds: string[], primaryPortId: string | undefined, buffNerf?: boolean, economyModelOptions?: EconomyModelOptions) => {
 
   const mapEconomies: Record<string, number> = {};
   const sumEffects: SysEffects = {};
 
-  let first = true;
   for (const site of siteMaps) {
     if (site.status === 'demolish') { continue; }
 
     // skip incomplete sites, unless ...
     if (!calcIds.includes(site.id)) continue;
 
-    // calc total system economic influence
-    if (['settlement', 'outpost', 'starport'].includes(site.type.buildClass)) {
-      calculateColonyEconomies2(site, calcIds);
-    }
+    ensureSiteEconomiesCalculated(site, calcIds, economyModelOptions);
     const inf = site.primaryEconomy ?? site.type.inf;
 
     if (inf !== 'none') {
@@ -492,12 +561,10 @@ const sumSystemEffects = (siteMaps: SiteMap2[], calcIds: string[], buffNerf?: bo
       let effect = site.type.effects[key] ?? 0;
       if (effect === 0) continue;
       if (buffNerf) {
-        effect = adjustAfflictedStarPortSumEffect(key, effect, first);
+        effect = adjustAfflictedStarPortSumEffect(key, effect, site.id === primaryPortId);
       }
       sumEffects[key] = (sumEffects[key] ?? 0) + effect;
     }
-
-    first = false;
   }
 
   // sort: highest count first, or alpha if equal
@@ -538,33 +605,58 @@ const adjustAfflictedStarPortSumEffect = (key: keyof SysEffects, effect: number,
   }
 }
 
-const getBodyPrimaryPort = (sites: SiteMap2[], calcIds: string[]): SiteMap2 | undefined => {
+/** Dockable ports anchor link graphs; hubs only when the body has no port; installations never. */
+const canActAsBodyLinkPrimary = (s: SiteMap2, bodyHasDockablePort: boolean): boolean => {
+  if (s.type.buildClass === "installation") {
+    return false;
+  }
+  if (canReceiveLinks(s.type)) {
+    return true;
+  }
+  if (s.type.buildClass === "hub" && s.type.inf !== "none") {
+    return !bodyHasDockablePort;
+  }
+  return false;
+};
+
+const pickPrimaryByTier = (
+  sites: SiteMap2[],
+  tier: number,
+  bodyHasDockablePort: boolean,
+): SiteMap2 | undefined => {
+  const matches = sites.filter(
+    s => s.type.tier === tier && canActAsBodyLinkPrimary(s, bodyHasDockablePort),
+  );
+  // Dockable ports beat hubs/installations at the same tier when picking body primary.
+  const port = matches.find(s => canReceiveLinks(s.type));
+  if (port) {
+    return port;
+  }
+  return matches.length > 0 ? matches[0] : undefined;
+};
+
+const getBodyPrimaryPort = (
+  sites: SiteMap2[],
+  calcIds: string[],
+  allBodySites: SiteMap2[],
+): SiteMap2 | undefined => {
   if (sites.length === 0) return undefined;
 
-  // skip incomplete sites?
   if (calcIds.length) {
     sites = sites.filter(s => calcIds.includes(s.id));
   }
 
-  // do we have any Tier 3's ?
-  const t3s = sites.filter(s => s.type.tier === 3 && canReceiveLinks(s.type));
-  if (t3s.length > 0) {
-    return t3s[0];
+  const bodyHasDockablePort = allBodySites.some(
+    s => (!calcIds.length || calcIds.includes(s.id)) && canReceiveLinks(s.type),
+  );
+
+  for (const tier of [3, 2, 1] as const) {
+    const primary = pickPrimaryByTier(sites, tier, bodyHasDockablePort);
+    if (primary) {
+      return primary;
+    }
   }
 
-  // do we have any Tier 2's ?
-  const t2s = sites.filter(s => s.type.tier === 2 && canReceiveLinks(s.type));
-  if (t2s.length > 0) {
-    return t2s[0];
-  }
-
-  // do we have any Tier 1's ?
-  const t1s = sites.filter(s => s.type.tier === 1 && canReceiveLinks(s.type));
-  if (t1s.length > 0) {
-    return t1s[0];
-  }
-
-  // there is no primary to receive links on this body
   return undefined;
 }
 
@@ -573,78 +665,266 @@ const calcBodyLinks = (bodyMap: Record<string, BodyMap2>, body: BodyMap2, sys: S
   // exit early if no primary port for this body
   if (!body.surfacePrimary && !body.orbitalPrimary) { return; }
 
-  // calc strong/weaks links, for surface sites, then orbital
+  // Calc link graphs for surface then orbital; then share pools once both exist.
   if (body.surfacePrimary) {
     calcSiteLinks(sys.bodies, bodyMap, body, body.surfacePrimary, calcIds);
   }
   if (body.orbitalPrimary) {
     calcSiteLinks(sys.bodies, bodyMap, body, body.orbitalPrimary, calcIds);
   }
-
-  // // order by surface, then tier
-  // const sortedSites = [...body.sites].sort((a, b) => {
-  //   let val = (a.type.orbital ? 1 : 0) - (b.type.orbital ? 1 : 0);
-  //   if (val === 0) {
-  //     val = b.type.tier - a.type.tier;
-  //   }
-  //   if (val === 0) {
-  //     val = b.buildName.localeCompare(a.buildName);
-  //   }
-  //   return val;
-  // });
-
-  // then calculate the economies after that
-  for (const site of body.sites) {
-    calcSiteEconomies(site, calcIds);
-  }
 }
+
+/** T1/T2/T3 starports and outposts only contribute weak links when subordinate to another station. */
+export { siteAlreadyStrongLinkedTo, siteContributesWeakLinks } from './economy-weak-links';
+
+const canBeSubordinateToPrimary = (
+  s: SiteMap2,
+  primarySite: SiteMap2,
+  body: BodyMap2,
+  calcIds: string[],
+): boolean => {
+  if (s.parentLink || s.type.inf === 'none' || s === primarySite || (!calcIds.includes(s.id))) {
+    return false;
+  }
+
+  if (!primarySite.type.orbital && s.type.orbital && (s.type.buildClass === 'outpost' || s.type.buildClass === 'starport')) {
+    // surface sites cannot claim orbital ports
+    return false;
+  }
+
+  if (s.type.orbital && !primarySite.type.orbital && !!body.orbitalPrimary) {
+    // surface sites cannot claim orbital facilities if there's an orbital port
+    return false;
+  }
+
+  if (s.type.buildClass === "installation") {
+    if (canReceiveLinks(primarySite.type)) {
+      return true;
+    }
+    if (primarySite.type.buildClass === "hub") {
+      return true;
+    }
+  }
+
+  if (primarySite.type.buildClass === "hub" && s.type.buildClass === "hub") {
+    return false;
+  }
+
+  if (primarySite.type.buildClass === "installation" && s.type.buildClass === "installation") {
+    return s.type.orbital && !primarySite.type.orbital;
+  }
+
+  return true;
+};
+
+const assignBodySubordinateLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, calcIds: string[]) => {
+  if (!body.surfacePrimary && !body.orbitalPrimary) { return; }
+
+  if (body.surfacePrimary) {
+    assignSubordinateLinks(bods, bodyMap, body, body.surfacePrimary, calcIds);
+  }
+  if (body.orbitalPrimary) {
+    assignSubordinateLinks(bods, bodyMap, body, body.orbitalPrimary, calcIds);
+  }
+};
+
+const assignSubordinateLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, primarySite: SiteMap2, calcIds: string[]) => {
+  const siblingSites = findSiblingSites(bods, bodyMap, body, false);
+
+  for (const s of siblingSites) {
+    if (canBeSubordinateToPrimary(s, primarySite, body, calcIds)) {
+      s.parentLink = primarySite;
+    }
+  }
+};
 
 const calcSiteLinks = (bods: Bod[], bodyMap: Record<string, BodyMap2>, body: BodyMap2, primarySite: SiteMap2, calcIds: string[]) => {
 
   // start with sites directly on the body
   const siblingSites = findSiblingSites(bods, bodyMap, body, false);
 
-  // strong links are everything else tied to the current body, alpha sort by name
-  const strongSites = siblingSites
-    .filter(s => {
-      if (s.parentLink || s.type.inf === 'none' || s === primarySite || (!calcIds.includes(s.id))) {
-        // skip anything already strong-linked, things without influence, ourself or incompletes
-        return false;
-      }
+  // strong links: direct subordinates; sibling-moon farms strong-link the body primary only (orbital wins).
+  const clusterAgInstallations = bodyPrimaryReceivesGasGiantClusterAgStrongLinks(body, primarySite)
+    ? findGasGiantClusterAgricultureInstallations(body, bodyMap, bods, calcIds)
+    : [];
+  const strongSiteIds = new Set<string>();
+  const strongSites = flattenHubGrandchildStrongSites(
+    [
+      ...siblingSites.filter(s => s.parentLink === primarySite),
+      ...clusterAgInstallations,
+    ]
+      .filter(s => {
+        if (strongSiteIds.has(s.id)) {
+          return false;
+        }
+        strongSiteIds.add(s.id);
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  );
 
-      if (!primarySite.type.orbital && s.type.orbital && (s.type.buildClass === 'outpost' || s.type.buildClass === 'starport')) {
-        // surface sites cannot claim orbital ports
-        return false;
-      }
+  const strongGraph = { strongSites } as Pick<SiteLinks2, "strongSites">;
+  const excludeStrongLinkedWeak = (list: SiteMap2[]) =>
+    list.filter(s => !siteAlreadyStrongLinkedTo(s, { links: strongGraph } as SiteMap2));
 
-      if (s.type.orbital && !primarySite.type.orbital && !!body.orbitalPrimary) {
-        // surface sites cannot claim orbital facilities if there's an orbital port
-        return false;
-      }
+  // Weak links: same-body subordinates/hubs, then other bodies (full candidate pool).
+  // Economy calc applies +5% steps until the agriculture weak-link budget is exhausted.
+  // When primarySite.original.weakLinkIds is set, only those sources are used (player-configured links).
+  let sameBodyWeakSites: SiteMap2[] = [];
+  let weakSites = excludeStrongLinkedWeak(
+    Object.values(bodyMap)
+      .filter(b => b !== body)
+      .flatMap(b => b.sites)
+      .filter(s =>
+        !siblingSites.includes(s) &&
+        calcIds.includes(s.id) &&
+        !(
+          (s.type.buildClass === "starport" || s.type.buildClass === "outpost") &&
+          (s === s.body?.orbitalPrimary || s === s.body?.surfacePrimary)
+        ) &&
+        siteContributesWeakLinks(s),
+      ),
+  );
+  sameBodyWeakSites = excludeStrongLinkedWeak(sameBodyWeakSites);
 
-      // set the link to the primary
-      s.parentLink = primarySite;
-      return true;
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const configuredWeakLinkIds = primarySite.original.weakLinkIds;
+  if (configuredWeakLinkIds?.length) {
+    const allowed = new Set(configuredWeakLinkIds);
+    weakSites = weakSites.filter(s => allowed.has(s.id));
+    sameBodyWeakSites = sameBodyWeakSites.filter(s => allowed.has(s.id));
+  }
 
-
-  // weak links are everything around any other body (and not a sibling), except primary ports
-  const weakSites = Object.values(bodyMap)
-    .filter(b => b !== body)
-    .flatMap(b => b.sites)
-    .filter(s => !siblingSites.includes(s) && s.type.inf !== 'none' && (s !== s.body?.orbitalPrimary && s !== s.body?.surfacePrimary) && (calcIds.includes(s.id)));
-
-  if (!primarySite.links && (strongSites.length > 0 || weakSites.length > 0)) {
+  if (!primarySite.links && (strongSites.length > 0 || weakSites.length > 0 || sameBodyWeakSites.length > 0)) {
     primarySite.links = {
       economies: {}, // we need to calculate strong/weak links across all sites before we can populate this
       strongSites,
       weakSites,
+      sameBodyWeakSites,
     };
   }
 }
 
-const calcSiteEconomies = (site: SiteMap2, calcIds: string[]) => {
+const usesGeneratedColonyEconomy = (site: SiteMap2): boolean =>
+  ['settlement', 'outpost', 'starport'].includes(site.type.buildClass);
+
+const ensureSiteEconomiesCalculated = (
+  s: SiteMap2,
+  calcIds: string[],
+  economyModelOptions?: EconomyModelOptions,
+): boolean => {
+  if (s.economyCalcState === "done") {
+    return true;
+  }
+  if (s.economyCalcState === "calculating") {
+    return false;
+  }
+
+  const shouldCalculateColonyEconomy = usesGeneratedColonyEconomy(s);
+  const shouldCalculateFacilityEconomy = !shouldCalculateColonyEconomy && isFacilityWithEconomy(s);
+  if (!shouldCalculateColonyEconomy && !shouldCalculateFacilityEconomy) {
+    return true;
+  }
+
+  s.economyCalcState = "calculating";
+  try {
+    if (shouldCalculateColonyEconomy) {
+      calculateColonyEconomies2(s, calcIds, economyModelOptions);
+    } else {
+      calculateFacilityEconomies2(s, calcIds, economyModelOptions);
+    }
+    s.economyCalcState = "done";
+    return true;
+  } finally {
+    if (s.economyCalcState === "calculating") {
+      delete s.economyCalcState;
+    }
+  }
+};
+
+const recalculateSiteEconomies = (
+  s: SiteMap2,
+  calcIds: string[],
+  economyModelOptions?: EconomyModelOptions,
+): boolean => {
+  if (s.status === 'demolish' || !calcIds.includes(s.id)) {
+    return false;
+  }
+
+  const shouldCalculateColonyEconomy = usesGeneratedColonyEconomy(s);
+  const shouldCalculateFacilityEconomy = !shouldCalculateColonyEconomy && isFacilityWithEconomy(s);
+  if (!shouldCalculateColonyEconomy && !shouldCalculateFacilityEconomy) {
+    return false;
+  }
+
+  s.economyCalcState = "calculating";
+  try {
+    if (shouldCalculateColonyEconomy) {
+      calculateColonyEconomies2(s, calcIds, economyModelOptions);
+    } else {
+      calculateFacilityEconomies2(s, calcIds, economyModelOptions);
+    }
+    s.economyCalcState = "done";
+    return true;
+  } finally {
+    if (s.economyCalcState === "calculating") {
+      delete s.economyCalcState;
+    }
+  }
+};
+
+const MAX_ECONOMY_STABILIZATION_PASSES = 5;
+
+const siteEconomySignature = (site: SiteMap2): string => {
+  const economies = site.economies
+    ? (Object.keys(site.economies) as Array<keyof EconomyMap>)
+      .sort()
+      .map(key => `${key}:${site.economies![key]}`)
+      .join(',')
+    : '';
+  const links = site.links?.economies
+    ? Object.keys(site.links.economies)
+      .sort()
+      .map(key => {
+        const link = site.links!.economies[key];
+        return `${key}:${link.strong}/${link.weak}`;
+      })
+      .join(',')
+    : '';
+
+  return `${site.id}|${site.primaryEconomy ?? ''}|${economies}|${links}`;
+};
+
+const economySignature = (siteMaps: SiteMap2[]): string =>
+  siteMaps
+    .filter(site => usesGeneratedColonyEconomy(site) || isFacilityWithEconomy(site))
+    .map(siteEconomySignature)
+    .join('\n');
+
+const stabilizeSiteEconomies = (
+  siteMaps: SiteMap2[],
+  calcIds: string[],
+  economyModelOptions?: EconomyModelOptions,
+) => {
+  for (let pass = 0; pass < MAX_ECONOMY_STABILIZATION_PASSES; pass++) {
+    const before = economySignature(siteMaps);
+
+    for (const site of siteMaps) {
+      recalculateSiteEconomies(site, calcIds, economyModelOptions);
+    }
+    for (const site of siteMaps) {
+      calcSiteEconomies(site, calcIds, economyModelOptions);
+    }
+
+    const after = economySignature(siteMaps);
+    if (after === before) {
+      return;
+    }
+  }
+
+  console.warn(`Economy model did not stabilize after ${MAX_ECONOMY_STABILIZATION_PASSES} passes`);
+};
+
+const calcSiteEconomies = (site: SiteMap2, calcIds: string[], economyModelOptions?: EconomyModelOptions) => {
   if (!site.links) return;
 
   const map: Record<ConcreteEconomy, EconomyLink> = {
@@ -665,20 +945,23 @@ const calcSiteEconomies = (site: SiteMap2, calcIds: string[]) => {
     // this mimicks the in-game UI behavior
     const curSiteLinks: Set<ConcreteEconomy> = new Set();
     if (inf === 'colony') {
-      // we need to calculate what the economy actually is for these
-      calculateColonyEconomies2(s, calcIds);
-      // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
-      // tally strong links from intrinsic economies
-      for (const intrinsicInf of s.intrinsic ?? []) {
-        if (intrinsicInf === 'none' || intrinsicInf === 'colony') continue;
-        curSiteLinks.add(intrinsicInf);
+      if (!ensureSiteEconomiesCalculated(s, calcIds, economyModelOptions)) {
+        continue;
+      }
+      const pe = s.primaryEconomy;
+      if (pe && pe !== 'none' && pe !== 'colony') {
+        curSiteLinks.add(pe);
       }
     } else {
+      ensureSiteEconomiesCalculated(s, calcIds, economyModelOptions);
       curSiteLinks.add(inf);
     }
 
-    // if the linked site has its own strong links, we treat those as sub-strong links
+    // Hub grandchildren already flattened into strongSites — avoid double-counting.
     for (const strongLink of s.links?.strongSites ?? []) {
+      if (site.links.strongSites.some(top => top.id === strongLink.id)) {
+        continue;
+      }
       const linkInf = strongLink.type.inf;
       if (linkInf === 'none' || linkInf === 'colony') continue;
       curSiteLinks.add(linkInf);
@@ -689,19 +972,27 @@ const calcSiteEconomies = (site: SiteMap2, calcIds: string[]) => {
     }
   }
 
-  for (const s of site.links.weakSites) {
+  const allWeakCandidates = [
+    ...(site.links.sameBodyWeakSites ?? []),
+    ...site.links.weakSites,
+  ];
+  for (const s of allWeakCandidates) {
+    if (!siteContributesWeakLinks(s)) { continue; }
+    if (siteAlreadyStrongLinkedTo(s, site)) { continue; }
     const inf = s.type.inf;
     if (inf === 'none') continue;
     if (inf === 'colony') {
-      // we need to calculate what the economy actually is for these
-      calculateColonyEconomies2(s, calcIds);
-      // console.log(`** ${s.buildName}: ${inf}\n`, JSON.stringify(s.economies, null, 2)); // TMP!
-      // tally weak links from intrinsic economies
+      if (!ensureSiteEconomiesCalculated(s, calcIds, economyModelOptions)) {
+        continue;
+      }
       for (const intrinsicInf of s.intrinsic ?? []) {
-        if (intrinsicInf === 'none' || intrinsicInf === 'colony') continue;
+        if (intrinsicInf === 'none' || intrinsicInf === 'colony') {
+          continue;
+        }
         map[intrinsicInf].weak++;
       }
     } else {
+      ensureSiteEconomiesCalculated(s, calcIds, economyModelOptions);
       if (!map[inf]) { map[inf] = { strong: 0, weak: 0 }; }
       map[inf].weak++;
     }
@@ -731,6 +1022,22 @@ export interface SiteTypeValidity {
   unlocks?: string[];
 }
 
+const usesTaxedTierNeed = (type: SiteType | undefined) =>
+  !!type && type.buildClass === 'starport' && type.tier > 1 && type.needs.tier > 1;
+
+const getProjectedTierNeedCount = (sysMap: SysMap2, type: SiteType, priorType: SiteType | undefined) => {
+  if (!usesTaxedTierNeed(type)) {
+    return type.needs.count;
+  }
+
+  let taxCount = sysMap.taxCount ?? 0;
+  if (!usesTaxedTierNeed(priorType)) {
+    taxCount++;
+  }
+
+  return applyTax(type.needs.tier, type.needs.count, taxCount);
+};
+
 export const isTypeValid2 = (sysMap: SysMap2 | undefined, type: SiteType | undefined, priorType: SiteType | undefined): SiteTypeValidity => {
   if (!type) { return { isValid: true }; }
 
@@ -739,11 +1046,13 @@ export const isTypeValid2 = (sysMap: SysMap2 | undefined, type: SiteType | undef
     let neededT2 = sysMap.tierPoints.tier2;
     let neededT3 = sysMap.tierPoints.tier3;
     if (priorType) {
-      if (priorType.needs.tier === 2) { neededT2 += priorType.needs.count; }
-      if (priorType.needs.tier === 3) { neededT3 += priorType.needs.count; }
+      const priorNeedCount = getProjectedTierNeedCount(sysMap, priorType, priorType);
+      if (priorType.needs.tier === 2) { neededT2 += priorNeedCount; }
+      if (priorType.needs.tier === 3) { neededT3 += priorNeedCount; }
     }
+    const needCount = getProjectedTierNeedCount(sysMap, type, priorType);
 
-    if (type.needs.tier === 2 && neededT2 < type.needs.count) {
+    if (type.needs.tier === 2 && neededT2 < needCount) {
       return {
         isValid: false,
         msg: 'Not enough Tier 2 points',
@@ -751,7 +1060,7 @@ export const isTypeValid2 = (sysMap: SysMap2 | undefined, type: SiteType | undef
       };
     }
 
-    if (type.needs.tier === 3 && neededT3 < type.needs.count) {
+    if (type.needs.tier === 3 && neededT3 < needCount) {
       return {
         isValid: false,
         msg: 'Not enough Tier 3 points',

@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { Chevrons } from "../../components/Chevrons";
 import { TierPoint } from "../../components/TierPoints";
 import { mapName, sysEffects, SysEffects } from "../../site-data";
-import { getSysScoreDiagnostic, SysMap2 } from "../../system-model2";
+import { getSysScoreDiagnostic, SysMap2 } from "../../economy/system-model2";
 import { asPosNegTxt, isMobile } from "../../util";
 import { appTheme, cn } from "../../theme";
 import { HaulList } from "./HaulList";
@@ -185,12 +185,6 @@ export const SystemStats: FunctionComponent<{ sysMap: SysMap2, useIncomplete: bo
           <span key={`se${key}5`} style={{ width: '100%' }} />
         ]
       })}
-
-      <Stack horizontal verticalAlign='center' style={{ gridColumn: '1 / span 5', fontSize: 10, marginLeft: 0 }}>
-        <input type='checkbox' checked={props.sysView.state.buffNerf} onChange={() => props.sysView.doToggleBuffNerf()} />
-        <div>Apply <Link href="https://forums.frontier.co.uk/threads/elite-dangerous-update-on-balancing-changes-to-system-development.643111/" target="fdev">stats buff/nerf</Link> to ALL facilities</div>
-        <div style={{ color: appTheme.palette.themeSecondary }}>&nbsp;(Experimental unconfirmed behaviour)</div>
-      </Stack>
 
       <div>System unlocks:</div>
       <div style={{ gridColumn: '2 / span 4', alignContent: 'center', marginLeft: -16 }}>

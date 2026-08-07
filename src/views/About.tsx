@@ -3,6 +3,7 @@ import { Link2, LinkSrvSurvey } from "../components/LinkSrvSurvey";
 import { appTheme, cn } from "../theme";
 import { mapStatusIcon } from "./SystemView2/ViewEditStatus";
 import { App } from "../App";
+import { AboutEconomyGuide } from "./AboutEconomyGuide";
 
 export const learnAbout = (currentHelpId?: string) => {
 
@@ -27,6 +28,7 @@ export const learnAbout = (currentHelpId?: string) => {
     fc: 'Linking Fleet Carriers',
     markets: 'Finding markets',
     nexus: 'Building a nexus',
+    economy: 'Economy Guide',
   }
 
   return <div className={`home-box rel ${cn.greyer}`}>
@@ -268,6 +270,9 @@ export const About: React.FunctionComponent = () => {
         <IconBtnScrollTop />
       </ul>
     </div>}
+
+
+    {(!helpId || helpId === 'economy') && <AboutEconomyGuide />}
   </>;
 };
 

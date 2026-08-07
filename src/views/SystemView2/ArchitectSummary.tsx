@@ -11,7 +11,7 @@ import { Chevrons } from '../../components/Chevrons';
 import { SysEffects, getSiteType, mapName } from '../../site-data';
 import { SystemView2 } from './SystemView2';
 import { SysPop } from './SysPop';
-import { getSnapshot } from '../../system-model2';
+import { getSnapshot } from '../../economy/system-model2';
 import { mapStatusIcon } from './ViewEditStatus';
 import { CopyButton } from '../../components/CopyButton';
 import { CalloutMsg } from '../../components/CalloutMsg';

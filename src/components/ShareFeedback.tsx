@@ -1,6 +1,6 @@
 import * as api from '../api';
 import { DefaultButton, IconButton, Label, Modal, PrimaryButton, Spinner, Stack, TextField } from '@fluentui/react';
-import { FunctionComponent, useState } from 'react';
+import { FunctionComponent, useRef, useState } from 'react';
 import { appTheme, cn } from '../theme';
 import { LinkSrvSurvey } from './LinkSrvSurvey';
 
@@ -10,22 +10,37 @@ export const ShareFeedback: FunctionComponent<{ topic: string; body?: string; on
   const [contact, setContact] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const addImageFiles = (files: Iterable<File> | null | undefined) => {
+    if (!files) { return; }
+
+    for (const file of Array.from(files).filter(f => f.type.startsWith('image/'))) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          setImages(prev => [...prev, result]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const onPaste = (ev: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const items = ev.clipboardData.items;
+    const imageFiles: File[] = [];
 
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         const file = item.getAsFile();
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setImages([...images, e.target?.result as string]); // Set the image as a base64 string
-          };
-          reader.readAsDataURL(file);
+          imageFiles.push(file);
         }
       }
     }
+
+    addImageFiles(imageFiles);
   };
 
   const onSend = async () => {
@@ -64,9 +79,6 @@ export const ShareFeedback: FunctionComponent<{ topic: string; body?: string; on
         description='(optional, if you would like a reply)'
         value={contact}
         onChange={(_, v) => setContact(v ?? '')}
-        onPaste={(ev) => {
-          console.log(ev);
-        }}
         styles={{ fieldGroup: { width: 600 }, root: { marginBottom: appTheme.spacing.s2 }, subComponentStyles: { label: { root: { color: appTheme.palette.accent } } } }}
       />
 
@@ -79,15 +91,54 @@ export const ShareFeedback: FunctionComponent<{ topic: string; body?: string; on
         onPaste={onPaste}
       />
 
-      <Label style={{ color: appTheme.palette.themeSecondary }}>Images: (paste into message)</Label>
-      <Stack horizontal wrap tokens={{ childrenGap: '4px 8px' }} style={{ overflowX: 'auto', padding: 4, height: 80, backgroundColor: appTheme.palette.neutralQuaternary }} >
+      <Stack horizontal verticalAlign='center' horizontalAlign='space-between'>
+        <Label style={{ color: appTheme.palette.themeSecondary }}>Images:</Label>
+        <DefaultButton
+          text='Add image'
+          onClick={() => imageInputRef.current?.click()}
+        />
+      </Stack>
+      <input
+        ref={imageInputRef}
+        type='file'
+        accept='image/*'
+        multiple
+        style={{ display: 'none' }}
+        onChange={(ev) => {
+          addImageFiles(ev.currentTarget.files);
+          ev.currentTarget.value = '';
+        }}
+      />
+      <Stack
+        horizontal
+        wrap
+        tokens={{ childrenGap: '4px 8px' }}
+        onPaste={onPaste}
+        onDragOver={(ev) => ev.preventDefault()}
+        onDrop={(ev) => {
+          ev.preventDefault();
+          addImageFiles(ev.dataTransfer.files);
+        }}
+        style={{
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          padding: 4,
+          minHeight: 80,
+          maxHeight: 132,
+          backgroundColor: appTheme.palette.neutralQuaternary,
+          border: `1px dashed ${appTheme.semanticColors.inputBorder}`,
+        }}
+      >
+        {images.length === 0 && <div style={{ color: appTheme.palette.neutralSecondaryAlt, padding: 8 }}>
+          Paste screenshots into the message field, drop images here, or add image files.
+        </div>}
         {images.map((img, idx) => {
-          return <div style={{ position: 'relative' }}>
+          return <div key={idx} style={{ position: 'relative' }}>
             <img
               src={img}
               alt='Pasted'
               style={{
-                maxWidth: '100%',
+                maxWidth: '120px',
                 maxHeight: '60px',
                 border: `1px dotted ${appTheme.semanticColors.inputBorder}`
               }} />

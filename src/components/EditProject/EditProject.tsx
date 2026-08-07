@@ -9,7 +9,7 @@ import { ChooseBody } from "../ChooseBody";
 import { TimeRemaining } from "../TimeRemaining";
 import { delay, isMobile } from '../../util';
 import { CalloutMsg } from '../CalloutMsg';
-import { SysMap2 } from '../../system-model2';
+import { SysMap2 } from '../../economy/system-model2';
 
 
 interface ChooseEditProjectProps {
@@ -79,6 +79,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
   render() {
     const { editProject, errorMsg, showAdvanced } = this.state;
     const disableSave = !editProject.buildName || !editProject.buildType;
+    const bodyType = this.props.sysMap?.bodies.find(b => b.num === editProject.bodyNum)?.type;
 
     const dateCompletedHelpElement = <span>
       The <b>Date completed</b> value is needed for two important reasons:
@@ -169,7 +170,7 @@ export class EditProject extends Component<ChooseEditProjectProps, ChooseEditPro
             <tr>
               <td><Label required>Build type:</Label></td>
               <td><div className='grey' style={{ backgroundColor: appTheme.palette.purpleLight }} onKeyDown={(ev) => this.onKeyPress(ev)}>
-                <BuildType sysMap2={this.props.sysMap} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
+                <BuildType sysMap2={this.props.sysMap} bodyType={bodyType} buildType={editProject.buildType!} onChange={(value) => this.updateProjData('buildType', value)} />
               </div>
               </td>
             </tr>
