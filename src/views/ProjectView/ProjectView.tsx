@@ -2041,11 +2041,12 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     const validCargoKeys = Object.keys(proj.commodities)
       .filter(k => proj.commodities[k] > 0)
 
+    const disableDeliver = submitting || sumCargo(nextDelivery) === 0 || (isPrep && (!deliverMarketId || deliverMarketId === 'site'));
     return <div className='delivery'>
       {!submitting && <Stack horizontal tokens={{ childrenGap: 10, padding: 10, }}>
         <PrimaryButton
           text='Deliver'
-          disabled={submitting || sumCargo(nextDelivery) === 0 || (isPrep && !deliverMarketId)}
+          disabled={disableDeliver}
           iconProps={{ iconName: 'DeliveryTruck' }}
           onClick={this.deliverToSite}
         />

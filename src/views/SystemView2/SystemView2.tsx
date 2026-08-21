@@ -1210,7 +1210,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
           {
             key: 'sys-save',
-            title: isAllowed ? 'Save changes to this system' : 'Save permission is denied',
+            title: canEditAsArchitect ? 'Save changes to this system' : 'Save permission is denied',
             text: canEditAsArchitect ? 'Save' : undefined,
             className: anonymous ? undefined : cn.bBox,
             iconProps: { iconName: 'Save', style: { color: saveIconColor } },
