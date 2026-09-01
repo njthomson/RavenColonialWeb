@@ -263,7 +263,7 @@ export class App extends Component<AppProps, AppState> {
     const timeSinceLastLogin = Date.now() - new Date(cmdrSettings?.lastLogin ?? '').getTime();
     const tooLong = timeSinceLastLogin > threeWeeks;
 
-    const changeLogColor = (Date.now() - lastEntry.getTime()) < twoDays ? appTheme.palette.yellowDark : undefined;
+    const changeLogColor = (Date.now() - lastEntry.getTime()) < twoDays ? appTheme.palette.themeDarker : undefined;
 
     return (
       <ThemeProvider theme={appTheme} className='app'>

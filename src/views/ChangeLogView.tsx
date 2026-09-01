@@ -67,7 +67,7 @@ const css = mergeStyles({
 });
 
 
-export const lastEntry = new Date('2026-05-14T04:00:00.433Z');
+export const lastEntry = new Date('2026-09-01T04:00:00.433Z');
 
 export const ChangeLog: FunctionComponent<{}> = (props) => {
 
@@ -79,7 +79,23 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
       onClick={() => App.showFeedback('Change log feedback or suggestions')}
     />
     <div className='sub1'>Recent changes and additions to Raven Colonial:</div>
-    <div className='sub2'>(Something I should have been sharing since the beginning)</div>
+
+    <div style={{ marginTop: 20 }}>
+      <div className='date'>September 1st 2026</div>
+      <StackH className='head' gap={8}>
+        <Icon iconName='HomeGroup' style={{ fontSize: 24 }} />
+        <span>Ports around a Barycentre?</span>
+      </StackH>
+      <ul className='block'>
+        <li>With the release of Operations this summer it became possible for a facility to start orbiting a barycentre rather than a parent star, planet or moon.</li>
+        <li>This is a relatively rare aspect. The game does not allow us to choose the barycentre but automatically shifts a construction site to the barycentre once it has been placed.</li>
+        <li>What is interesting about this is it appears facilities sharing a barycentre will have combined economies, allowing strong links between things initially placed around different stars.</li>
+        <li>Raven Colonial now allows an architect to choose a barycentre as a parent body, if the system has the expected criteria. When choosing a body you'll see something like <b>'x AB'</b> between stars A and B.</li>
+        <li>An example of this can be seen in the <Link2 href='/#sys=2MASS%20J18185805-1647318' text='2MASS J18185805-1647318 system' /> where 5 installations around stars A and B were shifted to the barycentre. </li>
+        <br />
+        <li>If you have an old or new colonised system that uses a barycentre as a parent, <Link onClick={() => App.showFeedback('Barycentre system:')} style={{ color: appTheme.palette.themeDarker }}>please let me know<Icon className='icon-inline' iconName='Feedback' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link></li>
+      </ul>
+    </div>
 
     <div style={{ marginTop: 20 }}>
       <div className='date'>May 13th 2026</div>
