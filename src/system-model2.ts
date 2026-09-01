@@ -6,6 +6,12 @@ import { Bod, BT, Site, Sys } from './types2';
 
 export const unknown = 'Unknown';
 
+/** The max distance 2 stars can be in order for stations to be relocated to their parent barycentre */
+const baryCentreParentMaxDistLS = 20;
+
+/** If we want to auto-shift stations from their current body to a parent barycentre. This is probably a bad idea as systems colonised before Operations may be different than those colonised afterwards. */
+export const useBarycentreAsStationParent = false;
+
 // const sysMapCache: Record<string, SysMap> = {};
 
 // /** Returns what ever cached value we have for the given system */
@@ -304,6 +310,33 @@ const initializeSysMap = (sys: Sys, useIncomplete: boolean, idxLimit: number) =>
   const calcIds = useIncomplete
     ? sys.sites.filter((s, i) => i < idxLimit && s.status !== 'demolish').map(s => s.id) // include up to idxLimit
     : sys.sites.filter(s => s.status === 'complete').map(s => s.id); // include only completed sites
+
+  // determine which barycentre's could be a parent for stations. Select barycentre's who have 2 children and they are both stars
+  for (let b of sys.bodies) {
+    if (b.type !== BT.bc) { continue; }
+    let children = sys.bodies.filter(c => c.parents[0] === b.num && ([...stellarRemnants, BT.st].includes(c.type)));
+    if (children.length === 2) {
+      // require distLS to be within 20ls of each other
+      const deltaDistLS = Math.abs(children[0].distLS - children[1].distLS);
+      if (deltaDistLS < baryCentreParentMaxDistLS) {
+        b.hostBC = true;
+        b.name = 'x ' + children[0].name.replace(sys.name, '').trim() + children[1].name.replace(sys.name, '').trim();
+        b.subType = 'Barycentre';
+        if (b.parents.length === 0) {
+          // recreate parents as they to appear to be missing from barycentres
+          b.parents = children[0].parents.slice(1);
+        }
+        // auto-shift any stations to the barycentre? Not right now
+        if (useBarycentreAsStationParent && false) {
+          for (let s of sys.sites) {
+            if (s.bodyNum === children[0].num || s.bodyNum === children[1].num) {
+              s.bodyNum = b.num;
+            }
+          }
+        }
+      }
+    }
+  }
 
   // first: group sites by their bodies
   if (!sys.sites) { sys.sites = []; }

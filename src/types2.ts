@@ -59,6 +59,8 @@ export interface Bod {
   radius: number;
   temp: number;
   gravity: number;
+  /** If this is a barycentre that can be a parent for stations */
+  hostBC?: boolean;
 }
 
 /** Body Type */

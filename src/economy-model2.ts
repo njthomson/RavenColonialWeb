@@ -198,6 +198,7 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       adjust('tourism', +1, 'Body type: BH/NS/WD', map, site); intrinsic.add('tourism');
       break;
     case BT.st:
+    case BT.bc:
       adjust('military', +1, 'Body type: STAR', map, site); intrinsic.add('military');
       break;
     case BT.elw:

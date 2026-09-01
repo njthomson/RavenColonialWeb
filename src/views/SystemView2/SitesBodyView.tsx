@@ -105,7 +105,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
 
     //const tree = Object.values(sysMap.bodyMap).reduce((map, bm) => {
     const tree = sysMap.bodies.reduce((map, b) => {
-      if (b.type === BT.bc) { return map; }
+      if (b.type === BT.bc && !b.hostBC) { return map; }
       let bm = sysMap.bodyMap[b.name] ?? b;
 
       let bpn: BodyMapTreeNode | undefined = undefined;
@@ -483,6 +483,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
         hasSome: hasSome,
         hasSites: hasSites || !!node.map?.sites.length,
         element: <BBaryCentre
+          node={node}
           key={`barycentre-${node.body.name}${idx}`}
           hasParent={!!node.parent}
           filtering={this.state.bodyFilter.size > 0}
@@ -492,6 +493,7 @@ export class SitesBodyView extends Component<SitesViewProps, SitesBodyViewState>
           up={node.parent && (idx > 0 || !parentIsBaryCentre)}
           down={siblings.length > 1 && idx !== siblings.length - 1}
           leftDotted={parentIsBaryCentre && idx > 1}
+          sysView={this.props.sysView}
         />
       };
 
@@ -558,7 +560,7 @@ type ChildParts = {
   element: JSX.Element;
 }
 
-export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean, filtering: boolean, leftDotted?: boolean }> = (props) => {
+export const BBaryCentre: FunctionComponent<{ node: BodyMapTreeNode, bodyA: JSX.Element, bodyB: JSX.Element, hasParent?: boolean, up?: boolean, down?: boolean, filtering: boolean, leftDotted?: boolean, sysView: SystemView2 }> = (props) => {
   // calculate a rough ratio of the size of each body and adjust how far down is the bottom line connecting to the children
   const na = (props.bodyA?.props as BodyBlockProps)?.node;
   const sa = na?.map?.sites.length || 0;
@@ -577,6 +579,8 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
   } else if (r > 2) {
     bottomHeight = '50%';
   }
+
+  const sites = props.node.map?.sites;
 
   return <>
     <div style={{
@@ -607,6 +611,31 @@ export const BBaryCentre: FunctionComponent<{ bodyA: JSX.Element, bodyB: JSX.Ele
             {props.children}
           </div>
         </Stack>
+      </>}
+
+      {sites?.length && <>
+        <Stack
+          horizontal
+          verticalAlign='center'
+          style={{ borderLeft: props.filtering ? undefined : `2px solid ${appTheme.palette.themeSecondary}`, }}
+        >
+          {!props.filtering && <div style={{
+            borderBottom: `2px dashed ${appTheme.palette.themeTertiary}`,
+            marginLeft: indent,
+            paddingRight: 20,
+            color: 'grey'
+          }}>{props.node.body.name}</div>}
+
+          <div style={{
+            borderLeft: props.filtering ? undefined : `2px dashed ${appTheme.palette.themeTertiary}`,
+            margin: '10px 0',
+            paddingLeft: 10,
+          }}>
+            {sites && sites.map(s => <SiteLink key={`surfacesite${s.id}${++nnn}`} doSelect site={s} sysView={props.sysView} prefix='sbv' siteGraphType={props.sysView.state.siteGraphType} />)}
+
+          </div>
+        </Stack>
+
       </>}
 
       {props.bodyB}

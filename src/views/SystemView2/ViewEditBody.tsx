@@ -2,9 +2,10 @@ import { Stack, DirectionalHint, ActionButton, Icon, Callout } from "@fluentui/r
 import { Component } from "react";
 import { appTheme, cn } from "../../theme";
 import { Bod, BT } from "../../types2";
-import { BodyMap2, getUnknownBody } from "../../system-model2";
+import { BodyMap2, getUnknownBody, useBarycentreAsStationParent } from "../../system-model2";
 import { App } from "../../App";
 import { BodyFeature } from "../../types";
+import { stellarRemnants } from "../../economy-model2";
 
 interface ViewEditBodyProps {
   onChange: (num: number) => void;
@@ -19,6 +20,7 @@ interface ViewEditBodyProps {
 
 interface ViewEditBodyState {
   dropDown: boolean;
+  bodies: Bod[];
 }
 
 export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState> {
@@ -27,8 +29,26 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
   constructor(props: ViewEditBodyProps) {
     super(props);
 
+    // start with the unknown body + all non-barycentre's ...
+    const bodies = [getUnknownBody(), ...props.bodies].filter(b => b.type !== BT.bc);
+    // ... then insert (between the relevant stars) any barycentre's that could be viable parents for a station
+    for (let b of props.bodies) {
+      if (!b.hostBC) { continue; }
+      let children = bodies.filter(c => c.parents[0] === b.num && ([...stellarRemnants, BT.st].includes(c.type)));
+      if (children.length === 2) {
+        const idx = bodies.indexOf(children[0]);
+        // auto-shift any stations to the barycentre? Not right now
+        if (useBarycentreAsStationParent && false) {
+          bodies.splice(idx, 2, b);
+        } else {
+          bodies.splice(idx + 1, 0, b);
+        }
+      }
+    }
+
     this.state = {
       dropDown: false,
+      bodies,
     };
   }
 
@@ -43,25 +63,26 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
   }
 
   render() {
-    const { systemName, bodies, pinnedSiteId, bodyNum, shortName, bodyMap } = this.props;
-    const { dropDown } = this.state;
+    const { systemName, pinnedSiteId, bodyNum, shortName, bodyMap } = this.props;
+    const { dropDown, bodies } = this.state;
     const id = Date.now().toString();
 
     const bodyName = bodies.find(b => b.num === bodyNum)?.name;
+    const shortBodyName = bodyName?.replace(systemName, '').trim();
     let bodyNameElement = <></>;
     if (!bodyName) {
       bodyNameElement = <>?</>;
     } else if (shortName) {
-      bodyNameElement = <>{bodyName.slice(systemName.length + 1)}</>;
+      bodyNameElement = <>{shortBodyName}</>;
     } else {
       bodyNameElement = <span>
         {systemName}
         &nbsp;
-        <span style={{ fontWeight: 'bolder' }}>{bodyName.slice(systemName.length + 1)}</span>
+        <span style={{ fontWeight: 'bolder' }}>{shortBodyName}</span>
       </span>;
     }
 
-    const rows = [getUnknownBody(), ...bodies].filter(b => b.type !== BT.bc).map((body, i) => {
+    const rows = bodies.map((body, i) => {
       if (!body) return null;
 
       const sites = bodyMap[body.name]?.sites;
@@ -79,6 +100,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
         style={{
           userSelect: 'none',
           cursor: 'pointer',
+          borderBottom: body.num === -1 ? '1px solid ' + appTheme.palette.themeTertiary : undefined,
         }}
         onClick={() => {
           this.setState({ dropDown: false });
@@ -92,11 +114,11 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
         >
           <div>
             <span style={{ color: appTheme.palette.neutralSecondary }}>{systemName}</span>
-            <span style={{ fontWeight: 'bold' }}> {body.name.slice(systemName.length + 1)}</span>
+            <span style={{ fontWeight: 'bold' }}> {body.name.replace(systemName, '').trim()}</span>
           </div>
 
           <div style={{ color: appTheme.palette.themeSecondary }}>
-            {body.subType} ~{Math.round(body.distLS).toLocaleString()}ls
+            {body.subType} {body.distLS > 0 && <>~{Math.round(body.distLS).toLocaleString()}ls</>}
             {isLandable && <Icon iconName='GlobeFavorite' className='icon-inline' style={{ marginLeft: 8, paddingTop: 0 }} title='Landable body' />}
           </div>
           {!!sites && <Stack>
