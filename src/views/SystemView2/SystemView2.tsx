@@ -1357,7 +1357,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                   iconProps: { imageProps: { src: inara16 } },
                   className: cn.bBox,
                   onClick: () => {
-                    window.open(`https://inara.cz/elite/starsystem/?search=${systemName}`, 'Inara');
+                    window.open(`https://inara.cz/elite/starsystem/?search=${encodeURIComponent(systemName)}`, 'Inara');
                   },
                 },
                 {
@@ -1376,7 +1376,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
                   iconProps: { imageProps: { src: canonn16 } },
                   className: cn.bBox,
                   onClick: () => {
-                    window.open(`https://signals.canonn.tech/index.html?system=${systemName}`, 'Canonn');
+                    window.open(`https://signals.canonn.tech/index.html?system=${encodeURIComponent(systemName)}`, 'Canonn');
                   },
                 }
               ]
