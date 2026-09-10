@@ -86,7 +86,7 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
       if (!body) return null;
 
       const sites = bodyMap[body.name]?.sites;
-      const isLandable = body.features.includes(BodyFeature.landable);
+      const isLandable = body.features?.includes(BodyFeature.landable);
 
       const isCurrent = this.props.bodyNum === body.num;
       const borderLine = isCurrent

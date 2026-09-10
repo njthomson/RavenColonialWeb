@@ -790,8 +790,17 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     // calculate sum cargo diff for all FCs per commodity name
     const fcMarketIds = Object.keys(fcCargo);
     const mapSumCargoDiff = Object.keys(mapCommodityNames).reduce((map, key) => {
-      const need = cargo[key] ?? 0;
-      if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
+      if (key in cargo) {
+        const need = cargo[key] ?? 0;
+        if (need >= 0) {
+          map[key] = fcMarketIds.reduce((sum, marketId) => {
+            if (fcCargo[marketId] && fcCargo[marketId][key]) {
+              sum += fcCargo[marketId][key];
+            }
+            return sum;
+          }, 0) - need;
+        }
+      }
       return map;
     }, {} as Cargo);
 
