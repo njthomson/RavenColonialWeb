@@ -789,9 +789,22 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     // calculate sum cargo diff for all FCs per commodity name
     const fcMarketIds = Object.keys(fcCargo);
+    let errorLogged = false;
     const mapSumCargoDiff = Object.keys(mapCommodityNames).reduce((map, key) => {
-      const need = cargo[key] ?? 0;
-      if (need >= 0) { map[key] = fcMarketIds.reduce((sum, marketId) => sum += fcCargo[marketId][key] ?? 0, 0) - need; }
+      if (key in cargo) {
+        const need = cargo[key] ?? 0;
+        if (need >= 0) {
+          map[key] = fcMarketIds.reduce((sum, marketId) => {
+            if (fcCargo[marketId] && fcCargo[marketId][key]) {
+              sum += fcCargo[marketId][key];
+            } else if (fcCargo[marketId] == null && !errorLogged) {
+              console.error(`Why bad cargo for marketId: '${marketId}' on key: '${key}'?\n`, JSON.stringify(this.state, null, 2));
+              errorLogged = true;
+            }
+            return sum;
+          }, 0) - need;
+        }
+      }
       return map;
     }, {} as Cargo);
 
@@ -826,7 +839,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
       // TODO: Entirely split view rendering
       flip = !flip;
-      var { row, enoughOnShipsOrFC } = this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff);
+      var { row, enoughOnShipsOrFC } = this.getCommodityRow(proj, key, cmdrs, flip, mapSumCargoDiff, fcCargo);
       rows.push(row)
       if (enoughOnShipsOrFC) { countEnoughOnAnything++; }
 
@@ -988,7 +1001,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
     }
   }
 
-  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo): { enoughOnShipsOrFC: boolean, row: JSX.Element } {
+  getCommodityRow(proj: Project, key: string, cmdrs: string[], flip: boolean, mapSumCargoDiff: Cargo, fcCargo: Record<string, Cargo>): { enoughOnShipsOrFC: boolean, row: JSX.Element } {
     const displayName = mapCommodityNames[key] ?? key;
     const currentCmdr = store.cmdrName;
 
@@ -1083,7 +1096,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
 
     const enoughOnShipsOrFC = need > 0 && (countOnShips + sumCargoDiff >= 0);
 
-    const fcMarketIds = Object.keys(this.state.fcCargo);
+    const fcMarketIds = Object.keys(fcCargo);
 
     const className = need !== 0 ? '' : 'done ';
     const style: CSSProperties | undefined = flip ? undefined : { background: appTheme.palette.themeLighter };
@@ -1136,11 +1149,11 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
             </div>
           </td>
           {fcMarketIds.map((marketId, i) => {
-            const fcCount = this.state.fcCargo[marketId][key];
+            const fcCount = fcCargo[marketId][key];
             const fc = proj.linkedFC.find(fc => fc.marketId.toString() === marketId);
             return <td key={`fcc${marketId}`} className={`commodity-need ${i + 1 < fcMarketIds.length || this.state.hasAssignments ? cn.br : ''}`} style={{ position: 'relative', ...this.getBorderStyleForFC(marketId, key) }}>
               {fc && <InlineMarketOrders fc={fc} cargo={key} count={fcCount} />}
-              {this.state.fcCargo[marketId][key] ? <span>{fcCount.toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
+              {fcCargo[marketId][key] ? <span>{fcCount.toLocaleString()}</span> : <span style={{ color: 'grey' }}>-</span>}
             </td>;
           })}
         </>
