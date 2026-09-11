@@ -1240,7 +1240,9 @@ export const siteTypes: SiteType[] = [
 export const mapSitePads: Record<string, [s: number, m: number, l: number,]> = {
 
   // T2/T3  space ports
-  dodec: [4, 8, 6], // Dodec Starport
+  dodec: [4, 11, 5], // Dodec Starport
+  quint_truss: [4, 11, 5], // Dodec Starport
+  dec_truss: [4, 11, 5], // Dodec Starport
   no_truss: [8, 11, 5], // Coriolis Starport
   dual_truss: [8, 11, 5], // Coriolis Starport
   quad_truss: [8, 11, 5], // Coriolis Starport

@@ -866,7 +866,7 @@ export class WhereToBuy extends Component<WhereToBuyProps, WhereToBuyState> {
     const stationName = market.stationName.endsWith(')')
       ? market.stationName.substring(market.stationName.lastIndexOf('(')).slice(1, -1)
       : market.stationName;
-    const inaraLink = `https://inara.cz/elite/station/?search=${stationName} [${market.systemName}]`;
+    const inaraLink = `https://inara.cz/elite/station/?search=${encodeURIComponent(stationName)} [${encodeURIComponent(market.systemName)}]`;
 
     const subMatches = Object.entries(market.supplies).filter(([cargo]) => cargo in this.props.need && this.props.need[cargo] > 0);
     const countMatches = subMatches.length;

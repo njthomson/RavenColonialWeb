@@ -509,7 +509,7 @@ export class ProjectView extends Component<ProjectViewProps, ProjectViewState> {
               disabled: refreshing,
               style: { color: refreshing ? appTheme.palette.neutralTertiaryAlt : undefined },
               onClick: () => {
-                window.open(`https://inara.cz/elite/station/?search=${proj.buildName} [${proj.systemName}]`, 'Inara');
+                window.open(`https://inara.cz/elite/station/?search=${encodeURIComponent(proj.buildName)} [${encodeURIComponent(proj.systemName)}]`, 'Inara');
               },
             },
             // {
