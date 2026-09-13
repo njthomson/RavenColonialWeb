@@ -264,7 +264,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     }
 
     const isArchitect = !!newSys.architect && isMatchingCmdr(newSys.architect, store.cmdrName);
-    const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect; // || !!newSys.editors?.includes(store.cmdrName);
+    const hasCompleteSite = newSys.sites.some(s => s.status === 'complete' && s.marketId);
+    const canEditAsArchitect = newSys.open || !newSys.architect || isArchitect || !hasCompleteSite; // || !!newSys.editors?.includes(store.cmdrName);
     const lastRev = newSys.revs.reduce((m, r) => Math.max(r.rev, m), 0);
 
     this.setState({
@@ -420,8 +421,10 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
       return;
     }
 
+    const hasCompleteSite = this.state.sysMap.sites.some(s => s.status === 'complete' && s.marketId);
+
     // warn before lockout
-    const aboutToLock = !this.state.sysMap.open && !!this.state.sysMap?.architect && !isMatchingCmdr(this.state.sysMap?.architect, store.cmdrName);
+    const aboutToLock = hasCompleteSite && !this.state.sysMap.open && !!this.state.sysMap?.architect && !isMatchingCmdr(this.state.sysMap?.architect, store.cmdrName);
     if (aboutToLock && !saveName) {
       if (this.state.showConfirmAction !== this.confirmDoSaveData) {
         this.setState({
@@ -456,7 +459,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     if (this.state.sysOriginal.reserveLevel !== this.state.sysMap.reserveLevel) {
       payload.reserveLevel = this.state.sysMap.reserveLevel;
     }
-    if (this.state.sysOriginal.open !== this.state.sysMap.open) {
+    if (hasCompleteSite && this.state.sysOriginal.open !== this.state.sysMap.open) {
       payload.open = this.state.sysMap.open;
     }
     if (this.state.sysOriginal.nickname !== this.state.sysMap.nickname) {
@@ -1604,7 +1607,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const validations = [];
 
-    // archiect is unknown and there are some non-planning sites
+    // architect is unknown and there are some non-planning sites
     if (!architect && sites.some(s => s.status !== 'plan')) {
       validations.push(<div key={`valNoArchitect`}>
         » System architect unknown - <Link onClick={() => this.setState({ showEditSys: true })}>Fix it</Link>

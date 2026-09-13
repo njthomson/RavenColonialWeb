@@ -18,7 +18,8 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
   // const [newEditor, setNewEditor] = useState<string | undefined>();
   // const [editors, setEditors] = useState<Set<string>>(new Set<string>(sysMap.editors));
 
-  const isOpen = sysMap.open;
+  const hasCompleteSite = sysMap.sites.some(s => s.status === 'complete' && s.marketId);
+  const isOpen = hasCompleteSite && sysMap.open;
 
   const hasArchitect = !!props.sysView.state.sysOriginal.architect;
   const isArchitect = hasArchitect && isMatchingCmdr(props.sysView.state.sysOriginal.architect, store.cmdrName);
@@ -110,8 +111,9 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
                 props.sysView.setState({ sysMap: sysMap });
               }}
             />}
+          </Stack>
 
-            {/* {isArchitect && <IconButton
+          {/* {isArchitect && <IconButton
               className={cn.bBox}
               iconProps={{ iconName: 'AddFriend', style: { fontSize: 12 } }}
               text={'Add someone?'}
@@ -120,7 +122,6 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
               style={{ textDecoration: !hasArchitect ? 'line-through 2px' : undefined, float: 'right' }}
               onClick={() => setNewEditor(" ")}
             />} */}
-          </Stack>
 
           {/* {(!!newEditor || editors.size > 0) && <>
             <div style={{ alignContent: 'start' }}>Editors:</div>
@@ -189,13 +190,16 @@ export const SystemCard: FunctionComponent<{ targetId: string, sysView: SystemVi
               className={cn.bBox}
               iconProps={{ iconName: isOpen ? 'Unlock' : 'LockSolid', style: { fontSize: 12 } }}
               text={isOpen ? 'Open' : 'Secured'}
-              title='Only architects can edit a secured system'
-              disabled={!canEditAsArchitect}
-              style={{ textDecoration: !hasArchitect && !isOpen ? 'line-through 1px' : undefined }}
+              title='Only architects with a completed, linked site can Secure exclusive edit access'
+              disabled={!canEditAsArchitect || !hasCompleteSite}
+              style={{ textDecoration: (!hasCompleteSite || !hasArchitect) && !isOpen ? 'line-through 1px' : undefined }}
               onClick={() => {
-                props.sysView.updateOpen(!isOpen);
+                props.sysView.updateOpen(!sysMap.open);
               }}
             />
+            {!hasCompleteSite && <div style={{ color: appTheme.palette.themeTertiary, fontSize: 12 }}>
+              Complete your 1st site to secure this system
+            </div>}
           </div>
 
           <div />
