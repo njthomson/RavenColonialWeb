@@ -5,6 +5,7 @@ export const apiSvcUrl =
   // 'https://localhost:7007'; /*
   'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
 
+
 const logApiCalls = true;
 
 export const callAPI = async <T>(uri: string, method: string = 'GET', body?: string): Promise<T> => {
