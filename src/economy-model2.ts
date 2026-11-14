@@ -202,13 +202,13 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       adjust('military', +1, 'Body type: STAR', map, site); intrinsic.add('military');
       break;
     case BT.elw:
-      adjust('agriculture', +1, 'Body type: ELW', map, site); intrinsic.add('agriculture');
+      adjust('agriculture', +1, 'Body type: ELW', map, site); intrinsic.add('agriculture'); // 1.8? not yet
       adjust('hightech', +1, 'Body type: ELW', map, site); intrinsic.add('hightech');
       adjust('military', +1, 'Body type: ELW', map, site); intrinsic.add('military');
       adjust('tourism', +1, 'Body type: ELW', map, site); intrinsic.add('tourism');
       break;
     case BT.ww:
-      adjust('agriculture', +1, 'Body type: WW', map, site); intrinsic.add('agriculture');
+      adjust('agriculture', +1, 'Body type: WW', map, site); intrinsic.add('agriculture'); // 1.4? not yet
       adjust('tourism', +1, 'Body type: WW', map, site); intrinsic.add('tourism');
       break;
     case BT.aw:
@@ -258,6 +258,13 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
     if (![BT.elw, BT.ww].includes(site.body?.type)) { adjust('agriculture', +1, 'Body has: BIO', map, site, 'body'); intrinsic.add('agriculture'); }
     adjust('terraforming', +1, 'Body has: BIO', map, site, 'body'); intrinsic.add('terraforming');
   }
+
+  /* not yet
+  // If the Body has Terraformable
+  if (site.body.features.includes(BodyFeature.terraformable)) {
+    adjust('agriculture', +0.4, 'Body is ELW or has: TERRAFORMING', map, site, 'body'); intrinsic.add('agriculture');
+  }
+  */
 
   // If the Body has Geologicals (+1.00) for Industrial and Extraction - the type of Geologicals doesn't matter
   if (site.body.features.includes(BodyFeature.geo)) {
@@ -478,6 +485,14 @@ export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolea
     else if (matches([BT.elw, BT.ww], site.body?.type)) {
       adjust('agriculture', +0.4, 'Buff: body is ELW or WW', map, site, 'body');
     }
+
+    /* not yet + remove terraformable from above
+    if (matches([BodyFeature.terraformable], site.body?.features)) {// && (!isSettlement || !debuff)) {
+      // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
+      adjust('agriculture', +0.4, 'Buff: body has TERRAFORMABLE', map, site, 'body');
+      buffed = true;
+    }
+    */
 
     if ((matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && (!isSettlement || buffed)) {
       // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice

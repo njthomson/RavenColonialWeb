@@ -3,7 +3,7 @@ import { RequestError } from "../types";
 
 export const apiSvcUrl =
   // 'https://localhost:7007'; /*
-  localStorage.getItem('newHost') ? 'https://ravencolonial.net' : 'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net'; // */
+  localStorage.getItem('oldHost') ? 'https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net' : 'https://ravencolonial.net'; // */
 
 
 const logApiCalls = true;

@@ -23,6 +23,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:economy": "react-scripts test economy-audit",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
