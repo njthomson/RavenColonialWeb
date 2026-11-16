@@ -369,8 +369,17 @@ export const applyStrongLinkBoost = (inf: Economy, map: EconomyMap, site: SiteMa
           adjust(inf, +0.4, `+ ${reason} boost: Body has TERRAFORMABLE`, map, site, 'body');
         }
       } else {
-        if (matches([BT.elw, BT.ww], site.body?.type) || matches([BodyFeature.bio], site.body?.features)) { // NOT , BodyFeature.terraformable?
-          adjust(inf, +0.4, `+ ${reason} boost: Body is ELW/WW or has BIO`, map, site, 'body'); // /TERRAFORMABLE
+        if (matches([BodyFeature.bio], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has BIO`, map, site, 'body'); // /TERRAFORMABLE
+        }
+        if (matches([BT.elw], site.body?.type)) {
+          adjust(inf, +0.8, `+ ${reason} boost: Body is ELW`, map, site, 'body'); // /TERRAFORMABLE
+        }
+        if (matches([BT.ww], site.body?.type)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body is WW`, map, site, 'body'); // /TERRAFORMABLE
+        }
+        if (matches([BodyFeature.terraformable], site.body?.features)) {
+          adjust(inf, +0.4, `+ ${reason} boost: Body has TERRAFORMABLE`, map, site, 'body'); // /TERRAFORMABLE
         }
       }
       if (matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) {

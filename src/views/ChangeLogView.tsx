@@ -92,6 +92,7 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
         <br />
         <li>I'm also making adjustments to barycentre and Agricultural economy predictions code today.</li>
         <li>There's more work to go on this front, but hopefully many of you will see things correct or now only off by 40%.</li>
+        <li>It also appears Settlement Agricultural economies have changed in the game, hence you may need to revisit to get them updated in Spansh for economy comparisons to work correctly.</li>
         <br />
         <li>Finally, it appears to be common in Raven Colonial that planned dockable ports keep the construction site marketID, instead of the actual port marketID.</li>
         <li>Whilst harmless, it blocks comparisons against data from Spansh, which hinders my ability to test new code. To that end I have added a new verification check, that will recommend re-importing data from Spansh.</li>
