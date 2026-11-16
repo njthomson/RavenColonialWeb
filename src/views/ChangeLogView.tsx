@@ -67,7 +67,7 @@ const css = mergeStyles({
 });
 
 
-export const lastEntry = new Date('2026-09-01T04:00:00.433Z');
+export const lastEntry = new Date('2026-11-15T20:00:00Z');
 
 export const ChangeLog: FunctionComponent<{}> = (props) => {
 
@@ -79,6 +79,25 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
       onClick={() => App.showFeedback('Change log feedback or suggestions')}
     />
     <div className='sub1'>Recent changes and additions to Raven Colonial:</div>
+
+    <div style={{ marginTop: 20 }}>
+      <div className='date'>November 15th 2026</div>
+      <StackH className='head' gap={8}>
+        <Icon iconName='ClassroomLogo' style={{ fontSize: 24 }} />
+        <span>New server + Agri economies</span>
+      </StackH>
+      <ul className='block'>
+        <li>Due to a spate of firewalls deciding my API server must be malicous, due to a generated portion of the host name, I have splashed out on a bigger server and vanity host name.</li>
+        <li>So, if you've been using <code style={{ color: appTheme.palette.yellowDark }}>https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net</code> this can now be updated to just <code style={{ color: appTheme.palette.yellowDark }}>https://ravencolonial.net</code></li>
+        <br />
+        <li>I'm also making adjustments to barycentre and Agricultural economy predictions code today.</li>
+        <li>There's more work to go on this front, but hopefully many of you will see things correct or now only off by 40%.</li>
+        <br />
+        <li>Finally, it appears to be common in Raven Colonial that planned dockable ports keep the construction site marketID, instead of the actual port marketID.</li>
+        <li>Whilst harmless, it blocks comparisons against data from Spansh, which hinders my ability to test new code. To that end I have added a new verification check, that will recommend re-importing data from Spansh.</li>
+        <li>Mostly this just matches ports by name and updates the marketID. It will also bring in new ports if they were known to Spansh but not Raven Colonial.</li>
+      </ul>
+    </div>
 
     <div style={{ marginTop: 20 }}>
       <div className='date'>September 1st 2026</div>

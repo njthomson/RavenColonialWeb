@@ -44,7 +44,12 @@ export const calculateColonyEconomies2 = (site: SiteMap2, calcIds: string[]): Ec
 
     case 'settlement':
       // Odyssey settlements have 1 fixed economy + body buffs
-      adjust(site.type.inf, +1.0, 'Odyssey settlement fixed economy', map, site);
+      if (site.buildType === 'annona') {
+        // TODO: are there other settlements that don't follow the same pattern?
+        adjust(site.type.inf, +0.6, 'Odyssey settlement fixed economy', map, site);
+      } else {
+        adjust(site.type.inf, +1.0, 'Odyssey settlement fixed economy', map, site);
+      }
       applyBuffs(map, site, true);
       return finishUp(map, site);
 
@@ -202,13 +207,13 @@ export const applyBodyType = (map: EconomyMap, site: SiteMap2) => {
       adjust('military', +1, 'Body type: STAR', map, site); intrinsic.add('military');
       break;
     case BT.elw:
-      adjust('agriculture', +1, 'Body type: ELW', map, site); intrinsic.add('agriculture'); // 1.8? not yet
+      adjust('agriculture', +1.8, 'Body type: ELW', map, site); intrinsic.add('agriculture'); // was 1.0 before not yet
       adjust('hightech', +1, 'Body type: ELW', map, site); intrinsic.add('hightech');
       adjust('military', +1, 'Body type: ELW', map, site); intrinsic.add('military');
       adjust('tourism', +1, 'Body type: ELW', map, site); intrinsic.add('tourism');
       break;
     case BT.ww:
-      adjust('agriculture', +1, 'Body type: WW', map, site); intrinsic.add('agriculture'); // 1.4? not yet
+      adjust('agriculture', +1.4, 'Body type: WW', map, site); intrinsic.add('agriculture'); // was 1.0 before not yet
       adjust('tourism', +1, 'Body type: WW', map, site); intrinsic.add('tourism');
       break;
     case BT.aw:
@@ -474,25 +479,20 @@ export const applyBuffs = (map: EconomyMap, site: SiteMap2, isSettlement: boolea
 
   if (map.agriculture > 0) {
     let buffed = false;
-    if (matches([BodyFeature.bio, BodyFeature.terraformable], site.body?.features)) {// && (!isSettlement || !debuff)) {
-      // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
-      adjust('agriculture', +0.4, 'Buff: body has BIO or TERRAFORMABLE', map, site, 'body');
+    if (matches([BodyFeature.bio], site.body?.features)) {// && (!isSettlement || !debuff)) {
+      adjust('agriculture', +0.4, 'Buff: body has BIO', map, site, 'body');
       buffed = true;
     }
-
+    if (matches([BodyFeature.terraformable], site.body?.features)) {// && (!isSettlement || !debuff)) {
+      adjust('agriculture', +0.4, 'Buff: body has TERRAFORMABLE', map, site, 'body');
+      buffed = true;
+    }
+    /*
     // If the Body is an Earth Like World (+0.40) for High Tech, Tourism and Agriculture
     // If the Body is a Water World (+0.40) for Tourism and Agriculture
     else if (matches([BT.elw, BT.ww], site.body?.type)) {
       adjust('agriculture', +0.4, 'Buff: body is ELW or WW', map, site, 'body');
-    }
-
-    /* not yet + remove terraformable from above
-    if (matches([BodyFeature.terraformable], site.body?.features)) {// && (!isSettlement || !debuff)) {
-      // If the Body has Organics (also known as Biologicals) (+0.40) for High Tech, Tourism and Agriculture - the type of Organics doesn't matter
-      adjust('agriculture', +0.4, 'Buff: body has TERRAFORMABLE', map, site, 'body');
-      buffed = true;
-    }
-    */
+    }//*/
 
     if ((matches([BT.ib], site.body?.type) || bodyIsTidalToStar(site.sys, site.body)) && (!isSettlement || buffed)) {
       // If the Body is an Icy World (-0.40) for Agriculture - Icy World only, does not include Rocky Ice
@@ -656,8 +656,7 @@ export const bodyIsTidalToStar = (sys: SysMap2, body: Bod | undefined, parents?:
       if (idx > 1 && matches([...stellarRemnants, BT.st], children[0].type) && matches([...stellarRemnants, BT.st], children[1].type)) {
         return true;
       }
-      // otherwise - recurse no further and apply no penalty
-      return false;
+      // otherwise - recurse
     }
   }
 

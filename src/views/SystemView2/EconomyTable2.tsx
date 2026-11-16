@@ -157,7 +157,7 @@ export const EconomyTable2: FunctionComponent<{ site: SiteMap2; sysView?: System
       <h3 className={cn.h3}>
         {!props.noTableHeader && <>
           <span>Economy Ratios:</span>
-          {sotlLink && <Link href={sotlLink} target='sotl' style={{ marginLeft: 8, fontSize: 10, fontWeight: 'normal' }} title='See estimated commodities at: cdb.sotl.org.uk'>Estimate commodities<Icon className="icon-inline" iconName='OpenInNewWindow' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>}
+          {false && sotlLink && <Link href={sotlLink} target='sotl' style={{ marginLeft: 8, fontSize: 10, fontWeight: 'normal' }} title='See estimated commodities at: cdb.sotl.org.uk'>Estimate commodities<Icon className="icon-inline" iconName='OpenInNewWindow' style={{ textDecoration: 'none', marginLeft: 4 }} /></Link>}
         </>}
         {!!props.noTableHeader && <>&nbsp;</>}
         <div style={{ fontSize: 10, fontWeight: 'normal', float: 'right', marginTop: 6 }}>
