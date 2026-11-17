@@ -67,7 +67,7 @@ const css = mergeStyles({
 });
 
 
-export const lastEntry = new Date('2026-11-15T20:00:00Z');
+export const lastEntry = new Date('2026-11-16T20:00:00Z');
 
 export const ChangeLog: FunctionComponent<{}> = (props) => {
 
@@ -79,6 +79,20 @@ export const ChangeLog: FunctionComponent<{}> = (props) => {
       onClick={() => App.showFeedback('Change log feedback or suggestions')}
     />
     <div className='sub1'>Recent changes and additions to Raven Colonial:</div>
+
+    <div style={{ marginTop: 20 }}>
+      <div className='date'>November 16th 2026</div>
+      <StackH className='head' gap={8}>
+        <Icon iconName='BuildQueue' style={{ fontSize: 24 }} />
+        <span>Nexus assign all ... or not?</span>
+      </StackH>
+      <ul className='block'>
+        <li>Feedback on the <Link href='#nexus'>Nexus</Link> feature has been positive on the whole.</li>
+        <li>However, that it auto-assigns all Commanders linked to a Nexus to every build-project started in any system in a Nexus is not so popular.</li>
+        <li>So, I have added an explicit check-box to Nexus that controls whether Commanders shoule be auto-assigned to new projects or not.</li>
+        <li>This defaults to OFF, meaning if you liked the auto-assign you will need to turn it back on again.</li>
+      </ul>
+    </div>
 
     <div style={{ marginTop: 20 }}>
       <div className='date'>November 15th 2026</div>

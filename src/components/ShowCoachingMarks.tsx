@@ -196,6 +196,17 @@ const coachingContent: Record<string, {
     </div>,
   },
 
+
+  autoAssignNexus: {
+    headline: 'When building your Nexus...',
+    directionalHint: DirectionalHint.rightTopEdge,
+    body: <div>
+      <div>Some like to auto assign all Commanders to every new project, but not everyone likes this.</div>
+      <br />
+      <div>Use this checkbox to control if Commanders should be auto assigned to new build projects in any system on this nexus, or not.</div>
+    </div>,
+  },
+
   largeBuildType: {
     headline: 'Compare and contrast (new!)',
     directionalHint: DirectionalHint.bottomCenter,

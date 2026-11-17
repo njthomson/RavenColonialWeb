@@ -1,7 +1,7 @@
 import * as api from '../api';
 import { Component, FunctionComponent, useMemo, useState } from "react";
 import { Nexus, NexusSummary, NexusSys, NexusType } from "../api/nexus";
-import { ActionButton, Callout, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
+import { ActionButton, Callout, Checkbox, CommandBar, DefaultButton, DirectionalHint, Icon, IconButton, Label, Link, mergeStyles, MessageBar, MessageBarButton, MessageBarType, Modal, Panel, PanelType, PrimaryButton, Spinner, SpinnerSize, Stack, TextField } from '@fluentui/react';
 import { appTheme, cn } from '../theme';
 import { CopyButton } from '../components/CopyButton';
 import { asGrey, delayFocus, getCargoCountOnHand, getSystemDistance, isMatchingCmdr, isMobile, mergeCargo, removeCargo, sum, sumCargo } from '../util';
@@ -17,6 +17,7 @@ import { ViewEditName } from './SystemView2/ViewEditName';
 import { Link2 } from '../components/LinkSrvSurvey';
 import { EditNotes } from './SystemView2/SystemView2';
 import { getSiteType } from '../site-data';
+import { ShowCoachingMarks } from '../components/ShowCoachingMarks';
 
 const css = mergeStyles({
   '.ms-Button--action, .ms-Button--icon': {
@@ -1459,7 +1460,7 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
   }
 
   renderCommanders(nexus: Nexus) {
-    const { editing, isMember } = this.state;
+    const { editing, isMember, saving } = this.state;
     const allowRemoveCmdr = nexus.cmdrs.length > 1;
 
     return <div className='statBox'>
@@ -1484,6 +1485,28 @@ export class NexusView extends Component<NexusViewProps, NexusViewState> {
         api.nexus.setCmdrs(nexus.id, newCmdrs)
           .then(newNexus => this.setState({ saving: false, nexus: newNexus }));
       }} />}
+
+      {editing !== 'addCmdr' && isMember && <div style={{ float: 'right' }}>
+        <Checkbox
+          id='check-auto-assign'
+          checked={nexus.autoAssign}
+          label='Auto assign to build projects'
+          title='Auto assign all Commanders to new build projects created in any system in this Nexus.'
+          styles={{ text: { color: appTheme.palette.themeSecondary }, checkbox: { borderColor: appTheme.palette.themeSecondary } }}
+          disabled={saving || !isMember}
+          onChange={(_, checked) => {
+            this.setState({ saving: true });
+            api.nexus.setAutoAssign(nexus.id, !!checked)
+              .then(newNexus => this.useNexus(newNexus))
+              .catch((err: any) => {
+                console.error(`setAutoAssign: ${err.stack}`);
+                this.setState({ saving: false, errorMsg: err.message });
+              });
+
+          }}
+        />
+        <ShowCoachingMarks id='autoAssignNexus' target='#check-auto-assign' />
+      </div>}
 
       <div style={{ fontSize: 14 }}>
         {nexus.cmdrs.map(cmdr => {

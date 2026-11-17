@@ -43,6 +43,10 @@ export const nexus = {
   setSystems: async (id: string, systemNames: string[]): Promise<Nexus> => {
     return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setSystems`, 'POST', JSON.stringify(systemNames));
   },
+
+  setAutoAssign: async (id: string, doAutoAssign: boolean): Promise<Nexus> => {
+    return await callAPI<Nexus>(`/api/chain/${encodeURIComponent(id)}/setAutoAssign`, 'POST', JSON.stringify(doAutoAssign));
+  },
 };
 
 export type NexusSummary = {
@@ -63,6 +67,7 @@ export type Nexus = {
   systems: NexusSys[];
   hubs: number[];
   notes?: string;
+  autoAssign?: boolean;
 }
 
 export type NexusSys = {
