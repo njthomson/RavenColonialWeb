@@ -1651,7 +1651,7 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
     let importNeeded = sysMap.siteMaps.filter(s => ['starport', 'outpost', 'settlement'].includes(s.type.buildClass) && s.status === 'complete' && s.marketId > 0 && s.marketId < 4_200_000_000);
     if (importNeeded.length && this.state.processingMsg !== 'Importing ...') {
       validations.push(<div key={`valInvalidOrdering`}>
-        » Re-importing sites from Spansh is recommened - <Link onClick={() => this.doImport('sites')}>Import</Link>
+        » Re-importing sites from Spansh is recommended - <Link onClick={() => this.doImport('sites')}>Import</Link>
       </div>);
     }
 
