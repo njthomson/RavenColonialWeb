@@ -156,32 +156,49 @@ export class FindSystemName extends Component<FindSystemNameProps, FindSystemNam
     // query system names
     this.setState({ matches: [], searching: true });
 
-    const useArdent = () => {
+    // last resort: proxy through our own server to Spansh
+    const searchSpansh = () => {
+      return api.systemV2.findSystemNames(txt!)
+        .then(names => {
+          return names.slice(0, 15).map(name => ({
+            key: name,
+            text: name,
+          }));
+        })
+        .catch((err: any) => {
+          console.error(`findSystemNames (Spansh) failed: ${err.stack}`);
+          return undefined;
+        });
+    };
+
+    const searchArdent = () => {
       return api.ardent.findSystem(txt)
         .then(hits => {
+          if (!hits?.length) { return searchSpansh(); }
           return hits.slice(0, 15).map(m => ({
             key: m.systemName, //m.systemAddress.toString(),
             text: m.systemName,
           }));
         })
         .catch((err: any) => {
-          console.error(`findSystems failed: ${err.stack}`);
-          return undefined;
+          console.warn(`findSystems (Ardent) failed: ${err.stack}`);
+          return searchSpansh();
         });
     };
 
     const matches = txt?.toLowerCase().includes('2mass')
-      ? await useArdent()
+      ? await searchArdent()
       : await api.edsm.findSystems(txt)
         .then(hits => {
+          if (!hits?.length) { return searchArdent(); }
           return hits.map(m => ({
             key: m.value,
             text: m.value,
           }));
         })
         .catch((err: any) => {
-          console.warn(`findSystems failed: ${err.stack}`);
-          return useArdent();
+          console.warn(`findSystems (EDSM) failed: ${err.stack}`);
+          return searchArdent();
         });
 
     const errMsg = matches === undefined

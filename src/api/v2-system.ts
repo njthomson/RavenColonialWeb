@@ -15,6 +15,11 @@ export const systemV2 = {
     snapshots: {} as Record<string, SysSnapshot[]>,
   },
 
+  /** Type-ahead search for system names, proxied through our server to Spansh */
+  findSystemNames: async (text: string): Promise<string[]> => {
+    return await callAPI<string[]>(`/api/v2/system/findSystems?q=${encodeURIComponent(text)}`);
+  },
+
   getSys: async (nameOrNum: string, force?: boolean, revOrSaveName?: string): Promise<Sys> => {
     if (!force) {
       const match = Object.values(systemV2.cache.sys).find(s => s.name === nameOrNum || s.id64.toString() === nameOrNum);
@@ -39,7 +44,7 @@ export const systemV2 = {
         const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/.${rev}`);
         return result;
       } else {
-        const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/!`,'POST', JSON.stringify(revOrSaveName));
+        const result = await callAPI<Sys>(`/api/v2/system/${encodeURIComponent(nameOrNum)}/!`, 'POST', JSON.stringify(revOrSaveName));
         return result;
       }
     }
