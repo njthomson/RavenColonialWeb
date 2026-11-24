@@ -1744,14 +1744,15 @@ export const CmdrNexus: FunctionComponent<{}> = (props) => {
       {!!nexus?.length && nexus.map(n => {
         return <div key={`ck-${n.id}`}>
           <Link href={`/#nexus=${encodeURIComponent(n.id)}`}>
-            <Icon iconName='BuildQueue' style={{ marginRight: 4, fontSize: 12, textDecoration: 'none' }} />
+            <Icon iconName={n.open ? 'BuildQueue' : 'LockSolid'} style={{ marginRight: 4, fontSize: 12, textDecoration: 'none' }} />
             {n.name}
             {!!n.destination && <span style={{ color: appTheme.palette.themeDarker, fontSize: 12 }}> ≫ {n.destination}</span>}
           </Link>
         </div>;
       })}
 
-      {!nexus?.length && <div style={{ color: 'grey', textAlign: 'center' }}>You are not linked to any nexus <br /><br /><Link2 href='/#nexus=sample' text='View a sample' /></div>}
+      {!nexus && <Spinner size={SpinnerSize.medium} label='Loading...' />}
+      {nexus && !nexus.length && <div style={{ color: 'grey', textAlign: 'center' }}>You are not linked to any nexus <br /><br /><Link2 href='/#nexus=sample' text='View a sample' /></div>}
     </div>
   </div>
     ;
