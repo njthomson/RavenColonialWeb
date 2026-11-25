@@ -131,8 +131,8 @@ export class ViewEditBody extends Component<ViewEditBodyProps, ViewEditBodyState
             >
               <span>&nbsp;»&nbsp;{s.name}</span>
               {s.sys.primaryPortId === s.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} className='icon-inline' title='Primary port' />}
-              {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Planned site' />}
-              {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} className='icon-inline' title='Under construction' />}
+              {s.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.themeTertiary }} className='icon-inline' title='Planned site' />}
+              {s.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark, fontSize: 16, fontWeight: 'bold' }} className='icon-inline' title='Under construction' />}
               {pinnedSiteId === s.id && <Icon iconName='PinnedSolid' style={{ marginLeft: 4, color: appTheme.palette.yellow }} className='icon-inline' title='Pinned site' />}
             </div>)}
           </Stack>}

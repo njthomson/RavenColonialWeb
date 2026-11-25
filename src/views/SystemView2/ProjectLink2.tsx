@@ -73,7 +73,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
       >
         <Stack horizontal verticalAlign='center'>
           <span>{props.site.name}</span>
-          <Icon iconName={mapStatusIcon.build} style={{ marginLeft: 4, fontSize: 14, color: appTheme.palette.yellowDark }} />
+          <Icon iconName={mapStatusIcon.build} style={{ marginLeft: 4, fontSize: 16, color: appTheme.palette.yellowDark, fontWeight: 'bold' }} />
         </Stack>
         <Stack horizontal verticalAlign='center'>
           {progressElement}
@@ -117,7 +117,7 @@ export const ProjectLink2: FunctionComponent<{ site: Site; sysView: SystemView2;
 
   return <>
     <ActionButton
-      iconProps={{ iconName: mapStatusIcon[props.site.status], style: { color: appTheme.palette.yellowDark } }}
+      iconProps={{ iconName: mapStatusIcon[props.site.status], style: { color: appTheme.palette.yellowDark, fontSize: 16, fontWeight: 'bold' } }}
       title='Open project page'
       className={cn.bBox}
       href={`${window.location.origin}/#build=${props.site.buildId}`}

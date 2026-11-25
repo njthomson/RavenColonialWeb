@@ -55,8 +55,8 @@ export const SiteLink: FunctionComponent<{ site: SiteMap2, sysView: SystemView2,
         </Link>}
 
         {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} title='Primary port' />}
-        {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Planned site' />}
-        {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Under construction' />}
+        {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.themeTertiary }} title='Planned site' />}
+        {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark, fontSize: 16, fontWeight: 'bold' }} title='Under construction' />}
 
         {!props.noPin && <IconButton
           className={isPinned ? cn.ibBri : cn.ibDim}

@@ -784,6 +784,8 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
 
     const { errorMsg, sysMap, processingMsg, showBuildOrder, showCreateBuildProject, importSitesComplete } = this.state;
 
+    const importNeeded = !importSitesComplete || !sysMap?.siteMaps?.length ? [] : sysMap.siteMaps.filter(s => ['starport', 'outpost', 'settlement'].includes(s.type.buildClass) && s.status === 'complete' && s.marketId > 0 && s.marketId < 4_200_000_000);
+
     return <div className='sys' style={{ position: 'relative' }}>
       {errorMsg && <MessageBar messageBarType={MessageBarType.error}>{errorMsg}</MessageBar>}
 
@@ -820,21 +822,28 @@ export class SystemView2 extends Component<SystemView2Props, SystemView2State> {
         styles={{ main: { border: '1px solid ' + appTheme.palette.themePrimary, } }}
         dialogContentProps={{
           title: 'Import complete',
-          subText: this.state.sysOriginal?.updateIDs?.length ? `${this.state.sysOriginal?.updateIDs?.length} stations changed:` : 'No stations changed',
+          subText: this.state.sysOriginal?.updateIDs?.length ? `${this.state.sysOriginal?.updateIDs?.length} station(s) changed:` : 'No stations changed',
           showCloseButton: true,
         }}
         onDismiss={() => this.setState({ importSitesComplete: false })}
       >
-        {!!this.state.sysOriginal?.updateIDs?.length && <>
+        {!!importNeeded.length && <>
+          The following ports still have construction site marketID's:
+          <div style={{ color: appTheme.palette.themePrimary, margin: 10 }}>
+            {importNeeded.map(s => <div>» {s.name} ({s.buildType}) on: {s?.body?.name.replace(this.state.sysOriginal.name, '') ?? s?.bodyNum ?? '?'}</div>)}
+          </div>
+          To fix: dock at them with an EDDN uploading client, so that Spansh knows about them. Re-import once this is done.
+        </>}
+        {!!this.state.sysOriginal?.updateIDs?.length && <div style={{ color: appTheme.palette.themePrimary, margin: 10 }}>
           {this.state.sysOriginal?.updateIDs.map(id => {
             var site = this.state.sysMap.siteMaps.find(s => s.id === id);
             return <div key={`siteChanged-${id}`}>
-              {site?.name ?? id} ({site?.buildType ?? '?'})
+              » {site?.name ?? id} ({site?.buildType ?? '?'})
               on: {site?.body?.name.replace(this.state.sysOriginal.name, '') ?? site?.bodyNum ?? '?'}
             </div>;
           })}
           <div style={{ marginTop: 20, color: appTheme.semanticColors.bodySubtext }}>Don't forget to save.</div>
-        </>}
+        </div>}
       </Dialog>}
     </div>;
   }

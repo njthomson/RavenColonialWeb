@@ -107,8 +107,8 @@ export const SitesTableView: FunctionComponent<SitesViewProps> = (props) => {
             }}
           />
           {site.sys.primaryPortId === site.id && <Icon iconName='CrownSolid' style={{ marginLeft: 4 }} title='Primary port' />}
-          {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Planned site' />}
-          {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark }} title='Build in-progress' />}
+          {site.status === 'plan' && <Icon iconName='WebAppBuilderFragment' style={{ marginLeft: 4, color: appTheme.palette.themeTertiary }} title='Planned site' />}
+          {site.status === 'build' && <Icon iconName='ConstructionCone' style={{ marginLeft: 4, color: appTheme.palette.yellowDark, fontSize: 16, fontWeight: 'bold' }} title='Build in-progress' />}
           {site.status === 'demolish' && <Icon iconName='Broom' style={{ marginLeft: 4 }} title='Demolished' />}
         </Stack>
 
